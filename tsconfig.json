@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "Node",
+    "noImplicitAny": true,
+    "outDir": "./build",
+    "sourceMap": true,
+    "target": "ES2017",
+    "typeRoots": ["node_modules/@types", "node_modules/web-ext-types/"],
+    "alwaysStrict": true
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}

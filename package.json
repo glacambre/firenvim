@@ -1,0 +1,23 @@
+{
+  "name": "Firenvim",
+  "version": "0.1.0",
+  "description": "A webextension to turn Firefox into a Neovim client.",
+  "devDependencies": {
+    "@types/node": "^8.0.46",
+    "typescript": "^2.5.3",
+    "web-ext": "^1.8.1"
+  },
+  "scripts": {
+    "build": "tsc && cp src/manifest.json build/manifest.json",
+    "run": "web-ext run --source-dir=./build --keep-profile-changes --firefox-profile=$HOME/.mozilla/firefox/firenvim.profile",
+    "package": "web-ext build"
+  },
+  "author": "glacambre",
+  "keywords": [
+    "webextension",
+    "webext",
+    "vim",
+    "firefox"
+  ],
+  "license": "GPL-3.0"
+}
