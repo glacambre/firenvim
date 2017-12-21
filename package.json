@@ -5,10 +5,12 @@
   "devDependencies": {
     "@types/node": "^8.0.46",
     "typescript": "^2.5.3",
-    "web-ext": "^1.8.1"
+    "web-ext": "^1.8.1",
+    "browserify": "^14.5.0",
+    "msgpack5": "^3.6.0"
   },
   "scripts": {
-    "build": "tsc && cp src/manifest.json build/manifest.json",
+    "build": "tsc && browserify build/firenvim.js -o build/firenvim.js && cp src/manifest.json build/manifest.json",
     "run": "web-ext run --source-dir=./build --keep-profile-changes --firefox-profile=$HOME/.mozilla/firefox/firenvim.profile",
     "package": "web-ext build"
   },
