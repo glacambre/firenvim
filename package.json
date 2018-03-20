@@ -7,12 +7,13 @@
     "typescript": "^2.5.3",
     "web-ext": "^1.8.1",
     "browserify": "^14.5.0",
-    "msgpack5": "^3.6.0"
+    "promised-neovim-client": "^2.0.2"
   },
   "scripts": {
-    "build": "tsc && browserify build/firenvim.js -o build/firenvim.js && cp src/manifest.json build/manifest.json",
-    "run": "web-ext run --source-dir=./build --keep-profile-changes --firefox-profile=$HOME/.mozilla/firefox/firenvim.profile",
-    "package": "web-ext build"
+    "build": "((cargo build --release && (unlink ~/bin/firenvim ; cp target/release/firenvim ~/bin)) & tsc && browserify target/*.js -o target/background.js && cp src/manifest.json target/manifest.json && cp src/native_manifest.json $HOME/.mozilla/native-messaging-hosts/firenvim.json) || true",
+    "run": "web-ext run --source-dir=./target --keep-profile-changes --firefox-profile=$HOME/.mozilla/firefox/firenvim.profile",
+    "package": "web-ext target",
+    "clean": "rm -rf target"
   },
   "author": "glacambre",
   "keywords": [

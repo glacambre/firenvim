@@ -10,8 +10,20 @@
       "matches": [
         "<all_urls>"
       ],
-      "js": ["firenvim.js"]
+      "js": ["content.js"]
     }
-  ]
+  ],
 
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+  "applications": {
+    "gecko": {
+      "id": "firenvim@lacamb.re",
+      "strict_min_version": "50.0"
+    }
+  },
+
+  "permissions": ["nativeMessaging"]
 }

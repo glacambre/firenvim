@@ -2,7 +2,7 @@
   "compilerOptions": {
     "moduleResolution": "Node",
     "noImplicitAny": true,
-    "outDir": "./build",
+    "outDir": "./target",
     "sourceMap": true,
     "target": "ES2017",
     "typeRoots": ["node_modules/@types", "node_modules/web-ext-types/"],

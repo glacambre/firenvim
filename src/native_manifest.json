@@ -1,0 +1,7 @@
+{
+  "name": "firenvim",
+  "description": "Turn Firefox into a Neovim client.",
+  "path": "/home/me/bin/firenvim",
+  "type": "stdio",
+  "allowed_extensions": [ "firenvim@lacamb.re" ]
+}
