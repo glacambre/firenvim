@@ -1,0 +1,11 @@
+[package]
+name = "firenvim"
+version = "0.1.0"
+authors = ["glacambre <code@lacamb.re>"]
+
+[[bin]]
+path = "native_src/main.rs"
+name = "firenvim"
+
+[dependencies]
+byteorder = "*"
