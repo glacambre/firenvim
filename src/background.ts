@@ -1,15 +1,15 @@
-///<reference path="firenvim.d.ts" />
+import NeovimClient from "promised-neovim-client";
+import {NeovimProcess} from "./NeovimProcess";
 
 console.log("Firenvim content script loaded.");
-let NvimProcess = require("./NeovimProcess.js").NeovimProcess;
-let nvim = new NvimProcess();
+const nvimProc = new NeovimProcess();
 
-require("promised-neovim-client").attach(nvim.stdin, nvim.stdout).then((nvim: any) => {
+NeovimClient.attach(nvimProc.stdin, nvimProc.stdout).then((nvim: any) => {
     nvim.on("request", (method: any, args: any, resp: any) => {
-        console.log("request", method, args, resp)
+        console.log("request", method, args, resp);
     });
     nvim.on("notification", (method: any, args: any) => {
-        console.log("notification", method, args)
+        console.log("notification", method, args);
     });
 }).catch((err: any) => console.log(err));
 

@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
+    "module": "amd",
     "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
     "noImplicitAny": true,
     "outDir": "./target",
     "sourceMap": true,
