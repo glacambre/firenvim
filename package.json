@@ -5,6 +5,7 @@
   "devDependencies": {
     "@types/node": "^8.0.46",
     "typescript": "^2.5.3",
+    "tslint": "^5.9.1",
     "web-ext": "^1.8.1",
     "browserify": "^14.5.0",
     "promised-neovim-client": "^2.0.2"
