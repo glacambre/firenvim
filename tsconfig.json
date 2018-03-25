@@ -1,10 +1,7 @@
 {
   "compilerOptions": {
-    "module": "amd",
     "moduleResolution": "Node",
-    "allowSyntheticDefaultImports": true,
     "noImplicitAny": true,
-    "outDir": "./target",
     "sourceMap": true,
     "target": "ES2017",
     "typeRoots": ["node_modules/@types", "node_modules/web-ext-types/"],

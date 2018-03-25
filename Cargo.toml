@@ -9,3 +9,6 @@ name = "firenvim"
 
 [dependencies]
 byteorder = "*"
+serde = "*"
+serde_derive = "*"
+serde_json = "*"

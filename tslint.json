@@ -1,7 +1,9 @@
 {
   "extends": "tslint:recommended",
   "rules": {
+    "arrow-parens": false,
     "no-console": false,
-    "no-namespace": false
+    "no-namespace": false,
+    "semicolon": [true, "always"]
   }
 }

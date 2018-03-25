@@ -1,37 +1,24 @@
-export class Stdin extends EventEmitter {
+import * as stream from "stream";
+
+export class Stdin extends stream.Writable {
     public port: Port;
-    public writable: boolean;
-    public writableBuffer: boolean;
 
     constructor(port: Port) {
         super();
         this.port = port;
-        this.writable = true;
-        this.writableBuffer = true;
+        this.port.onDisconnect.addListener(this.onDisconnect.bind(this));
     }
 
-    public write(str: string) {
-        this.port.postMessage(str);
+    public _write(chunk: any, encoding: any, cb: any) {
+        console.warn("Stdin._write called: ", chunk);
+        this.port.postMessage(chunk);
         return false;
     }
 
-    public pipe() {
-        throw new Error("Trying to pipe Stdin");
-    }
-
-    public cork() {
-        throw new Error("Trying to cork Stdin");
-    }
-
-    public uncork() {
-        throw new Error("Trying to uncork Stdin");
-    }
-
-    public setDefaultEncoding() {
-        throw new Error("Trying to setDefaultEncoding Stdin");
-    }
-
-    public end() {
-        throw new Error("Trying to end Stdin");
+    private onDisconnect(port: Port) {
+        if (port.error) {
+            console.log("Disconnected due to an error:", port);
+        }
+        this.emit("close");
     }
 }
