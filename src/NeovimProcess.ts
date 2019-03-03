@@ -6,7 +6,7 @@ export class NeovimProcess {
     public stdout: Stdout;
 
     constructor() {
-        const port = browser.runtime.connectNative("firenvim");
+        const port = browser.runtime.connect();
         this.stdin = new Stdin(port);
         this.stdout = new Stdout(port);
     }

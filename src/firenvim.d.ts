@@ -1,6 +1,6 @@
 declare class WebextensionEventTarget {
-    public addListener(f: () => void): void;
-    public removeListener(f: () => void): void;
+    public addListener(f: (a: any) => void): void;
+    public removeListener(f: (a: any) => void): void;
 }
 
 declare class RuntimeOnConnect extends WebextensionEventTarget {}
@@ -18,8 +18,8 @@ declare class Port {
     public onMessage: PortOnMessage;
     public onDisconnect: PortOnDisconnect;
     public error: PortError;
-    public disconnect(): void;
-    public postMessage(msg: string): void;
+    public disconnect(p: Port): void;
+    public postMessage(msg: any): void;
 }
 
 declare namespace browser.runtime {

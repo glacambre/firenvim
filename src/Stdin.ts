@@ -1,24 +1,23 @@
-import * as stream from "stream";
+import * as msgpack from "msgpack-lite";
 
-export class Stdin extends stream.Writable {
+export class Stdin {
     public port: Port;
+    private reqId = 0;
 
     constructor(port: Port) {
-        super();
         this.port = port;
         this.port.onDisconnect.addListener(this.onDisconnect.bind(this));
     }
 
-    public _write(chunk: any, encoding: any, cb: any) {
-        console.warn("Stdin._write called: ", chunk);
-        this.port.postMessage(chunk);
-        return false;
+    public write(method: string, args: any[]) {
+        const req = [0, this.reqId++, method, args];
+        const encoded = msgpack.encode(req);
+        console.log("writing ", req, "encoded: ", encoded);
+        this.port.postMessage({ type: "Buffer", data: Array.from(encoded)});
     }
 
-    private onDisconnect(port: Port) {
-        if (port.error) {
-            console.log("Disconnected due to an error:", port);
-        }
-        this.emit("close");
+    private onDisconnect() {
+        console.log("onDisconnect", this.port);
     }
+
 }

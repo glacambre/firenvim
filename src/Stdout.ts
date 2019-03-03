@@ -1,29 +1,34 @@
-import * as stream from "stream";
+import * as msgpack from "msgpack-lite";
 
-export class Stdout extends stream.Readable {
+export class Stdout {
     public port: Port;
+    private listeners = new Map<string, Array<(...args: any[]) => any>>();
 
     constructor(port: Port) {
-        super();
         this.port = port;
         this.port.onMessage.addListener(this.onMessage.bind(this));
         this.port.onDisconnect.addListener(this.onDisconnect.bind(this));
     }
 
-    public _read(n: any) {
-        console.log("Stdout._read called:", n);
+    public addListener(kind: string, listener: (...args: any[]) => any) {
+        let arr = this.listeners.get(kind);
+        if (!arr) {
+            arr = [];
+            this.listeners.set(kind, arr);
+        }
+        arr.push(listener);
     }
 
-    private onDisconnect(port: Port) {
-        if (port.error) {
-            console.log("Disconnected due to an error:", port);
-        }
-        console.log("Stdout.onDisconnect");
+    private onDisconnect() {
+        console.log("onDisconnect", this.port);
     }
 
     private onMessage(msg: any) {
-        console.log("Stdout.onMessage: ", msg);
-        this.push(new Uint8Array(msg.data));
-        // this.emit("data", msg.data);
+        const decoded = msgpack.decode(msg.data);
+        console.log("received ", decoded, "encoded: ", msg);
+        const arr = this.listeners.get("message");
+        if (arr) {
+            arr.forEach(l => l(decoded));
+        }
     }
 }
