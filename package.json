@@ -3,17 +3,17 @@
   "version": "0.1.0",
   "description": "A webextension to turn Firefox into a Neovim client.",
   "devDependencies": {
-    "@types/node": "^8.0.46",
-    "awesome-typescript-loader": "^3.2.3",
-    "copy-webpack-plugin": "^4.2.0",
-    "promised-neovim-client": "^2.0.2",
-    "tslint": "^5.9.1",
-    "typescript": "^2.5.3",
-    "web-ext": "^1.8.1",
-    "webpack": "^3.8.1"
+    "@types/node": "^11.10.4",
+    "awesome-typescript-loader": "^5.2.1",
+    "copy-webpack-plugin": "^5.0.0",
+    "tslint": "^5.13.1",
+    "typescript": "^3.3.3333",
+    "web-ext": "^3.0.0",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3"
   },
   "scripts": {
-    "build": "((cargo build --release && (unlink ~/bin/firenvim ; cp target/release/firenvim ~/bin)) & webpack && cp src/native_manifest.json $HOME/.mozilla/native-messaging-hosts/firenvim.json && tslint --fix --project .) || true",
+    "build": "((cargo build --release && (unlink ~/bin/firenvim ; cp target/release/firenvim ~/bin)) & (webpack && cp src/native_manifest.json $HOME/.mozilla/native-messaging-hosts/firenvim.json && tslint --fix --project .)) && wait || true",
     "run": "web-ext run --source-dir=./target --keep-profile-changes --firefox-profile=$HOME/.mozilla/firefox/firenvim.profile",
     "package": "web-ext target",
     "clean": "rm -rf target"
@@ -25,5 +25,8 @@
     "vim",
     "firefox"
   ],
-  "license": "GPL-3.0"
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@types/msgpack-lite": "^0.1.6"
+  }
 }
