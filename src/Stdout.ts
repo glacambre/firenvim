@@ -24,11 +24,11 @@ export class Stdout {
     }
 
     private onMessage(msg: any) {
-        const decoded = msgpack.decode(msg.data);
-        console.log("received ", decoded, "encoded: ", msg);
+        const [_, reqId, data1, data2] = msgpack.decode(msg.data);
+        console.log(`Response to reqId ${reqId}:`, data1, data2);
         const arr = this.listeners.get("message");
         if (arr) {
-            arr.forEach(l => l(decoded));
+            arr.forEach(l => l(reqId, data1, data2));
         }
     }
 }

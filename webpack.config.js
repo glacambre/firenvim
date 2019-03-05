@@ -6,6 +6,7 @@ module.exports = {
   entry: {
     background: "./src/background.ts",
     content: "./src/content.ts",
+    nvimui: "./src/NeovimUi.ts",
   },
   output: {
     filename: "[name].js",
@@ -30,6 +31,7 @@ module.exports = {
   plugins: [
     new CopyWebPackPlugin([
       { from: "src/manifest.json" },
+      { from: "src/NeovimFrame.html" },
     ]),
   ],
 };

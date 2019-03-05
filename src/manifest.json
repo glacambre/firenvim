@@ -7,10 +7,13 @@
 
   "content_scripts": [
     {
+      "all_frames": true,
+      "js": ["content.js"],
       "matches": [
         "<all_urls>"
       ],
-      "js": ["content.js"]
+      "match_about_blank": true,
+      "run_at": "document_start"
     }
   ],
 
@@ -21,7 +24,7 @@
   "applications": {
     "gecko": {
       "id": "firenvim@lacamb.re",
-      "strict_min_version": "50.0"
+      "strict_min_version": "65.0"
     }
   },
 
