@@ -4,6 +4,7 @@
     "arrow-parens": false,
     "no-console": false,
     "no-namespace": false,
+    "no-conditional-assignment": false,
     "semicolon": [true, "always"]
   }
 }
