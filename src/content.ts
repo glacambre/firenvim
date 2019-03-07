@@ -15,7 +15,6 @@ function nvimify(evt: Event) {
     span.attachShadow({ mode: "closed" }).appendChild(iframe);
     elem.ownerDocument.body.appendChild(span);
     iframe.focus();
-    console.log(iframe);
 }
 
 function isEditable(elem: HTMLElement) {

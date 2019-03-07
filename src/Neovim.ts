@@ -54,7 +54,7 @@ function onRedraw(events: any[], elem: HTMLPreElement, grids: Grid[], highlights
         const [name, ...evts] = evt;
         switch (name) {
             case "option_set":
-                console.log("option_set:", evts);
+                // console.log("option_set:", evts);
                 break;
             case "hl_attr_define":
                 evts.forEach((highlight: HighlightUpdate) => {
@@ -66,7 +66,7 @@ function onRedraw(events: any[], elem: HTMLPreElement, grids: Grid[], highlights
                 });
                 break;
             case "default_colors_set":
-                console.log("default_colors_set:", evts);
+                // console.log("default_colors_set:", evts);
                 break;
             case "grid_resize":
                 evts.forEach((resize: ResizeUpdate) => {
@@ -98,7 +98,7 @@ function onRedraw(events: any[], elem: HTMLPreElement, grids: Grid[], highlights
                     }, col);
                 });
             case "mode_info_set":
-                console.log("mode_info_set:", evts);
+                // console.log("mode_info_set:", evts);
                 break;
             case "flush":
                 const firstGrid = grids.find(g => !!g);
@@ -108,11 +108,11 @@ function onRedraw(events: any[], elem: HTMLPreElement, grids: Grid[], highlights
                 }
                 break;
             default:
-                console.log("Unhandled evt:", evt);
+                // console.log("Unhandled evt:", evt);
                 break;
         }
     });
-    console.log(grids, highlights);
+    // console.log(grids, highlights);
 }
 
 export async function neovim(element: HTMLPreElement) {
@@ -128,18 +128,27 @@ export async function neovim(element: HTMLPreElement) {
     stdout = new Stdout(port);
 
     const request = (api: string, args: any[]) => {
-        reqId += 1;
-        const p = new Promise(resolve => {
+        return new Promise(resolve => {
+            reqId += 1;
+            const r = requests.get(reqId);
+            if (r) {
+                console.error(`reqId ${reqId} already taken!`);
+            }
             requests.set(reqId, (...resp) => {
                 requests.delete(reqId);
                 resolve(resp);
             });
             stdin.write(reqId, api, args);
         });
-        return p;
     };
     stdout.addListener("message", (id, data1, data2) => {
-        requests.get(id)(data1, data2);
+        const r = requests.get(id);
+        if (!r) {
+            // This can't happen and yet it sometimes does, possibly due to a firefox bug
+            console.error(`Received answer to ${id} but no handler found!`);
+        } else {
+            r(data1, data2);
+        }
     });
     requests.set("redraw", (evt) => onRedraw(evt, element, grids, highlights));
 
