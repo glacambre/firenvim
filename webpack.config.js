@@ -33,6 +33,7 @@ module.exports = {
     new CopyWebPackPlugin([
       { from: "src/manifest.json" },
       { from: "src/NeovimFrame.html" },
+      { from: "static/firenvim.svg" },
     ]),
   ],
 };

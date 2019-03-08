@@ -28,5 +28,9 @@
     }
   },
 
-  "permissions": ["nativeMessaging"]
+  "permissions": ["nativeMessaging"],
+
+  "icons": {
+    "48": "firenvim.svg"
+  }
 }
