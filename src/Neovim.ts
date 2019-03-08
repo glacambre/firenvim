@@ -2,11 +2,11 @@ import { onRedraw } from "./Redraw";
 import { Stdin } from "./Stdin";
 import { Stdout } from "./Stdout";
 
-export async function neovim(element: HTMLPreElement) {
+export async function neovim(element: HTMLPreElement, selector: string) {
     let stdin: Stdin;
     let stdout: Stdout;
     let reqId = 0;
-    const requests = new Map<number | string, ((...args: any[]) => any)>();
+    const requests = new Map<number, { resolve: any, reject: any }>();
     const highlights: HighlightArray = [{ background: "#FFFFFF", foreground: "#000000" }];
     const grids: any[] = [];
 
@@ -15,33 +15,55 @@ export async function neovim(element: HTMLPreElement) {
     stdout = new Stdout(port);
 
     const request = (api: string, args: any[]) => {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             reqId += 1;
             const r = requests.get(reqId);
             if (r) {
                 console.error(`reqId ${reqId} already taken!`);
             }
-            requests.set(reqId, (...resp) => {
-                requests.delete(reqId);
-                resolve(resp);
-            });
+            requests.set(reqId, {resolve, reject});
             stdin.write(reqId, api, args);
         });
     };
-    stdout.addListener("message", (id, data1, data2) => {
+    stdout.addListener("request", (id: any, name: any, args: any) => {
+        console.log("received request", id, name, args);
+    });
+    stdout.addListener("response", (id: any, error: any, result: any) => {
         const r = requests.get(id);
         if (!r) {
             // This can't happen and yet it sometimes does, possibly due to a firefox bug
             console.error(`Received answer to ${id} but no handler found!`);
         } else {
-            r(data1, data2);
+            requests.delete(id);
+            if (error) {
+                r.reject(error);
+            } else {
+                r.resolve(result);
+            }
         }
     });
-    requests.set("redraw", (evt) => onRedraw(evt, element, grids, highlights));
+    stdout.addListener("notification", async (name: string, args: any[]) => {
+        switch (name) {
+            case "redraw":
+                onRedraw(args, element, grids, highlights);
+                break;
+            case "firenvim_bufwrite":
+                browser.runtime.sendMessage({
+                    args: {
+                        args: [selector, args[0].text.join("\n")],
+                        function: "setElementContent",
+                    },
+                    function: "messageOwnTab",
+                });
+                break;
+            default:
+                console.log(`Unhandled notification '${name}':`, args);
+                break;
+        }
+    });
 
-    const [_, apiInfo] = (await request("nvim_get_api_info", [])) as any;
-    return (apiInfo as INvimApiInfo)[1]
-        .functions
+    const { 0: channel, 1: apiInfo } = (await request("nvim_get_api_info", [])) as INvimApiInfo;
+    return apiInfo.functions
         .filter(f => f.deprecated_since === undefined)
         .reduce((acc, cur) => {
             let name = cur.name;

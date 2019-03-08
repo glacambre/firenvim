@@ -1,9 +1,9 @@
 import * as msgpack from "msgpack-lite";
 
 export class Stdin {
-    public port: Port;
+    public port: browser.runtime.Port;
 
-    constructor(port: Port) {
+    constructor(port: browser.runtime.Port) {
         this.port = port;
         this.port.onDisconnect.addListener(this.onDisconnect.bind(this));
     }
@@ -16,7 +16,7 @@ export class Stdin {
     }
 
     private onDisconnect() {
-        // console.log("onDisconnect", this.port);
+        console.log("onDisconnect", this.port);
     }
 
 }

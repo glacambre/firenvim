@@ -1,5 +1,15 @@
+import { computeSelector } from "./CSSUtils";
 
-function nvimify(evt: Event) {
+browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResponse: any) => {
+    if (!functions[request.function]) {
+        throw new Error(`Error: unhandled content request: ${request.toString()}.`);
+    }
+    return functions[request.function](...(request.args || []));
+});
+
+let lastEditorLocation = ["", ""];
+
+function nvimify(evt: FocusEvent) {
     const elem = evt.target as HTMLElement;
     const rect = elem.getBoundingClientRect();
     const iframe = elem.ownerDocument
@@ -15,12 +25,25 @@ function nvimify(evt: Event) {
     span.attachShadow({ mode: "closed" }).appendChild(iframe);
     elem.ownerDocument.body.appendChild(span);
     iframe.focus();
+    lastEditorLocation = [document.location.href, computeSelector(evt.target as HTMLElement)];
 }
 
 function isEditable(elem: HTMLElement) {
     return elem.tagName === "TEXTAREA"
         || (elem.tagName === "INPUT" && (elem as HTMLInputElement).type === "text");
 }
+
+const functions: any = {
+    getEditorLocation: () => lastEditorLocation,
+    setElementContent: (selector: string, text: string) => {
+        const e = document.querySelector(selector) as any;
+        if (e.value) {
+            e.value = text;
+        } else {
+            e.innerText = text;
+        }
+    },
+};
 
 (new MutationObserver(changes => {
     changes

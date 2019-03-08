@@ -3,7 +3,7 @@ import { Cursor } from "./Cursor";
 
 function new_cell_proxy(parent: any) {
     const span = document.createElement("span");
-    span.innerText = " ";
+    span.innerText = "";
     span.className = "nvim_cell";
     (span as any).highlight = 0;
     parent.appendChild(span);
@@ -16,7 +16,7 @@ function new_cell_proxy(parent: any) {
                 return target.innerText;
             }
             if (prop === "clear") {
-                return () => { target.innerText = " "; };
+                return () => { target.innerText = ""; };
             }
             if (prop === "setCursor") {
                 return () => { target.classList.add("nvim_cursor"); };

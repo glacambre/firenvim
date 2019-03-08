@@ -55,11 +55,24 @@ function addModifier(mod: string, text: string) {
     return "<" + mod + modifiers + "-" + key + ">";
 }
 
+function toFileName(url: string, id: string) {
+    const parsedURL = new URL(url);
+    const toAlphaNum = (str: string) => (str.match(/[a-zA-Z0-9]+/g) || []).join("-");
+    return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(id)}.txt`;
+}
+
+const locationPromise = browser.runtime.sendMessage({
+    args: {function: "getEditorLocation"},
+    function: "messageOwnTab",
+});
+
 window.addEventListener("load", async () => {
     const host = document.getElementById("pre") as HTMLPreElement;
-    const nvim = neovim(host);
+    const [url, selector] = await locationPromise;
+    const nvimPromise = neovim(host, selector);
 
-    // We need to know how wide our characters are
+    // We need to know how tall/wide our characters are in order to know how
+    // many rows/cols we can have
     const span = document.createElement("span");
     span.innerText = " ";
     host.appendChild(span);
@@ -69,25 +82,28 @@ window.addEventListener("load", async () => {
     const cols = Math.floor(rect.width / charWidth);
     const rows = Math.floor(rect.height / charHeight);
 
-    nvim.then(n => {
-        n.ui_attach(cols, rows, {
-            ext_linegrid: true,
-            rgb: true,
-        });
-        window.addEventListener("keydown", (evt) => {
-            if (evt.isTrusted && evt.key !== "OS" && evt.key !== "AltGraph") {
-                const special = false;
-                const text = [["altKey", "A"], ["ctrlKey", "C"], ["metaKey", "M"], ["shiftKey", "S"]]
-                    .reduce((key: string, [attr, mod]: [string, string]) => {
-                        if ((evt as any)[attr]) {
-                            return addModifier(mod, key);
-                        }
-                        return key;
-                    }, translateKey(evt.key));
-                n.input(text);
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
-            }
-        });
+    const nvim = await nvimPromise;
+
+    nvim.ui_attach(cols, rows, {
+        ext_linegrid: true,
+        rgb: true,
+    });
+    nvim.command(`edit ${toFileName(url, selector)}`);
+    nvim.command("autocmd BufWrite * "
+        + "call rpcnotify(1, 'firenvim_bufwrite', {'text': nvim_buf_get_lines(0, 0, -1, 0)})");
+    window.addEventListener("keydown", (evt) => {
+        if (evt.isTrusted && evt.key !== "OS" && evt.key !== "AltGraph") {
+            const special = false;
+            const text = [["altKey", "A"], ["ctrlKey", "C"], ["metaKey", "M"], ["shiftKey", "S"]]
+                .reduce((key: string, [attr, mod]: [string, string]) => {
+                    if ((evt as any)[attr]) {
+                        return addModifier(mod, key);
+                    }
+                    return key;
+                }, translateKey(evt.key));
+            nvim.input(text);
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+        }
     });
 });

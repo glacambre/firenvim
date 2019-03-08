@@ -27,6 +27,8 @@
   ],
   "license": "GPL-3.0",
   "dependencies": {
-    "@types/msgpack-lite": "^0.1.6"
+    "@types/msgpack-lite": "^0.1.6",
+    "msgpack-lite": "^0.1.26",
+    "web-ext-types": "^3.1.0"
   }
 }
