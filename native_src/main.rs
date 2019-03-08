@@ -56,7 +56,7 @@ fn main() {
     // let nvim = Command::new("tee")
     //     .args(&["/tmp/firenvim_log"])
     let nvim = Command::new("nvim")
-        .args(&["-u", "NORC", "--embed"])
+        .args(&["--embed"])
         .stdout(Stdio::piped())
         .stdin(Stdio::piped())
         .stderr(Stdio::piped())
