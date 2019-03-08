@@ -75,7 +75,7 @@ window.addEventListener("load", async () => {
             rgb: true,
         });
         window.addEventListener("keydown", (evt) => {
-            if (evt.isTrusted) {
+            if (evt.isTrusted && evt.key !== "OS" && evt.key !== "AltGraph") {
                 const special = false;
                 const text = [["altKey", "A"], ["ctrlKey", "C"], ["metaKey", "M"], ["shiftKey", "S"]]
                     .reduce((key: string, [attr, mod]: [string, string]) => {
