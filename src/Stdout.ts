@@ -20,15 +20,19 @@ export class Stdout {
     }
 
     private onDisconnect() {
-        // console.log("onDisconnect", this.port);
+        console.log("onDisconnect", this.port);
     }
 
     private onMessage(msg: any) {
         const [_, reqId, data1, data2] = msgpack.decode(msg.data);
-        // console.log(`Response to reqId ${reqId}:`, data1, data2);
         const arr = this.listeners.get("message");
         if (arr) {
             arr.forEach(l => l(reqId, data1, data2));
+        }
+        // FIXME: This is a hack to deal with coallesced messages, there has to be a better way
+        const rec = msgpack.encode([_, reqId, data1, data2]);
+        if (msg.data.length > rec.length + 4) {
+            this.onMessage({ data: msg.data.slice(rec.length) });
         }
     }
 }
