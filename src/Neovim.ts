@@ -1,3 +1,4 @@
+import { Grid } from "./Grid";
 import { page } from "./page/proxy";
 import { onRedraw } from "./Redraw";
 import { Stdin } from "./Stdin";
@@ -9,7 +10,7 @@ export async function neovim(element: HTMLPreElement, selector: string) {
     let reqId = 0;
     const requests = new Map<number, { resolve: any, reject: any }>();
     const highlights: HighlightArray = [{ background: "#FFFFFF", foreground: "#000000" }];
-    const grids: any[] = [];
+    const grids: Grid[] = [];
 
     const port = browser.runtime.connect();
     stdin = new Stdin(port);
