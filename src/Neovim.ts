@@ -1,3 +1,4 @@
+import { page } from "./page/proxy";
 import { onRedraw } from "./Redraw";
 import { Stdin } from "./Stdin";
 import { Stdout } from "./Stdout";
@@ -48,22 +49,10 @@ export async function neovim(element: HTMLPreElement, selector: string) {
                 onRedraw(args, element, grids, highlights);
                 break;
             case "firenvim_bufwrite":
-                browser.runtime.sendMessage({
-                    args: {
-                        args: [selector, args[0].text.join("\n")],
-                        function: "setElementContent",
-                    },
-                    function: "messageOwnTab",
-                });
+                page.setElementContent(selector, args[0].text.join("\n"));
                 break;
             case "firenvim_vimleave":
-                browser.runtime.sendMessage({
-                    args: {
-                        args: [selector],
-                        function: "killEditor",
-                    },
-                    function: "messageOwnTab",
-                });
+                page.killEditor(selector);
                 break;
             default:
                 console.log(`Unhandled notification '${name}':`, args);

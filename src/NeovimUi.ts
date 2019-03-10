@@ -1,4 +1,5 @@
 import { neovim } from "./Neovim";
+import { page } from "./page/proxy";
 
 function translateKey(text: string) {
     switch (text) {
@@ -61,22 +62,13 @@ function toFileName(url: string, id: string) {
     return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(id)}.txt`;
 }
 
-const locationPromise = browser.runtime.sendMessage({
-    args: {function: "getEditorLocation"},
-    function: "messageOwnTab",
-});
+const locationPromise = page.getEditorLocation();
 
 window.addEventListener("load", async () => {
     const host = document.getElementById("pre") as HTMLPreElement;
     const [url, selector] = await locationPromise;
     const nvimPromise = neovim(host, selector);
-    const contentPromise = browser.runtime.sendMessage({
-        args: {
-            args: [selector],
-            function: "getElementContent",
-        },
-        function: "messageOwnTab",
-    });
+    const contentPromise = page.getElementContent(selector);
 
     // We need to know how tall/wide our characters are in order to know how
     // many rows/cols we can have
@@ -96,10 +88,8 @@ window.addEventListener("load", async () => {
         rgb: true,
     });
     const filename = toFileName(url, selector);
-    nvim.command(`edit ${filename}`)
-        .then((_: any) => contentPromise
-            .then(content =>
-                nvim.buf_set_lines(0, 0, -1, 0, content.split("\n"))));
+    Promise.all([nvim.command(`edit ${filename}`), contentPromise])
+        .then(([_, content]: [any, string]) => nvim.buf_set_lines(0, 0, -1, 0, content.split("\n")));
     nvim.command(`autocmd BufWrite ${filename} `
         + `call rpcnotify(1, 'firenvim_bufwrite', {'text': nvim_buf_get_lines(0, 0, -1, 0)})`);
     nvim.command("autocmd VimLeave * call rpcnotify(1, 'firenvim_vimleave')");
