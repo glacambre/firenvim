@@ -2,9 +2,10 @@
   "extends": "tslint:recommended",
   "rules": {
     "arrow-parens": false,
+    "no-conditional-assignment": false,
     "no-console": false,
     "no-namespace": false,
-    "no-conditional-assignment": false,
+    "no-switch-case-fall-through": true,
     "semicolon": [true, "always"]
   }
 }

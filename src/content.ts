@@ -1,5 +1,34 @@
 import { computeSelector } from "./CSSUtils";
 
+const selectorToElems = new Map<string, [HTMLSpanElement, HTMLElement]>();
+
+const functions: any = {
+    getEditorLocation: () => lastEditorLocation,
+    getElementContent: (selector: string) => {
+        const [_, e] = selectorToElems.get(selector) as [any, any];
+        if (e.value !== undefined) {
+            return e.value;
+        }
+        if (e.textContent !== undefined) {
+            return e.textContent;
+        }
+        return e.innerText;
+    },
+    killEditor: (selector: string) => {
+        const [e, _] = selectorToElems.get(selector) as [any, any];
+        e.parentNode.removeChild(e);
+        selectorToElems.delete(selector);
+    },
+    setElementContent: (selector: string, text: string) => {
+        const [_, e] = selectorToElems.get(selector) as [any, any];
+        if (e.value !== undefined) {
+            e.value = text;
+        } else {
+            e.textContent = text;
+        }
+    },
+};
+
 browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResponse: any) => {
     if (!functions[request.function]) {
         throw new Error(`Error: unhandled content request: ${request.toString()}.`);
@@ -25,25 +54,16 @@ function nvimify(evt: FocusEvent) {
     span.attachShadow({ mode: "closed" }).appendChild(iframe);
     elem.ownerDocument.body.appendChild(span);
     iframe.focus();
-    lastEditorLocation = [document.location.href, computeSelector(evt.target as HTMLElement)];
+
+    const selector = computeSelector(evt.target as HTMLElement);
+    lastEditorLocation = [document.location.href, selector];
+    selectorToElems.set(selector, [span, elem]);
 }
 
 function isEditable(elem: HTMLElement) {
     return elem.tagName === "TEXTAREA"
         || (elem.tagName === "INPUT" && (elem as HTMLInputElement).type === "text");
 }
-
-const functions: any = {
-    getEditorLocation: () => lastEditorLocation,
-    setElementContent: (selector: string, text: string) => {
-        const e = document.querySelector(selector) as any;
-        if (e.value) {
-            e.value = text;
-        } else {
-            e.innerText = text;
-        }
-    },
-};
 
 (new MutationObserver(changes => {
     changes

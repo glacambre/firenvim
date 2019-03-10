@@ -70,6 +70,13 @@ window.addEventListener("load", async () => {
     const host = document.getElementById("pre") as HTMLPreElement;
     const [url, selector] = await locationPromise;
     const nvimPromise = neovim(host, selector);
+    const contentPromise = browser.runtime.sendMessage({
+        args: {
+            args: [selector],
+            function: "getElementContent",
+        },
+        function: "messageOwnTab",
+    });
 
     // We need to know how tall/wide our characters are in order to know how
     // many rows/cols we can have
@@ -88,9 +95,14 @@ window.addEventListener("load", async () => {
         ext_linegrid: true,
         rgb: true,
     });
-    nvim.command(`edit ${toFileName(url, selector)}`);
-    nvim.command("autocmd BufWrite * "
-        + "call rpcnotify(1, 'firenvim_bufwrite', {'text': nvim_buf_get_lines(0, 0, -1, 0)})");
+    const filename = toFileName(url, selector);
+    nvim.command(`edit ${filename}`)
+        .then((_: any) => contentPromise
+            .then(content =>
+                nvim.buf_set_lines(0, 0, -1, 0, content.split("\n"))));
+    nvim.command(`autocmd BufWrite ${filename} `
+        + `call rpcnotify(1, 'firenvim_bufwrite', {'text': nvim_buf_get_lines(0, 0, -1, 0)})`);
+    nvim.command("autocmd VimLeave * call rpcnotify(1, 'firenvim_vimleave')");
     window.addEventListener("keydown", (evt) => {
         if (evt.isTrusted && evt.key !== "OS" && evt.key !== "AltGraph") {
             const special = false;

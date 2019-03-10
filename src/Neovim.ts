@@ -56,6 +56,15 @@ export async function neovim(element: HTMLPreElement, selector: string) {
                     function: "messageOwnTab",
                 });
                 break;
+            case "firenvim_vimleave":
+                browser.runtime.sendMessage({
+                    args: {
+                        args: [selector],
+                        function: "killEditor",
+                    },
+                    function: "messageOwnTab",
+                });
+                break;
             default:
                 console.log(`Unhandled notification '${name}':`, args);
                 break;
