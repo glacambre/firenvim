@@ -1,28 +1,25 @@
 <html class="nvim_highlight_0">
     <head>
         <meta charset="utf-8"/>
+        <style>
+            html, body, #pre {
+                width: 100%;
+                height: 100%;
+                margin: 0px;
+                padding: 0px;
+                overflow: hidden;
+            }
+            .nvim_row {
+                display: block;
+            }
+            .nvim_cell {
+                display: inline-block;
+                width: 1ch;
+            }
+        </style>
+        <style id="nvim_highlight_style"></style>
+        <style id="nvim_cursor_style"></style>
         <script type="application/javascript" src="nvimui.js"></script>
-    <style>
-    html, body, #pre {
-        width: 100%;
-        height: 100%;
-        margin: 0px;
-        padding: 0px;
-        overflow: hidden;
-    }
-    .nvim_row {
-        display: block;
-    }
-    .nvim_cell {
-        display: inline-block;
-        width: 1ch;
-    }
-    html body .nvim_cursor {
-        background: red;
-        color: red;
-    }
-    </style>
-    <style id="neovim_highlights"></style>
     </head>
     <body>
         <pre id="pre"></pre>

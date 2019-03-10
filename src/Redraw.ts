@@ -2,8 +2,13 @@ import { toCss, toHexCss } from "./CSSUtils";
 import { Grid } from "./Grid";
 
 const defaultColors = { background: 16777215, foreground: 0 };
+const grids: Grid[] = [];
+const highlights: HighlightArray = [{ background: "#FFFFFF", foreground: "#000000" }];
+const cursorStyles: string[] = [];
+const nvimCursorStyle = document.getElementById("nvim_cursor_style");
+const nvimHighlightStyle = document.getElementById("nvim_highlight_style");
 
-export function onRedraw(events: any[], elem: HTMLPreElement, grids: Grid[], highlights: HighlightArray) {
+export function onRedraw(events: any[], elem: HTMLPreElement) {
     events.forEach(evt => {
         const [name, ...evts] = evt;
         switch (name) {
@@ -19,17 +24,16 @@ export function onRedraw(events: any[], elem: HTMLPreElement, grids: Grid[], hig
             case "default_colors_set":
                 const [] = evts;
                 evts.forEach(([fg, bg, sp, _, __]: [number, number, number, number, number]) => {
-                    defaultColors.background = bg;
-                    defaultColors.foreground = fg;
-                    highlights[0] = {
-                        background: toHexCss(defaultColors.background),
-                        foreground: toHexCss(defaultColors.foreground),
-                    };
+                    if (fg !== undefined && fg !== -1) {
+                        defaultColors.foreground = fg;
+                        highlights[0].foreground = toHexCss(defaultColors.foreground);
+                    }
+                    if (bg !== undefined && bg !== -1) {
+                        defaultColors.background = bg;
+                        highlights[0].background = toHexCss(defaultColors.background);
+                    }
                 });
-                const styleElem = document.getElementById("neovim_highlights");
-                if (styleElem) {
-                    styleElem.innerText = toCss(highlights);
-                }
+                nvimHighlightStyle.innerText = toCss(highlights);
                 break;
             case "grid_resize":
                 evts.forEach((resize: ResizeUpdate) => {
@@ -45,7 +49,6 @@ export function onRedraw(events: any[], elem: HTMLPreElement, grids: Grid[], hig
                 evts.forEach(([id]: [number]) => grids[id].clear());
                 break;
             case "grid_cursor_goto":
-                // console.log("cursor_goto:", evt);
                 evts.forEach(([id, x, y]: GotoUpdate) => grids[id].cursor_goto(y, x) );
                 break;
             case "grid_line":
@@ -69,13 +72,40 @@ export function onRedraw(events: any[], elem: HTMLPreElement, grids: Grid[], hig
                         .call(elem.classList, (cname: string) => cname.startsWith(modePrefix))
                         .forEach((cname: string) => elem.classList.remove(cname));
                     elem.classList.add(modePrefix + modename);
+                    nvimCursorStyle.innerText = cursorStyles[modeid];
+                });
+                break;
+            case "mode_info_set":
+                evts.forEach(([cursorStyleEnabled, modeInfo]: [boolean, any]) => {
+                    if (cursorStyleEnabled) {
+                        modeInfo.forEach((info: any, idx: number) => {
+                            const { cursor_shape: shape, attr_id: attrId } = info;
+                            let cssStr = `html body span.nvim_cursor { `;
+                            switch (shape) {
+                                case "vertical":
+                                    cssStr += `box-sizing: border-box;`;
+                                    cssStr += `border-left: solid 1px ${highlights[0].foreground};`;
+                                    break;
+                                case "horizontal":
+                                    cssStr += `box-sizing: border-box;`;
+                                    cssStr += `border-bottom: solid 1px ${highlights[0].foreground};`;
+                                    break;
+                                case "block":
+                                    cssStr += `background: ${highlights[0].foreground};`;
+                                    cssStr += `color: ${highlights[0].background};`;
+                                    break;
+                                default:
+                                    console.log(`Unhandled cursor shape: ${shape}`);
+                                    break;
+                            }
+                            cssStr += "}";
+                            cursorStyles[idx] = cssStr;
+                        });
+                    }
                 });
                 break;
             case "flush":
-                const style = document.getElementById("neovim_highlights");
-                if (style) {
-                    style.innerText = toCss(highlights);
-                }
+                nvimHighlightStyle.innerText = toCss(highlights);
                 break;
             default:
                 console.log("Unhandled evt:", evt);

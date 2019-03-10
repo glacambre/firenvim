@@ -6,7 +6,7 @@ export class Cell {
 
     constructor() {
         this.elem = document.createElement("span");
-        this.elem.innerText = "";
+        this.elem.innerText = " ";
         this.elem.className = "nvim_cell";
     }
 
@@ -37,7 +37,7 @@ export class Cell {
     }
 
     public clear() {
-        this.value = "";
+        this.value = " ";
     }
 
     public setCursor() {
