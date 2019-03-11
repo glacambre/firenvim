@@ -1,6 +1,9 @@
 extern crate byteorder;
 use byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
+extern crate directories;
+use directories::{ProjectDirs, UserDirs};
+
 extern crate serde;
 extern crate serde_json;
 #[macro_use]
@@ -9,6 +12,9 @@ extern crate serde_derive;
 use std::process::{Command, Stdio};
 use std::thread;
 use std::io::{self, Read, Write};
+use std::path;
+use std::fs;
+use std::env;
 
 #[derive(Serialize, Deserialize)]
 struct Message {
@@ -16,6 +22,16 @@ struct Message {
     json_type: String,
     data: Vec<u8>,
 }
+
+static NATIVE_MANIFEST_BEGINNING: &str = "{
+  \"name\": \"firenvim\",
+  \"description\": \"Turn Firefox into a Neovim client.\",
+  \"path\": \"";
+static NATIVE_MANIFEST_END: &str = "\",
+  \"type\": \"stdio\",
+  \"allowed_extensions\": [ \"firenvim@lacamb.re\" ]
+}
+";
 
 fn forward_inputs (ff: &mut Read, nvim: &mut Write) {
     let mut buf = vec![];
@@ -48,7 +64,7 @@ fn forward_outputs (ff: &mut Write, nvim: &mut Read) {
     }
 }
 
-fn main() {
+fn run_neovim () {
     let mut ff_in = io::stdin();
     let mut ff_out = io::stdout();
 
@@ -70,4 +86,58 @@ fn main() {
 
     inthread.join().unwrap();
     outthread.join().unwrap();
+}
+
+fn install_native_messenger () -> std::result::Result<(), ()> {
+    if let (Some(proj_dirs), Some(user_dirs)) = (ProjectDirs::from("", "Firenvim", "Firenvim"), UserDirs::new()) {
+        let home_dir_path = user_dirs.home_dir();
+        let home_dir_str = home_dir_path.to_str().unwrap();
+        let data_dir_path = proj_dirs.data_dir();
+        let data_dir_str = data_dir_path.to_str().unwrap();
+        if !data_dir_path.exists() {
+            if let Err(_) = fs::create_dir_all(data_dir_path) {
+                eprintln!("Error: failed to create {}", data_dir_str);
+            }
+        }
+        let binary_path = format!("{}{}{}", data_dir_str, path::MAIN_SEPARATOR, "firenvim");
+        let current_binary = env::args().nth(0).unwrap();
+        if current_binary != binary_path {
+            if let Err(_) = fs::copy(current_binary.clone(), binary_path.clone()) {
+                eprintln!("Error copying {} to {}", current_binary, binary_path);
+                return Err(());
+            }
+        }
+
+#[cfg(target_os = "macos")]
+        let manifest_path = format!("{}{}", home_dir_str, "/Library/Apllication Support/Mozilla/NativeMessagingHosts/firenvim.json");
+#[cfg(target_os = "linux")]
+        let manifest_path = format!("{}{}", home_dir_str, "/.mozilla/native-messaging-hosts/firenvim.json");
+#[cfg(target_os = "windows")]
+        let manifest_path = format!("{}{}", data_dir_str + "\\firenvim.json");
+
+        if let Err(_) = fs::write(manifest_path.clone(), format!("{}{}{}", NATIVE_MANIFEST_BEGINNING, binary_path, NATIVE_MANIFEST_END)) {
+            eprintln!("Failed to write native manifest to {}.", manifest_path);
+            return Err(());
+        }
+    } else {
+        eprintln!("Error: failed to detect install directories.");
+        return Err(());
+    }
+    return Ok(());
+}
+
+fn main() {
+    if let Some(_) = env::args().nth(1) {
+        run_neovim();
+    } else {
+        if let Ok(_) = install_native_messenger() {
+            println!("Native messenger successfully installed.");
+        } else {
+            println!("Please manually install the native messenger manifest according to the steps available here:
+  https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests
+The manifest must be named 'firenvim.json' and its content must be the following json, with the 'path' attribute replaced with the absolute path to the firenvim binary you just ran.
+
+{}{}", NATIVE_MANIFEST_BEGINNING, NATIVE_MANIFEST_END);
+        }
+    }
 }

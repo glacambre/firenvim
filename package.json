@@ -13,9 +13,7 @@
     "webpack-cli": "^3.2.3"
   },
   "scripts": {
-    "build": "((cargo build --release && (unlink ~/bin/firenvim ; cp target/release/firenvim ~/bin)) & (webpack && cp src/native_manifest.json $HOME/.mozilla/native-messaging-hosts/firenvim.json && tslint --fix --project .)) && wait || true",
-    "run": "web-ext run --source-dir=./target --keep-profile-changes --firefox-profile=$HOME/.mozilla/firefox/firenvim.profile",
-    "package": "web-ext target",
+    "build": "((cargo build --release && cargo run --release) & (webpack && tslint --fix --project .)) && wait || true",
     "clean": "rm -rf target"
   },
   "author": "glacambre",
