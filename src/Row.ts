@@ -6,7 +6,7 @@ export class Row {
     constructor(width: number) {
         this.elem = document.createElement("span");
         this.elem.className = "nvim_row";
-        for (let i = 0; i < width; ++i) {
+        for (let i = 0; i <= width; ++i) {
             this.cells.push(new Cell());
             this.cells[this.cells.length - 1].attach(this.elem);
         }

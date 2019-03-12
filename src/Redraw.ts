@@ -35,16 +35,6 @@ export function onRedraw(events: any[], elem: HTMLPreElement) {
                 });
                 nvimHighlightStyle.innerText = toCss(highlights);
                 break;
-            case "grid_resize":
-                evts.forEach((resize: ResizeUpdate) => {
-                    const [id, width, height] = resize;
-                    if (grids[id]) {
-                        grids[id].detach();
-                    }
-                    grids[id] = new Grid(width, height);
-                    grids[id].attach(elem);
-                });
-                break;
             case "grid_clear":
                 evts.forEach(([id]: [number]) => grids[id].clear());
                 break;
@@ -63,6 +53,21 @@ export function onRedraw(events: any[], elem: HTMLPreElement) {
                         }
                         return limit;
                     }, col);
+                });
+                break;
+            case "grid_resize":
+                evts.forEach((resize: ResizeUpdate) => {
+                    const [id, width, height] = resize;
+                    if (grids[id]) {
+                        grids[id].detach();
+                    }
+                    grids[id] = new Grid(width, height);
+                    grids[id].attach(elem);
+                });
+                break;
+            case "grid_scroll":
+                evts.forEach(([id, ...rest]: [number, number, number, number, number, number, number]) => {
+                    grids[id].scroll(...rest);
                 });
                 break;
             case "mode_change":
@@ -108,7 +113,7 @@ export function onRedraw(events: any[], elem: HTMLPreElement) {
                 nvimHighlightStyle.innerText = toCss(highlights);
                 break;
             default:
-                console.log("Unhandled evt:", evt);
+                console.log("Unhandled redraw request:", evt);
                 break;
         }
     });
