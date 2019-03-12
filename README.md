@@ -1,4 +1,5 @@
 # Firenvim
+[![Build Status](https://travis-ci.org/glacambre/firenvim.svg?branch=master)](https://travis-ci.org/glacambre/firenvim)
 
 Turn Firefox into a Neovim client.
 
