@@ -16,9 +16,12 @@ export function getFunctions(global: {
             return e.innerText;
         },
         killEditor: (selector: string) => {
-            const [e, _] = global.selectorToElems.get(selector) as [any, any];
-            e.parentNode.removeChild(e);
-            global.selectorToElems.delete(selector);
+            const tuple = global.selectorToElems.get(selector) as [any, any];
+            if (tuple) {
+                const [e, _] = tuple;
+                e.parentNode.removeChild(e);
+                global.selectorToElems.delete(selector);
+            }
         },
         setElementContent: (selector: string, text: string) => {
             const [_, e] = global.selectorToElems.get(selector) as [any, any];

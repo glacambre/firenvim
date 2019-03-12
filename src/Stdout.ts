@@ -8,7 +8,6 @@ export class Stdout {
     constructor(port: browser.runtime.Port) {
         this.port = port;
         this.port.onMessage.addListener(this.onMessage.bind(this));
-        this.port.onDisconnect.addListener(this.onDisconnect.bind(this));
     }
 
     public addListener(kind: string, listener: (...args: any[]) => any) {

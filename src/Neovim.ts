@@ -10,6 +10,10 @@ export async function neovim(element: HTMLPreElement, selector: string) {
     const requests = new Map<number, { resolve: any, reject: any }>();
 
     const port = browser.runtime.connect();
+    port.onDisconnect.addListener((_: any) => {
+        console.log(`Port disconnected for element ${selector}.`);
+        page.killEditor(selector);
+    });
     stdin = new Stdin(port);
     stdout = new Stdout(port);
 

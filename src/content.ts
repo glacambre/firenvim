@@ -37,6 +37,7 @@ function nvimify(evt: FocusEvent) {
     iframe.style.position = "absolute";
     iframe.style.top = `${rect.top + window.scrollY}px`;
     iframe.style.width = `${rect.width}px`;
+    iframe.style.zIndex = "2147483647";
     iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
     span.attachShadow({ mode: "closed" }).appendChild(iframe);
     elem.ownerDocument.body.appendChild(span);
