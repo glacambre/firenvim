@@ -58,8 +58,11 @@ function addModifier(mod: string, text: string) {
 
 function toFileName(url: string, id: string) {
     const parsedURL = new URL(url);
-    const toAlphaNum = (str: string) => (str.match(/[a-zA-Z0-9]+/g) || []).join("-");
-    return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(id)}.txt`;
+    const shortId = id.replace(/:nth-of-type/g, "");
+    const toAlphaNum = (str: string) => (str.match(/[a-zA-Z0-9]+/g) || [])
+        .join("-")
+        .slice(-32);
+    return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(shortId)}.txt`;
 }
 
 const locationPromise = page.getEditorLocation();
@@ -89,7 +92,8 @@ window.addEventListener("load", async () => {
     });
     const filename = toFileName(url, selector);
     Promise.all([nvim.command(`edit ${filename}`), contentPromise])
-        .then(([_, content]: [any, string]) => nvim.buf_set_lines(0, 0, -1, 0, content.split("\n")));
+        .then(([_, content]: [any, string]) => nvim.buf_set_lines(0, 0, -1, 0, content.split("\n")))
+        .then((_: any) => nvim.command(":w"));
     nvim.command(`autocmd BufWrite ${filename} `
         + `call rpcnotify(1, 'firenvim_bufwrite', {'text': nvim_buf_get_lines(0, 0, -1, 0)})`);
     nvim.command("autocmd VimLeave * call rpcnotify(1, 'firenvim_vimleave')");
