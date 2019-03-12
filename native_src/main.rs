@@ -113,7 +113,7 @@ fn install_native_messenger () -> std::result::Result<(), ()> {
 #[cfg(target_os = "linux")]
         let manifest_path = format!("{}{}", home_dir_str, "/.mozilla/native-messaging-hosts/firenvim.json");
 #[cfg(target_os = "windows")]
-        let manifest_path = format!("{}{}", data_dir_str + "\\firenvim.json");
+        let manifest_path = format!("{}{}", data_dir_str, "\\firenvim.json");
 
         if let Err(_) = fs::write(manifest_path.clone(), format!("{}{}{}", NATIVE_MANIFEST_BEGINNING, binary_path, NATIVE_MANIFEST_END)) {
             eprintln!("Failed to write native manifest to {}.", manifest_path);

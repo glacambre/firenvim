@@ -13,7 +13,7 @@
     "webpack-cli": "^3.2.3"
   },
   "scripts": {
-    "build": "((cargo build --release && cargo run --release) & (webpack && tslint --fix --project .)) && wait || true",
+    "build": "cargo build --release && tslint --fix --project . && webpack && cargo run --release",
     "clean": "rm -rf target"
   },
   "author": "glacambre",

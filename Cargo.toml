@@ -8,7 +8,6 @@ path = "native_src/main.rs"
 name = "firenvim"
 
 [dependencies]
-atty = "*"
 byteorder = "*"
 directories = "*"
 serde = "*"
