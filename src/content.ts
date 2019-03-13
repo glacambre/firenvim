@@ -44,8 +44,16 @@ browser.runtime.onMessage.addListener(async (
 });
 
 function isEditable(elem: HTMLElement) {
-    return elem.tagName === "TEXTAREA"
-        || (elem.tagName === "INPUT" && (elem as HTMLInputElement).type === "text");
+    if (elem.tagName === "TEXTAREA"
+        || (elem.tagName === "INPUT" && (elem as HTMLInputElement).type === "text")) {
+        return NodeFilter.FILTER_ACCEPT;
+    }
+    return NodeFilter.FILTER_REJECT;
+}
+
+function addNvimListener(elem: HTMLElement) {
+    elem.removeEventListener("focus", global.nvimify);
+    elem.addEventListener("focus", global.nvimify);
 }
 
 (new MutationObserver(changes => {
@@ -53,7 +61,16 @@ function isEditable(elem: HTMLElement) {
         .filter((change: MutationRecord) => change.addedNodes.length > 0)
         .forEach((change: MutationRecord) => {
             Array.from(change.addedNodes)
-                .filter(node => isEditable(node as HTMLElement))
-                .forEach(node => node.addEventListener("focus", global.nvimify));
+                .filter(node => isEditable(node as HTMLElement) === NodeFilter.FILTER_ACCEPT)
+                .forEach(node => addNvimListener(node as HTMLElement));
         });
 })).observe(window.document, { subtree: true, childList: true });
+
+const treeWalker = document.createTreeWalker(document.documentElement,
+    NodeFilter.SHOW_ELEMENT,
+    { acceptNode: isEditable },
+);
+
+while (treeWalker.nextNode()) {
+    addNvimListener(treeWalker.currentNode as HTMLElement);
+}
