@@ -1,6 +1,7 @@
 
 export function getFunctions(global: {
     lastEditorLocation: [string, string],
+    nvimify: (evt: FocusEvent) => void,
     selectorToElems: Map<string, [HTMLSpanElement, HTMLElement]>,
 }) {
     return {
@@ -18,9 +19,12 @@ export function getFunctions(global: {
         killEditor: (selector: string) => {
             const tuple = global.selectorToElems.get(selector) as [any, any];
             if (tuple) {
-                const [e, _] = tuple;
-                e.parentNode.removeChild(e);
+                const [span, input] = tuple;
+                span.parentNode.removeChild(span);
                 global.selectorToElems.delete(selector);
+                input.removeEventListener("focus", global.nvimify);
+                input.focus();
+                input.addEventListener("focus", global.nvimify);
             }
         },
         setElementContent: (selector: string, text: string) => {
