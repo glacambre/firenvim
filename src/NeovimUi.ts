@@ -98,7 +98,7 @@ window.addEventListener("load", async () => {
         + `call rpcnotify(1, 'firenvim_bufwrite', {'text': nvim_buf_get_lines(0, 0, -1, 0)})`);
     nvim.command("autocmd VimLeave * call rpcnotify(1, 'firenvim_vimleave')");
     window.addEventListener("keydown", (evt) => {
-        if (evt.isTrusted && evt.key !== "OS" && evt.key !== "AltGraph") {
+        if (evt.isTrusted && !["OS", "AltGraph", "Shift", "Control"].includes(evt.key)) {
             const special = false;
             const text = [["altKey", "A"], ["ctrlKey", "C"], ["metaKey", "M"], ["shiftKey", "S"]]
                 .reduce((key: string, [attr, mod]: [string, string]) => {
