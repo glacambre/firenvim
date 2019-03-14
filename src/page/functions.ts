@@ -34,6 +34,7 @@ export function getFunctions(global: {
             } else {
                 e.textContent = text;
             }
+            e.dispatchEvent(new Event("change", { bubbles: true }));
         },
     };
 }

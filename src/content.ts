@@ -56,14 +56,22 @@ function addNvimListener(elem: HTMLElement) {
     elem.addEventListener("focus", global.nvimify);
 }
 
+function recurseNvimify(elem: HTMLElement) {
+    if (isEditable(elem) === NodeFilter.FILTER_ACCEPT) {
+        addNvimListener(elem);
+        return;
+    }
+    if (elem.children) {
+        Array.from(elem.children).forEach(child => recurseNvimify(child as HTMLElement));
+    }
+}
+
 (new MutationObserver(changes => {
     changes
         .filter((change: MutationRecord) => change.addedNodes.length > 0)
-        .forEach((change: MutationRecord) => {
-            Array.from(change.addedNodes)
-                .filter(node => isEditable(node as HTMLElement) === NodeFilter.FILTER_ACCEPT)
-                .forEach(node => addNvimListener(node as HTMLElement));
-        });
+        .forEach((change: MutationRecord) => Array.from(change.addedNodes)
+            .forEach(node => recurseNvimify(node as HTMLElement)),
+        );
 })).observe(window.document, { subtree: true, childList: true });
 
 const treeWalker = document.createTreeWalker(document.documentElement,
