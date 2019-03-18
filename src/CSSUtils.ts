@@ -25,6 +25,9 @@ export function toHighlightClassName(n: number) {
 }
 
 export function toCss(highlights: HighlightArray) {
-    return highlights.reduce((css, elem, id) =>
-        `${css} .${toHighlightClassName(id)} { background: ${elem.background}; color: ${elem.foreground}; }`, "");
+    const bg = highlights[0].background;
+    const fg = highlights[0].foreground;
+    return highlights.reduce((css, elem, id) => css +
+        `.${toHighlightClassName(id)} { background: ${elem.background || bg}; color: ${elem.foreground || fg}; }`
+        , "");
 }

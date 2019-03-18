@@ -1,13 +1,14 @@
 import { toHighlightClassName } from "./CSSUtils";
 
 export class Cell {
-    private highlightValue = 0;
+    private highlightValue: number;
     private elem: HTMLSpanElement;
 
     constructor() {
         this.elem = document.createElement("span");
         this.elem.innerText = " ";
         this.elem.className = "nvim_cell";
+        this.highlight = 0;
     }
 
     public attach(parent: HTMLElement) {

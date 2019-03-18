@@ -12,15 +12,6 @@ export function onRedraw(events: any[], elem: HTMLPreElement) {
     events.forEach(evt => {
         const [name, ...evts] = evt;
         switch (name) {
-            case "hl_attr_define":
-                evts.forEach((highlight: HighlightUpdate) => {
-                    const [id, { foreground, background }] = highlight;
-                    highlights[id] = {
-                        background: toHexCss(background && background >= 0 ? background : defaultColors.background),
-                        foreground: toHexCss(foreground && foreground >= 0 ? foreground : defaultColors.foreground),
-                    };
-                });
-                break;
             case "default_colors_set":
                 const [] = evts;
                 evts.forEach(([fg, bg, sp, _, __]: [number, number, number, number, number]) => {
@@ -34,6 +25,16 @@ export function onRedraw(events: any[], elem: HTMLPreElement) {
                     }
                 });
                 nvimHighlightStyle.innerText = toCss(highlights);
+                break;
+            case "hl_attr_define":
+                evts.forEach((highlight: HighlightUpdate) => {
+                    const [id, { foreground, background }] = highlight;
+                    if (highlights[id] === undefined) {
+                        highlights[id] = { background: undefined, foreground: undefined };
+                    }
+                    highlights[id].foreground = foreground ? toHexCss(foreground) : undefined;
+                    highlights[id].background = background ? toHexCss(background) : undefined;
+                });
                 break;
             case "grid_clear":
                 evts.forEach(([id]: [number]) => grids[id].clear());
