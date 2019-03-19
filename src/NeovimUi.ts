@@ -111,5 +111,6 @@ window.addEventListener("load", async () => {
         keyHandler.innerText = "";
     });
     keyHandler.addEventListener("blur", _ => setTimeout(__ => keyHandler.focus(), 0));
+    window.addEventListener("click", _ => keyHandler.focus());
     keyHandler.focus();
 });

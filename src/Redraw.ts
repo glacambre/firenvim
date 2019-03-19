@@ -27,8 +27,7 @@ export function onRedraw(events: any[], elem: HTMLPreElement) {
                 nvimHighlightStyle.innerText = toCss(highlights);
                 break;
             case "hl_attr_define":
-                evts.forEach((highlight: HighlightUpdate) => {
-                    const [id, { foreground, background }] = highlight;
+                evts.forEach(([id, { foreground, background }]: HighlightUpdate) => {
                     if (highlights[id] === undefined) {
                         highlights[id] = { background: undefined, foreground: undefined };
                     }
@@ -43,8 +42,7 @@ export function onRedraw(events: any[], elem: HTMLPreElement) {
                 evts.forEach(([id, x, y]: GotoUpdate) => grids[id].cursor_goto(y, x) );
                 break;
             case "grid_line":
-                evts.forEach((line: LineUpdate) => {
-                    const [id, row, col, contents] = line;
+                evts.forEach(([id, row, col, contents]: LineUpdate) =>
                     contents.reduce((prevCol, content) => {
                         const [chara, high = 0, repeat = 1] = content;
                         const limit = prevCol + repeat;
@@ -53,8 +51,7 @@ export function onRedraw(events: any[], elem: HTMLPreElement) {
                             grids[id].get(row).get(i).highlight = high;
                         }
                         return limit;
-                    }, col);
-                });
+                    }, col));
                 break;
             case "grid_resize":
                 evts.forEach((resize: ResizeUpdate) => {

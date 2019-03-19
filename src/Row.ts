@@ -1,7 +1,7 @@
 import { Cell } from "./Cell";
 
 export class Row {
-    private elem: HTMLSpanElement;
+    public elem: HTMLSpanElement;
     private cells: Cell[] = [];
     constructor(width: number) {
         this.elem = document.createElement("span");
@@ -14,6 +14,10 @@ export class Row {
 
     public clear() {
         this.cells.forEach(c => c.clear());
+    }
+
+    public attachBefore(e: HTMLElement) {
+        e.parentNode.insertBefore(this.elem, e);
     }
 
     public attach(e: HTMLElement) {
