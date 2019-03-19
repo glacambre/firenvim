@@ -43,15 +43,15 @@ export function onRedraw(events: any[], elem: HTMLPreElement) {
                 break;
             case "grid_line":
                 evts.forEach(([id, row, col, contents]: LineUpdate) =>
-                    contents.reduce((prevCol, content) => {
-                        const [chara, high = 0, repeat = 1] = content;
+                    contents.reduce(({ prevCol, highlight }, content) => {
+                        const [chara, high = highlight, repeat = 1] = content;
                         const limit = prevCol + repeat;
                         for (let i = prevCol; i < limit; i += 1) {
                             grids[id].get(row).get(i).value = chara;
                             grids[id].get(row).get(i).highlight = high;
                         }
-                        return limit;
-                    }, col));
+                        return { prevCol: limit, highlight: high };
+                    }, { prevCol: col, highlight: 0 }));
                 break;
             case "grid_resize":
                 evts.forEach((resize: ResizeUpdate) => {
