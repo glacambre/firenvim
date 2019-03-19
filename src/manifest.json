@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Firenvim",
-  "version": "0.1.3",
+  "version": "0.1.4",
 
   "description": "Turn Firefox into a Neovim client.",
 
