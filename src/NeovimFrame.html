@@ -2,12 +2,19 @@
     <head>
         <meta charset="utf-8"/>
         <style>
-            html, body, #pre {
+            html, body, #host {
                 width: 100%;
                 height: 100%;
                 margin: 0px;
                 padding: 0px;
                 overflow: hidden;
+            }
+            #keyhandler {
+                height: 0px;
+                overflow: hidden;
+                outline: none;
+                border: none;
+                position: absolute;
             }
             .nvim_row {
                 display: block;
@@ -22,6 +29,7 @@
         <script type="application/javascript" src="nvimui.js"></script>
     </head>
     <body>
-        <pre id="pre"></pre>
+        <textarea id="keyhandler"></textarea>
+        <pre id="host"></pre>
     </body>
 </html>

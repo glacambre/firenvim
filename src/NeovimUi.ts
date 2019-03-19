@@ -1,44 +1,31 @@
 import { neovim } from "./Neovim";
 import { page } from "./page/proxy";
 
-function translateKey(text: string) {
-    switch (text) {
-        case " ":
-            return "<Space>";
-        case "ArrowDown":
-            return "<Down>";
-        case "ArrowLeft":
-            return "<Left>";
-        case "ArrowRight":
-            return "<Right>";
-        case "ArrowUp":
-            return "<Up>";
-        case "Backspace":
-            return "<BS>";
-        case "Delete":
-            return "<Del>";
-        case "End":
-            return "<End>";
-        case "Enter":
-            return "<CR>";
-        case "Escape":
-            return "<Esc>";
-        case "Home":
-            return "<Home>";
-        case "PageDown":
-            return "<PageDown>";
-        case "PageUp":
-            return "<PageUp>";
-        case "Tab":
-            return "<Tab>";
-        case "<":
-            return "<lt>";
-        case "\\":
-            return "<Bslash>";
-        case "|":
-            return "<Bar>";
+const nonLiteralKeys: {[key: string]: string} = {
+    " ": "<Space>",
+    "<": "<lt>",
+    "ArrowDown": "<Down>",
+    "ArrowLeft": "<Left>",
+    "ArrowRight": "<Right>",
+    "ArrowUp": "<Up>",
+    "Backspace": "<BS>",
+    "Delete": "<Del>",
+    "End": "<End>",
+    "Enter": "<CR>",
+    "Escape": "<Esc>",
+    "Home": "<Home>",
+    "PageDown": "<PageDown>",
+    "PageUp": "<PageUp>",
+    "Tab": "<Tab>",
+    "\\": "<Bslash>",
+    "|": "<Bar>",
+};
+
+function translateKey(key: string) {
+    if (nonLiteralKeys[key] !== undefined) {
+        return nonLiteralKeys[key];
     }
-    return text;
+    return key;
 }
 
 function addModifier(mod: string, text: string) {
@@ -68,7 +55,7 @@ function toFileName(url: string, id: string) {
 const locationPromise = page.getEditorLocation();
 
 window.addEventListener("load", async () => {
-    const host = document.getElementById("pre") as HTMLPreElement;
+    const host = document.getElementById("host") as HTMLPreElement;
     const [url, selector] = await locationPromise;
     const nvimPromise = neovim(host, selector);
     const contentPromise = page.getElementContent(selector);
@@ -97,10 +84,15 @@ window.addEventListener("load", async () => {
     nvim.command(`autocmd BufWrite ${filename} `
         + `call rpcnotify(1, 'firenvim_bufwrite', {'text': nvim_buf_get_lines(0, 0, -1, 0)})`);
     nvim.command("autocmd VimLeave * call rpcnotify(1, 'firenvim_vimleave')");
-    window.addEventListener("keydown", (evt) => {
-        if (evt.isTrusted && !["OS", "AltGraph", "Shift", "Control"].includes(evt.key)) {
-            const special = false;
-            const text = [["altKey", "A"], ["ctrlKey", "C"], ["metaKey", "M"], ["shiftKey", "S"]]
+
+    const keyHandler = document.getElementById("keyhandler");
+    keyHandler.addEventListener("keydown", (evt) => {
+        const specialKeys = [["altKey", "A"], ["ctrlKey", "C"], ["metaKey", "M"], ["shiftKey", "S"]];
+        // The event has to be trusted and either have a modifier or a non-literal representation
+        if (evt.isTrusted
+            && (nonLiteralKeys[evt.key] !== undefined
+                || specialKeys.find(([attr, _]: [string, string]) => (evt as any)[attr]))) {
+            const text = specialKeys
                 .reduce((key: string, [attr, mod]: [string, string]) => {
                     if ((evt as any)[attr]) {
                         return addModifier(mod, key);
@@ -112,4 +104,12 @@ window.addEventListener("load", async () => {
             evt.stopImmediatePropagation();
         }
     });
+    keyHandler.addEventListener("input", (evt: any) => {
+        nvim.input(evt.data);
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+        keyHandler.innerText = "";
+    });
+    keyHandler.addEventListener("blur", _ => setTimeout(__ => keyHandler.focus(), 0));
+    keyHandler.focus();
 });
