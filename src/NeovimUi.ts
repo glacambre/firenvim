@@ -52,14 +52,7 @@ function toFileName(url: string, id: string) {
     return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(shortId)}.txt`;
 }
 
-const locationPromise = page.getEditorLocation();
-
-window.addEventListener("load", async () => {
-    const host = document.getElementById("host") as HTMLPreElement;
-    const [url, selector] = await locationPromise;
-    const nvimPromise = neovim(host, selector);
-    const contentPromise = page.getElementContent(selector);
-
+function getFrameSize(host: HTMLElement) {
     // We need to know how tall/wide our characters are in order to know how
     // many rows/cols we can have
     const span = document.createElement("span");
@@ -68,8 +61,18 @@ window.addEventListener("load", async () => {
     const { width: charWidth, height: charHeight } = span.getBoundingClientRect();
     host.removeChild(span);
     const rect = host.getBoundingClientRect();
-    const cols = Math.floor(rect.width / charWidth);
-    const rows = Math.floor(rect.height / charHeight);
+    return [Math.floor(rect.width / charWidth), Math.floor(rect.height / charHeight)];
+}
+
+const locationPromise = page.getEditorLocation();
+
+window.addEventListener("load", async () => {
+    const host = document.getElementById("host") as HTMLPreElement;
+    const [url, selector] = await locationPromise;
+    const nvimPromise = neovim(host, selector);
+    const contentPromise = page.getElementContent(selector);
+
+    const [cols, rows] = getFrameSize(host);
 
     const nvim = await nvimPromise;
 
@@ -77,6 +80,11 @@ window.addEventListener("load", async () => {
         ext_linegrid: true,
         rgb: true,
     });
+    window.addEventListener("resize", _ => {
+        const [nCols, nRows] = getFrameSize(host);
+        nvim.ui_try_resize(nCols, nRows);
+    });
+
     const filename = toFileName(url, selector);
     Promise.all([nvim.command(`edit ${filename}`), contentPromise])
         .then(([_, content]: [any, string]) => nvim.buf_set_lines(0, 0, -1, 0, content.split("\n")))

@@ -30,6 +30,13 @@ const global = {
         span.attachShadow({ mode: "closed" }).appendChild(iframe);
         elem.ownerDocument.body.appendChild(span);
         iframe.focus();
+        window.addEventListener("resize", _ => {
+            const contentRect = elem.getBoundingClientRect();
+            iframe.style.height = `${contentRect.height}px`;
+            iframe.style.left = `${contentRect.left + window.scrollX}px`;
+            iframe.style.top = `${contentRect.top + window.scrollY}px`;
+            iframe.style.width = `${contentRect.width}px`;
+        });
     },
     selectorToElems: new Map<string, [HTMLSpanElement, HTMLElement]>(),
 };
