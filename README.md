@@ -10,7 +10,7 @@ For now, just click on textareas or input fields. When you want to set the conte
 
 # How to install
 
-Get the extension from [AMO](https://addons.mozilla.org/en-US/firefox/addon/firenvim/), get the native messenger from the [releases page](https://github.com/glacambre/firefox-patches/releases). Run the native messenger once in your shell and if it results in `Native messenger successfully installed.` being printed, you're done.
+Get the extension from [AMO](https://addons.mozilla.org/en-US/firefox/addon/firenvim/), get the native messenger from the [releases page](https://github.com/glacambre/firenvim/releases). Run the native messenger once in your shell and if it results in `Native messenger successfully installed.` being printed, you're done.
 
 # Drawbacks
 
