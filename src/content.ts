@@ -6,6 +6,11 @@ const global = {
     nvimify: (evt: FocusEvent) => {
         const elem = evt.target as HTMLElement;
         const selector = computeSelector(elem as HTMLElement);
+
+        if (global.selectorToElems.get(selector) !== undefined) {
+            return;
+        }
+
         const span = elem.ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLSpanElement;
 
