@@ -34,7 +34,12 @@ export function getFunctions(global: {
             } else {
                 e.textContent = text;
             }
-            e.dispatchEvent(new Event("change", { bubbles: true }));
+            e.dispatchEvent(new Event("keydown",     { bubbles: true }));
+            e.dispatchEvent(new Event("keyup",       { bubbles: true }));
+            e.dispatchEvent(new Event("keypress",    { bubbles: true }));
+            e.dispatchEvent(new Event("beforeinput", { bubbles: true }));
+            e.dispatchEvent(new Event("input",       { bubbles: true }));
+            e.dispatchEvent(new Event("change",      { bubbles: true }));
         },
     };
 }
