@@ -118,7 +118,10 @@ window.addEventListener("load", async () => {
         evt.stopImmediatePropagation();
         keyHandler.innerText = "";
     });
-    keyHandler.addEventListener("blur", _ => setTimeout(__ => keyHandler.focus(), 0));
+    window.addEventListener("mousemove", (evt: MouseEvent) => {
+        keyHandler.style.left = `${evt.clientX}px`;
+        keyHandler.style.top = `${evt.clientY}px`;
+    });
     window.addEventListener("click", _ => keyHandler.focus());
     keyHandler.focus();
 });
