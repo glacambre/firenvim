@@ -4,15 +4,18 @@ import { getFunctions } from "./functions";
 // get the name of functions that exist in the page.
 const functions = getFunctions({} as any);
 
-export const page = {} as typeof functions;
+type ft = typeof functions;
+type ArgumentsType<T> = T extends  (...args: infer U) => any ? U: never;
+
+export const page = {} as { [k in keyof ft]: (...args: ArgumentsType<ft[k]>) => Promise<ReturnType<ft[k]>> };
 
 let funcName: keyof typeof functions;
 for (funcName in functions) {
     if (!functions.hasOwnProperty(funcName)) { // Make tslint happy
         continue;
     }
-    // We need this local variable because Typescript won't let us give type
-    // annotations to variables declared on for(... in ...) loops
+    // We need to declare func here because funcName is a global and would not
+    // be captured in the closure otherwise
     const func = funcName;
     page[func] = ((...arr: any[]) => {
         return browser.runtime.sendMessage({
@@ -22,5 +25,5 @@ for (funcName in functions) {
             },
             function: "messageOwnTab",
         });
-    }) as ((typeof functions)[typeof func]);
+    });
 }

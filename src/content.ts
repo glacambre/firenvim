@@ -5,16 +5,15 @@ const global = {
     lastEditorLocation: ["", ""] as [string, string],
     nvimify: (evt: FocusEvent) => {
         const elem = evt.target as HTMLElement;
-        const selector = computeSelector(elem as HTMLElement);
+        const selector = computeSelector(elem);
 
         if (global.selectorToElems.get(selector) !== undefined) {
             return;
         }
 
+        global.lastEditorLocation = [document.location.href, selector];
         const span = elem.ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLSpanElement;
-
-        global.lastEditorLocation = [document.location.href, selector];
         global.selectorToElems.set(selector, [span, elem]);
 
         const rect = elem.getBoundingClientRect();

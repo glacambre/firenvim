@@ -1,11 +1,12 @@
 {
-  "extends": "tslint:recommended",
+  "extends": ["tslint:recommended", "tslint-sonarts"],
   "rules": {
     "arrow-parens": false,
     "no-conditional-assignment": false,
     "no-console": false,
     "no-namespace": false,
     "no-switch-case-fall-through": true,
+    "no-useless-cast": false,
     "semicolon": [true, "always"]
   }
 }

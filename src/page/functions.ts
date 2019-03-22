@@ -7,7 +7,8 @@ export function getFunctions(global: {
     return {
         getEditorLocation: () => global.lastEditorLocation,
         getElementContent: (selector: string) => {
-            const [_, e] = global.selectorToElems.get(selector) as [any, any];
+            const [_ , e] = global.selectorToElems.get(selector) as [any, any];
+            console.log(_);
             if (e.value !== undefined) {
                 return e.value;
             }
@@ -28,7 +29,8 @@ export function getFunctions(global: {
             }
         },
         setElementContent: (selector: string, text: string) => {
-            const [_, e] = global.selectorToElems.get(selector) as [any, any];
+            const [_ , e] = global.selectorToElems.get(selector) as [any, any];
+            console.log(_);
             if (e.value !== undefined) {
                 e.value = text;
             } else {

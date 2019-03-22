@@ -64,7 +64,6 @@ export class Grid {
             this.rows = this.rows.slice(0, top)
                 .concat(newRows)
                 .concat(this.rows.slice(top, this.rows.length - newRows.length));
-            rowCount = -rowCount;
         }
         this.cursor_goto(this.cursor.x, this.cursor.y);
     }

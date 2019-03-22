@@ -62,7 +62,7 @@ export async function neovim(element: HTMLPreElement, selector: string) {
         }
     });
 
-    const { 0: channel, 1: apiInfo } = (await request("nvim_get_api_info", [])) as INvimApiInfo;
+    const { 1: apiInfo } = (await request("nvim_get_api_info", [])) as INvimApiInfo;
     return apiInfo.functions
         .filter(f => f.deprecated_since === undefined)
         .reduce((acc, cur) => {

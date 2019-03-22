@@ -38,5 +38,4 @@ type ResizeUpdate = [number, number, number];
 type GotoUpdate = [number, number, number];
 type LineUpdate = [number, number, number, Array<[string, number, number?]>];
 
-type HighlightArray = { foreground: string, background: string }[];
-
+type HighlightArray = Array<{ foreground: string, background: string }>;

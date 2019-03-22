@@ -7,13 +7,14 @@
     "awesome-typescript-loader": "^5.2.1",
     "copy-webpack-plugin": "^5.0.0",
     "tslint": "^5.13.1",
+    "tslint-sonarts": "^1.9.0",
     "typescript": "^3.3.3333",
     "web-ext": "^3.0.0",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.2.3"
   },
   "scripts": {
-    "build": "cargo build --release && tslint --fix --project . && webpack && cargo run --release",
+    "build": "tslint --fix --project . && webpack && cargo build --release && cargo run --release",
     "clean": "rm -rf target"
   },
   "author": "glacambre",
