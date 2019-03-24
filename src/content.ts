@@ -25,24 +25,12 @@ const global = {
             .createElementNS("http://www.w3.org/1999/xhtml", "iframe") as HTMLIFrameElement;
         pageElements.iframe = iframe;
 
-        const rect = elem.getBoundingClientRect();
-        iframe.style.height = `${rect.height}px`;
-        iframe.style.left = `${rect.left + window.scrollX}px`;
-        iframe.style.position = "absolute";
-        iframe.style.top = `${rect.top + window.scrollY}px`;
-        iframe.style.width = `${rect.width}px`;
-        iframe.style.zIndex = "2147483647";
+        resizeEditor(pageElements);
+        window.addEventListener("resize", _ => resizeEditor(pageElements));
         iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
         span.attachShadow({ mode: "closed" }).appendChild(iframe);
         elem.ownerDocument.body.appendChild(span);
         iframe.focus();
-        window.addEventListener("resize", _ => {
-            const contentRect = elem.getBoundingClientRect();
-            iframe.style.height = `${contentRect.height}px`;
-            iframe.style.left = `${contentRect.left + window.scrollX}px`;
-            iframe.style.top = `${contentRect.top + window.scrollY}px`;
-            iframe.style.width = `${contentRect.width}px`;
-        });
     },
     selectorToElems: new Map<string, PageElements>(),
 };
@@ -60,6 +48,16 @@ browser.runtime.onMessage.addListener(async (
     }
     return functions[request.function](...request.args);
 });
+
+function resizeEditor({ iframe, input }: PageElements) {
+    const rect = input.getBoundingClientRect();
+    iframe.style.height = `${rect.height}px`;
+    iframe.style.left = `${rect.left + window.scrollX}px`;
+    iframe.style.position = "absolute";
+    iframe.style.top = `${rect.top + window.scrollY}px`;
+    iframe.style.width = `${rect.width}px`;
+    iframe.style.zIndex = "2147483647";
+}
 
 function isEditable(elem: HTMLElement) {
     if (elem.tagName === "TEXTAREA"
@@ -104,6 +102,7 @@ function recurseNvimify(elem: HTMLElement) {
             }
         });
     }
+    global.selectorToElems.forEach(resizeEditor);
 })).observe(window.document, { subtree: true, childList: true });
 
 const treeWalker = document.createTreeWalker(document.documentElement,

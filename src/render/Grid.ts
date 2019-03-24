@@ -26,7 +26,10 @@ export class Grid {
 
     public cursor_goto(x: number, y: number) {
         if (this.cursorLine !== undefined) {
-            this.cursorLine.get(this.cursor.x).removeCursor();
+            const cell = this.cursorLine.get(this.cursor.x);
+            if (cell !== undefined) {
+                cell.removeCursor();
+            }
         }
         this.cursor = new Cursor(x, y);
         this.cursorLine = this.get(this.cursor.y);

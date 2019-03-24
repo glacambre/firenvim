@@ -48,6 +48,7 @@ const locationPromise = page.getEditorLocation();
 
 window.addEventListener("load", async () => {
     const host = document.getElementById("host") as HTMLPreElement;
+    const keyHandler = document.getElementById("keyhandler");
     const [url, selector] = await locationPromise;
     const nvimPromise = neovim(host, selector);
     const contentPromise = page.getElementContent(selector);
@@ -61,6 +62,8 @@ window.addEventListener("load", async () => {
         rgb: true,
     });
     window.addEventListener("resize", _ => {
+        keyHandler.style.left = `0px`;
+        keyHandler.style.top = `0px`;
         const [nCols, nRows] = getGridSize(host);
         nvim.ui_try_resize(nCols, nRows);
     });
@@ -73,8 +76,10 @@ window.addEventListener("load", async () => {
         + `call rpcnotify(1, 'firenvim_bufwrite', {'text': nvim_buf_get_lines(0, 0, -1, 0)})`);
     nvim.command("autocmd VimLeave * call rpcnotify(1, 'firenvim_vimleave')");
 
-    const keyHandler = document.getElementById("keyhandler");
     keyHandler.addEventListener("keydown", (evt) => {
+        keyHandler.style.left = `0px`;
+        keyHandler.style.top = `0px`;
+
         const specialKeys = [["altKey", "A"], ["ctrlKey", "C"], ["metaKey", "M"]];
         // The event has to be trusted and either have a modifier or a non-literal representation
         if (evt.isTrusted

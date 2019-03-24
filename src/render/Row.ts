@@ -29,18 +29,15 @@ export class Row {
     }
 
     public get(n: number) {
-        if (n >= 0 && n < this.cells.length) {
-            return this.cells[n];
-        }
-        throw new Error(`Accessing non-exisiting property ${n} of row.`);
+        return this.cells[n];
     }
 
     public resize(width: number) {
-        if (this.width < width) {
+        if (width < this.width) {
             this.cells.slice(width).forEach(cell => cell.detach());
             this.cells = this.cells.slice(0, width);
         } else {
-            for (let i = this.width; i < width; ++i) {
+            for (let i = this.width; i <= width; ++i) {
                 this.cells.push(new Cell());
                 this.cells[this.cells.length - 1].attach(this.elem);
             }
