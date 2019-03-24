@@ -1,4 +1,4 @@
-import { toHighlightClassName } from "./CSSUtils";
+import { toHighlightClassName } from "../utils/CSSUtils";
 
 export class Cell {
     private highlightValue: number;

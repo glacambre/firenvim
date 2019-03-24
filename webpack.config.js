@@ -6,7 +6,7 @@ module.exports = {
   entry: {
     background: "./src/background.ts",
     content: "./src/content.ts",
-    nvimui: "./src/NeovimUi.ts",
+    nvimui: "./src/NeovimFrame.ts",
   },
   output: {
     filename: "[name].js",

@@ -1,7 +1,7 @@
-import { toCss, toHexCss } from "./CSSUtils";
+import { page } from "../page/proxy";
+import { toCss, toHexCss } from "../utils/CSSUtils";
+import { getCharSize } from "../utils/utils";
 import { Grid } from "./Grid";
-import { page } from "./page/proxy";
-import { getCharSize } from "./utils";
 
 const defaultColors = { background: 16777215, foreground: 0 };
 const grids: Grid[] = [];

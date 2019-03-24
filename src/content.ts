@@ -1,5 +1,5 @@
-import { computeSelector } from "./CSSUtils";
 import { getFunctions } from "./page/functions";
+import { computeSelector } from "./utils/CSSUtils";
 
 const global = {
     lastEditorLocation: ["", ""] as [string, string],

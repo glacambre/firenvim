@@ -1,6 +1,6 @@
-import { neovim } from "./Neovim";
+import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
-import { getGridSize, toFileName } from "./utils";
+import { getGridSize, toFileName } from "./utils/utils";
 
 const nonLiteralKeys: {[key: string]: string} = {
     " ": "<Space>",
