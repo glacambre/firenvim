@@ -56,7 +56,8 @@ browser.runtime.onMessage.addListener(async (
 
 function isEditable(elem: HTMLElement) {
     if (elem.tagName === "TEXTAREA"
-        || (elem.tagName === "INPUT" && (elem as HTMLInputElement).type === "text")) {
+        || (elem.tagName === "INPUT"
+            && ["email", "search", "tel", "text", "url"].includes((elem as HTMLInputElement).type))) {
         return NodeFilter.FILTER_ACCEPT;
     }
     return NodeFilter.FILTER_REJECT;
