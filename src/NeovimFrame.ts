@@ -75,12 +75,12 @@ window.addEventListener("load", async () => {
 
     const keyHandler = document.getElementById("keyhandler");
     keyHandler.addEventListener("keydown", (evt) => {
-        const specialKeys = [["altKey", "A"], ["ctrlKey", "C"], ["metaKey", "M"], ["shiftKey", "S"]];
+        const specialKeys = [["altKey", "A"], ["ctrlKey", "C"], ["metaKey", "M"]];
         // The event has to be trusted and either have a modifier or a non-literal representation
         if (evt.isTrusted
             && (nonLiteralKeys[evt.key] !== undefined
                 || specialKeys.find(([attr, _]: [string, string]) => (evt as any)[attr]))) {
-            const text = specialKeys
+            const text = specialKeys.concat(["shiftKey", "S"])
                 .reduce((key: string, [attr, mod]: [string, string]) => {
                     if ((evt as any)[attr]) {
                         return addModifier(mod, key);
