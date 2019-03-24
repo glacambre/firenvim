@@ -3,7 +3,7 @@ import { Cell } from "./Cell";
 export class Row {
     public elem: HTMLSpanElement;
     private cells: Cell[] = [];
-    constructor(width: number) {
+    constructor(public width: number) {
         this.elem = document.createElement("span");
         this.elem.className = "nvim_row";
         for (let i = 0; i <= width; ++i) {
@@ -33,6 +33,19 @@ export class Row {
             return this.cells[n];
         }
         throw new Error(`Accessing non-exisiting property ${n} of row.`);
+    }
+
+    public resize(width: number) {
+        if (this.width < width) {
+            this.cells.slice(width).forEach(cell => cell.detach());
+            this.cells = this.cells.slice(0, width);
+        } else {
+            for (let i = this.width; i < width; ++i) {
+                this.cells.push(new Cell());
+                this.cells[this.cells.length - 1].attach(this.elem);
+            }
+        }
+        this.width = width;
     }
 
     public set(n: number, v: string) {

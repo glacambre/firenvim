@@ -37,5 +37,6 @@ type HighlightUpdate = [number, { foreground: number, background: number }];
 type ResizeUpdate = [number, number, number];
 type GotoUpdate = [number, number, number];
 type LineUpdate = [number, number, number, Array<[string, number, number?]>];
-
 type HighlightArray = Array<{ foreground: string, background: string }>;
+
+type PageElements = { input: HTMLElement, span: HTMLSpanElement, iframe: HTMLIFrameElement };

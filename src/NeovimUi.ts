@@ -1,5 +1,6 @@
 import { neovim } from "./Neovim";
 import { page } from "./page/proxy";
+import { getGridSize, toFileName } from "./utils";
 
 const nonLiteralKeys: {[key: string]: string} = {
     " ": "<Space>",
@@ -43,27 +44,6 @@ function addModifier(mod: string, text: string) {
     return "<" + mod + modifiers + "-" + key + ">";
 }
 
-function toFileName(url: string, id: string) {
-    const parsedURL = new URL(url);
-    const shortId = id.replace(/:nth-of-type/g, "");
-    const toAlphaNum = (str: string) => (str.match(/[a-zA-Z0-9]+/g) || [])
-        .join("-")
-        .slice(-32);
-    return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(shortId)}.txt`;
-}
-
-function getFrameSize(host: HTMLElement) {
-    // We need to know how tall/wide our characters are in order to know how
-    // many rows/cols we can have
-    const span = document.createElement("span");
-    span.innerText = " ";
-    host.appendChild(span);
-    const { width: charWidth, height: charHeight } = span.getBoundingClientRect();
-    host.removeChild(span);
-    const rect = host.getBoundingClientRect();
-    return [Math.floor(rect.width / charWidth), Math.floor(rect.height / charHeight)];
-}
-
 const locationPromise = page.getEditorLocation();
 
 window.addEventListener("load", async () => {
@@ -72,7 +52,7 @@ window.addEventListener("load", async () => {
     const nvimPromise = neovim(host, selector);
     const contentPromise = page.getElementContent(selector);
 
-    const [cols, rows] = getFrameSize(host);
+    const [cols, rows] = getGridSize(host);
 
     const nvim = await nvimPromise;
 
@@ -81,7 +61,7 @@ window.addEventListener("load", async () => {
         rgb: true,
     });
     window.addEventListener("resize", _ => {
-        const [nCols, nRows] = getFrameSize(host);
+        const [nCols, nRows] = getGridSize(host);
         nvim.ui_try_resize(nCols, nRows);
     });
 

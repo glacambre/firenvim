@@ -11,14 +11,21 @@ const global = {
             return;
         }
 
+        const pageElements = {} as PageElements;
+        pageElements.input = elem;
+        global.selectorToElems.set(selector, pageElements);
+
         global.lastEditorLocation = [document.location.href, selector];
         const span = elem.ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLSpanElement;
-        global.selectorToElems.set(selector, [span, elem]);
-
-        const rect = elem.getBoundingClientRect();
+        pageElements.span = span;
+        // It's important to create the iframe last because otherwise it might
+        // try to access uninitialized data from the page
         const iframe = span.ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "iframe") as HTMLIFrameElement;
+        pageElements.iframe = iframe;
+
+        const rect = elem.getBoundingClientRect();
         iframe.style.height = `${rect.height}px`;
         iframe.style.left = `${rect.left + window.scrollX}px`;
         iframe.style.position = "absolute";
@@ -37,14 +44,14 @@ const global = {
             iframe.style.width = `${contentRect.width}px`;
         });
     },
-    selectorToElems: new Map<string, [HTMLSpanElement, HTMLElement]>(),
+    selectorToElems: new Map<string, PageElements>(),
 };
 
 const functions = getFunctions(global);
 
 browser.runtime.onMessage.addListener(async (
     // args: [string, string] is factually incorrect but we need to please typescript
-    request: { function: keyof typeof functions, args: [string, string] },
+    request: { function: keyof typeof functions, args: [string, string & number, string & number] },
     sender: any,
     sendResponse: any,
 ) => {
@@ -89,7 +96,7 @@ function recurseNvimify(elem: HTMLElement) {
     // large numbers of iframes but we'll never have more than 10 anyway so
     // it's probably ok.
     if (changes.find(change => change.removedNodes.length > 0)) {
-        global.selectorToElems.forEach(([span, elem], selector, map) => {
+        global.selectorToElems.forEach(({input: elem}, selector, map) => {
             // If element is not in document or is not visible
             if (!elem.ownerDocument.contains(elem)
                 || (elem.offsetWidth === 0 && elem.offsetHeight === 0 && elem.getClientRects().length === 0)) {

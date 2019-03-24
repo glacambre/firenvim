@@ -2,13 +2,12 @@
 export function getFunctions(global: {
     lastEditorLocation: [string, string],
     nvimify: (evt: FocusEvent) => void,
-    selectorToElems: Map<string, [HTMLSpanElement, HTMLElement]>,
+    selectorToElems: Map<string, PageElements>,
 }) {
     return {
         getEditorLocation: () => global.lastEditorLocation,
         getElementContent: (selector: string) => {
-            const [_ , e] = global.selectorToElems.get(selector) as [any, any];
-            console.log(_);
+            const { input: e } = global.selectorToElems.get(selector) as any;
             if (e.value !== undefined) {
                 return e.value;
             }
@@ -18,19 +17,20 @@ export function getFunctions(global: {
             return e.innerText;
         },
         killEditor: (selector: string) => {
-            const tuple = global.selectorToElems.get(selector) as [any, any];
-            if (tuple) {
-                const [span, input] = tuple;
-                span.parentNode.removeChild(span);
-                global.selectorToElems.delete(selector);
-                input.removeEventListener("focus", global.nvimify);
-                input.focus();
-                input.addEventListener("focus", global.nvimify);
-            }
+            const { span, input } = global.selectorToElems.get(selector);
+            span.parentNode.removeChild(span);
+            global.selectorToElems.delete(selector);
+            input.removeEventListener("focus", global.nvimify);
+            input.focus();
+            input.addEventListener("focus", global.nvimify);
+        },
+        resizeEditor: (selector: string, width: number, height: number) => {
+            const { iframe } = global.selectorToElems.get(selector);
+            iframe.style.width = `${width}px`;
+            iframe.style.height = `${height}px`;
         },
         setElementContent: (selector: string, text: string) => {
-            const [_ , e] = global.selectorToElems.get(selector) as [any, any];
-            console.log(_);
+            const { input: e } = global.selectorToElems.get(selector) as any;
             if (e.value !== undefined) {
                 e.value = text;
             } else {

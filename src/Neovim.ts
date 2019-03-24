@@ -48,7 +48,7 @@ export async function neovim(element: HTMLPreElement, selector: string) {
     stdout.addListener("notification", async (name: string, args: any[]) => {
         switch (name) {
             case "redraw":
-                onRedraw(args, element);
+                onRedraw(args, element, selector);
                 break;
             case "firenvim_bufwrite":
                 page.setElementContent(selector, args[0].text.join("\n"));

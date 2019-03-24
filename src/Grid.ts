@@ -44,6 +44,23 @@ export class Grid {
         return this.rows[n];
     }
 
+    public resize(width: number, height: number) {
+        if (height < this.height) {
+            this.rows.slice(height).forEach(row => row.detach());
+            this.rows = this.rows.slice(0, height);
+        } else {
+            for (let i = this.height; i < height; ++i) {
+                this.rows.push(new Row(this.width));
+                this.rows[this.rows.length - 1].attach(this.elem);
+            }
+        }
+        if (width !== this.width) {
+            this.rows.forEach(row => row.resize(width));
+        }
+        this.width = width;
+        this.height = height;
+    }
+
     public scroll(top: number, bot: number, left: number, right: number, rowCount: number, cols: number) {
         if (rowCount > 0) {
             const toDelete = this.rows.splice(top, rowCount);
