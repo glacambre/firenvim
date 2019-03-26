@@ -1,6 +1,6 @@
 {
   "name": "Firenvim",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "description": "A webextension to turn Firefox into a Neovim client.",
   "devDependencies": {
     "@types/node": "^11.10.4",
