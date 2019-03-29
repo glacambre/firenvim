@@ -74,7 +74,8 @@ window.addEventListener("load", async () => {
         .then((_: any) => nvim.command(":w"));
     nvim.command(`autocmd BufWrite ${filename} `
         + `call rpcnotify(1, 'firenvim_bufwrite', {'text': nvim_buf_get_lines(0, 0, -1, 0)})`);
-    nvim.command("autocmd VimLeave * call rpcnotify(1, 'firenvim_vimleave')");
+    nvim.command(`autocmd VimLeave * call rpcnotify(1, 'firenvim_vimleave')`);
+    nvim.command(`autocmd VimLeave * call delete('${filename}')`);
 
     keyHandler.addEventListener("keydown", (evt) => {
         keyHandler.style.left = `0px`;
