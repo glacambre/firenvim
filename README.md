@@ -37,7 +37,7 @@ You need nodejs, rustc, npm and cargo.
 git clone https://github.com/glacambre/firenvim
 cd firenvim
 npm install
-node run build
+npm run build
 ```
 
 All build artifacts will be in the `target/` directory. Note that `node run build` will also install the native messenger on your computer. If another instance of the native messenger is already running while you try to install another version, you might get an error message. You can ignore it if you didn't change the native messenger's source code.
