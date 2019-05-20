@@ -13,3 +13,6 @@ directories = "*"
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.6.0"

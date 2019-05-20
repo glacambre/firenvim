@@ -9,6 +9,13 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+#[cfg(target_os = "windows")]
+extern crate winreg;
+#[cfg(target_os = "windows")]
+use winreg::RegKey;
+#[cfg(target_os = "windows")]
+use winreg::enums::*;
+
 use std::env;
 use std::fs;
 use std::io::{self, Read, Write};
@@ -107,7 +114,15 @@ fn install_native_messenger() -> std::result::Result<(), ()> {
         if !data_dir_path.exists() && fs::create_dir_all(data_dir_path).is_err() {
             eprintln!("Error: failed to create {}", data_dir_str);
         }
-        let binary_path = format!("{}{}{}", data_dir_str, path::MAIN_SEPARATOR, "firenvim");
+
+        #[cfg(target_os = "linux")]
+        let binary_name = "firenvim";
+        #[cfg(target_os = "macos")]
+        let binary_name = "firenvim";
+        #[cfg(target_os = "windows")]
+        let binary_name = "firenvim.exe";
+
+        let mut binary_path = format!("{}{}{}", data_dir_str, path::MAIN_SEPARATOR, binary_name);
         let current_binary = env::args().nth(0).unwrap();
         if current_binary != binary_path
             && fs::copy(current_binary.clone(), binary_path.clone()).is_err()
@@ -116,18 +131,27 @@ fn install_native_messenger() -> std::result::Result<(), ()> {
             return Err(());
         }
 
+        let manifest_path;
+
         #[cfg(target_os = "macos")]
-        let manifest_path = format!(
-            "{}{}",
-            home_dir_str, "/Library/Apllication Support/Mozilla/NativeMessagingHosts/firenvim.json"
-        );
+        {
+          manifest_path = format!(
+              "{}{}",
+              home_dir_str, "/Library/Apllication Support/Mozilla/NativeMessagingHosts/firenvim.json"
+          );
+        }
         #[cfg(target_os = "linux")]
-        let manifest_path = format!(
+        {
+          manifest_path = format!(
             "{}{}",
             home_dir_str, "/.mozilla/native-messaging-hosts/firenvim.json"
-        );
+          );
+        }
         #[cfg(target_os = "windows")]
-        let manifest_path = format!("{}{}", data_dir_str, "\\firenvim.json");
+        {
+          manifest_path = format!("{}{}", data_dir_str, "\\firenvim.json");
+          binary_path = binary_path.replace("\\", "\\\\");
+        }
 
         if fs::write(
             manifest_path.clone(),
@@ -140,6 +164,21 @@ fn install_native_messenger() -> std::result::Result<(), ()> {
         {
             eprintln!("Failed to write native manifest to {}.", manifest_path);
             return Err(());
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+          // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Windows
+          println!("Writing firenvim registry key.");
+          let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+          let path = path::Path::new("SOFTWARE")
+            .join("Mozilla")
+            .join("NativeMessagingHosts")
+            .join("firenvim");
+          let (key, disp) = hkcu.create_subkey(&path).unwrap();
+
+          key.set_value("", &manifest_path).unwrap();
+          println!("Registry key successfully written.");
         }
     } else {
         eprintln!("Error: failed to detect install directories.");
