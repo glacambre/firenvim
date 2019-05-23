@@ -137,7 +137,7 @@ fn install_native_messenger() -> std::result::Result<(), ()> {
         {
           manifest_path = format!(
               "{}{}",
-              home_dir_str, "/Library/Apllication Support/Mozilla/NativeMessagingHosts/firenvim.json"
+              home_dir_str, "/Library/Application Support/Mozilla/NativeMessagingHosts/firenvim.json"
           );
         }
         #[cfg(target_os = "linux")]
