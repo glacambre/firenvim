@@ -21,9 +21,9 @@ for (funcName in functions) {
         return browser.runtime.sendMessage({
             args: {
                 args: arr,
-                function: func,
+                funcName: [func],
             },
-            function: "messageOwnTab",
+            funcName: ["messageOwnTab"],
         });
     });
 }

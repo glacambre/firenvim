@@ -36,17 +36,19 @@ const global = {
 };
 
 const functions = getFunctions(global);
+Object.assign(window, functions);
 
 browser.runtime.onMessage.addListener(async (
     // args: [string, string] is factually incorrect but we need to please typescript
-    request: { function: keyof typeof functions, args: [string, string & number, string & number] },
+    request: { funcName: string[], args: [string, string & number, string & number] },
     sender: any,
     sendResponse: any,
 ) => {
-    if (!functions[request.function]) {
+    const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
+    if (!fn) {
         throw new Error(`Error: unhandled content request: ${request.toString()}.`);
     }
-    return functions[request.function](...request.args);
+    return fn(...request.args);
 });
 
 function resizeEditor({ iframe, input }: PageElements) {

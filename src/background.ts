@@ -7,14 +7,15 @@ browser.runtime.onConnect.addListener((port: browser.runtime.Port) => {
     port.onDisconnect.addListener((msg: any) => nvim.disconnect());
 });
 
-const functions: any = {
+Object.assign(window, {
     getTab: (sender: any, args: any) => sender.tab,
     messageOwnTab: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id, args),
-};
+} as any);
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResponse: any) => {
-    if (!functions[request.function]) {
+    const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
+    if (!fn) {
         throw new Error(`Error: unhandled content request: ${request.toString()}.`);
     }
-    return functions[request.function](sender, request.args || []);
+    return fn(sender, request.args || []);
 });
