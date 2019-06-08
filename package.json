@@ -3,7 +3,7 @@
   "version": "0.1.5",
   "description": "A webextension to turn Firefox into a Neovim client.",
   "devDependencies": {
-    "@types/node": "^11.10.4",
+    "@types/node": "^12.0.7",
     "awesome-typescript-loader": "^5.2.1",
     "copy-webpack-plugin": "^5.0.0",
     "tslint": "^5.13.1",
