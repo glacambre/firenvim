@@ -6,6 +6,7 @@ module.exports = {
   entry: {
     background: "./src/background.ts",
     content: "./src/content.ts",
+    preferences: "./src/preferences/preferences.ts",
     nvimui: "./src/NeovimFrame.ts",
   },
   output: {
@@ -32,6 +33,7 @@ module.exports = {
     new CopyWebPackPlugin([
       { from: "src/manifest.json" },
       { from: "src/NeovimFrame.html" },
+      { from: "src/preferences/preferences.html" },
       { from: "static/firenvim.svg" },
     ]),
   ],

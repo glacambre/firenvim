@@ -67,7 +67,7 @@ function isEditable(elem: HTMLElement) {
             && ["email", "search", "tel", "text", "url"].includes((elem as HTMLInputElement).type))) {
         return NodeFilter.FILTER_ACCEPT;
     }
-    return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_SKIP;
 }
 
 function addNvimListener(elem: HTMLElement) {
@@ -85,33 +85,46 @@ function recurseNvimify(elem: HTMLElement) {
     }
 }
 
-(new MutationObserver(changes => {
-    changes
-        .filter((change: MutationRecord) => change.addedNodes.length > 0)
-        .forEach((change: MutationRecord) => Array.from(change.addedNodes)
-            .forEach(node => recurseNvimify(node as HTMLElement)),
-        );
-    // Each time nodes have been removed from the page, check if each of our
-    // iframes should be removed from the page. This would be wasteful for
-    // large numbers of iframes but we'll never have more than 10 anyway so
-    // it's probably ok.
-    if (changes.find(change => change.removedNodes.length > 0)) {
-        global.selectorToElems.forEach(({input: elem}, selector, map) => {
-            // If element is not in document or is not visible
-            if (!elem.ownerDocument.contains(elem)
-                || (elem.offsetWidth === 0 && elem.offsetHeight === 0 && elem.getClientRects().length === 0)) {
-                functions.killEditor(selector);
-            }
-        });
+function setupListeners() {
+    (new MutationObserver(changes => {
+        changes
+            .filter((change: MutationRecord) => change.addedNodes.length > 0)
+            .forEach((change: MutationRecord) => Array.from(change.addedNodes)
+                .forEach(node => recurseNvimify(node as HTMLElement)),
+            );
+        // Each time nodes have been removed from the page, check if each of our
+        // iframes should be removed from the page. This would be wasteful for
+        // large numbers of iframes but we'll never have more than 10 anyway so
+        // it's probably ok.
+        if (changes.find(change => change.removedNodes.length > 0)) {
+            global.selectorToElems.forEach(({input: elem}, selector, map) => {
+                // If element is not in document or is not visible
+                if (!elem.ownerDocument.contains(elem)
+                    || (elem.offsetWidth === 0 && elem.offsetHeight === 0 && elem.getClientRects().length === 0)) {
+                    functions.killEditor(selector);
+                }
+            });
+        }
+        global.selectorToElems.forEach(resizeEditor);
+    })).observe(window.document, { subtree: true, childList: true });
+
+    const treeWalker = document.createTreeWalker(document.documentElement,
+        NodeFilter.SHOW_ELEMENT,
+        { acceptNode: isEditable },
+    );
+
+    while (treeWalker.nextNode()) {
+        addNvimListener(treeWalker.currentNode as HTMLElement);
     }
-    global.selectorToElems.forEach(resizeEditor);
-})).observe(window.document, { subtree: true, childList: true });
-
-const treeWalker = document.createTreeWalker(document.documentElement,
-    NodeFilter.SHOW_ELEMENT,
-    { acceptNode: isEditable },
-);
-
-while (treeWalker.nextNode()) {
-    addNvimListener(treeWalker.currentNode as HTMLElement);
 }
+
+browser.storage.sync.get("selected").then(async ({ selected }: { selected: string }) => {
+    const list = (await browser.storage.sync.get(selected))[selected] as string;
+    const matches = list
+        .split("\n")
+        .find((pat: string) => (new RegExp(pat)).test(document.location.href));
+    if ((selected === "whitelist" && matches)
+        || (selected === "blacklist" && !matches)) {
+        setupListeners();
+    }
+});

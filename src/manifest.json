@@ -28,7 +28,11 @@
     }
   },
 
-  "permissions": ["nativeMessaging"],
+  "options_ui": {
+    "page": "preferences.html"
+  },
+
+  "permissions": ["nativeMessaging", "storage"],
 
   "icons": {
     "48": "firenvim.svg"
