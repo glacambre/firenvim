@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { ElementOption } from "./ElementOption";
 import { ListOption } from "./ListOption";
 
 class Page extends React.Component {
@@ -9,6 +10,7 @@ class Page extends React.Component {
     public render() {
         return React.createElement("div", { id: "main" },
             React.createElement(ListOption),
+            React.createElement(ElementOption),
         );
     }
 }

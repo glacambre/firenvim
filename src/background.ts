@@ -19,3 +19,12 @@ browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResp
     }
     return fn(sender, request.args || []);
 });
+
+browser.runtime.onInstalled.addListener((details) => {
+    if (details.reason === "install") {
+        browser.storage.sync.set({
+            blacklist: "example\\.{com,net,org}",
+            elements: ".* textarea",
+        });
+    }
+});

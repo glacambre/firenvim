@@ -61,70 +61,52 @@ function resizeEditor({ iframe, input }: PageElements) {
     iframe.style.zIndex = "2147483647";
 }
 
-function isEditable(elem: HTMLElement) {
-    if (elem.tagName === "TEXTAREA"
-        || (elem.tagName === "INPUT"
-            && ["email", "search", "tel", "text", "url"].includes((elem as HTMLInputElement).type))) {
-        return NodeFilter.FILTER_ACCEPT;
-    }
-    return NodeFilter.FILTER_SKIP;
-}
-
-function addNvimListener(elem: HTMLElement) {
+function addNvimListener(elem: Element) {
     elem.removeEventListener("focus", global.nvimify);
     elem.addEventListener("focus", global.nvimify);
 }
 
-function recurseNvimify(elem: HTMLElement) {
-    if (isEditable(elem) === NodeFilter.FILTER_ACCEPT) {
-        addNvimListener(elem);
-        return;
-    }
-    if (elem.children) {
-        Array.from(elem.children).forEach(child => recurseNvimify(child as HTMLElement));
-    }
-}
+const mutationTimeout = 0;
 
-function setupListeners() {
+function setupListeners(selector: string) {
     (new MutationObserver(changes => {
-        changes
-            .filter((change: MutationRecord) => change.addedNodes.length > 0)
-            .forEach((change: MutationRecord) => Array.from(change.addedNodes)
-                .forEach(node => recurseNvimify(node as HTMLElement)),
-            );
+        Array.from(document.querySelectorAll(selector))
+            .forEach(elem => addNvimListener(elem));
         // Each time nodes have been removed from the page, check if each of our
         // iframes should be removed from the page. This would be wasteful for
         // large numbers of iframes but we'll never have more than 10 anyway so
         // it's probably ok.
         if (changes.find(change => change.removedNodes.length > 0)) {
-            global.selectorToElems.forEach(({input: elem}, selector, map) => {
+            global.selectorToElems.forEach(({input: elem}, select, map) => {
                 // If element is not in document or is not visible
                 if (!elem.ownerDocument.contains(elem)
                     || (elem.offsetWidth === 0 && elem.offsetHeight === 0 && elem.getClientRects().length === 0)) {
-                    functions.killEditor(selector);
+                    functions.killEditor(select);
                 }
             });
         }
         global.selectorToElems.forEach(resizeEditor);
     })).observe(window.document, { subtree: true, childList: true });
 
-    const treeWalker = document.createTreeWalker(document.documentElement,
-        NodeFilter.SHOW_ELEMENT,
-        { acceptNode: isEditable },
-    );
-
-    while (treeWalker.nextNode()) {
-        addNvimListener(treeWalker.currentNode as HTMLElement);
-    }
+    Array.from(document.querySelectorAll(selector))
+        .forEach(elem => addNvimListener(elem));
 }
 
-browser.storage.sync.get("selected").then(async ({ selected }: { selected: string }) => {
-    const list = (await browser.storage.sync.get(selected))[selected] as string;
-    const matches = list
+browser.storage.sync.get("blacklist").then(async ({ blacklist }: { blacklist: string }) => {
+    const matches = blacklist
         .split("\n")
         .find((pat: string) => (new RegExp(pat)).test(document.location.href));
-    if ((selected === "whitelist" && matches)
-        || (selected === "blacklist" && !matches)) {
-        setupListeners();
+    if (!matches) {
+        const match = ((await browser.storage.sync.get("elements"))
+            .elements as string)
+            .split("\n")
+            .map(line => {
+                const index = line.indexOf(" ");
+                return [line.slice(0, index), line.slice(index + 1)];
+            })
+            .find(patsel => (new RegExp(patsel[0])).test(document.location.href));
+        if (match) {
+            setupListeners(match[1]);
+        }
     }
 });
