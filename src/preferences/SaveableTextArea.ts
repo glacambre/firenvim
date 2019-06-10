@@ -58,7 +58,7 @@ export class SaveableTextArea extends React.Component {
         return React.createElement("div", {},
             React.createElement("textarea", {
                 disabled: (this.props as any).disabled,
-                onInput: e => this.onTextInput(e),
+                onInput: (e: any) => this.onTextInput(e),
                 value: this.state.currentContent,
             }),
             saveButton,
