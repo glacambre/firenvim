@@ -30,7 +30,12 @@ const global = {
         iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
         span.attachShadow({ mode: "closed" }).appendChild(iframe);
         elem.ownerDocument.body.appendChild(span);
-        iframe.focus();
+        function refocus() {
+            setTimeout(() => iframe.focus(), 0);
+        }
+        iframe.addEventListener("blur", refocus);
+        setTimeout(() => iframe.removeEventListener("blur", refocus), 1000);
+        refocus();
     },
     selectorToElems: new Map<string, PageElements>(),
 };
