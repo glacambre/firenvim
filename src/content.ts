@@ -2,7 +2,11 @@ import { getFunctions } from "./page/functions";
 import { computeSelector } from "./utils/CSSUtils";
 
 const global = {
+    // lastEditorLocation: a [url, selector] tuple indicating the page the last
+    // iframe was created on and the selector of the corresponding textarea.
     lastEditorLocation: ["", ""] as [string, string],
+    // nvimify: triggered when an element is focused, takes care of creating
+    // the editor iframe and appending it to the page.
     nvimify: (evt: FocusEvent) => {
         const elem = evt.target as HTMLElement;
         const selector = computeSelector(elem);
@@ -64,6 +68,7 @@ const global = {
             }
         }, { root: null, threshold: 0.1 })).observe(elem);
     },
+    // selectorToElems: a map of selectors->{input, span, iframe} objects
     selectorToElems: new Map<string, PageElements>(),
 };
 
@@ -85,12 +90,18 @@ browser.runtime.onMessage.addListener(async (
 
 function resizeEditor({ iframe, input }: PageElements) {
     const rect = input.getBoundingClientRect();
+    // First, save attributes
+    const attrs = ["height", "left", "position", "top", "width", "zIndex"];
+    const oldAttrs = attrs.map((attr: any) => iframe.style[attr]);
+    // Assign new values
     iframe.style.height = `${rect.height}px`;
     iframe.style.left = `${rect.left + window.scrollX}px`;
     iframe.style.position = "absolute";
     iframe.style.top = `${rect.top + window.scrollY}px`;
     iframe.style.width = `${rect.width}px`;
     iframe.style.zIndex = "2147483647";
+    // Return true if the values changed, false otherwise
+    return !!attrs.find((attr: any, index) => iframe.style[attr] !== oldAttrs[index]);
 }
 
 function addNvimListener(elem: Element) {
@@ -112,6 +123,26 @@ function setupListeners(selector: string) {
 
     Array.from(document.querySelectorAll(selector))
         .forEach(elem => addNvimListener(elem));
+
+    function onScroll(cont: boolean) {
+        window.requestAnimationFrame(() => {
+            const changed = Array.from(global.selectorToElems.entries())
+                .map(([_, elems]) => resizeEditor(elems))
+                .find(hasChanged => hasChanged);
+            if (changed) {
+                // As long as one editor changes position, try to resize
+                onScroll(true);
+            } else if (cont) {
+                // No editor has moved, but this might be because the website
+                // implements some kind of smooth scrolling that doesn't make
+                // the textarea move immediately. In order to deal with these
+                // cases, schedule a last redraw in a few milliseconds
+                setTimeout(() => onScroll(false), 50);
+            }
+        });
+    }
+    window.addEventListener("scroll", () => onScroll(true));
+    window.addEventListener("wheel", () => onScroll(true));
 }
 
 browser.storage.sync.get("blacklist").then(async ({ blacklist }: { blacklist: string }) => {
