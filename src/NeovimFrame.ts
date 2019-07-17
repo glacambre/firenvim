@@ -47,10 +47,11 @@ function addModifier(mod: string, text: string) {
 const locationPromise = page.getEditorLocation();
 
 window.addEventListener("load", async () => {
+    const connectionData = browser.runtime.sendMessage({ funcName: ["getNewNeovimInstance"] });
     const host = document.getElementById("host") as HTMLPreElement;
     const keyHandler = document.getElementById("keyhandler");
     const [url, selector] = await locationPromise;
-    const nvimPromise = neovim(host, selector);
+    const nvimPromise = neovim(host, selector, await connectionData);
     const contentPromise = page.getElementContent(selector);
 
     const [cols, rows] = getGridSize(host);
@@ -68,14 +69,37 @@ window.addEventListener("load", async () => {
         nvim.ui_try_resize(nCols, nRows);
     });
 
+    // Create file, set its content to the textarea's, write it
     const filename = toFileName(url, selector);
     Promise.all([nvim.command(`edit ${filename}`), contentPromise])
         .then(([_, content]: [any, string]) => nvim.buf_set_lines(0, 0, -1, 0, content.split("\n")))
         .then((_: any) => nvim.command(":w"));
-    nvim.command(`autocmd BufWrite ${filename} `
-        + `call rpcnotify(1, 'firenvim_bufwrite', {'text': nvim_buf_get_lines(0, 0, -1, 0)})`);
-    nvim.command(`autocmd VimLeave * call rpcnotify(1, 'firenvim_vimleave')`);
+
+    // When closing the editor, delete the file
     nvim.command(`autocmd VimLeave * call delete('${filename}')`);
+
+    // Set client info and ask for notifications when the file is written/nvim is closed
+    const extInfo = browser.runtime.getManifest();
+    const [major, minor, patch] = extInfo.version.split(".");
+    nvim.set_client_info(extInfo.name,
+        { major, minor, patch },
+        "ui",
+        { write: { async: true, nargs: 0 } },
+        {},
+    )
+        .then(() => nvim.list_chans())
+        .then((channels: any) => {
+            const self: any = Object.values(channels)
+                .find((channel: any) => channel.client && channel.client.name.match(new RegExp(extInfo.name, "i")));
+            if (!self) {
+                throw new Error("Couldn't find own channel.");
+            }
+            nvim.command(`autocmd BufWrite ${filename} `
+                + `call rpcnotify(${self.id}, `
+                    + `'firenvim_bufwrite', `
+                    + `{'text': nvim_buf_get_lines(0, 0, -1, 0)})`);
+            nvim.command(`autocmd VimLeave * call rpcnotify(${self.id}, 'firenvim_vimleave')`);
+        });
 
     keyHandler.addEventListener("keydown", (evt) => {
         keyHandler.style.left = `0px`;
@@ -99,10 +123,11 @@ window.addEventListener("load", async () => {
         }
     });
     keyHandler.addEventListener("input", (evt: any) => {
-        nvim.input(evt.data);
+        nvim.input(evt.target.value);
         evt.preventDefault();
         evt.stopImmediatePropagation();
-        keyHandler.innerText = "";
+        evt.target.innerText = "";
+        evt.target.value = "";
     });
     window.addEventListener("mousemove", (evt: MouseEvent) => {
         keyHandler.style.left = `${evt.clientX}px`;

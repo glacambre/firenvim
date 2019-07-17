@@ -5,15 +5,14 @@ os:
   - windows
 node_js:
   - 10.15
-before_install:
-  - curl https://sh.rustup.rs > rustup.sh && chmod +x rustup.sh && ./rustup.sh -y
+  - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64"
 install:
-  - PATH="$PATH:$HOME/.cargo/bin" npm install
-  - PATH="$PATH:$HOME/.cargo/bin" npm run build
+  - npm install
+  - npm run build
+  - npm run install
 cache:
   directories:
     - node_modules
-    - "$HOME/.cargo"
 addons:
   apt:
     update: true

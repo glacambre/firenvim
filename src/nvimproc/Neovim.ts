@@ -3,19 +3,26 @@ import { onRedraw } from "../render/Redraw";
 import { Stdin } from "./Stdin";
 import { Stdout } from "./Stdout";
 
-export async function neovim(element: HTMLPreElement, selector: string) {
+export async function neovim(
+        element: HTMLPreElement,
+        selector: string,
+        { port, password }: { port: number, password: number },
+    ) {
     let stdin: Stdin;
     let stdout: Stdout;
     let reqId = 0;
     const requests = new Map<number, { resolve: any, reject: any }>();
 
-    const port = browser.runtime.connect();
-    port.onDisconnect.addListener((_: any) => {
+    const socket = new WebSocket(`ws://127.0.0.1:${port}/${password}`);
+    document.addEventListener("beforeunload", () => socket.close());
+    socket.binaryType = "arraybuffer";
+    socket.addEventListener("close", ((_: any) => {
         console.log(`Port disconnected for element ${selector}.`);
         page.killEditor(selector);
-    });
-    stdin = new Stdin(port);
-    stdout = new Stdout(port);
+    }));
+    await (new Promise(resolve => socket.addEventListener("open", resolve)));
+    stdin = new Stdin(socket);
+    stdout = new Stdout(socket);
 
     const request = (api: string, args: any[]) => {
         return new Promise((resolve, reject) => {

@@ -1,5 +1,6 @@
 local utils = require("utils")
 
+-- The client's handshake is described here: https://tools.ietf.org/html/rfc6455#section-4.2.1
 local function parse_headers()
         local headerend = nil
         local headerstring = ""
@@ -10,7 +11,7 @@ local function parse_headers()
         end
 
         -- request is the first line of any HTTP request: `GET /file HTTP/1.1`
-        local request = string.sub(headerstring, 1, string.find(headerstring, "\n") - 1)
+        local request = string.sub(headerstring, 1, string.find(headerstring, "\n"))
         -- rest is any data that might follow the actual HTTP request
         -- (GET+key/values). If I understand the spec correctly, it should be
         -- empty.
@@ -28,6 +29,7 @@ local function compute_key(key)
         return utils.base64(utils.sha1(key .. "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
 end
 
+-- The server's opening handshake is described here: https://tools.ietf.org/html/rfc6455#section-4.2.2
 local function accept_connection(headers)
         return "HTTP/1.1 101 Swithing Protocols\n" ..
         "Connection: Upgrade\r\n" ..
@@ -36,6 +38,7 @@ local function accept_connection(headers)
         "\r\n"
 end
 
+-- Frames are described here: https://tools.ietf.org/html/rfc6455#section-5.2
 local function decode_frame(frame)
         local result = {}
         local current_byte = 1
@@ -49,36 +52,12 @@ local function decode_frame(frame)
         result.payload_length = bit.band(string.byte(frame, current_byte), 127)
         current_byte = current_byte + 1
         if result.payload_length == 126 then
-                result.payload_length = bit.lshift(string.byte(frame, current_byte), 8)
-                current_byte = current_byte + 1
-                result.payload_length = result.payload_length +
-                        string.byte(frame, current_byte)
-                current_byte = current_byte + 1
+                result.payload_length = utils.to_16_bits_number(string.sub(frame, current_byte))
+                current_byte = current_byte + 2
         elseif result.payload_length == 127 then
-                result.payload_length = 0
-                -- Can't do this because numbers are on 53 bits
-                -- result.payload_length = bit.lshift(string.byte(frame, current_byte), 56)
-                current_byte = current_byte + 1
-                -- Can't do this because numbers are on 53 bits
-                -- result.payload_length = bit.lshift(string.byte(frame, current_byte), 48)
-                current_byte = current_byte + 1
-                result.payload_length = result.payload_length +
-                        bit.lshift(string.byte(frame, current_byte), 40)
-                current_byte = current_byte + 1
-                result.payload_length = result.payload_length +
-                        bit.lshift(string.byte(frame, current_byte), 32)
-                current_byte = current_byte + 1
-                result.payload_length = result.payload_length +
-                        bit.lshift(string.byte(frame, current_byte), 24)
-                current_byte = current_byte + 1
-                result.payload_length = result.payload_length +
-                        bit.lshift(string.byte(frame, current_byte), 16)
-                current_byte = current_byte + 1
-                result.payload_length = result.payload_length +
-                        bit.lshift(string.byte(frame, current_byte), 8)
-                current_byte = current_byte + 1
-                result.payload_length = result.payload_length + string.byte(frame, current_byte)
+                result.payload_length = utils.to_64_bits_number(string.sub(frame, current_byte))
                 print("Warning: payload length on 64 bits. Estimated:" .. result.payload_length)
+                current_byte = current_byte + 8
         end
         result.masking_key = string.sub(frame, current_byte, current_byte + 4)
         current_byte = current_byte + 4
@@ -96,8 +75,29 @@ local function decode_frame(frame)
         return result
 end
 
+-- The format is the same as the client's (
+-- https://tools.ietf.org/html/rfc6455#section-5.2 ), except we don't need to
+-- mask the data.
+local function encode_frame(data)
+        -- 130: 10000010
+        -- Fin: 1
+        -- RSV{1,2,3}: 0
+        -- Opcode: 2 (binary frame)
+        local header = string.char(130)
+        local len = ""
+        if string.len(data) < 126 then
+                len = string.char(string.len(data))
+        elseif string.len(data) < 65536 then
+                len = string.char(126) .. utils.to_16_bits_str(string.len(data))
+        else
+                len = string.char(127) .. utils.to_64_bits_str(string.len(data))
+        end
+        return  header .. len .. data
+end
+
 return {
         accept_connection = accept_connection,
         decode_frame = decode_frame,
+        encode_frame = encode_frame,
         parse_headers = parse_headers,
 }

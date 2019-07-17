@@ -56,20 +56,52 @@ local function base64(val)
         return result
 end
 
+-- Returns a 2-characters string the bits of which represent the argument
+local function to_16_bits_str(number)
+        return string.char(bit.band(bit.rshift(number, 8), 255)) ..
+                string.char(bit.band(number, 255))
+end
+
+-- Returns a number representing the 2 first characters of the argument string
+local function to_16_bits_number(str)
+        return bit.lshift(string.byte(str, 1), 8) +
+                string.byte(str, 2)
+end
+
+-- Returns a 4-characters string the bits of which represent the argument
+local function to_32_bits_str(number)
+        return string.char(bit.band(bit.rshift(number, 24), 255)) ..
+                string.char(bit.band(bit.rshift(number, 16), 255)) ..
+                string.char(bit.band(bit.rshift(number, 8), 255)) ..
+                string.char(bit.band(number, 255))
+end
+
+-- Returns a number representing the 4 first characters of the argument string
+local function to_32_bits_number(str)
+        return bit.lshift(string.byte(str, 1), 24) +
+                bit.lshift(string.byte(str, 2), 16) +
+                bit.lshift(string.byte(str, 3), 8) +
+                string.byte(str, 4)
+end
+
+-- Returns a 4-characters string the bits of which represent the argument
+-- Returns incorrect results on numbers larger than 2^32
+local function to_64_bits_str(number)
+        return string.char(0) .. string.char(0) .. string.char(0) .. string.char(0) ..
+                to_32_bits_str(number % 0xFFFFFFFF)
+end
+
+-- Returns a number representing the 8 first characters of the argument string
+-- Returns incorrect results on numbers larger than 2^32
+local function to_64_bits_number(str)
+        return bit.lshift(string.byte(str, 5), 24) +
+                bit.lshift(string.byte(str, 6), 16) +
+                bit.lshift(string.byte(str, 7), 8) +
+                string.byte(str, 8)
+end
+
 -- Algorithm described in https://tools.ietf.org/html/rfc3174
 local function sha1(val)
-        local function to_32_bits_str(number)
-                return string.char(bit.band(bit.rshift(number, 24), 255)) ..
-                        string.char(bit.band(bit.rshift(number, 16), 255)) ..
-                        string.char(bit.band(bit.rshift(number, 8), 255)) ..
-                        string.char(bit.band(number, 255))
-        end
-        local function to_32_bits_number(str)
-                return bit.lshift(string.byte(str, 1), 24) +
-                        bit.lshift(string.byte(str, 2), 16) +
-                        bit.lshift(string.byte(str, 3), 8) +
-                        string.byte(str, 4)
-        end
 
         -- Mark message end with bit 1 and pad with bit 0, then add message length
         -- Append original message length in bits as a 64bit number
@@ -173,4 +205,10 @@ end
 return {
         base64 = base64,
         sha1 = sha1,
+        to_16_bits_str = to_16_bits_str,
+        to_16_bits_number = to_16_bits_number,
+        to_32_bits_str = to_32_bits_str,
+        to_32_bits_number = to_32_bits_number,
+        to_64_bits_str = to_64_bits_str,
+        to_64_bits_number = to_64_bits_number,
 }

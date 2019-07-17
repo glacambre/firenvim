@@ -10,17 +10,29 @@ For now, just click on textareas or input fields. When you want to set the conte
 
 # How to install
 
+Before installing anything, please read [SECURITY.md](SECURITY.md).
+
+## Pre-built
+
 Get the extension from [AMO](https://addons.mozilla.org/en-US/firefox/addon/firenvim/), get the native messenger from the [releases page](https://github.com/glacambre/firenvim/releases). Run the native messenger once in your shell and if it results in `Native messenger successfully installed.` being printed, you're done.
+
+## From source
+
+Installing from source requires nodejs, npm and neovim v.>=0.4 and running the following commands:
+```sh
+git clone https://github.com/glacambre/firenvim
+cd firenvim
+npm install
+npm run build
+npm run install
+```
+These commands should have created a file named `target/xpi/firenvim-X.X.X.zip`. You can import it in firefox by going to `about:addons`, clicking on the cog icon and selecting `install addon from file` (note: this might require setting `xpinstall.signatures.required` to false in `about:config`).
+
+Now, install Firenvim like a regular vim plugin manually or by using your favourite plugin manager.
 
 # Drawbacks
 
-There are two huge issues with this extension. The first one is that some keybindings (e.g. `<C-w>`) are not overridable. I circumvent this issue by running a [patched](https://github.com/glacambre/firefox-patches) version of firefox.
-
-The second issue is that the extension is quite slow, for now. I believe this is in part caused by webextension API architecture: in order to reach Neovim, Firenvim's messages must go from Firefox's content process to its background process, then from the background process to Firenvim's native messenger and then from the native messenger to Neovim. Answers to these messages must pass through all 3 layers of IPC too.
-
-This could perhaps be alleviated by moving from the native messenger API to a websocket (this would remove the need to go through the background script).
-
-Another way to make Firenvim faster would probably be to move from DOM-rendering to Webgl rendering.
+The main issue with Firenvim is that some keybindings (e.g. `<C-w>`) are not overridable. I circumvent this issue by running a [patched](https://github.com/glacambre/firefox-patches) version of firefox.
 
 # You might also like
 
@@ -28,16 +40,3 @@ Another way to make Firenvim faster would probably be to move from DOM-rendering
 - [GhostText](https://github.com/GhostText/GhostText), lets you edit text areas in your editor with a single click. Requires installing a plugin in your editor too. Features live updates!
 - [Textern](https://github.com/jlebon/textern), a Firefox addon that lets you edit text areas in your editor without requiring you to install a plugin in your editor.
 - [withExEditor](https://github.com/asamuzaK/withExEditor), same thing as Textern, except you can also edit/view a page's source with your editor.
-
-# How to build
-
-You need nodejs, rustc, npm and cargo.
-
-```sh
-git clone https://github.com/glacambre/firenvim
-cd firenvim
-npm install
-npm run build
-```
-
-All build artifacts will be in the `target/` directory. Note that `node run build` will also install the native messenger on your computer. If another instance of the native messenger is already running while you try to install another version, you might get an error message. You can ignore it if you didn't change the native messenger's source code.

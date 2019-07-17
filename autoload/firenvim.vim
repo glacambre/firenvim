@@ -11,7 +11,7 @@ endfunction
 
 " Entry point of the vim-side of the extension.
 " This function does the following things:
-" - Generate a security token
+" - Get a security token from neovim's stdin
 " - Bind itself to a TCP port
 " - Write the security token + tcp port number to stdout()
 " - Take care of forwarding messages received on the TCP port to neovim
@@ -22,13 +22,17 @@ function! firenvim#run()
                 if strlen(a:data) > 254
                         throw "firenvim#run()WriteStdout doesn't handle messages more than 254 bytes long."
                 endif
-                call chansend(a:id, [strlen(a:data) . "\0\0\0" . a:data])
+                call chansend(a:id, [printf("%c\n\n\n", strlen(a:data)) . a:data])
         endfunction
         function! OnStdin(id, data, event)
                 if g:firenvim_port_opened
                         return
                 endif
-                let l:port = luaeval('require("firenvim").start_server("' . a:data[0][4:] . '")')
+                let l:params = json_decode(a:data[0][4:])
+                let l:port = luaeval("require('firenvim').start_server('" .
+                                        \ l:params["password"] . "', '" .
+                                        \ l:params["origin"] .
+                                        \ "')")
                 let g:firenvim_port_opened = 1
                 call WriteStdout(a:id, l:port)
         endfunction
@@ -48,7 +52,7 @@ endfunction
 function! firenvim#install()
         " Decide where the script responsible for starting neovim when firefox
         " asks for it should be placed
-        let l:execute_nvim_name_unix = "firenvim.sh"
+        let l:execute_nvim_name_unix = "firenvim"
         let l:execute_nvim_name_win = "firenvim.bat"
         let l:execute_nvim_name = l:execute_nvim_name_unix
         if has("win32")
@@ -65,7 +69,7 @@ function! firenvim#install()
         " Build native manifest and place it where firefox can find it
         let l:manifest_content = '{
                                 \ "name": "firenvim",
-                                \ "decription": "Turn Firefox into a Neovim client.",
+                                \ "description": "Turn Firefox into a Neovim client.",
                                 \ "path": "' . substitute(l:execute_nvim_path, '\', '\\\\', 'g') . '",
                                 \ "type": "stdio",
                                 \ "allowed_extensions": ["firenvim@lacamb.re"]
@@ -87,12 +91,12 @@ function! firenvim#install()
 
         " Build startup scripts and place them where needed
         let l:execute_nvim_sh = "#!/bin/sh\n
-                                \ cd " . l:data_dir . "\n
-                                \ exec '" . v:progpath . "' --headless -c 'FirenvimRun'\n
+                                \cd " . l:data_dir . "\n
+                                \exec '" . v:progpath . "' --headless -c 'call firenvim#run()'\n
                                 \"
 
         let l:execute_nvim_bat = "@echo off\n" .
-                                \ "dir " . l:data_dir . "\n" .
+                                \ "cd " . l:data_dir . "\n" .
                                 \ v:progpath . " --headless -c FirenvimRun\n"
 
         let l:execute_nvim = l:execute_nvim_sh
@@ -114,12 +118,13 @@ function! firenvim#install()
                 let l:key_arr = split(l:key, '\')
                 let l:i = 0
                 for l:i in range(2, len(key_arr) - 1)
-                        let l:ps1_content = l:ps1_content . "\nNew-Item -Path \"" . join(key_arr[0:i], '\') . '"'
+                        let l:ps1_content = l:ps1_content . "\nNew-Item -Path \"" . join(key_arr[0:i], '\') . '" -ErrorAction SilentlyContinue'
                 endfor
                 " Then, assign a value to it
                 let l:ps1_content = l:ps1_content . "\nSet-Item -Path \"" .
                                         \ l:key .
-                                        \ '\" -Value "' . l:manifest_path . '"'
+                                        \ '\" -Value "' . l:manifest_path . '" ' .
+                                        \ '-ErrorAction SilentlyContinue'
                 let l:ps1_path = s:build_path([l:manifest_dir_path, "create_registry_key.ps1"])
                 call writefile(split(l:ps1_content, "\n"), l:ps1_path)
                 call setfperm(l:ps1_path, "rwx------")
