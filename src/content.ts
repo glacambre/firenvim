@@ -50,10 +50,17 @@ const global = {
         // the user might want to stop focusing the iframe at some point, so we
         // actually stop refocusing the iframe a second after it is created.
         function refocus() {
-            setTimeout(() => iframe.focus(), 0);
+            setTimeout(() => {
+                elem.blur();
+                iframe.focus();
+            }, 0);
         }
         iframe.addEventListener("blur", refocus);
-        setTimeout(() => iframe.removeEventListener("blur", refocus), 1000);
+        elem.addEventListener("focus", refocus);
+        setTimeout(() => {
+            iframe.removeEventListener("blur", refocus);
+            elem.removeEventListener("focus", refocus);
+        }, 1000);
         refocus();
 
         // We want to remove the frame from the page if the corresponding
