@@ -1,6 +1,6 @@
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
-import { getGridSize, toFileName } from "./utils/utils";
+import { getCharSize, getGridSize, toFileName } from "./utils/utils";
 
 const nonLiteralKeys: {[key: string]: string} = {
     " ": "<Space>",
@@ -62,11 +62,27 @@ window.addEventListener("load", async () => {
         ext_linegrid: true,
         rgb: true,
     });
-    window.addEventListener("resize", _ => {
-        keyHandler.style.left = `0px`;
-        keyHandler.style.top = `0px`;
-        const [nCols, nRows] = getGridSize(host);
-        nvim.ui_try_resize(nCols, nRows);
+    let resizeReqId = 0;
+    browser.runtime.onMessage.addListener((request: any, sender: any, sendResponse: any) => {
+        if (request.selector === selector
+            && request.funcName[0] === "resize"
+            && request.args[0] > resizeReqId) {
+            const [id, width, height] = request.args;
+            resizeReqId = id;
+            // We need to put the keyHandler at the origin in order to avoid
+            // issues when it slips out of the viewport
+            keyHandler.style.left = `0px`;
+            keyHandler.style.top = `0px`;
+            // It's tempting to try to optimize this by only calling
+            // ui_try_resize when nCols is different from cols and nRows is
+            // different from rows but we can't because redraw notifications
+            // might happen without us actually calling ui_try_resize and then
+            // the sizes wouldn't be in sync anymore
+            const [cellWidth, cellHeight] = getCharSize(host);
+            const nCols = Math.floor(width / cellWidth);
+            const nRows = Math.floor(height / cellHeight);
+            nvim.ui_try_resize(nCols, nRows);
+        }
     });
 
     // Create file, set its content to the textarea's, write it

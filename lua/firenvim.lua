@@ -34,9 +34,7 @@ local function firenvim_start_server(token, origin)
                                         -- because it isn't complete yet
                                         return
                                 end
-                                print(origin)
                                 local origin_pattern = "^" .. string.gsub(origin, "-", "%%-") .. "$"
-                                print(origin_pattern)
                                 if not (string.match(request, "^GET /" .. token .. " HTTP/1.1\r\n$")
                                         and string.match(headers["Connection"] or "", "Upgrade")
                                         and string.match(headers["Origin"] or "", origin_pattern)

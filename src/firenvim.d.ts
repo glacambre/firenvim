@@ -39,4 +39,4 @@ type GotoUpdate = [number, number, number];
 type LineUpdate = [number, number, number, Array<[string, number, number?]>];
 type HighlightArray = Array<{ foreground: string, background: string }>;
 
-type PageElements = { input: HTMLElement, span: HTMLSpanElement, iframe: HTMLIFrameElement };
+type PageElements = { input: HTMLElement, span: HTMLSpanElement, iframe: HTMLIFrameElement, selector: string };

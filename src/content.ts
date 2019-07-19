@@ -15,8 +15,7 @@ const global = {
             return;
         }
 
-        const pageElements = {} as PageElements;
-        pageElements.input = elem;
+        const pageElements = { input: elem, selector } as PageElements;
         global.selectorToElems.set(selector, pageElements);
 
         global.lastEditorLocation = [document.location.href, selector];
@@ -33,13 +32,13 @@ const global = {
         // We don't need the iframe to be appended to the page in order to
         // resize it because we're just using the corresponding
         // input/textarea's size
-        resizeEditor(pageElements);
+        putEditorOverInput(pageElements);
         // Resizing a textarea changes its "style" attribute
         // This is a hack. We should ideally use a ResizeObserver (
         // https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver )
         // but this API doesn't exist in Firefox yet :(
-        new MutationObserver((changes, observer) => resizeEditor(pageElements))
-            .observe(elem, { attributes: true, attributeFilter: ["style"] });
+        new MutationObserver((changes, observer) => putEditorOverInput(pageElements))
+            .observe(elem, { attributes: true, attributeOldValue: true, attributeFilter: ["style"] });
 
         iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
         span.attachShadow({ mode: "closed" }).appendChild(iframe);
@@ -84,10 +83,13 @@ Object.assign(window, functions);
 
 browser.runtime.onMessage.addListener(async (
     // args: [string, string] is factually incorrect but we need to please typescript
-    request: { funcName: string[], args: [string, string & number, string & number] },
+    request: { funcName: string[], selector?: string, args: [string, string & number, string & number] },
     sender: any,
     sendResponse: any,
 ) => {
+    if (request.selector) {
+        return;
+    }
     const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
     if (!fn) {
         throw new Error(`Error: unhandled content request: ${request.toString()}.`);
@@ -95,9 +97,17 @@ browser.runtime.onMessage.addListener(async (
     return fn(...request.args);
 });
 
-function resizeEditor({ iframe, input }: PageElements) {
+let resizeReqId = 0;
+function putEditorOverInput({ iframe, input, selector }: PageElements) {
     const rect = input.getBoundingClientRect();
-    // First, save attributes
+    // Make sure there isn't any extra width/height
+    iframe.style.padding = "0px";
+    iframe.style.margin = "0px";
+    iframe.style.border = "0px";
+    // We still need a border, use a shadow for that
+    iframe.style.boxShadow = "0px 0px 1px 1px black";
+
+    // Save attributes
     const attrs = ["height", "left", "position", "top", "width", "zIndex"];
     const oldAttrs = attrs.map((attr: any) => iframe.style[attr]);
     // Assign new values
@@ -107,8 +117,20 @@ function resizeEditor({ iframe, input }: PageElements) {
     iframe.style.top = `${rect.top + window.scrollY}px`;
     iframe.style.width = `${rect.width}px`;
     iframe.style.zIndex = "2147483647";
-    // Return true if the values changed, false otherwise
-    return !!attrs.find((attr: any, index) => iframe.style[attr] !== oldAttrs[index]);
+
+    const changed = !!attrs.find((attr: any, index) => iframe.style[attr] !== oldAttrs[index]);
+    if (changed) {
+        resizeReqId += 1;
+        browser.runtime.sendMessage({
+            args: {
+                args: [resizeReqId, rect.width, rect.height],
+                funcName : ["resize"],
+                selector,
+            },
+            funcName: ["messageOwnTab"],
+        });
+    }
+    return changed;
 }
 
 function addNvimListener(elem: Element) {
@@ -134,7 +156,7 @@ function setupListeners(selector: string) {
     function onScroll(cont: boolean) {
         window.requestAnimationFrame(() => {
             const changed = Array.from(global.selectorToElems.entries())
-                .map(([_, elems]) => resizeEditor(elems))
+                .map(([_, elems]) => putEditorOverInput(elems))
                 .find(hasChanged => hasChanged);
             if (changed) {
                 // As long as one editor changes position, try to resize
