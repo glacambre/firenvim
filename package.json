@@ -1,24 +1,24 @@
 {
-  "name": "Firenvim",
-  "version": "0.1.5",
-  "description": "A webextension to turn Firefox into a Neovim client.",
-  "devDependencies": {
+  "author": "glacambre",
+  "dependencies": {
+    "@types/msgpack-lite": "0.1.6",
     "@types/node": "12.0.7",
+    "@types/react": "16.8.19",
+    "@types/react-dom": "16.8.4",
     "awesome-typescript-loader": "5.2.1",
     "copy-webpack-plugin": "5.0.0",
+    "msgpack-lite": "0.1.26",
+    "react": "16.8.6",
+    "react-dom": "16.8.6",
     "tslint": "5.13.1",
     "tslint-sonarts": "1.9.0",
     "typescript": "3.3.3333",
     "web-ext": "3.0.0",
+    "web-ext-types": "3.1.0",
     "webpack": "4.29.6",
     "webpack-cli": "3.2.3"
   },
-  "scripts": {
-    "build": "tslint --fix --project . && webpack && web-ext build --source-dir target/extension --artifacts-dir target/xpi --overwrite-dest",
-    "install": "nvim --headless -c ':set rtp+=.' -c 'call firenvim#install()' -c 'quit' || true",
-    "clean": "rm -rf target"
-  },
-  "author": "glacambre",
+  "description": "A webextension to turn Firefox into a Neovim client.",
   "keywords": [
     "webextension",
     "webext",
@@ -26,13 +26,11 @@
     "firefox"
   ],
   "license": "GPL-3.0",
-  "dependencies": {
-    "@types/msgpack-lite": "0.1.6",
-    "@types/react": "16.8.19",
-    "@types/react-dom": "16.8.4",
-    "msgpack-lite": "0.1.26",
-    "react": "16.8.6",
-    "react-dom": "16.8.6",
-    "web-ext-types": "3.1.0"
-  }
+  "name": "Firenvim",
+  "scripts": {
+    "build": "tslint --fix --project . && webpack && web-ext build --source-dir target/extension --artifacts-dir target/xpi --overwrite-dest",
+    "install": "nvim --headless -c ':set rtp+=.' -c 'call firenvim#install()' -c 'quit' || true",
+    "clean": "rm -rf target"
+  },
+  "version": "0.1.5"
 }
