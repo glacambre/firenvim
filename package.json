@@ -10,7 +10,7 @@
     "tslint-sonarts": "1.9.0",
     "typescript": "3.3.3333",
     "web-ext": "3.0.0",
-    "webpack": "4.29.6",
+    "webpack": "4.36.1",
     "webpack-cli": "3.2.3"
   },
   "scripts": {
