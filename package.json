@@ -14,7 +14,7 @@
     "tslint-sonarts": "1.9.0",
     "typescript": "3.5.3",
     "web-ext": "3.1.1",
-    "web-ext-types": "3.1.0",
+    "web-ext-types": "3.2.1",
     "webpack": "4.29.6",
     "webpack-cli": "3.3.6"
   },
