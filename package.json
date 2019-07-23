@@ -11,7 +11,7 @@
     "typescript": "3.3.3333",
     "web-ext": "3.0.0",
     "webpack": "4.29.6",
-    "webpack-cli": "3.2.3"
+    "webpack-cli": "3.3.6"
   },
   "scripts": {
     "build": "tslint --fix --project . && webpack && web-ext build --source-dir target/extension --artifacts-dir target/xpi --overwrite-dest",
