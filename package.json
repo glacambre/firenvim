@@ -10,7 +10,7 @@
     "msgpack-lite": "0.1.26",
     "react": "16.8.6",
     "react-dom": "16.8.6",
-    "tslint": "5.13.1",
+    "tslint": "5.18.0",
     "tslint-sonarts": "1.9.0",
     "typescript": "3.3.3333",
     "web-ext": "3.1.1",
