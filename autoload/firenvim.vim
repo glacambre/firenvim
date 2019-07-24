@@ -28,7 +28,7 @@ function! firenvim#run()
                 if g:firenvim_port_opened
                         return
                 endif
-                let l:params = json_decode(a:data[0][4:])
+                let l:params = json_decode(matchstr(a:data[0], "{[^}]*}"))
                 let l:port = luaeval("require('firenvim').start_server('" .
                                         \ l:params["password"] . "', '" .
                                         \ l:params["origin"] .
