@@ -4,7 +4,7 @@
     "@types/msgpack-lite": "0.1.6",
     "@types/node": "12.6.8",
     "@types/react": "16.8.23",
-    "@types/react-dom": "16.8.4",
+    "@types/react-dom": "16.8.5",
     "awesome-typescript-loader": "5.2.1",
     "copy-webpack-plugin": "5.0.3",
     "msgpack-lite": "0.1.26",
