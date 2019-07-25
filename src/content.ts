@@ -37,6 +37,7 @@ const global = {
         // This is a hack. We should ideally use a ResizeObserver (
         // https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver )
         // but this API doesn't exist in Firefox yet :(
+        let resizeReqId = 0;
         new MutationObserver((changes, observer) => {
             const { dimChanged, newRect: rect } = putEditorOverInput(pageElements);
             if (dimChanged) {
@@ -90,9 +91,10 @@ const global = {
     selectorToElems: new Map<string, PageElements>(),
 };
 
+// This works as an rpc mechanism, allowing the frame script to perform calls
+// in the content script.
 const functions = getFunctions(global);
 Object.assign(window, functions);
-
 browser.runtime.onMessage.addListener(async (
     // args: [string, string] is factually incorrect but we need to please typescript
     request: { funcName: string[], selector?: string, args: [string, string & number, string & number] },
@@ -109,7 +111,6 @@ browser.runtime.onMessage.addListener(async (
     return fn(...request.args);
 });
 
-let resizeReqId = 0;
 function putEditorOverInput({ iframe, input, selector }: PageElements) {
     const rect = input.getBoundingClientRect();
     // Make sure there isn't any extra width/height
