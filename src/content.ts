@@ -37,8 +37,20 @@ const global = {
         // This is a hack. We should ideally use a ResizeObserver (
         // https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver )
         // but this API doesn't exist in Firefox yet :(
-        new MutationObserver((changes, observer) => putEditorOverInput(pageElements))
-            .observe(elem, { attributes: true, attributeOldValue: true, attributeFilter: ["style"] });
+        new MutationObserver((changes, observer) => {
+            const { dimChanged, newRect: rect } = putEditorOverInput(pageElements);
+            if (dimChanged) {
+                resizeReqId += 1;
+                browser.runtime.sendMessage({
+                    args: {
+                        args: [resizeReqId, rect.width, rect.height],
+                        funcName : ["resize"],
+                        selector,
+                    },
+                    funcName: ["messageOwnTab"],
+                });
+            }
+        }).observe(elem, { attributes: true, attributeOldValue: true, attributeFilter: ["style"] });
 
         iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
         span.attachShadow({ mode: "closed" }).appendChild(iframe);
@@ -108,8 +120,11 @@ function putEditorOverInput({ iframe, input, selector }: PageElements) {
     iframe.style.boxShadow = "0px 0px 1px 1px black";
 
     // Save attributes
-    const attrs = ["height", "left", "position", "top", "width", "zIndex"];
-    const oldAttrs = attrs.map((attr: any) => iframe.style[attr]);
+    const posAttrs = ["left", "position", "top", "zIndex"];
+    const oldPosAttrs = posAttrs.map((attr: any) => iframe.style[attr]);
+    const dimAttrs = ["height", "width"];
+    const oldDimAttrs = dimAttrs.map((attr: any) => iframe.style[attr]);
+
     // Assign new values
     iframe.style.height = `${rect.height}px`;
     iframe.style.left = `${rect.left + window.scrollX}px`;
@@ -118,27 +133,18 @@ function putEditorOverInput({ iframe, input, selector }: PageElements) {
     iframe.style.width = `${rect.width}px`;
     iframe.style.zIndex = "2147483647";
 
-    const changed = !!attrs.find((attr: any, index) => iframe.style[attr] !== oldAttrs[index]);
-    if (changed) {
-        resizeReqId += 1;
-        browser.runtime.sendMessage({
-            args: {
-                args: [resizeReqId, rect.width, rect.height],
-                funcName : ["resize"],
-                selector,
-            },
-            funcName: ["messageOwnTab"],
-        });
-    }
-    return changed;
-}
+    const posChanged = !!posAttrs.find((attr: any, index) => iframe.style[attr] !== oldPosAttrs[index]);
+    const dimChanged = !!dimAttrs.find((attr: any, index) => iframe.style[attr] !== oldDimAttrs[index]);
 
-function addNvimListener(elem: Element) {
-    elem.removeEventListener("focus", global.nvimify);
-    elem.addEventListener("focus", global.nvimify);
+    return { posChanged, dimChanged, newRect: rect };
 }
 
 function setupListeners(selector: string) {
+    function addNvimListener(elem: Element) {
+        elem.removeEventListener("focus", global.nvimify);
+        elem.addEventListener("focus", global.nvimify);
+    }
+
     (new MutationObserver((changes, observer) => {
         if (changes.filter(change => change.addedNodes.length > 0).length <= 0) {
             return;
@@ -155,10 +161,10 @@ function setupListeners(selector: string) {
 
     function onScroll(cont: boolean) {
         window.requestAnimationFrame(() => {
-            const changed = Array.from(global.selectorToElems.entries())
+            const posChanged = Array.from(global.selectorToElems.entries())
                 .map(([_, elems]) => putEditorOverInput(elems))
-                .find(hasChanged => hasChanged);
-            if (changed) {
+                .find(changed => changed.posChanged);
+            if (posChanged) {
                 // As long as one editor changes position, try to resize
                 onScroll(true);
             } else if (cont) {
