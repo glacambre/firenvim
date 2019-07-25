@@ -45,13 +45,13 @@ function addModifier(mod: string, text: string) {
 }
 
 const locationPromise = page.getEditorLocation();
+const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNewNeovimInstance"] });
 
 window.addEventListener("load", async () => {
-    const connectionData = browser.runtime.sendMessage({ funcName: ["getNewNeovimInstance"] });
     const host = document.getElementById("host") as HTMLPreElement;
     const keyHandler = document.getElementById("keyhandler");
-    const [url, selector] = await locationPromise;
-    const nvimPromise = neovim(host, selector, await connectionData);
+    const [[url, selector], connectionData] = await Promise.all([locationPromise, connectionPromise]);
+    const nvimPromise = neovim(host, selector, connectionData);
     const contentPromise = page.getElementContent(selector);
 
     const [cols, rows] = getGridSize(host);
@@ -91,9 +91,6 @@ window.addEventListener("load", async () => {
         .then(([_, content]: [any, string]) => nvim.buf_set_lines(0, 0, -1, 0, content.split("\n")))
         .then((_: any) => nvim.command(":w"));
 
-    // When closing the editor, delete the file
-    nvim.command(`autocmd VimLeave * call delete('${filename}')`);
-
     // Set client info and ask for notifications when the file is written/nvim is closed
     const extInfo = browser.runtime.getManifest();
     const [major, minor, patch] = extInfo.version.split(".");
@@ -110,11 +107,15 @@ window.addEventListener("load", async () => {
             if (!self) {
                 throw new Error("Couldn't find own channel.");
             }
-            nvim.command(`autocmd BufWrite ${filename} `
-                + `call rpcnotify(${self.id}, `
-                    + `'firenvim_bufwrite', `
-                    + `{'text': nvim_buf_get_lines(0, 0, -1, 0)})`);
-            nvim.command(`autocmd VimLeave * call rpcnotify(${self.id}, 'firenvim_vimleave')`);
+            nvim.call_atomic((`augroup FirenvimAugroup
+                            au!
+                            autocmd BufWrite ${filename} `
+                                + `call rpcnotify(${self.id}, `
+                                    + `'firenvim_bufwrite', `
+                                    + `{'text': nvim_buf_get_lines(0, 0, -1, 0)})
+                            autocmd VimLeave * call delete('${filename}')
+                            autocmd VimLeave * call rpcnotify(${self.id}, 'firenvim_vimleave')
+                        augroup END`).split("\n").map(command => ["nvim_command", [command]]));
         });
 
     keyHandler.addEventListener("keydown", (evt) => {
