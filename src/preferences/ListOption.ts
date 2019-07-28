@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as browser from "webextension-polyfill";
 import { SaveableTextArea } from "./SaveableTextArea";
 
 export class ListOption extends React.Component {

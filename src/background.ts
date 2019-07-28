@@ -1,3 +1,4 @@
+import * as browser from "webextension-polyfill";
 
 function createNewInstance() {
     return new Promise(resolve => {
@@ -5,7 +6,7 @@ function createNewInstance() {
         window.crypto.getRandomValues(password);
 
         const nvim = browser.runtime.connectNative("firenvim");
-        nvim.onMessage.addListener(port => resolve({ password: password[0], port }));
+        nvim.onMessage.addListener((port: any) => resolve({ password: password[0], port }));
         nvim.postMessage({
             origin: browser.runtime.getURL("").slice(0, -1),
             password: password[0],
@@ -33,7 +34,7 @@ browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResp
     return fn(sender, request.args || []);
 });
 
-browser.runtime.onInstalled.addListener((details) => {
+browser.runtime.onInstalled.addListener((details: any) => {
     if (details.reason === "install") {
         browser.storage.sync.set({
             blacklist: "example\\.{com,net,org}",

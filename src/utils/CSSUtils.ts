@@ -1,3 +1,5 @@
+import * as browser from "webextension-polyfill";
+
 export function computeSelector(element: HTMLElement) {
     function uniqueSelector(e: HTMLElement): string {
         // Only matching alphanumeric selectors because others chars might have special meaning in CSS

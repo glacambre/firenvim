@@ -15,6 +15,7 @@
     "typescript": "3.5.3",
     "web-ext": "3.1.1",
     "web-ext-types": "3.2.1",
+    "webextension-polyfill": "0.4.0",
     "webpack": "4.38.0",
     "webpack-cli": "3.3.6"
   },
@@ -28,9 +29,9 @@
   "license": "GPL-3.0",
   "name": "Firenvim",
   "scripts": {
-    "build": "tslint --fix --project . && webpack && web-ext build --source-dir target/extension --artifacts-dir target/xpi --overwrite-dest",
+    "build": "tslint --fix --project . && webpack && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest",
     "install": "nvim --headless -c ':set rtp+=.' -c 'call firenvim#install()' -c 'quit' || true",
     "clean": "rm -rf target"
   },
-  "version": "0.1.5"
+  "version": "0.1.7"
 }

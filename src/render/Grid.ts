@@ -1,3 +1,4 @@
+import * as browser from "webextension-polyfill";
 import { Cursor } from "./Cursor";
 import { Row } from "./Row";
 

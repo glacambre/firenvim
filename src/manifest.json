@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Firenvim",
-  "version": "0.1.6",
+  "version": "FIRENVIM_VERSION",
 
   "description": "Turn Firefox into a Neovim client.",
 
@@ -21,12 +21,9 @@
     "scripts": ["background.js"]
   },
 
-  "applications": {
-    "gecko": {
-      "id": "firenvim@lacamb.re",
-      "strict_min_version": "65.0"
-    }
-  },
+  "web_accessible_resources": ["NeovimFrame.html"],
+
+  BROWSER_SPECIFIC_SETTINGS,
 
   "options_ui": {
     "page": "preferences.html"

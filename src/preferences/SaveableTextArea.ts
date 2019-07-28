@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as browser from "webextension-polyfill";
 
 export class SaveableTextArea extends React.Component {
     public state: {
@@ -22,7 +23,7 @@ export class SaveableTextArea extends React.Component {
                 savedContent: list[this.state.configName],
             });
         });
-        browser.storage.onChanged.addListener((changes, areaname) => {
+        browser.storage.onChanged.addListener((changes: any, areaname: any) => {
             if (changes[this.state.configName]) {
                 this.setState({
                     currentContent: changes[this.state.configName].newValue,

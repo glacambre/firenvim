@@ -1,6 +1,25 @@
 const CopyWebPackPlugin = require("copy-webpack-plugin");
 
-module.exports = {
+function deepCopy (obj) {
+  if (obj instanceof Array) {
+    return obj.slice();
+  }
+  const result = {};
+  Object.assign(result, obj);
+  Object.keys(result)
+    .filter(key => (typeof result[key]) === "object")
+    .forEach(key => result[key] = deepCopy(result[key]));
+  return result;
+};
+
+const CopyWebPackFiles = [
+  "src/manifest.json",
+  "src/NeovimFrame.html",
+  "src/preferences/preferences.html",
+  "static/firenvim.svg",
+]
+
+const config = {
   mode: "development",
 
   entry: {
@@ -11,7 +30,8 @@ module.exports = {
   },
   output: {
     filename: "[name].js",
-    path: __dirname + "/target/extension",
+    // Overwritten by browser-specific config
+    // path: __dirname + "/target/extension",
   },
 
   // Enable sourcemaps for debugging webpack's output.
@@ -29,12 +49,53 @@ module.exports = {
     ],
   },
 
-  plugins: [
-    new CopyWebPackPlugin([
-      { from: "src/manifest.json" },
-      { from: "src/NeovimFrame.html" },
-      { from: "src/preferences/preferences.html" },
-      { from: "static/firenvim.svg" },
-    ]),
-  ],
-};
+  // Overwritten by browser-specific config
+  plugins: [],
+}
+
+const version = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "package.json"))).version;
+
+module.exports = [
+  Object.assign(deepCopy(config), {
+    output: {
+      path: __dirname + "/target/chrome",
+    },
+    plugins: [new CopyWebPackPlugin(CopyWebPackFiles.map(file => ({
+      from: file,
+      to: __dirname + "/target/chrome",
+      transform: (content, src) => {
+        switch(src.split("/").reverse()[0]) {
+          case "manifest.json":
+            return content.toString().replace("BROWSER_SPECIFIC_SETTINGS,", ``)
+              .replace("FIRENVIM_VERSION", version);
+            break;
+        }
+        return content;
+      }
+    })))]
+  }),
+  Object.assign(deepCopy(config), {
+    output: {
+      path: __dirname + "/target/firefox",
+    },
+    plugins: [new CopyWebPackPlugin(CopyWebPackFiles.map(file => ({
+      from: file,
+      to: __dirname + "/target/firefox",
+      transform: (content, src) => {
+        switch(src.split("/").reverse()[0]) {
+          case "manifest.json":
+            return content.toString().replace("BROWSER_SPECIFIC_SETTINGS,", `
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "firenvim@lacamb.re",
+      "strict_min_version": "65.0"
+    }
+  },`)
+              .replace("FIRENVIM_VERSION", version);
+            break;
+        }
+        return content;
+      }
+    })))]
+  }),
+];

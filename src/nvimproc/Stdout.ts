@@ -1,4 +1,5 @@
 import * as msgpack from "msgpack-lite";
+import * as browser from "webextension-polyfill";
 
 export class Stdout {
     private listeners = new Map<string, Array<(...args: any[]) => any>>();

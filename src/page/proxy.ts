@@ -1,3 +1,4 @@
+import * as browser from "webextension-polyfill";
 import { getFunctions } from "./functions";
 
 // We don't need to give real values to getFunctions since we're only trying to

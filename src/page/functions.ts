@@ -1,3 +1,4 @@
+import * as browser from "webextension-polyfill";
 
 export function getFunctions(global: {
     lastEditorLocation: [string, string],

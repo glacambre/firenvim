@@ -1,3 +1,4 @@
+import * as browser from "webextension-polyfill";
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
 import { getCharSize, getGridSize, toFileName } from "./utils/utils";

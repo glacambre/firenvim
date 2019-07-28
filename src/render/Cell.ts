@@ -1,3 +1,4 @@
+import * as browser from "webextension-polyfill";
 import { toHighlightClassName } from "../utils/CSSUtils";
 
 export class Cell {

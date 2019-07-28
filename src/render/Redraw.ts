@@ -1,3 +1,4 @@
+import * as browser from "webextension-polyfill";
 import { page } from "../page/proxy";
 import { toCss, toHexCss } from "../utils/CSSUtils";
 import { getCharSize } from "../utils/utils";

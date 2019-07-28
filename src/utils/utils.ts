@@ -1,3 +1,4 @@
+import * as browser from "webextension-polyfill";
 
 export function toFileName(url: string, id: string) {
     const parsedURL = new URL(url);

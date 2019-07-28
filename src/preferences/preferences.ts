@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as browser from "webextension-polyfill";
 import { ElementOption } from "./ElementOption";
 import { ListOption } from "./ListOption";
 
