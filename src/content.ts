@@ -1,5 +1,4 @@
 import * as browser from "webextension-polyfill";
-console.log(browser);
 import { getFunctions } from "./page/functions";
 import { computeSelector } from "./utils/CSSUtils";
 

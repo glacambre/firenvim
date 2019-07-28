@@ -1,6 +1,6 @@
 # Firenvim [![Build Status](https://travis-ci.org/glacambre/firenvim.svg?branch=master)](https://travis-ci.org/glacambre/firenvim)[![Total alerts](https://img.shields.io/lgtm/alerts/g/glacambre/firenvim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/glacambre/firenvim/alerts/)
 
-Turn Firefox into a Neovim client.
+Turn your browser into a Neovim client.
 
 ![Firenvim demo](firenvim.gif)
 

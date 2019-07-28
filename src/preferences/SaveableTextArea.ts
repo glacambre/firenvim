@@ -19,15 +19,15 @@ export class SaveableTextArea extends React.Component {
         };
         browser.storage.sync.get(this.state.configName).then((list: any) => {
             this.setState({
-                currentContent: list[this.state.configName],
-                savedContent: list[this.state.configName],
+                currentContent: list[props.configName],
+                savedContent: list[props.configName],
             });
         });
         browser.storage.onChanged.addListener((changes: any, areaname: any) => {
             if (changes[this.state.configName]) {
                 this.setState({
-                    currentContent: changes[this.state.configName].newValue,
-                    savedContent: changes[this.state.configName].newValue,
+                    currentContent: changes[props.configName].newValue,
+                    savedContent: changes[props.configName].newValue,
                 });
             }
         });
@@ -58,8 +58,8 @@ export class SaveableTextArea extends React.Component {
 
         return React.createElement("div", {},
             React.createElement("textarea", {
-                disabled: (this.props as any).disabled,
-                onInput: (e: any) => this.onTextInput(e),
+                disabled: this.state.disabled,
+                onChange: (e: any) => this.onTextInput(e),
                 value: this.state.currentContent,
             }),
             saveButton,
