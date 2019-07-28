@@ -53,7 +53,8 @@ const config = {
   plugins: [],
 }
 
-const version = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "package.json"))).version;
+const path = require("path")
+const version = JSON.parse(require("fs").readFileSync(path.join(__dirname, "package.json"))).version;
 
 module.exports = [
   Object.assign(deepCopy(config), {
@@ -64,7 +65,7 @@ module.exports = [
       from: file,
       to: __dirname + "/target/chrome",
       transform: (content, src) => {
-        switch(src.split("/").reverse()[0]) {
+        switch(path.basename(src)) {
           case "manifest.json":
             return content.toString().replace("BROWSER_SPECIFIC_SETTINGS,", ``)
               .replace("FIRENVIM_VERSION", version);
@@ -82,7 +83,7 @@ module.exports = [
       from: file,
       to: __dirname + "/target/firefox",
       transform: (content, src) => {
-        switch(src.split("/").reverse()[0]) {
+        switch(path.basename(src)) {
           case "manifest.json":
             return content.toString().replace("BROWSER_SPECIFIC_SETTINGS,", `
   "browser_specific_settings": {
