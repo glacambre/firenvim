@@ -43,7 +43,7 @@ Go to `about:addons`, click on the cog icon and select `install addon from file`
 Go to `chrome://extensions`, enable "Developer mode", click on `Load unpacked` and select the `target/chrome` directory.
 
 ### Other browsers
-Other browsers aren't supported for now. Opera, Vivaldi and other Chromium-based browsers should however work just like in Chromium and have install steps similar to Chromium's. Brave and Edge might work, Safari doesn't (it doesn't support Webextensions).
+Other browsers aren't supported for now. Opera, Vivaldi and other Chromium-based browsers should however work just like in Chromium and have similar install steps. Brave and Edge might work, Safari doesn't (it doesn't support Webextensions).
 
 # Drawbacks
 
