@@ -1,3 +1,4 @@
+// lgtm[js/unused-local-variable]
 import * as browser from "webextension-polyfill";
 
 export function getFunctions(global: {

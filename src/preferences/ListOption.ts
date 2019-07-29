@@ -1,4 +1,5 @@
 import * as React from "react";
+// lgtm[js/unused-local-variable]
 import * as browser from "webextension-polyfill";
 import { SaveableTextArea } from "./SaveableTextArea";
 

@@ -18,17 +18,17 @@ export class SaveableTextArea extends React.Component {
             savedContent: props.defaultContent,
         };
         browser.storage.sync.get(this.state.configName).then((list: any) => {
-            this.setState({
-                currentContent: list[props.configName],
-                savedContent: list[props.configName],
-            });
+            this.setState(prevState => ({
+                currentContent: list[prevState.configName],
+                savedContent: list[prevState.configName],
+            }));
         });
         browser.storage.onChanged.addListener((changes: any, areaname: any) => {
             if (changes[this.state.configName]) {
-                this.setState({
-                    currentContent: changes[props.configName].newValue,
-                    savedContent: changes[props.configName].newValue,
-                });
+                this.setState(prevState => ({
+                    currentContent: changes[prevState.configName].newValue,
+                    savedContent: changes[prevState.configName].newValue,
+                }));
             }
         });
     }
