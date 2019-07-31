@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-// lgtm[js/unused-local-variable]
-import * as browser from "webextension-polyfill";
+import * as browser from "webextension-polyfill"; // lgtm[js/unused-local-variable]
 import { ElementOption } from "./ElementOption";
 import { ListOption } from "./ListOption";
 

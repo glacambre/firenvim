@@ -1,5 +1,4 @@
-// lgtm[js/unused-local-variable]
-import * as browser from "webextension-polyfill";
+import * as browser from "webextension-polyfill"; // lgtm[js/unused-local-variable]
 
 export function getFunctions(global: {
     lastEditorLocation: [string, string],

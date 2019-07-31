@@ -1,6 +1,5 @@
 import * as msgpack from "msgpack-lite";
-// lgtm[js/unused-local-variable]
-import * as browser from "webextension-polyfill";
+import * as browser from "webextension-polyfill"; // lgtm[js/unused-local-variable]
 
 export class Stdin {
 
