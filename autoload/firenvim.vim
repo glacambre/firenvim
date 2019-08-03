@@ -14,6 +14,7 @@ function! firenvim#run()
                         throw "firenvim#run()WriteStdout doesn't handle messages more than 254 bytes long."
                 endif
                 call chansend(a:id, [printf("%c\n\n\n", strlen(a:data)) . a:data])
+                call chanclose(a:id)
         endfunction
         function! OnStdin(id, data, event)
                 if g:firenvim_port_opened
@@ -26,6 +27,7 @@ function! firenvim#run()
                                         \ "')")
                 let g:firenvim_port_opened = 1
                 call WriteStdout(a:id, l:port)
+                call chanclose(a:id)
         endfunction
         let l:chanid = stdioopen({ 'on_stdin': 'OnStdin' })
 endfunction
@@ -52,7 +54,6 @@ function! s:firefox_config_exists()
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Roaming', 'Mozilla', 'Firefox']
         end
-        echo s:build_path(l:p)
         return isdirectory(s:build_path(l:p))
 endfunction
 

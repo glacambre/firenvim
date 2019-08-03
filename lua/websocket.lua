@@ -1,5 +1,13 @@
 local utils = require("utils")
 
+local opcodes = {
+        text = 1,
+        binary = 2,
+        close = 8,
+        ping = 9,
+        pong = 10,
+}
+
 -- The client's handshake is described here: https://tools.ietf.org/html/rfc6455#section-4.2.1
 local function parse_headers()
         local headerend = nil
@@ -95,9 +103,16 @@ local function encode_frame(data)
         return  header .. len .. data
 end
 
+local function close_frame()
+        local frame = encode_frame("")
+        return string.char(136) .. string.sub(frame, 2)
+end
+
 return {
         accept_connection = accept_connection,
+        close_frame = close_frame,
         decode_frame = decode_frame,
         encode_frame = encode_frame,
+        opcodes = opcodes,
         parse_headers = parse_headers,
 }
