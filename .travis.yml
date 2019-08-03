@@ -5,6 +5,10 @@ os:
   - windows
 node_js:
   - 10.15
+before_install:
+  - if [ $TRAVIS_OS_NAME = linux ]; then curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim.appimage; mkdir bin; mv nvim.appimage bin/nvim; chmod u+x bin/nvim; export PATH="$(pwd)/bin/:$PATH"; nvim --version; fi
+  - if [ $TRAVIS_OS_NAME = osx ]; then curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-macos.tar.gz; tar xzf nvim-macos.tar.gz; export PATH="$(pwd)/nvim-osx64/bin/:$PATH"; nvim --version; fi
+  - if [ $TRAVIS_OS_NAME = windows ]; then choco install neovim --pre; fi
 install:
   - npm install
   - npm run build
