@@ -58,11 +58,23 @@ local function firenvim_start_server(token, origin)
                                 return
                         end
                         local decoded_frame = websocket.decode_frame(chunk)
-                        current_payload = current_payload .. decoded_frame.payload
-                        if not decoded_frame.fin then
+                        if decoded_frame.opcode == websocket.opcodes.binary then
+                                current_payload = current_payload .. decoded_frame.payload
+                                if not decoded_frame.fin then
+                                        return
+                                end
+                                pipe:write(current_payload)
+                        elseif decoded_frame.opcode == websocket.opcodes.ping then
+                                -- TODO: implement websocket.pong_frame
+                                -- sock:write(websocket.pong_frame(decoded_frame))
+                                return
+                        elseif decoded_frame.opcode == websocket.opcodes.close then
+                                sock:write(websocket.close_frame(decoded_frame))
+                                sock:close()
+                                pipe:close()
+                                close_server(server)
                                 return
                         end
-                        pipe:write(current_payload)
                         current_payload = ""
                 end)
         end)
