@@ -1,3 +1,4 @@
+const path = require("path")
 const CopyWebPackPlugin = require("copy-webpack-plugin");
 
 function deepCopy (obj) {
@@ -55,27 +56,31 @@ const config = {
   plugins: [],
 }
 
-const path = require("path")
-const version = JSON.parse(require("fs").readFileSync(path.join(__dirname, "package.json"))).version;
+const package_json = JSON.parse(require("fs").readFileSync(path.join(__dirname, "package.json")))
+
+const chrome_target_dir = path.join(__dirname, "target", "chrome")
 
 module.exports = [
   Object.assign(deepCopy(config), {
     output: {
-      path: __dirname + "/target/chrome",
+      path: chrome_target_dir,
     },
     plugins: [new CopyWebPackPlugin(CopyWebPackFiles.map(file => ({
       from: file,
-      to: __dirname + "/target/chrome",
+      to: chrome_target_dir,
       transform: (content, src) => {
         switch(path.basename(src)) {
           case "manifest.json":
             return content.toString().replace("BROWSER_SPECIFIC_SETTINGS,", ``)
-              .replace("FIRENVIM_VERSION", version);
+              .replace("FIRENVIM_VERSION", package_json.version)
+              .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
+            ;
             break;
         }
         return content;
       }
-    })))]
+    }))),
+    ]
   }),
   Object.assign(deepCopy(config), {
     output: {
@@ -94,7 +99,9 @@ module.exports = [
       "strict_min_version": "65.0"
     }
   },`)
-              .replace("FIRENVIM_VERSION", version);
+              .replace("FIRENVIM_VERSION", package_json.version)
+              .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
+            ;
             break;
         }
         return content;
@@ -102,3 +109,4 @@ module.exports = [
     })))]
   }),
 ];
+

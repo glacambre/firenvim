@@ -88,10 +88,10 @@ window.addEventListener("load", async () => {
 
     // Create file, set its content to the textarea's, write it
     const filename = toFileName(url, selector);
-    Promise.all([nvim.command(`edit ${filename}`), contentPromise])
+    Promise.all([nvim.command(`noswapfile edit ${filename}`), contentPromise])
         .then(([_, content]: [any, string]) => {
             const promise = nvim.buf_set_lines(0, 0, -1, 0, content.split("\n"))
-                .then((__: any) => nvim.command(":w"));
+                .then((__: any) => nvim.command(":w!"));
 
             const beforeCursor = content.slice(0, cursor);
             const newlines = beforeCursor.match(/\n.*/g);

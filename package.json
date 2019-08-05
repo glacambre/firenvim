@@ -1,11 +1,17 @@
 {
   "author": "glacambre",
   "dependencies": {
+    "@types/jest": "24.0.16",
     "@types/msgpack-lite": "0.1.6",
     "@types/node": "12.7.3",
     "awesome-typescript-loader": "5.2.1",
+    "chromedriver": "76.0.0",
     "copy-webpack-plugin": "5.0.4",
+    "geckodriver": "1.16.2",
+    "jest": "24.8.0",
     "msgpack-lite": "0.1.26",
+    "selenium-webdriver": "4.0.0-alpha.4",
+    "ts-jest": "24.0.2",
     "tslint": "5.19.0",
     "tslint-sonarts": "1.9.0",
     "typescript": "3.6.2",
@@ -15,19 +21,34 @@
     "webpack": "4.39.3",
     "webpack-cli": "3.3.7"
   },
-  "description": "A webextension to turn Firefox into a Neovim client.",
+  "description": "Turn your browser into a Neovim GUI.",
   "keywords": [
-    "webextension",
-    "webext",
+    "chrome",
+    "chromium",
+    "firefox",
+    "nvim",
     "vim",
-    "firefox"
+    "webext",
+    "webextension"
   ],
   "license": "GPL-3.0",
   "name": "Firenvim",
   "scripts": {
     "build": "tslint --fix --project . && webpack && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest",
-    "install_manifests": "nvim --headless -c ':set rtp+=.' -c 'call firenvim#install()' -c 'quit' || true",
-    "clean": "rm -rf target"
+    "clean": "rm -rf target",
+    "install_manifests": "nvim --headless -c ':set rtp+=.' -c 'call firenvim#install(1)' -c 'quit' || true",
+    "test": "jest"
+  },
+  "jest": {
+    "testRegex": "/tests/[^_].*\\.(jsx?|tsx?)$",
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "moduleFileExtensions": [
+      "json",
+      "js",
+      "ts"
+    ]
   },
   "version": "0.1.9"
 }
