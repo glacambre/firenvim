@@ -31,7 +31,7 @@ export class Stdout {
             decoded = msgpack.decode(uint8arr);
         } catch (e) {
             // Buffer shortage means rpc messages are split
-            if (e !== "BUFFER_SHORTAGE") {
+            if (e.message !== "BUFFER_SHORTAGE") {
                 this.prev = new Uint8Array(0);
                 throw e;
             }
