@@ -9,7 +9,7 @@
     "copy-webpack-plugin": "5.0.4",
     "msgpack-lite": "0.1.26",
     "react": "16.9.0",
-    "react-dom": "16.8.6",
+    "react-dom": "16.9.0",
     "tslint": "5.18.0",
     "tslint-sonarts": "1.9.0",
     "typescript": "3.5.3",
