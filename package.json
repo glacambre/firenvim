@@ -16,7 +16,7 @@
     "web-ext": "3.1.1",
     "web-ext-types": "3.2.1",
     "webextension-polyfill": "0.4.0",
-    "webpack": "4.39.1",
+    "webpack": "4.39.2",
     "webpack-cli": "3.3.6"
   },
   "description": "A webextension to turn Firefox into a Neovim client.",
