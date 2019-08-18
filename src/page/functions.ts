@@ -1,23 +1,24 @@
 // lgtm[js/unused-local-variable]
 import * as browser from "webextension-polyfill";
 
+function _getElementContent(e: any) {
+    if (e.value !== undefined) {
+        return e.value;
+    }
+    if (e.textContent !== undefined) {
+        return e.textContent;
+    }
+    return e.innerText;
+}
+
 export function getFunctions(global: {
-    lastEditorLocation: [string, string],
+    lastEditorLocation: [string, string, number],
     nvimify: (evt: FocusEvent) => void,
     selectorToElems: Map<string, PageElements>,
 }) {
     return {
         getEditorLocation: () => global.lastEditorLocation,
-        getElementContent: (selector: string) => {
-            const { input: e } = global.selectorToElems.get(selector) as any;
-            if (e.value !== undefined) {
-                return e.value;
-            }
-            if (e.textContent !== undefined) {
-                return e.textContent;
-            }
-            return e.innerText;
-        },
+        getElementContent: (selector: string) => _getElementContent(global.selectorToElems.get(selector).input),
         killEditor: (selector: string) => {
             const { span, input } = global.selectorToElems.get(selector);
             span.parentNode.removeChild(span);
@@ -44,6 +45,15 @@ export function getFunctions(global: {
             e.dispatchEvent(new Event("beforeinput", { bubbles: true }));
             e.dispatchEvent(new Event("input",       { bubbles: true }));
             e.dispatchEvent(new Event("change",      { bubbles: true }));
+        },
+        setElementCursor: (selector: string, line: number, column: number) => {
+            const { input } = global.selectorToElems.get(selector) as any;
+            const pos = _getElementContent(input)
+                .split("\n")
+                .reduce((acc: number, l: string, index: number) => acc + (index < (line - 1)
+                    ? (l.length + 1)
+                    : 0), column + 1);
+            input.setSelectionRange(pos, pos);
         },
     };
 }
