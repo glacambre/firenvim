@@ -51,7 +51,7 @@ const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNewNeovim
 window.addEventListener("load", async () => {
     const host = document.getElementById("host") as HTMLPreElement;
     const keyHandler = document.getElementById("keyhandler");
-    const [[url, selector], connectionData] = await Promise.all([locationPromise, connectionPromise]);
+    const [[url, selector, cursor], connectionData] = await Promise.all([locationPromise, connectionPromise]);
     const nvimPromise = neovim(host, selector, connectionData);
     const contentPromise = page.getElementContent(selector);
 
@@ -89,8 +89,20 @@ window.addEventListener("load", async () => {
     // Create file, set its content to the textarea's, write it
     const filename = toFileName(url, selector);
     Promise.all([nvim.command(`edit ${filename}`), contentPromise])
-        .then(([_, content]: [any, string]) => nvim.buf_set_lines(0, 0, -1, 0, content.split("\n")))
-        .then((_: any) => nvim.command(":w"));
+        .then(([_, content]: [any, string]) => {
+            const promise = nvim.buf_set_lines(0, 0, -1, 0, content.split("\n"))
+                .then((__: any) => nvim.command(":w"));
+
+            const beforeCursor = content.slice(0, cursor);
+            const newlines = beforeCursor.match(/\n.*/g);
+            let line = 1;
+            let row = beforeCursor.length;
+            if (newlines) {
+                line = newlines.length + 1;
+                row = newlines[newlines.length - 1].length - 1;
+            }
+            return promise.then((__: any) => nvim.win_set_cursor(0, [line, row]));
+        });
 
     // Set client info and ask for notifications when the file is written/nvim is closed
     const extInfo = browser.runtime.getManifest();
@@ -113,7 +125,10 @@ window.addEventListener("load", async () => {
                             autocmd BufWrite ${filename} `
                                 + `call rpcnotify(${self.id}, `
                                     + `'firenvim_bufwrite', `
-                                    + `{'text': nvim_buf_get_lines(0, 0, -1, 0)})
+                                    + `{`
+                                        + `'text': nvim_buf_get_lines(0, 0, -1, 0),`
+                                        + `'cursor': nvim_win_get_cursor(0),`
+                                    + `})
                             autocmd VimLeave * call delete('${filename}')
                             autocmd VimLeave * call rpcnotify(${self.id}, 'firenvim_vimleave')
                         augroup END`).split("\n").map(command => ["nvim_command", [command]]));

@@ -5,7 +5,7 @@ import { computeSelector } from "./utils/CSSUtils";
 const global = {
     // lastEditorLocation: a [url, selector] tuple indicating the page the last
     // iframe was created on and the selector of the corresponding textarea.
-    lastEditorLocation: ["", ""] as [string, string],
+    lastEditorLocation: ["", "", 0] as [string, string, number],
     // nvimify: triggered when an element is focused, takes care of creating
     // the editor iframe and appending it to the page.
     nvimify: (evt: FocusEvent) => {
@@ -19,7 +19,7 @@ const global = {
         const pageElements = { input: elem, selector } as PageElements;
         global.selectorToElems.set(selector, pageElements);
 
-        global.lastEditorLocation = [document.location.href, selector];
+        global.lastEditorLocation = [document.location.href, selector, (elem as any).selectionStart || 0];
         // We use a span because these are the least likely to disturb the page
         const span = elem.ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLSpanElement;

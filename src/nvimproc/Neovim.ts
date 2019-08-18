@@ -12,7 +12,6 @@ export async function neovim(
     ) {
     let stdin: Stdin;
     let stdout: Stdout;
-    let reqId = 0;
     const requests = new Map<number, { resolve: any, reject: any }>();
 
     const socket = new WebSocket(`ws://127.0.0.1:${port}/${password}`);
@@ -26,13 +25,10 @@ export async function neovim(
     stdin = new Stdin(socket);
     stdout = new Stdout(socket);
 
+    let reqId = 0;
     const request = (api: string, args: any[]) => {
         return new Promise((resolve, reject) => {
             reqId += 1;
-            const r = requests.get(reqId);
-            if (r) {
-                console.error(`reqId ${reqId} already taken!`);
-            }
             requests.set(reqId, {resolve, reject});
             stdin.write(reqId, api, args);
         });
@@ -60,7 +56,9 @@ export async function neovim(
                 onRedraw(args, element, selector);
                 break;
             case "firenvim_bufwrite":
-                page.setElementContent(selector, args[0].text.join("\n"));
+                const data = args[0] as { text: string[], cursor: [number, number] };
+                page.setElementContent(selector, data.text.join("\n"));
+                page.setElementCursor(selector, ...(data.cursor));
                 break;
             case "firenvim_vimleave":
                 page.killEditor(selector);
