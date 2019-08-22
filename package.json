@@ -30,7 +30,7 @@
   "name": "Firenvim",
   "scripts": {
     "build": "tslint --fix --project . && webpack && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest",
-    "iinstall": "nvim --headless -c ':set rtp+=.' -c 'call firenvim#install()' -c 'quit' || true",
+    "install_manifests": "nvim --headless -c ':set rtp+=.' -c 'call firenvim#install()' -c 'quit' || true",
     "clean": "rm -rf target"
   },
   "version": "0.1.7"

@@ -32,7 +32,7 @@ git clone https://github.com/glacambre/firenvim
 cd firenvim
 npm install
 npm run build
-npm run install
+npm run install_manifests
 ```
 These commands should create three directories: `target/chrome`, `target/firefox` and `target/xpi`.
 
