@@ -96,12 +96,12 @@ window.addEventListener("load", async () => {
             const beforeCursor = content.slice(0, cursor);
             const newlines = beforeCursor.match(/\n.*/g);
             let line = 1;
-            let row = beforeCursor.length;
+            let col = beforeCursor.length;
             if (newlines) {
                 line = newlines.length + 1;
-                row = newlines[newlines.length - 1].length - 1;
+                col = newlines[newlines.length - 1].length - 1;
             }
-            return promise.then((__: any) => nvim.win_set_cursor(0, [line, row]));
+            return promise.then((__: any) => nvim.win_set_cursor(0, [line, col]));
         });
 
     // Set client info and ask for notifications when the file is written/nvim is closed
