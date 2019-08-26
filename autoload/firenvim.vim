@@ -104,15 +104,22 @@ function! s:get_chromium_manifest_dir_path()
         return s:build_path([$HOME, '.config', 'chromium', 'NativeMessagingHosts'])
 endfunction
 
+function! s:get_progpath()
+        if $APPIMAGE == ""
+                return v:progpath
+        endif
+        return $APPIMAGE
+endfunction
+
 function! s:get_executable_content(data_dir)
         if has("win32")
                 return  "@echo off\n" .
                                         \ "cd " . a:data_dir . "\n" .
-                                        \ v:progpath . " --headless -c FirenvimRun\n"
+                                        \ s:get_progpath() . " --headless -c FirenvimRun\n"
         endif
         return "#!/bin/sh\n
                                 \cd " . a:data_dir . "\n
-                                \exec '" . v:progpath . "' --headless -c 'call firenvim#run()'\n
+                                \exec '" . s:get_progpath() . "' --headless -c 'call firenvim#run()'\n
                                 \"
 endfunction
 
