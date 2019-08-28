@@ -80,6 +80,8 @@ local function decode_frame(frame)
                 ))
                 j = (j % 4) + 1
         end
+        current_byte = payload_end + 1
+        result.rest = string.sub(frame, current_byte)
         return result
 end
 
