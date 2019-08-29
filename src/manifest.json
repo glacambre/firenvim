@@ -25,9 +25,13 @@
 
   BROWSER_SPECIFIC_SETTINGS,
 
-  "options_ui": {
-    "page": "preferences.html"
+  "browser_action": {
+    "browser_style": true,
+    "default_icon": "firenvim.svg",
+    "default_title": "Firenvim",
+    "default_popup": "browserAction.html"
   },
+
 
   "permissions": ["nativeMessaging", "storage"],
 

@@ -45,6 +45,38 @@ Go to `chrome://extensions`, enable "Developer mode", click on `Load unpacked` a
 ### Other browsers
 Other browsers aren't supported for now. Opera, Vivaldi and other Chromium-based browsers should however work just like in Chromium and have similar install steps. Brave and Edge might work, Safari doesn't (it doesn't support Webextensions).
 
+# Configuring Firenvim
+
+Firenvim is configured by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionnary containing the key "localSettings". `g:firenvim_config["localSettings"]` is a dictionnary the keys of which have to be a javascript pattern matching a url and the values of which are dictionnaries containing settings that apply for all urls matched by the javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used.
+
+Here's an example `g:firenvim_config` that matches the default configuration:
+```
+let g:firenvim_config = {
+    \ 'localSettings': {
+        \ '.*': {
+            \ 'selector': 'textarea',
+            \ 'priority': 0,
+        \ }
+    \ }
+\ }
+```
+This means that for all urls ("`.*`"), textareas will be turned into firenvim instances. Here's an example that disables firenvim everywhere but enables it on github:
+```
+let g:firenvim_config = {
+    \ 'localSettings': {
+        \ '.*': {
+            \ 'selector': '',
+            \ 'priority': 0,
+        \ }
+        \ 'github\.com': {
+            \ 'selector': 'textarea',
+            \ 'priority': 1,
+        \ }
+    \ }
+\ }
+```
+Note that it is not necessary to specify the `priority` key because it defaults to 1, except for the `.*` pattern, which has a priority of 0.
+
 # Drawbacks
 
 The main issue with Firenvim is that some keybindings (e.g. `<C-w>`) are not overridable. I circumvent this issue by running a [patched](https://github.com/glacambre/firefox-patches) version of firefox.

@@ -1,4 +1,14 @@
-let g:firenvim_port_opened = 0
+let s:firenvim_done = 0
+let s:script_dir = expand('<sfile>:p:h:h')
+
+" Simple helper to build the right path depending on the platform.
+function! s:build_path(list)
+        let l:path_separator = "/"
+        if has("win32")
+                let l:path_separator = "\\"
+        endif
+        return join(a:list, path_separator)
+endfunction
 
 " Entry point of the vim-side of the extension.
 " This function does the following things:
@@ -10,23 +20,47 @@ function! firenvim#run()
         " Write messages to stdout according to the format expected by
         " Firefox's native messaging protocol
         function! WriteStdout(id, data)
-                if strlen(a:data) > 254
-                        throw "firenvim#run()WriteStdout doesn't handle messages more than 254 bytes long."
-                endif
-                call chansend(a:id, [printf("%c\n\n\n", strlen(a:data)) . a:data])
-                call chanclose(a:id)
+                " The native messaging protocol expects to the message's
+                " length to precede the message. It has to use native
+                " endianness. We assume big endian.
+                let l:len = strlen(a:data)
+                let l:lenstr = luaeval("string.char(bit.band(" . l:len . ", 255))"
+                                        \. ".. string.char(bit.band(bit.rshift(" . l:len . ", 8), 255))"
+                                        \. ".. string.char(bit.band(bit.rshift(" . l:len . ", 16), 255))"
+                                        \. ".. string.char(bit.band(bit.rshift(" . l:len . ", 24), 255))")["_VAL"]
+                call chansend(a:id, [join(l:lenstr) . a:data])
         endfunction
+        let s:accumulated_data = ""
         function! OnStdin(id, data, event)
-                if g:firenvim_port_opened
+                if s:firenvim_done
                         return
                 endif
-                let l:params = json_decode(matchstr(a:data[0], "{[^}]*}"))
-                let l:port = luaeval("require('firenvim').start_server('" .
-                                        \ l:params["password"] . "', '" .
-                                        \ l:params["origin"] .
-                                        \ "')")
-                let g:firenvim_port_opened = 1
-                call WriteStdout(a:id, l:port)
+                let l:data = s:accumulated_data . a:data[0]
+                try
+                        let l:params = json_decode(matchstr(l:data[4:], "{[^}]*}"))
+                catch
+                        let s:accumulated_data = l:data
+                        return
+                endtry
+                let s:firenvim_done = v:true
+
+                let l:package_json = s:build_path([s:script_dir, "package.json"])
+                let l:version = json_decode(join(readfile(l:package_json), "\n"))["version"]
+                let l:result = { "version": l:version }
+
+                if exists("g:firenvim_config")
+                        let l:result["settings"] = g:firenvim_config
+                endif
+
+                if has_key(l:params, "newInstance") && l:params["newInstance"]
+                        let l:port = luaeval("require('firenvim').start_server('" .
+                                                \ l:params["password"] . "', '" .
+                                                \ l:params["origin"] .
+                                                \ "')")
+                        let l:result["port"] = l:port
+                endif
+
+                call WriteStdout(a:id, json_encode(result))
                 call chanclose(a:id)
         endfunction
         let l:chanid = stdioopen({ 'on_stdin': 'OnStdin' })
@@ -158,15 +192,6 @@ function! s:key_to_ps1_str(key, manifest_path)
                                 \ l:key .
                                 \ '\" -Value "' . l:manifest_path . '" ' .
                                 \ '-ErrorAction SilentlyContinue'
-endfunction
-
-" Simple helper to build the right path depending on the platform.
-function! s:build_path(list)
-        let l:path_separator = "/"
-        if has("win32")
-                let l:path_separator = "\\"
-        endif
-        return join(a:list, path_separator)
 endfunction
 
 " Installing firenvim requires several steps:

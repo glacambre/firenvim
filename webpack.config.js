@@ -15,8 +15,10 @@ function deepCopy (obj) {
 const CopyWebPackFiles = [
   "src/manifest.json",
   "src/NeovimFrame.html",
-  "src/preferences/preferences.html",
+  "src/browserAction.html",
   "static/firenvim.svg",
+  "static/firenvim-notification.svg",
+  "static/firenvim-error.svg",
 ]
 
 const config = {
@@ -24,8 +26,8 @@ const config = {
 
   entry: {
     background: "./src/background.ts",
+    browserAction: "./src/browserAction.ts",
     content: "./src/content.ts",
-    preferences: "./src/preferences/preferences.ts",
     nvimui: "./src/NeovimFrame.ts",
   },
   output: {

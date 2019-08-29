@@ -110,7 +110,7 @@ window.addEventListener("load", async () => {
     nvim.set_client_info(extInfo.name,
         { major, minor, patch },
         "ui",
-        { write: { async: true, nargs: 0 } },
+        {},
         {},
     )
         .then(() => nvim.list_chans())

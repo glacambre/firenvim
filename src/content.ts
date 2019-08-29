@@ -182,21 +182,19 @@ function setupListeners(selector: string) {
     window.addEventListener("wheel", () => onScroll(true));
 }
 
-browser.storage.sync.get("blacklist").then(async ({ blacklist }: { blacklist: string }) => {
-    const matches = blacklist
-        .split("\n")
-        .find((pat: string) => (new RegExp(pat)).test(document.location.href));
-    if (!matches) {
-        const match = ((await browser.storage.sync.get("elements"))
-            .elements as string)
-            .split("\n")
-            .map(line => {
-                const index = line.indexOf(" ");
-                return [line.slice(0, index), line.slice(index + 1)];
-            })
-            .find(patsel => (new RegExp(patsel[0])).test(document.location.href));
-        if (match) {
-            setupListeners(match[1]);
+browser.storage.local.get("localSettings").then(async ({ localSettings }: { [key: string]: { [key: string]: any }}) => {
+    function or1(val: number) {
+        if (val === undefined) {
+            return 1;
         }
+        return val;
+    }
+    const [, conf] = Array.from(Object.entries(localSettings))
+        .sort((e1, e2) => (or1(e2[1].priority) - or1(e1[1].priority)))
+        .find(([pat, sel]) => (new RegExp(pat)).test(document.location.href));
+    if (conf.selector) {
+        setupListeners(conf.selector);
     }
 });
+
+console.log(browser.browserAction.setIcon);
