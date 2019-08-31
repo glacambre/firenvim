@@ -33,5 +33,5 @@
     "install_manifests": "nvim --headless -c ':set rtp+=.' -c 'call firenvim#install()' -c 'quit' || true",
     "clean": "rm -rf target"
   },
-  "version": "0.1.7"
+  "version": "0.1.8"
 }
