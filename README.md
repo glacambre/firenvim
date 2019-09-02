@@ -45,12 +45,21 @@ Go to `chrome://extensions`, enable "Developer mode", click on `Load unpacked` a
 ### Other browsers
 Other browsers aren't supported for now. Opera, Vivaldi and other Chromium-based browsers should however work just like in Chromium and have similar install steps. Brave and Edge might work, Safari doesn't (it doesn't support Webextensions).
 
+# Permissions
+
+Firenvim currently requires the following permissions for the following reasons:
+
+- [Access your data for all websites](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions?as=u&utm_source=inproduct#w_access-your-data-for-all-websites): this is necessary in order to be able to append elements (= the neovim iframe) to the DOM.
+- [Exchange messages with programs other than Firefox](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions?as=u#w_exchange-messages-with-programs-other-than-firefox): this is necessary in order to be able to start neovim instances.
+- [Access recently closed tabs](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions?as=u#w_access-recently-closed-tabs): Firenvim needs the [sessions](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/sessions) permission in order to be able to use [getTabValue](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/sessions/getTabValue) and [setTabValue](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/sessions/setTabValue), which are used to keep track of whether Firenvim should be disabled in a specific tab.
+- [Access browser tabs](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions?as=u#w_access-browser-tabs): This is required in order to find out what the currently active tab is (used in conjunction with getTabValue and setTabValue in order to set the disabled/enabled state).
+
 # Configuring Firenvim
 
 Firenvim is configured by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionnary containing the key "localSettings". `g:firenvim_config["localSettings"]` is a dictionnary the keys of which have to be a javascript pattern matching a url and the values of which are dictionnaries containing settings that apply for all urls matched by the javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used.
 
 Here's an example `g:firenvim_config` that matches the default configuration:
-```
+```vimscript
 let g:firenvim_config = {
     \ 'localSettings': {
         \ '.*': {
@@ -61,7 +70,7 @@ let g:firenvim_config = {
 \ }
 ```
 This means that for all urls ("`.*`"), textareas will be turned into firenvim instances. Here's an example that disables firenvim everywhere but enables it on github:
-```
+```vimscript
 let g:firenvim_config = {
     \ 'localSettings': {
         \ '.*': {
