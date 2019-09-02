@@ -89,9 +89,17 @@ function createNewInstance() {
     });
 }
 
+async function toggleDisabled() {
+    const tabId = (await browser.tabs.query({ active: true }))[0].id;
+    const disabled = !(await browser.sessions.getTabValue(tabId, "disabled"));
+    await browser.sessions.setTabValue(tabId, "disabled", disabled);
+    return browser.tabs.sendMessage(tabId, { args: [disabled], funcName: ["setDisabled"] });
+}
+
 let preloadedInstance = createNewInstance();
 
 Object.assign(window, {
+    exec: (sender: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
     getError: (sender: any, args: any) => getError(),
     getNewNeovimInstance: (sender: any, args: any) => {
         const result = preloadedInstance;
@@ -101,6 +109,7 @@ Object.assign(window, {
     getTab: (sender: any, args: any) => sender.tab,
     messageOwnTab: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id, args),
     messageTab: (sender: any, args: any) => browser.tabs.sendMessage(args[0], args.slice(1)),
+    toggleDisabled: (sender: any, args: any) => toggleDisabled(),
     updateSettings: (sender: any, args: any) => updateSettings(),
 } as any);
 

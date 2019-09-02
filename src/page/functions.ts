@@ -1,4 +1,3 @@
-// lgtm[js/unused-local-variable]
 import * as browser from "webextension-polyfill";
 
 function _getElementContent(e: any) {
@@ -15,6 +14,7 @@ export function getFunctions(global: {
     lastEditorLocation: [string, string, number],
     nvimify: (evt: FocusEvent) => void,
     selectorToElems: Map<string, PageElements>,
+    disabled: boolean | Promise<boolean>,
 }) {
     return {
         getEditorLocation: () => global.lastEditorLocation,
@@ -31,6 +31,21 @@ export function getFunctions(global: {
             const { iframe } = global.selectorToElems.get(selector);
             iframe.style.width = `${width}px`;
             iframe.style.height = `${height}px`;
+        },
+        setDisabled: (disabled: boolean) => {
+            global.disabled = disabled;
+            return browser.runtime.sendMessage({ funcName: ["getTab"] }).then((tab: any) =>
+                browser.runtime.sendMessage({
+                    args: {
+                        args: [{
+                            path: disabled ? "firenvim-disabled.svg" : undefined,
+                            tabId: tab.id,
+                        }],
+                        funcName: ["browser", "browserAction", "setIcon"],
+                    },
+                    funcName: ["exec"],
+                }),
+            );
         },
         setElementContent: (selector: string, text: string) => {
             const { input: e } = global.selectorToElems.get(selector) as any;

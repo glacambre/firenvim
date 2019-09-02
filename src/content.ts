@@ -3,12 +3,30 @@ import { getFunctions } from "./page/functions";
 import { computeSelector } from "./utils/CSSUtils";
 
 const global = {
+    // Whether Firenvim is disabled in this tab
+    disabled: browser.runtime.sendMessage({ funcName: ["getTab"] })
+        .then((tab: any) => browser.runtime.sendMessage({
+            args: {
+                args: [tab.id, "disabled"],
+                funcName: ["browser", "sessions", "getTabValue"],
+            },
+            funcName: ["exec"],
+        }))
+        // Note: this relies on setDisabled existing in the object returned by
+        // getFunctions and attached to the window object
+        .then((disabled: boolean) => (window as any).setDisabled(disabled)),
     // lastEditorLocation: a [url, selector] tuple indicating the page the last
     // iframe was created on and the selector of the corresponding textarea.
     lastEditorLocation: ["", "", 0] as [string, string, number],
     // nvimify: triggered when an element is focused, takes care of creating
     // the editor iframe and appending it to the page.
-    nvimify: (evt: FocusEvent) => {
+    nvimify: async (evt: FocusEvent) => {
+        if (global.disabled instanceof Promise) {
+            await global.disabled;
+        }
+        if (global.disabled) {
+            return;
+        }
         const elem = evt.target as HTMLElement;
         const selector = computeSelector(elem);
 
@@ -196,5 +214,3 @@ browser.storage.local.get("localSettings").then(async ({ localSettings }: { [key
         setupListeners(conf.selector);
     }
 });
-
-console.log(browser.browserAction.setIcon);
