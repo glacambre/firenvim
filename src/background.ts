@@ -14,9 +14,9 @@ function registerErrors(nvim: any, reject: any) {
             const errstr = p.error.toString();
             browser.browserAction.setIcon({ path: "firenvim-error.svg" });
             if (errstr.match(/no such native application/i)) {
-                error = "Native manifest not found. Please run `:FirenvimInstall` in neovim.";
+                error = "Native manifest not found. Please run `:call firenvim#install(0)` in neovim.";
             } else if (errstr.match(/an unexpected error occurred/i)) {
-                error = "The script supposed to start neovim couldn't be found. Please run `:FirenvimInstall` in neovim.";
+                error = "The script supposed to start neovim couldn't be found. Please run `:call firenvim#install(0)` in neovim.";
             } else {
                 error = errstr;
             }

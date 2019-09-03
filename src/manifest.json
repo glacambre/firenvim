@@ -3,7 +3,7 @@
   "name": "Firenvim",
   "version": "FIRENVIM_VERSION",
 
-  "description": "Turn Firefox into a Neovim client.",
+  "description": "PACKAGE_JSON_DESCRIPTION",
 
   "content_scripts": [
     {

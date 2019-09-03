@@ -15,13 +15,17 @@ export async function neovim(
     const requests = new Map<number, { resolve: any, reject: any }>();
 
     const socket = new WebSocket(`ws://127.0.0.1:${port}/${password}`);
-    document.addEventListener("beforeunload", () => socket.close());
+    document.addEventListener("beforeunload", () => {
+        socket.close();
+    });
     socket.binaryType = "arraybuffer";
     socket.addEventListener("close", ((_: any) => {
         console.log(`Port disconnected for element ${selector}.`);
         page.killEditor(selector);
     }));
-    await (new Promise(resolve => socket.addEventListener("open", resolve)));
+    await (new Promise(resolve => socket.addEventListener("open", () => {
+        resolve();
+    })));
     stdin = new Stdin(socket);
     stdout = new Stdout(socket);
 

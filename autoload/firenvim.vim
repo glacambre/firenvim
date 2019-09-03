@@ -204,10 +204,15 @@ endfunction
 "
 " Manifest paths & registry stuff are specified here: 
 " https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Manifest_location
-function! firenvim#install()
+function! firenvim#install(...)
         if !has("nvim-0.4.0")
                 echoerr "Error: nvim version >= 0.4.0 required. Aborting."
                 return
+        endif
+
+        let l:force_install = 0
+        if a:0 > 0
+                let l:force_install = a:1
         endif
 
         " Decide where the script responsible for starting neovim should be
@@ -244,7 +249,7 @@ function! firenvim#install()
         let l:powershell_script = ""
         for l:name in ["firefox", "chrome", "chromium"]
                 let l:cur_browser = l:browsers[l:name]
-                if !l:cur_browser["has_config"]
+                if !l:cur_browser["has_config"] && !l:force_install
                         echo "No config detected for " . l:name . ". Skipping."
                         continue
                 endif

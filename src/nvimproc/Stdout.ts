@@ -39,7 +39,6 @@ export class Stdout {
             return;
         }
         this.prev = new Uint8Array(0);
-
         const [kind, reqId, data1, data2] = decoded;
         const name = this.messageNames.get(kind);
         if (!name) {

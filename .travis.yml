@@ -1,18 +1,25 @@
 language: node_js
+env:
+  - HEADLESS=1
 os:
   - linux
-  - osx
-  - windows
 node_js:
   - 10.15
+before_install:
+  - if [ $TRAVIS_OS_NAME = linux ]; then npm install -g get-firefox; get-firefox --branch nightly --platform linux --extract --target $HOME ; export PATH="$HOME/firefox:$PATH" ; mkdir -p "$HOME/bin" ; curl -L https://github.com/neovim/neovim/releases/download/nightly/nvim.appimage -o "$HOME/bin/nvim" ; chmod u+x "$HOME/bin/nvim"; export PATH="$HOME/bin:$PATH"; fi
+  - if [ $TRAVIS_OS_NAME = osx ]; then curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-macos.tar.gz; tar xzf nvim-macos.tar.gz; export PATH="$(pwd)/nvim-osx64/bin/:$PATH"; brew cask install firefox; fi
+  - if [ $TRAVIS_OS_NAME = windows ]; then choco install neovim --pre;  choco install firefox; fi
+  - firefox --version
+  - nvim --version
+  - mkdir -p ~/.config/nvim
+  - echo "set rtp+=$(pwd)" >> $HOME/.config/nvim/init.vim
 install:
   - npm install
   - npm run build
+  - npm run install_manifests
 cache:
   directories:
     - node_modules
-addons:
-  apt:
-    update: true
+    - /home/travis/.npm
 git:
   depth: false
