@@ -1,7 +1,7 @@
 {
   "author": "glacambre",
   "dependencies": {
-    "@types/jest": "24.0.16",
+    "@types/jest": "24.0.18",
     "@types/msgpack-lite": "0.1.6",
     "@types/node": "12.7.3",
     "awesome-typescript-loader": "5.2.1",
