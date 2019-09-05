@@ -7,7 +7,7 @@ function! s:build_path(list)
         if has("win32")
                 let l:path_separator = "\\"
         endif
-        return join(a:list, path_separator)
+        return join(a:list, l:path_separator)
 endfunction
 
 " Entry point of the vim-side of the extension.
@@ -20,9 +20,9 @@ function! firenvim#run()
         " Write messages to stdout according to the format expected by
         " Firefox's native messaging protocol
         function! WriteStdout(id, data)
-                " The native messaging protocol expects to the message's
-                " length to precede the message. It has to use native
-                " endianness. We assume big endian.
+                " The native messaging protocol expects the message's length
+                " to precede the message. It has to use native endianness. We
+                " assume big endian.
                 let l:len = strlen(a:data)
                 let l:lenstr = luaeval("string.char(bit.band(" . l:len . ", 255))"
                                         \. ".. string.char(bit.band(bit.rshift(" . l:len . ", 8), 255))"

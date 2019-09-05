@@ -38,7 +38,7 @@ export function getNewestFileMatching(directory: string, pattern: string | RegEx
 export async function sendKeys(driver: any, keys: any[]) {
         return keys.reduce((prom, key) => prom
                 .then((action: any) => action.sendKeys(key))
-                .then((action: any) => action.pause(50))
+                .then((action: any) => action.pause(100))
                 , Promise.resolve(driver.actions())).then((action: any) => action.perform());
 }
 
@@ -53,11 +53,13 @@ export async function performTest(driver: any) {
         console.log("Waited for span to be created.");
         await driver.sleep(1000);
         await sendKeys(driver, "aTest".split("")
-                .concat(webdriver.Key.ESCAPE));
-        await driver.sleep(1000);
-        await sendKeys(driver, ":wq!".split("")
-                .concat(webdriver.Key.ENTER));
+                .concat(webdriver.Key.ESCAPE)
+                .concat(":wq!".split(""))
+                .concat(webdriver.Key.ENTER)
+        );
         console.log("Typed stuff.");
+        await driver.wait(Until.stalenessOf(span));
+        console.log("Span removed from page.");
         await driver.wait(async () => (await input.getAttribute("value")) === "Test");
         console.log("Waited for value update.");
 }
