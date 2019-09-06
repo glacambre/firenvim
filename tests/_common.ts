@@ -8,7 +8,7 @@ const By = webdriver.By;
 
 jest.setTimeout(20000)
 
-export const extensionDir = "./target";
+export const extensionDir = path.resolve("target");
 
 export function getNewestFileMatching(directory: string, pattern: string | RegExp) {
         return new Promise((resolve, reject) => {
