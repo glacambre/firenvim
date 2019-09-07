@@ -147,9 +147,9 @@ endfunction
 
 function! s:get_executable_content(data_dir)
         if has("win32")
-                return  "@echo off\n" .
-                                        \ "cd " . a:data_dir . "\n" .
-                                        \ s:get_progpath() . " --headless -c FirenvimRun\n"
+                return  "@echo off\r\n" .
+                                        \ "cd \'" . a:data_dir . "\"\r\n" .
+                                        \ "\"" . s:get_progpath() . "\" --headless -c \"call firenvim#run()\"\r\n"
         endif
         return "#!/bin/sh\n
                                 \cd " . a:data_dir . "\n
@@ -182,15 +182,15 @@ endfunction
 
 function! s:key_to_ps1_str(key, manifest_path)
         let l:ps1_content = ""
-        let l:key_arr = split(l:key, '\')
+        let l:key_arr = split(a:key, '\')
         let l:i = 0
-        for l:i in range(2, len(key_arr) - 1)
+        for l:i in range(2, len(l:key_arr) - 1)
                 let l:ps1_content = l:ps1_content . "\nNew-Item -Path \"" . join(key_arr[0:i], '\') . '" -ErrorAction SilentlyContinue'
         endfor
         " Then, assign a value to it
         return l:ps1_content . "\nSet-Item -Path \"" .
-                                \ l:key .
-                                \ '\" -Value "' . l:manifest_path . '" ' .
+                                \ a:key .
+                                \ '\" -Value "' . a:manifest_path . '" ' .
                                 \ '-ErrorAction SilentlyContinue'
 endfunction
 
@@ -258,6 +258,10 @@ function! firenvim#install(...)
                 let l:manifest_dir_path = l:cur_browser["manifest_dir_path"]()
                 let l:manifest_path = s:build_path([l:manifest_dir_path, "firenvim.json"])
 
+                if has('win32')
+                        let l:manifest_path = s:build_path([l:manifest_dir_path, "firenvim-" . l:name . ".json"])
+                endif
+
                 call mkdir(l:manifest_dir_path, "p", 0700)
                 call writefile([l:manifest_content], l:manifest_path)
                 call setfperm(l:manifest_path, "rw-------")
@@ -269,9 +273,9 @@ function! firenvim#install(...)
                         " On windows, also create a registry key. We
                         " do this by writing a powershell script to a
                         " file and executing it.
-                        let l:ps1 = s:key_to_ps1_str(l:cur_browser["registry_key"],
+                        let l:ps1_content = s:key_to_ps1_str(l:cur_browser["registry_key"],
                                                 \ l:manifest_path)
-                        let l:ps1_path = s:build_path([l:manifest_dir_path, l:cur_browser . ".ps1"])
+                        let l:ps1_path = s:build_path([l:manifest_dir_path, l:name . ".ps1"])
                         call writefile(split(l:ps1_content, "\n"), l:ps1_path)
                         call setfperm(l:ps1_path, "rwx------")
                         call system('powershell "' . l:ps1_path . '"')
