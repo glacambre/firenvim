@@ -257,6 +257,10 @@ function! firenvim#install(...)
                 let l:manifest_content = l:cur_browser["manifest_content"](l:execute_nvim_path)
                 let l:manifest_dir_path = l:cur_browser["manifest_dir_path"]()
                 let l:manifest_path = s:build_path([l:manifest_dir_path, "firenvim.json"])
+                
+                if has('win32')
+                        let l:manifest_path = s:build_path([l:manifest_dir_path, "firenvim-" . l:name . ".json"])
+                endif
 
                 if has('win32')
                         let l:manifest_path = s:build_path([l:manifest_dir_path, "firenvim-" . l:name . ".json"])

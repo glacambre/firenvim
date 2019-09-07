@@ -1,5 +1,8 @@
 import * as browser from "webextension-polyfill";
 
+let os = "";
+browser.runtime.getPlatformInfo((plat: any) => os = plat.os);
+
 let error = "";
 
 function getError() {
@@ -16,7 +19,12 @@ function registerErrors(nvim: any, reject: any) {
             if (errstr.match(/no such native application/i)) {
                 error = "Native manifest not found. Please run `:call firenvim#install(0)` in neovim.";
             } else if (errstr.match(/an unexpected error occurred/i)) {
-                error = "The script supposed to start neovim couldn't be found. Please run `:call firenvim#install(0)` in neovim.";
+                error = "The script supposed to start neovim couldn't be found."
+                    + " Please run `:call firenvim#install(0)` in neovim";
+                if (os === "win") {
+                    error += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
+                }
+                error += ".";
             } else {
                 error = errstr;
             }

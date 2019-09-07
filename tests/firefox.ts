@@ -17,7 +17,7 @@ describe("Firefox", () => {
 
                 // Temporary workaround until
                 // https://github.com/SeleniumHQ/selenium/pull/7464 is merged
-                let xpiPath
+                let xpiPath: string
                 if (extensionPath !== undefined) {
                         xpiPath = extensionPath.replace(/\.zip$/, ".xpi");
                         fs.renameSync(extensionPath, xpiPath);
@@ -30,13 +30,20 @@ describe("Firefox", () => {
                         .addExtensions(xpiPath);
 
                 if (env["HEADLESS"]) {
-                        options.headless()
+                        options.headless();
+                }
+
+                if (env["APPVEYOR"]) {
+                        options.setBinary("C:\\Program Files\\Firefox Developer Edition\\firefox.exe");
                 }
 
                 const driver = new webdriver.Builder()
                         .forBrowser("firefox")
                         .setFirefoxOptions(options)
                         .build();
+                driver.getCapabilities().then((cap: any) => {
+                        console.log(`${cap.getBrowserName()} ${cap.getBrowserVersion()} ${xpiPath}`);
+                });
                 await performTest(driver);
                 await killDriver(driver);
                 return done();
