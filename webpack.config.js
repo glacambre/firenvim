@@ -18,6 +18,7 @@ const CopyWebPackFiles = [
   "src/NeovimFrame.html",
   "src/browserAction.html",
   "static/firenvim.svg",
+  "static/firenvim-disabled.svg",
   "static/firenvim-notification.svg",
   "static/firenvim-error.svg",
 ]
@@ -74,6 +75,8 @@ module.exports = [
             return content.toString().replace("BROWSER_SPECIFIC_SETTINGS,", ``)
               .replace("FIRENVIM_VERSION", package_json.version)
               .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
+              // Chrome doesn't support svgs in its manifest
+              .replace('"default_icon": "firenvim.svg",\n', "")
             ;
             break;
         }

@@ -1,3 +1,5 @@
+import * as browser from "webextension-polyfill";
+
 function displayErrors() {
     function insertError(error: any) {
         console.log(error);
@@ -16,15 +18,15 @@ async function updateDisableButton() {
         },
         funcName: ["exec"],
     }))[0].id;
-    const disabled = await browser.runtime.sendMessage({
+    const disabled = JSON.parse((await browser.runtime.sendMessage({
         args: {
             args: [tabId, "disabled"],
             funcName: ["browser", "sessions", "getTabValue"],
         },
         funcName: ["exec"],
-    });
+    })));
     const button = document.getElementById("disableFirenvim");
-    if (disabled) {
+    if (disabled === true) {
         button.innerText = "Enable in this tab";
     } else {
         button.innerText = "Disable in this tab";

@@ -14,7 +14,7 @@ const global = {
         }))
         // Note: this relies on setDisabled existing in the object returned by
         // getFunctions and attached to the window object
-        .then((disabled: boolean) => (window as any).setDisabled(disabled)),
+        .then((disabled: boolean) => (window as any).setDisabled(!!disabled)),
     // lastEditorLocation: a [url, selector] tuple indicating the page the last
     // iframe was created on and the selector of the corresponding textarea.
     lastEditorLocation: ["", "", 0] as [string, string, number],

@@ -1,21 +1,73 @@
-import * as browser from "webextension-polyfill";
+import * as browserProxy from "webextension-polyfill";
+import { isFirefox, svgPathToImageData } from "./utils/utils";
 
+// Chrome doesn't support getTabValue/setTabValue but we need it to know
+// whether a tab is disabled or not.
+if (!isFirefox()) {
+    // Using chrome
+    const tabValues = new Map();
+    (window as any).browser = new Proxy(browserProxy, {
+        get: (target, prop) => {
+            if (prop === "sessions") {
+                return new Proxy(target[prop], {
+                    get: (target2, prop2) => {
+                        if (prop2 === "setTabValue") {
+                            return (tabid: any, item: any, value: any) => {
+                                let obj = tabValues.get(tabid);
+                                if (obj === undefined) {
+                                    obj = {};
+                                    tabValues.set(tabid, obj);
+                                }
+                                obj[item] = value;
+                            };
+                        }
+                        if (prop2 === "getTabValue") {
+                            return (tabid: any, item: any) => {
+                                const obj = tabValues.get(tabid);
+                                if (obj === undefined) {
+                                    return Promise.resolve(undefined);
+                                }
+                                return Promise.resolve(obj[item]);
+                            };
+                        }
+                        return target2[prop2];
+                    },
+                    set: (target2, prop2, value) => target2[prop2] = value,
+                });
+            }
+            return target[prop];
+        },
+        set: (target, prop, value) => target[prop] = value,
+    });
+}
+
+// Os is win/mac/linux/androis/cros. We only use it to add information to error
+// messages on windows.
 let os = "";
-browser.runtime.getPlatformInfo((plat: any) => os = plat.os);
+browser.runtime.getPlatformInfo().then((plat: any) => os = plat.os);
 
 let error = "";
+
+function getIcon(path: string) {
+    let details: any = { path };
+    if (!isFirefox()) {
+        const id = svgPathToImageData(path);
+        details = { imageData: id };
+    }
+    return details;
+}
 
 function getError() {
     return error;
 }
 
-function registerErrors(nvim: any, reject: any) {
-    browser.browserAction.setIcon({ path: "firenvim.svg" });
-    nvim.onDisconnect.addListener((p: any) => {
+async function registerErrors(nvim: any, reject: any) {
+    nvim.onDisconnect.addListener(async (p: any) => {
+        browser.browserAction.setIcon(getIcon("firenvim.svg"));
         error = "";
         if (p.error) {
             const errstr = p.error.toString();
-            browser.browserAction.setIcon({ path: "firenvim-error.svg" });
+            browser.browserAction.setIcon(getIcon("firenvim-error.svg"));
             if (errstr.match(/no such native application/i)) {
                 error = "Native manifest not found. Please run `:call firenvim#install(0)` in neovim.";
             } else if (errstr.match(/an unexpected error occurred/i)) {
@@ -33,11 +85,11 @@ function registerErrors(nvim: any, reject: any) {
     });
 }
 
-function checkVersion(nvimVersion: string) {
+async function checkVersion(nvimVersion: string) {
     const manifest = browser.runtime.getManifest();
     if (manifest.version !== nvimVersion) {
         error = `Neovim plugin version (${nvimVersion}) and firefox addon version (${manifest.version}) do not match.`;
-        browser.browserAction.setIcon({ path: "firenvim-notification.svg" });
+        browser.browserAction.setIcon(getIcon("firenvim-notification.svg"));
     }
 }
 
@@ -99,8 +151,9 @@ function createNewInstance() {
 
 async function toggleDisabled() {
     const tabId = (await browser.tabs.query({ active: true }))[0].id;
-    const disabled = !(await browser.sessions.getTabValue(tabId, "disabled"));
-    await browser.sessions.setTabValue(tabId, "disabled", disabled);
+    const tabValue = (await browser.sessions.getTabValue(tabId, "disabled"));
+    const disabled = !JSON.parse((tabValue as string) || "false");
+    await browser.sessions.setTabValue(tabId, "disabled", `${disabled}`);
     return browser.tabs.sendMessage(tabId, { args: [disabled], funcName: ["setDisabled"] });
 }
 
@@ -117,6 +170,14 @@ Object.assign(window, {
     getTab: (sender: any, args: any) => sender.tab,
     messageOwnTab: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id, args),
     messageTab: (sender: any, args: any) => browser.tabs.sendMessage(args[0], args.slice(1)),
+    setDisabledIcon: (sender: any, disabled: any) => {
+        disabled = JSON.parse(disabled);
+        const details = getIcon(disabled ? "firenvim-disabled.svg" : "firenvim.svg");
+        if (isFirefox() && !disabled) {
+            details.path = undefined;
+        }
+        return browser.browserAction.setIcon(details);
+    },
     toggleDisabled: (sender: any, args: any) => toggleDisabled(),
     updateSettings: (sender: any, args: any) => updateSettings(),
 } as any);
@@ -126,7 +187,7 @@ browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResp
     if (!fn) {
         throw new Error(`Error: unhandled content request: ${request.toString()}.`);
     }
-    return fn(sender, request.args || []);
+    return fn(sender, request.args !== undefined ? request.args : []);
 });
 
 updateSettings();

@@ -1,4 +1,5 @@
 import * as browser from "webextension-polyfill";
+import { isFirefox, svgPathToImageData } from "../utils/utils";
 
 function _getElementContent(e: any) {
     if (e.value !== undefined) {
@@ -34,18 +35,10 @@ export function getFunctions(global: {
         },
         setDisabled: (disabled: boolean) => {
             global.disabled = disabled;
-            return browser.runtime.sendMessage({ funcName: ["getTab"] }).then((tab: any) =>
-                browser.runtime.sendMessage({
-                    args: {
-                        args: [{
-                            path: disabled ? "firenvim-disabled.svg" : undefined,
-                            tabId: tab.id,
-                        }],
-                        funcName: ["browser", "browserAction", "setIcon"],
-                    },
-                    funcName: ["exec"],
-                }),
-            );
+            return browser.runtime.sendMessage({
+                args: disabled,
+                funcName: ["setDisabledIcon"],
+            });
         },
         setElementContent: (selector: string, text: string) => {
             const { input: e } = global.selectorToElems.get(selector) as any;
