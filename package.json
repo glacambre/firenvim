@@ -10,7 +10,7 @@
     "geckodriver": "1.16.2",
     "jest": "24.9.0",
     "msgpack-lite": "0.1.26",
-    "selenium-webdriver": "4.0.0-alpha.4",
+    "selenium-webdriver": "4.0.0-alpha.5",
     "ts-jest": "24.0.2",
     "tslint": "5.19.0",
     "tslint-sonarts": "1.9.0",
