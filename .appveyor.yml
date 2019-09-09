@@ -9,11 +9,11 @@ build: off
 test: off
 deploy: off
 environment:
-  HEADLESS: 1
   APPVEYOR: 1
 install:
   - ps: Install-Product node $env:nodejs_version
   - choco --version
+  - choco install googlechrome
   - choco install firefox-dev --pre
   - ps: $env:Path += ";C:\Program Files\Firefox Developer Edition"
   - ps: Invoke-WebRequest -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.zip" -OutFile "C:\Users\appveyor\nvim-win64.zip"
@@ -31,4 +31,4 @@ install:
   - ps: New-Item -Path "HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim"
   - ps: Set-Item -Path "HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim\" -Value "C:\Users\me\AppData\Local\firenvim\firenvim-firefox.json"
   - npm run install_manifests
-  - npm run test firefox
+  - npm run test

@@ -262,15 +262,11 @@ function! firenvim#install(...)
                         let l:manifest_path = s:build_path([l:manifest_dir_path, "firenvim-" . l:name . ".json"])
                 endif
 
-                if has('win32')
-                        let l:manifest_path = s:build_path([l:manifest_dir_path, "firenvim-" . l:name . ".json"])
-                endif
-
                 call mkdir(l:manifest_dir_path, "p", 0700)
                 call writefile([l:manifest_content], l:manifest_path)
                 call setfperm(l:manifest_path, "rw-------")
 
-                echo "Installed native manifest for " . l:name . "."
+                echo "Installed native manifest for " . l:name . ".\n"
 
                 if has('win32')
                         echo "Creating registry key for " . l:name . ". This may take a while."
