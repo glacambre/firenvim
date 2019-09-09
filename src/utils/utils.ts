@@ -16,15 +16,14 @@ export function svgPathToImageData(path: string, dimensions = "32x32") {
     }
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
-    // Placeholder until I can figure out how to draw an svg to a canvas
-    ctx.rect(width * 0.10, height * 0.10, width * 0.80, height * 0.80);
-    ctx.fillStyle = ({
-        "firenvim-disabled.svg": "#888888",
-        "firenvim-error.svg": "#FF0000",
-        "firenvim-notification.svg": "#FFFF00",
-    } as any)[path] || "#00FF00";
-    ctx.fill();
-    return ctx.getImageData(0, 0, width, height);
+    const img = new Image(width, height);
+    const result = new Promise((resolve) => img.addEventListener("load", (e) => {
+        ctx.drawImage(img, 0, 0, width, height);
+        const id = ctx.getImageData(0, 0, width, height);
+        resolve(id);
+    }));
+    img.src = path;
+    return result;
 }
 
 export function toFileName(url: string, id: string) {

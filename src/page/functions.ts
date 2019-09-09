@@ -1,5 +1,4 @@
 import * as browser from "webextension-polyfill";
-import { isFirefox, svgPathToImageData } from "../utils/utils";
 
 function _getElementContent(e: any) {
     if (e.value !== undefined) {

@@ -48,10 +48,10 @@ browser.runtime.getPlatformInfo().then((plat: any) => os = plat.os);
 
 let error = "";
 
-function getIcon(path: string) {
+async function getIcon(path: string) {
     let details: any = { path };
     if (!isFirefox()) {
-        const id = svgPathToImageData(path);
+        const id = await svgPathToImageData(path);
         details = { imageData: id };
     }
     return details;
@@ -63,11 +63,11 @@ function getError() {
 
 async function registerErrors(nvim: any, reject: any) {
     nvim.onDisconnect.addListener(async (p: any) => {
-        browser.browserAction.setIcon(getIcon("firenvim.svg"));
+        browser.browserAction.setIcon(await getIcon("firenvim.svg"));
         error = "";
         if (p.error) {
             const errstr = p.error.toString();
-            browser.browserAction.setIcon(getIcon("firenvim-error.svg"));
+            browser.browserAction.setIcon(await getIcon("firenvim-error.svg"));
             if (errstr.match(/no such native application/i)) {
                 error = "Native manifest not found. Please run `:call firenvim#install(0)` in neovim.";
             } else if (errstr.match(/an unexpected error occurred/i)) {
@@ -89,7 +89,7 @@ async function checkVersion(nvimVersion: string) {
     const manifest = browser.runtime.getManifest();
     if (manifest.version !== nvimVersion) {
         error = `Neovim plugin version (${nvimVersion}) and firefox addon version (${manifest.version}) do not match.`;
-        browser.browserAction.setIcon(getIcon("firenvim-notification.svg"));
+        browser.browserAction.setIcon(await getIcon("firenvim-notification.svg"));
     }
 }
 
@@ -170,9 +170,9 @@ Object.assign(window, {
     getTab: (sender: any, args: any) => sender.tab,
     messageOwnTab: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id, args),
     messageTab: (sender: any, args: any) => browser.tabs.sendMessage(args[0], args.slice(1)),
-    setDisabledIcon: (sender: any, disabled: any) => {
+    setDisabledIcon: async (sender: any, disabled: any) => {
         disabled = JSON.parse(disabled);
-        const details = getIcon(disabled ? "firenvim-disabled.svg" : "firenvim.svg");
+        const details = await getIcon(disabled ? "firenvim-disabled.svg" : "firenvim.svg");
         if (isFirefox() && !disabled) {
             details.path = undefined;
         }
