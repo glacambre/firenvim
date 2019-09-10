@@ -89,9 +89,10 @@ const global = {
         iframe.addEventListener("blur", refocus);
         elem.addEventListener("focus", refocus);
         setTimeout(() => {
+            iframe.focus();
             iframe.removeEventListener("blur", refocus);
             elem.removeEventListener("focus", refocus);
-        }, 1000);
+        }, 100);
         refocus();
 
         // We want to remove the frame from the page if the corresponding
