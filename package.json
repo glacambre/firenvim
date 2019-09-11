@@ -14,7 +14,7 @@
     "ts-jest": "24.0.2",
     "tslint": "5.20.0",
     "tslint-sonarts": "1.9.0",
-    "typescript": "3.6.2",
+    "typescript": "3.6.3",
     "web-ext": "3.1.1",
     "web-ext-types": "3.2.1",
     "webextension-polyfill": "0.4.0",
