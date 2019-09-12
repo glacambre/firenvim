@@ -1,3 +1,19 @@
+/**
+ * Browser extensions have multiple processes. This is the entry point for the
+ * [background process](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Anatomy_of_a_WebExtension#Background_scripts).
+ * Our background process has multiple tasks:
+ * - Keep track of per-tab values with its setTabValue/getTabValue functions
+ * - Set the [browserActions](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/browserAction)'s icon.
+ * - Keep track of error messages/warnings that should are displayed in the
+ *   browserAction.
+ * - Update settings when the user changes their vimrc.
+ * - Start new neovim instances when asked by a content script.
+ * - Provide an RPC mechanism that enables calling background APIs from the
+ *   browserAction/content script.
+ *
+ * The background process mostly acts as a slave for the browserAction and
+ * content scripts. It rarely acts on its own.
+ */
 import * as browser from "webextension-polyfill";
 import { isFirefox, svgPathToImageData } from "./utils/utils";
 
@@ -6,7 +22,7 @@ import { isFirefox, svgPathToImageData } from "./utils/utils";
 // the background. This has the disadvantage of not surviving browser restarts,
 // but's it's cross platform.
 const tabValues = new Map();
-function setTabValue (tabid: any, item: any, value: any) {
+function setTabValue(tabid: any, item: any, value: any) {
     let obj = tabValues.get(tabid);
     if (obj === undefined) {
         obj = {};
@@ -14,7 +30,7 @@ function setTabValue (tabid: any, item: any, value: any) {
     }
     obj[item] = value;
 }
-function getTabValue (tabid: any, item: any) {
+function getTabValue(tabid: any, item: any) {
     const obj = tabValues.get(tabid);
     if (obj === undefined) {
         return undefined;
@@ -22,16 +38,37 @@ function getTabValue (tabid: any, item: any) {
     return obj[item];
 }
 
+const svgs = {
+    disabled: "firenvim-disabled.svg",
+    error: "firenvim-error.svg",
+    normal: "firenvim.svg",
+    notification: "firenvim-notification.svg",
+};
 // Return a `details` object suitable for use with browserAction.setIcon().
 // This is needed because firefox allows using svg urls but Chrome requires
 // svgs to be rendered to a canvas.
-async function getIcon(path: string) {
+async function getIcon(name: keyof typeof svgs) {
+    if (svgs[name] === undefined) {
+        throw new Error(`Unknown svg icon ${name}!`);
+    }
+    const path = svgs[name];
     let details: any = { path };
     if (!isFirefox()) {
         const id = await svgPathToImageData(path);
         details = { imageData: id };
     }
     return details;
+}
+function updateIcon(tabId?: number) {
+    let name: keyof typeof svgs = "normal";
+    if (tabId !== undefined && getTabValue(tabId, "disabled") === "true") {
+        name = "disabled";
+    } else if (error !== "") {
+        name = "error";
+    } else if (warning !== "") {
+        name = "notification";
+    }
+    return getIcon(name).then((icon: any) => browser.browserAction.setIcon(icon));
 }
 
 // Os is win/mac/linux/androis/cros. We only use it to add information to error
@@ -49,11 +86,10 @@ function getError() {
 
 async function registerErrors(nvim: any, reject: any) {
     nvim.onDisconnect.addListener(async (p: any) => {
-        browser.browserAction.setIcon(await getIcon("firenvim.svg"));
         error = "";
+        updateIcon();
         if (p.error) {
             const errstr = p.error.toString();
-            browser.browserAction.setIcon(await getIcon("firenvim-error.svg"));
             if (errstr.match(/no such native application/i)) {
                 error = "Native manifest not found. Please run `:call firenvim#install(0)` in neovim.";
             } else if (errstr.match(/an unexpected error occurred/i)) {
@@ -66,20 +102,25 @@ async function registerErrors(nvim: any, reject: any) {
             } else {
                 error = errstr;
             }
+            updateIcon();
             reject(p.error);
         }
     });
 }
 
+// Last warning message
+let warning = "";
 async function checkVersion(nvimVersion: string) {
     const manifest = browser.runtime.getManifest();
+    warning = "";
     if (manifest.version !== nvimVersion) {
-        error = `Neovim plugin version (${nvimVersion}) and firefox addon version (${manifest.version}) do not match.`;
-        browser.browserAction.setIcon(await getIcon("firenvim-notification.svg"));
+        warning = `Neovim plugin version (${nvimVersion}) and firefox addon `
+            + `version (${manifest.version}) do not match.`;
     }
+    updateIcon();
 }
 
-// FUnction called in order to fill out default settings. Called from updateSettings.
+// Function called in order to fill out default settings. Called from updateSettings.
 function applySettings(settings: any) {
     function makeDefaults(obj: { [key: string]: any }, name: string, value: any) {
         if (obj[name] === undefined) {
@@ -102,7 +143,6 @@ function fetchSettings() {
         const nvim = browser.runtime.connectNative("firenvim");
         registerErrors(nvim, reject);
         nvim.onMessage.addListener((resp: any) => {
-            error = "";
             checkVersion(resp.version);
             return resolve(resp.settings);
         });
@@ -141,9 +181,13 @@ async function toggleDisabled() {
     const tabValue = getTabValue(tabId, "disabled");
     const disabled = !JSON.parse((tabValue as string) || "false");
     setTabValue(tabId, "disabled", `${disabled}`);
+    updateIcon(tabId);
     return browser.tabs.sendMessage(tabId, { args: [disabled], funcName: ["setDisabled"] });
 }
 
+// Creating this first instance serves two purposes: make creating new neovim
+// frames fast and also initialize settings the first time Firenvim is enabled
+// in a browser.
 let preloadedInstance = createNewInstance();
 
 Object.assign(window, {
@@ -162,14 +206,6 @@ Object.assign(window, {
     getTabValueFor: (sender: any, args: any) => getTabValue(args[0], args[1]),
     messageOwnTab: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id, args),
     messageTab: (sender: any, args: any) => browser.tabs.sendMessage(args[0], args.slice(1)),
-    setDisabledIcon: async (sender: any, disabled: any) => {
-        disabled = JSON.parse(disabled);
-        const details = await getIcon(disabled ? "firenvim-disabled.svg" : "firenvim.svg");
-        if (isFirefox() && !disabled) {
-            details.path = undefined;
-        }
-        return browser.browserAction.setIcon(details);
-    },
     setTabValue: (sender: any, args: any) => setTabValue(sender.tab.id, args[0], args[1]),
     toggleDisabled: (sender: any, args: any) => toggleDisabled(),
     updateSettings: (sender: any, args: any) => updateSettings(),
@@ -183,4 +219,8 @@ browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResp
     return fn(sender, request.args !== undefined ? request.args : []);
 });
 
-updateSettings();
+browser.tabs.onActivated.addListener(async ({ tabId }: { tabId: number }) => {
+    updateIcon(tabId);
+});
+
+updateIcon();

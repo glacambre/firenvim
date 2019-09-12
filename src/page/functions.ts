@@ -34,10 +34,6 @@ export function getFunctions(global: {
         },
         setDisabled: (disabled: boolean) => {
             global.disabled = disabled;
-            return browser.runtime.sendMessage({
-                args: disabled,
-                funcName: ["setDisabledIcon"],
-            });
         },
         setElementContent: (selector: string, text: string) => {
             const { input: e } = global.selectorToElems.get(selector) as any;

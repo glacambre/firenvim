@@ -2,6 +2,13 @@
   "extends": ["tslint:recommended", "tslint-sonarts"],
   "rules": {
     "arrow-parens": false,
+    "max-line-length": [
+      true,
+      {
+        "ignore-pattern": "http",
+        "limit": 120
+      }
+    ],
     "no-conditional-assignment": false,
     "no-console": false,
     "no-namespace": false,
