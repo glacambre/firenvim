@@ -4,22 +4,19 @@ import { computeSelector } from "./utils/CSSUtils";
 
 const global = {
     // Whether Firenvim is disabled in this tab
-    disabled: browser.runtime.sendMessage({ funcName: ["getTab"] })
-        .then((tab: any) => browser.runtime.sendMessage({
-            args: {
-                args: [tab.id, "disabled"],
-                funcName: ["browser", "sessions", "getTabValue"],
-            },
-            funcName: ["exec"],
-        }))
+    disabled: browser.runtime.sendMessage({
+                args: ["disabled"],
+                funcName: ["getTabValue"],
+        })
         // Note: this relies on setDisabled existing in the object returned by
         // getFunctions and attached to the window object
         .then((disabled: boolean) => (window as any).setDisabled(!!disabled)),
-    // lastEditorLocation: a [url, selector] tuple indicating the page the last
-    // iframe was created on and the selector of the corresponding textarea.
+    // lastEditorLocation: a [url, selector, cursor] tuple indicating the page
+    // the last iframe was created on, the selector of the corresponding
+    // textarea and the number of characters before the cursor.
     lastEditorLocation: ["", "", 0] as [string, string, number],
     // nvimify: triggered when an element is focused, takes care of creating
-    // the editor iframe and appending it to the page.
+    // the editor iframe, appending it to the page and focusing it.
     nvimify: async (evt: FocusEvent) => {
         if (global.disabled instanceof Promise) {
             await global.disabled;
@@ -116,7 +113,6 @@ const global = {
 const functions = getFunctions(global);
 Object.assign(window, functions);
 browser.runtime.onMessage.addListener(async (
-    // args: [string, string] is factually incorrect but we need to please typescript
     request: { funcName: string[], selector?: string, args: [string, string & number, string & number] },
     sender: any,
     sendResponse: any,

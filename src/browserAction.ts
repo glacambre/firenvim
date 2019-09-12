@@ -19,11 +19,8 @@ async function updateDisableButton() {
         funcName: ["exec"],
     }))[0].id;
     const disabled = JSON.parse((await browser.runtime.sendMessage({
-        args: {
-            args: [tabId, "disabled"],
-            funcName: ["browser", "sessions", "getTabValue"],
-        },
-        funcName: ["exec"],
+        args: [tabId, "disabled"],
+        funcName: ["getTabValueFor"],
     })));
     const button = document.getElementById("disableFirenvim");
     if (disabled === true) {

@@ -1,53 +1,30 @@
-import * as browserProxy from "webextension-polyfill";
+import * as browser from "webextension-polyfill";
 import { isFirefox, svgPathToImageData } from "./utils/utils";
 
-// Chrome doesn't support getTabValue/setTabValue but we need it to know
-// whether a tab is disabled or not.
-if (!isFirefox()) {
-    // Using chrome
-    const tabValues = new Map();
-    (window as any).browser = new Proxy(browserProxy, {
-        get: (target, prop) => {
-            if (prop === "sessions") {
-                return new Proxy(target[prop], {
-                    get: (target2, prop2) => {
-                        if (prop2 === "setTabValue") {
-                            return (tabid: any, item: any, value: any) => {
-                                let obj = tabValues.get(tabid);
-                                if (obj === undefined) {
-                                    obj = {};
-                                    tabValues.set(tabid, obj);
-                                }
-                                obj[item] = value;
-                            };
-                        }
-                        if (prop2 === "getTabValue") {
-                            return (tabid: any, item: any) => {
-                                const obj = tabValues.get(tabid);
-                                if (obj === undefined) {
-                                    return Promise.resolve(undefined);
-                                }
-                                return Promise.resolve(obj[item]);
-                            };
-                        }
-                        return target2[prop2];
-                    },
-                    set: (target2, prop2, value) => target2[prop2] = value,
-                });
-            }
-            return target[prop];
-        },
-        set: (target, prop, value) => target[prop] = value,
-    });
+// We can't use the sessions.setTabValue/getTabValue apis firefox has because
+// chrome doesn't support them. Instead, we create a map of tabid => {} kept in
+// the background. This has the disadvantage of not surviving browser restarts,
+// but's it's cross platform.
+const tabValues = new Map();
+function setTabValue (tabid: any, item: any, value: any) {
+    let obj = tabValues.get(tabid);
+    if (obj === undefined) {
+        obj = {};
+        tabValues.set(tabid, obj);
+    }
+    obj[item] = value;
+}
+function getTabValue (tabid: any, item: any) {
+    const obj = tabValues.get(tabid);
+    if (obj === undefined) {
+        return undefined;
+    }
+    return obj[item];
 }
 
-// Os is win/mac/linux/androis/cros. We only use it to add information to error
-// messages on windows.
-let os = "";
-browser.runtime.getPlatformInfo().then((plat: any) => os = plat.os);
-
-let error = "";
-
+// Return a `details` object suitable for use with browserAction.setIcon().
+// This is needed because firefox allows using svg urls but Chrome requires
+// svgs to be rendered to a canvas.
 async function getIcon(path: string) {
     let details: any = { path };
     if (!isFirefox()) {
@@ -57,6 +34,15 @@ async function getIcon(path: string) {
     return details;
 }
 
+// Os is win/mac/linux/androis/cros. We only use it to add information to error
+// messages on windows.
+let os = "";
+browser.runtime.getPlatformInfo().then((plat: any) => os = plat.os);
+
+// Last error message
+let error = "";
+
+// Simple getter for easy RPC calls
 function getError() {
     return error;
 }
@@ -93,6 +79,7 @@ async function checkVersion(nvimVersion: string) {
     }
 }
 
+// FUnction called in order to fill out default settings. Called from updateSettings.
 function applySettings(settings: any) {
     function makeDefaults(obj: { [key: string]: any }, name: string, value: any) {
         if (obj[name] === undefined) {
@@ -151,15 +138,18 @@ function createNewInstance() {
 
 async function toggleDisabled() {
     const tabId = (await browser.tabs.query({ active: true }))[0].id;
-    const tabValue = (await browser.sessions.getTabValue(tabId, "disabled"));
+    const tabValue = getTabValue(tabId, "disabled");
     const disabled = !JSON.parse((tabValue as string) || "false");
-    await browser.sessions.setTabValue(tabId, "disabled", `${disabled}`);
+    setTabValue(tabId, "disabled", `${disabled}`);
     return browser.tabs.sendMessage(tabId, { args: [disabled], funcName: ["setDisabled"] });
 }
 
 let preloadedInstance = createNewInstance();
 
 Object.assign(window, {
+    // We need to stick the browser polyfill in `window` if we want the `exec`
+    // call to be able to find it on Chrome
+    browser,
     exec: (sender: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
     getError: (sender: any, args: any) => getError(),
     getNewNeovimInstance: (sender: any, args: any) => {
@@ -168,6 +158,8 @@ Object.assign(window, {
         return result;
     },
     getTab: (sender: any, args: any) => sender.tab,
+    getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
+    getTabValueFor: (sender: any, args: any) => getTabValue(args[0], args[1]),
     messageOwnTab: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id, args),
     messageTab: (sender: any, args: any) => browser.tabs.sendMessage(args[0], args.slice(1)),
     setDisabledIcon: async (sender: any, disabled: any) => {
@@ -178,6 +170,7 @@ Object.assign(window, {
         }
         return browser.browserAction.setIcon(details);
     },
+    setTabValue: (sender: any, args: any) => setTabValue(sender.tab.id, args[0], args[1]),
     toggleDisabled: (sender: any, args: any) => toggleDisabled(),
     updateSettings: (sender: any, args: any) => updateSettings(),
 } as any);

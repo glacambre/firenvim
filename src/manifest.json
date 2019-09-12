@@ -33,7 +33,7 @@
   },
 
 
-  "permissions": ["nativeMessaging", "sessions", "storage", "tabs"],
+  "permissions": ["nativeMessaging", "storage", "tabs"],
 
   "icons": {
     "48": "firenvim.svg"
