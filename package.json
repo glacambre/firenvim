@@ -11,7 +11,7 @@
     "jest": "24.9.0",
     "msgpack-lite": "0.1.26",
     "selenium-webdriver": "4.0.0-alpha.5",
-    "ts-jest": "24.0.2",
+    "ts-jest": "24.1.0",
     "tslint": "5.20.0",
     "tslint-sonarts": "1.9.0",
     "typescript": "3.6.3",
