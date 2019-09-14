@@ -9,6 +9,7 @@ end
 
 local function firenvim_start_server(token, origin)
         local server = vim.loop.new_tcp()
+        server:nodelay(true)
         server:bind('127.0.0.1', 0)
         server:listen(128, function(err)
                 assert(not err, err)
