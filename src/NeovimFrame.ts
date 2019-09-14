@@ -167,7 +167,6 @@ window.addEventListener("load", async () => {
         keyHandler.style.top = `${evt.clientY}px`;
     });
     window.addEventListener("click", _ => keyHandler.focus());
-    keyHandler.focus();
     // Let users know when they focus/unfocus the frame
     function setFocusedStyle() {
         document.documentElement.style.opacity = "1";
@@ -177,4 +176,6 @@ window.addEventListener("load", async () => {
     }
     window.addEventListener("focus", setFocusedStyle);
     window.addEventListener("blur", setBluredStyle);
+    keyHandler.focus();
+    setTimeout(() => keyHandler.focus(), 10);
 });
