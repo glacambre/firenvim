@@ -42,26 +42,50 @@ export async function sendKeys(driver: any, keys: any[]) {
                 , Promise.resolve(driver.actions())).then((action: any) => action.perform());
 }
 
-export async function performTest(driver: any) {
+export async function testTxties(driver: any) {
+        console.log("Navigating to txti.es…");
         await driver.get("http://txti.es");
-        console.log("txti.es navigated to.");
+        console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
-        console.log("Found text area.");
+        console.log("Clicking on input…");
         await driver.actions().click(input).perform();
-        console.log("Text area clicked on.");
+        console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(7)")));
-        console.log("Waited for span to be created.");
+        console.log("Sleeping for a sec…");
         await driver.sleep(1000);
+        console.log("Typing things…");
         await sendKeys(driver, "aTest".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
         );
-        console.log("Typed stuff.");
+        console.log("Waiting for span to be removed…");
         await driver.wait(Until.stalenessOf(span));
-        console.log("Span removed from page.");
+        console.log("Waiting for value update…");
         await driver.wait(async () => (await input.getAttribute("value")) === "Test");
-        console.log("Waited for value update.");
+}
+
+export async function testCodemirror(driver: any) {
+        console.log("Navigating to codemirror.net…");
+        await driver.get("https://codemirror.net");
+        console.log("Looking for codemirror div…");
+        const input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")));
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")));
+        console.log("Sleeping for a sec…");
+        await driver.sleep(1000);
+        console.log("Typing stuff…");
+        await sendKeys(driver, "iTest".split("")
+                .concat(webdriver.Key.ESCAPE)
+                .concat(":wq!".split(""))
+                .concat(webdriver.Key.ENTER)
+        );
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+        console.log("Waiting for value update…");
+        await driver.wait(async () => /Test<!--/.test(await input.getAttribute("innerText")));
 }
 
 export async function killDriver(driver: any) {

@@ -1,13 +1,52 @@
 import * as browser from "webextension-polyfill";
+import { computeSelector } from "../utils/CSSUtils";
 
-function _getElementContent(e: any) {
+function executeInPage(code: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        const eventId = (new URL(browser.runtime.getURL(""))).hostname + Math.random();
+        script.innerHTML = `((evId) => {
+            try {
+                let result;
+                result = ${code};
+                window.dispatchEvent(new CustomEvent(evId, {
+                    detail: {
+                        success: true,
+                        result,
+                    }
+                }));
+            } catch (e) {
+                window.dispatchEvent(new CustomEvent(evId, {
+                    detail: { success: false, reason: e },
+                }));
+            }
+        })(${JSON.stringify(eventId)})`;
+        window.addEventListener(eventId, ({ detail }: any) => {
+            script.parentNode.removeChild(script);
+            if (detail.success) {
+                return resolve(detail.result);
+            }
+            return reject(detail.reason);
+        }, { once: true });
+        document.head.appendChild(script);
+    });
+}
+
+function _getElementContent(e: any): Promise<string> {
+    if (e.className.match(/CodeMirror/gi)) {
+        const selector = computeSelector(e);
+        return executeInPage(`(${(selec: string) => {
+            const elem = document.querySelector(selec) as any;
+            return elem.CodeMirror.getValue();
+        }})(${JSON.stringify(selector)})`);
+    }
     if (e.value !== undefined) {
-        return e.value;
+        return Promise.resolve(e.value);
     }
     if (e.textContent !== undefined) {
-        return e.textContent;
+        return Promise.resolve(e.textContent);
     }
-    return e.innerText;
+    return Promise.resolve(e.innerText);
 }
 
 export function getFunctions(global: {
@@ -37,6 +76,12 @@ export function getFunctions(global: {
         },
         setElementContent: (selector: string, text: string) => {
             const { input: e } = global.selectorToElems.get(selector) as any;
+            if (e.className.match(/CodeMirror/gi)) {
+                return executeInPage(`(${(selec: string, str: string) => {
+                    const elem = document.querySelector(selec) as any;
+                    return elem.CodeMirror.setValue(str);
+                }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
+            }
             if (e.value !== undefined) {
                 e.value = text;
             } else {
@@ -49,9 +94,12 @@ export function getFunctions(global: {
             e.dispatchEvent(new Event("input",       { bubbles: true }));
             e.dispatchEvent(new Event("change",      { bubbles: true }));
         },
-        setElementCursor: (selector: string, line: number, column: number) => {
+        setElementCursor: async (selector: string, line: number, column: number) => {
             const { input } = global.selectorToElems.get(selector) as any;
-            const pos = _getElementContent(input)
+            if (!input.setSelectionRange) {
+                return;
+            }
+            const pos = (await _getElementContent(input))
                 .split("\n")
                 .reduce((acc: number, l: string, index: number) => acc + (index < (line - 1)
                     ? (l.length + 1)

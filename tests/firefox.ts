@@ -8,7 +8,7 @@ const Until = webdriver.until;
 const By = webdriver.By;
 const Options = require("selenium-webdriver/firefox").Options
 
-import { extensionDir, getNewestFileMatching, sendKeys, performTest, killDriver } from "./_common"
+import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testCodemirror, killDriver } from "./_common"
 
 describe("Firefox", () => {
 
@@ -44,7 +44,8 @@ describe("Firefox", () => {
                 driver.getCapabilities().then((cap: any) => {
                         console.log(`${cap.getBrowserName()} ${cap.getBrowserVersion()} ${xpiPath}`);
                 });
-                await performTest(driver);
+                await testTxties(driver);
+                await testCodemirror(driver);
                 await killDriver(driver);
                 return done();
         })

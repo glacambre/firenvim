@@ -24,7 +24,12 @@ const global = {
         if (global.disabled) {
             return;
         }
-        const elem = evt.target as HTMLElement;
+        let elem = evt.target as HTMLElement;
+        if (elem.parentNode
+            && elem.parentNode.parentElement
+            && elem.parentNode.parentElement.className.match(/CodeMirror/gi)) {
+            elem = elem.parentNode.parentElement;
+        }
         const selector = computeSelector(elem);
 
         if (global.selectorToElems.get(selector) !== undefined) {

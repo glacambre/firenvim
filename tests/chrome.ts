@@ -7,7 +7,7 @@ const webdriver = require("selenium-webdriver");
 const Until = webdriver.until;
 const By = webdriver.By;
 
-import { extensionDir, getNewestFileMatching, sendKeys, performTest, killDriver } from "./_common"
+import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testCodemirror, killDriver } from "./_common"
 
 describe("Chrome", () => {
 
@@ -44,7 +44,8 @@ describe("Chrome", () => {
                         .forBrowser("chrome")
                         .setChromeOptions(options)
                         .build();
-                await performTest(driver);
+                await testCodemirror(driver);
+                await testTxties(driver);
                 await killDriver(driver);
                 return done();
         })
