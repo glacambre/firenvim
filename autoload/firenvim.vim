@@ -169,7 +169,7 @@ endfunction
 function! s:get_chrome_manifest(execute_nvim_path)
         return s:get_manifest_beginning(a:execute_nvim_path) .
                                 \' "allowed_origins": [
-                                \ "chrome-extension://mmmllmhmimdejghpafjolabnkfphckke/"
+                                \ "chrome-extension://egpjdkipkomnmjhjmdamaniclmdlobbo/"
                                 \ ]
                                 \}'
 endfunction
