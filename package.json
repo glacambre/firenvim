@@ -5,7 +5,7 @@
     "@types/msgpack-lite": "0.1.6",
     "@types/node": "12.7.5",
     "awesome-typescript-loader": "5.2.1",
-    "chromedriver": "76.0.1",
+    "chromedriver": "77.0.0",
     "copy-webpack-plugin": "5.0.4",
     "geckodriver": "1.17.0",
     "jest": "24.9.0",
