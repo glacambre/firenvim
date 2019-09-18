@@ -39,6 +39,11 @@ function _getElementContent(e: any): Promise<string> {
             const elem = document.querySelector(selec) as any;
             return elem.CodeMirror.getValue();
         }})(${JSON.stringify(selector)})`);
+    } else if (e.className.match(/ace_editor/gi)) {
+        return executeInPage(`(${(selec: string) => {
+            const elem = document.querySelector(selec) as any;
+            return (window as any).ace.edit(elem).getValue();
+        }})(${JSON.stringify(computeSelector(e))})`);
     }
     if (e.value !== undefined) {
         return Promise.resolve(e.value);
@@ -56,7 +61,25 @@ export function getFunctions(global: {
     disabled: boolean | Promise<boolean>,
 }) {
     return {
-        getEditorLocation: () => global.lastEditorLocation,
+        getEditorLocation: () => {
+            // global.lastEditorLocation[1] is a selector. If no selector is
+            // defined, we're not the script that should answer this question
+            // and thus return a Promise that will never be resolved
+            if (global.lastEditorLocation[1] === "") {
+                // This cast is wrong but we need it in order to be able to
+                // typecheck our proxy in page/proxy.ts. Note that it's ok
+                // because the promise will never return anyway.
+                return new Promise(() => undefined) as Promise<typeof global.lastEditorLocation>;
+            }
+            // We need to reset global.lastEditorLocation in order to avoid
+            // accidentally giving an already-given selector if we receive a
+            // message that isn't addressed to us. Note that this is a hack, a
+            // proper fix would be depending on frameIDs, but we can't do that
+            // efficiently
+            const result = global.lastEditorLocation;
+            global.lastEditorLocation = ["", "", 0];
+            return Promise.resolve(result);
+        },
         getElementContent: (selector: string) => _getElementContent(global.selectorToElems.get(selector).input),
         killEditor: (selector: string) => {
             const { span, input } = global.selectorToElems.get(selector);
@@ -80,6 +103,11 @@ export function getFunctions(global: {
                 return executeInPage(`(${(selec: string, str: string) => {
                     const elem = document.querySelector(selec) as any;
                     return elem.CodeMirror.setValue(str);
+                }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
+            } else if (e.className.match(/ace_editor/gi)) {
+                return executeInPage(`(${(selec: string, str: string) => {
+                    const elem = document.querySelector(selec) as any;
+                    return (window as any).ace.edit(elem).setValue(str);
                 }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
             }
             if (e.value !== undefined) {

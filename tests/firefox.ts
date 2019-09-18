@@ -8,11 +8,13 @@ const Until = webdriver.until;
 const By = webdriver.By;
 const Options = require("selenium-webdriver/firefox").Options
 
-import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testCodemirror, killDriver } from "./_common"
+import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testCodemirror, testAce, killDriver } from "./_common"
 
 describe("Firefox", () => {
 
-        test("Firenvim works on txti.es", async (done) => {
+        let driver: any = undefined
+
+        beforeAll(async () => {
                 const extensionPath = await getNewestFileMatching(path.join(extensionDir, "xpi"), ".*.zip");
 
                 // Temporary workaround until
@@ -37,16 +39,18 @@ describe("Firefox", () => {
                         options.setBinary("C:\\Program Files\\Firefox Developer Edition\\firefox.exe");
                 }
 
-                const driver = new webdriver.Builder()
+                driver = new webdriver.Builder()
                         .forBrowser("firefox")
                         .setFirefoxOptions(options)
                         .build();
                 driver.getCapabilities().then((cap: any) => {
                         console.log(`${cap.getBrowserName()} ${cap.getBrowserVersion()} ${xpiPath}`);
                 });
-                await testTxties(driver);
-                await testCodemirror(driver);
-                await killDriver(driver);
-                return done();
-        })
+        });
+
+        afterAll(() => killDriver(driver));
+
+        test("Firenvim works on txti.es", () => testTxties(driver));
+        test("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        test("Firenvim works on Ace", () => testAce(driver));
 })

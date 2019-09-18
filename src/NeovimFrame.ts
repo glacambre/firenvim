@@ -52,6 +52,7 @@ window.addEventListener("load", async () => {
     const host = document.getElementById("host") as HTMLPreElement;
     const keyHandler = document.getElementById("keyhandler");
     const [[url, selector, cursor], connectionData] = await Promise.all([locationPromise, connectionPromise]);
+    (window as any).selector = selector;
     const nvimPromise = neovim(host, selector, connectionData);
     const contentPromise = page.getElementContent(selector);
 

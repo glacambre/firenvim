@@ -7,8 +7,11 @@ const functions = getFunctions({} as any);
 
 type ft = typeof functions;
 type ArgumentsType<T> = T extends  (...args: infer U) => any ? U: never;
+type Promisify<T> = T extends Promise<infer U> ? T : Promise<T>;
 
-export const page = {} as { [k in keyof ft]: (...args: ArgumentsType<ft[k]>) => Promise<ReturnType<ft[k]>> };
+export const page = {} as {
+    [k in keyof ft]: (...args: ArgumentsType<ft[k]>) => Promisify<ReturnType<ft[k]>>
+};
 
 let funcName: keyof typeof functions;
 for (funcName in functions) {
@@ -23,6 +26,7 @@ for (funcName in functions) {
             args: {
                 args: arr,
                 funcName: [func],
+                selector: (window as any).selector,
             },
             funcName: ["messageOwnTab"],
         });

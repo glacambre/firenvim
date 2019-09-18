@@ -6,7 +6,7 @@ const webdriver = require("selenium-webdriver");
 const Until = webdriver.until;
 const By = webdriver.By;
 
-jest.setTimeout(20000)
+jest.setTimeout(40000)
 
 export const extensionDir = path.resolve("target");
 
@@ -47,6 +47,7 @@ export async function testTxties(driver: any) {
         await driver.get("http://txti.es");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
@@ -70,6 +71,7 @@ export async function testCodemirror(driver: any) {
         await driver.get("https://codemirror.net");
         console.log("Looking for codemirror div…");
         const input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
@@ -87,6 +89,32 @@ export async function testCodemirror(driver: any) {
         console.log("Waiting for value update…");
         await driver.wait(async () => /Test<!--/.test(await input.getAttribute("innerText")));
 }
+
+export async function testAce(driver: any) {
+        console.log("Navigating to ace.c9.io…");
+        await driver.get("https://ace.c9.io");
+        console.log("Looking for ace div…");
+        const input = await driver.wait(Until.elementLocated(By.css("div.ace_content")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(10)")));
+        console.log("Sleeping for a sec…");
+        await driver.sleep(1000);
+        console.log("Typing stuff…");
+        await sendKeys(driver, "ATest".split("")
+                .concat(webdriver.Key.ESCAPE)
+                .concat(":wq!".split(""))
+                .concat(webdriver.Key.ENTER)
+        );
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+        console.log("Waiting for value update…");
+        await driver.wait(async () => /\/\*\*Test/.test(await input.getAttribute("innerText")));
+}
+
+
 
 export async function killDriver(driver: any) {
         try {

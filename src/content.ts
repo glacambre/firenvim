@@ -25,13 +25,17 @@ const global = {
             return;
         }
         let elem = evt.target as HTMLElement;
-        if (elem.parentNode
-            && elem.parentNode.parentElement
-            && elem.parentNode.parentElement.className.match(/CodeMirror/gi)) {
-            elem = elem.parentNode.parentElement;
+        if (elem.parentElement) {
+            if (elem.parentElement.className.match(/ace_editor/gi)) {
+                elem = elem.parentElement;
+            } else if (elem.parentElement.parentElement
+                && elem.parentElement.parentElement.className.match(/CodeMirror/gi)) {
+                elem = elem.parentElement.parentElement;
+            }
         }
         const selector = computeSelector(elem);
 
+        // If this element already has a neovim frame, stop
         if (global.selectorToElems.get(selector) !== undefined) {
             return;
         }
@@ -122,12 +126,16 @@ browser.runtime.onMessage.addListener(async (
     sender: any,
     sendResponse: any,
 ) => {
-    if (request.selector) {
-        return;
-    }
     const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
     if (!fn) {
         throw new Error(`Error: unhandled content request: ${request.toString()}.`);
+    }
+    // If this is a selector-specific request and we don't know about this
+    // selector, the message is not for us, so we mustn't reply. It'd be better
+    // to be able to address messages to specific contexts directly but this is
+    // not possible yet: https://bugzilla.mozilla.org/show_bug.cgi?id=1580764
+    if (request.selector && !global.selectorToElems.get(request.selector)) {
+        return new Promise(() => undefined);
     }
     return fn(...request.args);
 });

@@ -7,11 +7,13 @@ const webdriver = require("selenium-webdriver");
 const Until = webdriver.until;
 const By = webdriver.By;
 
-import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testCodemirror, killDriver } from "./_common"
+import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testCodemirror, testAce, killDriver } from "./_common"
 
 describe("Chrome", () => {
 
-        test("Firenvim works on txti.es", async (done) => {
+        let nonHeadlessTest = () => env["HEADLESS"] ? test.skip : test;
+        let driver: any = undefined;
+        beforeAll(() => {
                 // Disabling the GPU is required on windows
                 const options = (new (require("selenium-webdriver/chrome").Options)())
                         .addArguments("--disable-gpu")
@@ -20,8 +22,7 @@ describe("Chrome", () => {
                 // Won't work until this wontfix is fixed:
                 // https://bugs.chromium.org/p/chromium/issues/detail?id=706008#c5
                 if (env["HEADLESS"]) {
-                        console.error("Can't test headless chrome.");
-                        return done();
+                        return;
                         // options.headless();
                 }
 
@@ -40,13 +41,15 @@ describe("Chrome", () => {
                                 break;
                 }
 
-                const driver = new webdriver.Builder()
+                driver = new webdriver.Builder()
                         .forBrowser("chrome")
                         .setChromeOptions(options)
                         .build();
-                await testCodemirror(driver);
-                await testTxties(driver);
-                await killDriver(driver);
-                return done();
-        })
+        });
+
+        afterAll(() => killDriver(driver));
+
+        nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
+        nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        nonHeadlessTest()("Firenvim works on txti.es", () => testTxties(driver));
 })
