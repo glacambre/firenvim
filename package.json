@@ -19,7 +19,7 @@
     "web-ext-types": "3.2.1",
     "webextension-polyfill": "0.4.0",
     "webpack": "4.40.2",
-    "webpack-cli": "3.3.8"
+    "webpack-cli": "3.3.9"
   },
   "description": "Turn your browser into a Neovim GUI.",
   "keywords": [
