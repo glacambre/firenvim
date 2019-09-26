@@ -1,4 +1,4 @@
-# Firenvim [![Build Status](https://travis-ci.org/glacambre/firenvim.svg?branch=master)](https://travis-ci.org/glacambre/firenvim)[![Total alerts](https://img.shields.io/lgtm/alerts/g/glacambre/firenvim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/glacambre/firenvim/alerts/)[![Build status](https://ci.appveyor.com/api/projects/status/kboak3f5kl9hkgf4/branch/master?svg=true)](https://ci.appveyor.com/project/glacambre/firenvim/branch/master)
+# Firenvim [![Build Status](https://travis-ci.org/glacambre/firenvim.svg?branch=master)](https://travis-ci.org/glacambre/firenvim)[![Build status](https://ci.appveyor.com/api/projects/status/kboak3f5kl9hkgf4/branch/master?svg=true)](https://ci.appveyor.com/project/glacambre/firenvim/branch/master)[![Total alerts](https://img.shields.io/lgtm/alerts/g/glacambre/firenvim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/glacambre/firenvim/alerts/)
 
 Turn your browser into a Neovim client.
 
@@ -6,15 +6,19 @@ Turn your browser into a Neovim client.
 
 # How to use
 
-For now, just click on textareas or input fields. When you want to set the content of the textarea to the content of the neovim frame, just `:w`. When you want to close the neovim frame, just `:q`.
+Just click on textareas, the firenvim frame should pop up. When you want to set the content of the textarea to the content of the neovim frame, just `:w`. When you want to close the neovim frame, just `:q`.
 
 # Installing
 
-Before installing anything, please read [SECURITY.md](SECURITY.md) and make sure you're OK with everything mentionned in there. If you think of a way to compromise Firenvim, please send an email (you can find my address in my commits).
+Before installing anything, please read [SECURITY.md](SECURITY.md) and make sure you're OK with everything mentionned in there. If you think of a way to compromise Firenvim, please send me an email (you can find my address in my commits).
 
 ## Pre-built
 
-Get the extension from [AMO](https://addons.mozilla.org/en-US/firefox/addon/firenvim/), get the native messenger from the [releases page](https://github.com/glacambre/firenvim/releases). Run the native messenger once in your shell and if it results in `Native messenger successfully installed.` being printed, you're done.
+First, make sure you are using neovim 0.4.0 or later.
+
+Then, install Firenvim as a neovim plugin ([using](https://github.com/junegunn/vim-plug) [your](https://github.com/Shougo/dein.vim) [favourite](https://github.com/tpope/vim-pathogen) [plugin](https://github.com/k-takata/minpac) [manager](https://github.com/VundleVim/Vundle.vim)) and after that, run the following command in your shell: `nvim --headless -c ":set rtp+=." -c "call firenvim#install(0)" -c "quit"`.
+
+The final step is to install Firenvim in your browser from [mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
 
 ## From source
 
