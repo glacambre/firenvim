@@ -16,7 +16,7 @@ Before installing anything, please read [SECURITY.md](SECURITY.md) and make sure
 
 First, make sure you are using neovim 0.4.0 or later.
 
-Then, install Firenvim as a neovim plugin ([using](https://github.com/junegunn/vim-plug) [your](https://github.com/Shougo/dein.vim) [favourite](https://github.com/tpope/vim-pathogen) [plugin](https://github.com/k-takata/minpac) [manager](https://github.com/VundleVim/Vundle.vim)) and after that, run the following command in your shell: `nvim --headless -c ":set rtp+=." -c "call firenvim#install(0)" -c "quit"`.
+Then, install Firenvim as a neovim plugin ([using](https://github.com/junegunn/vim-plug) [your](https://github.com/Shougo/dein.vim) [favourite](https://github.com/tpope/vim-pathogen) [plugin](https://github.com/k-takata/minpac) [manager](https://github.com/VundleVim/Vundle.vim)) and after that, run the following command in your shell: `nvim --headless -c "call firenvim#install(0)" -c "quit"`.
 
 The final step is to install Firenvim in your browser from [mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
 
