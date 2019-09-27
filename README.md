@@ -32,7 +32,7 @@ First, install Firenvim like a regular vim plugin (either by changing your runti
 
 Then, run the following commands:
 ```sh
-git clone git@git.sr.ht:~glacambre/firenvim
+git clone https://git.sr.ht/~glacambre/firenvim
 cd firenvim
 npm install
 npm run build
