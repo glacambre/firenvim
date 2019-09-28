@@ -117,7 +117,9 @@ window.addEventListener("load", async () => {
         .then(() => nvim.list_chans())
         .then((channels: any) => {
             const self: any = Object.values(channels)
-                .find((channel: any) => channel.client && channel.client.name.match(new RegExp(extInfo.name, "i")));
+                .find((channel: any) => channel.client
+                    && channel.client.name
+                    && channel.client.name.match(new RegExp(extInfo.name, "i")));
             if (!self) {
                 throw new Error("Couldn't find own channel.");
             }
