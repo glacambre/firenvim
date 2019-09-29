@@ -60,6 +60,17 @@ window.addEventListener("load", async () => {
 
     const nvim = await nvimPromise;
 
+    // We need to set client info before running ui_attach because we want this
+    // info to be available when UIEnter is triggered
+    const extInfo = browser.runtime.getManifest();
+    const [major, minor, patch] = extInfo.version.split(".");
+    const clientInfoPromise = nvim.set_client_info(extInfo.name,
+        { major, minor, patch },
+        "ui",
+        {},
+        {},
+    );
+
     nvim.ui_attach(cols, rows, {
         ext_linegrid: true,
         rgb: true,
@@ -105,16 +116,9 @@ window.addEventListener("load", async () => {
             return promise.then((__: any) => nvim.win_set_cursor(0, [line, col]));
         });
 
-    // Set client info and ask for notifications when the file is written/nvim is closed
-    const extInfo = browser.runtime.getManifest();
-    const [major, minor, patch] = extInfo.version.split(".");
-    nvim.set_client_info(extInfo.name,
-        { major, minor, patch },
-        "ui",
-        {},
-        {},
-    )
-        .then(() => nvim.list_chans())
+    // Wait for client info to be set and ask for notifications when the file
+    // is written/nvim is closed
+    clientInfoPromise.then(() => nvim.list_chans())
         .then((channels: any) => {
             const self: any = Object.values(channels)
                 .find((channel: any) => channel.client
