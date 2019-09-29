@@ -63,3 +63,18 @@ In your browser, open the background console. This requires the following steps:
 Then, navigate to a page with a textarea (I really like `http://txti.es` for this). Open the content console (`<CS-I>` on both firefox and chrome/ium) and focus the textarea. This should result in messages being printed in the console. If it doesn't, try clicking on the Firenvim icon next to the urlbar. If no messages are logged there either, try clicking on the `Reload settings` button.
 
 If none of the messages help you understand what's wrong or if you're not getting any messages, please open a new github issue.
+
+## Make sure firenvim's $PATH is the same as neovim's
+
+Some operating systems (such as OSX) empty your browser's `$PATH`. This could be a problem if you want to use plugins that depend on other executables. In order to check if this is indeed happening, just run `echo $PATH` in your shell and `:!echo $PATH` in firenvim and compare the results. If they're different, this might be the culprit.
+
+In order to fix this, [find the firenvim script](#make-sure-the-firenvim-script-has-been-created) and edit it to manually export the right `$PATH`, e.g.
+
+```diff
+ #!/bin/sh
+ cd $HOME/.local/share/firenvim
++export PATH="/path/to/somewhere:/path/to/elsewhere:$PATH"
+ exec '/usr/bin/nvim' --headless -c 'call firenvim#run()'
+```
+
+Please note that this is something you will have to do every time you call `firenvim#install()`.
