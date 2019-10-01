@@ -59,6 +59,8 @@ Firenvim currently requires the following permissions for the following reasons:
 
 # Configuring Firenvim
 
+## Configuring the browser addon behavior
+
 Firenvim is configured by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionnary containing the key "localSettings". `g:firenvim_config["localSettings"]` is a dictionnary the keys of which have to be a javascript pattern matching a url and the values of which are dictionnaries containing settings that apply for all urls matched by the javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used.
 
 Here's an example `g:firenvim_config` that matches the default configuration:
@@ -88,6 +90,28 @@ let g:firenvim_config = {
 \ }
 ```
 Note that it is not necessary to specify the `priority` key because it defaults to 1, except for the `.*` pattern, which has a priority of 0.
+
+## Configuring neovim's behavior
+
+You can detect when firenvim connects to neovim with the following code:
+```
+function! OnUIEnter(event)
+    let l:ui = nvim_get_chan_info(a:event.channel)
+    if has_key(l:ui, 'client') && has_key(l:ui.client, "name")
+        if l:ui.client.name == "Firenvim"
+            set laststatus=0
+        endif
+    endif
+endfunction
+autocmd UIEnter * call OnUIEnter(deepcopy(v:event))
+```
+
+Similarly, you can detect when firenvim disconnects from a neovim instance with the `UILeave` autocommand.
+
+If you want to use different settings depending on the textarea you're currently editing, you can use autocommands to do that too. All buffers are named like this: `domainname_page_selector.txt` (see [this function](src/utils/utils.ts)). This means that you can for example set the file type to markdown for all github buffers:
+```
+au BufEnter github.com_*.txt set filetype=markdown
+```
 
 # Drawbacks
 
