@@ -145,16 +145,17 @@ function! s:get_progpath()
         return $APPIMAGE
 endfunction
 
-function! s:get_executable_content(data_dir)
+function! s:get_executable_content(data_dir, prolog)
         if has("win32")
                 return  "@echo off\r\n" .
                                         \ "cd \"" . a:data_dir . "\"\r\n" .
+                                        \ a:prolog . "\r\n" .
                                         \ "\"" . s:get_progpath() . "\" --headless -c \"call firenvim#run()\"\r\n"
         endif
-        return "#!/bin/sh\n
-                                \cd " . a:data_dir . "\n
-                                \exec '" . s:get_progpath() . "' --headless -c 'call firenvim#run()'\n
-                                \"
+        return "#!/bin/sh\n" .
+                                \ "cd " . a:data_dir . "\n" .
+                                \ a:prolog . "\n" .
+                                \ "exec '" . s:get_progpath() . "' --headless -c 'call firenvim#run()'\n"
 endfunction
 
 function! s:get_manifest_beginning(execute_nvim_path)
@@ -204,6 +205,12 @@ endfunction
 "
 " Manifest paths & registry stuff are specified here: 
 " https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Manifest_location
+"
+" firenvim#install accepts the following optional arguments:
+" a:1: 0 to let firenvim detect what browsers the user wants to use or 1 to
+"      force install for every browser.
+" a:2: A prologue that should be inserted in the shell/batch script and
+"      executed before neovim is ran.
 function! firenvim#install(...)
         if !has("nvim-0.4.0")
                 echoerr "Error: nvim version >= 0.4.0 required. Aborting."
@@ -211,15 +218,19 @@ function! firenvim#install(...)
         endif
 
         let l:force_install = 0
+        let l:script_prolog = ""
         if a:0 > 0
                 let l:force_install = a:1
+                if a:0 > 1
+                        let l:script_prolog = a:2
+                endif
         endif
 
         " Decide where the script responsible for starting neovim should be
         let l:data_dir = s:get_data_dir_path()
         let l:execute_nvim_path = s:build_path([l:data_dir, s:get_executable_name()])
         " Write said script to said path
-        let l:execute_nvim = s:get_executable_content(l:data_dir)
+        let l:execute_nvim = s:get_executable_content(l:data_dir, l:script_prolog)
 
         call mkdir(l:data_dir, "p", 0700)
         call writefile(split(l:execute_nvim, "\n"), l:execute_nvim_path)

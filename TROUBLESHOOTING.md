@@ -68,13 +68,9 @@ If none of the messages help you understand what's wrong or if you're not gettin
 
 Some operating systems (such as OSX) empty your browser's `$PATH`. This could be a problem if you want to use plugins that depend on other executables. In order to check if this is indeed happening, just run `echo $PATH` in your shell and `:!echo $PATH` in firenvim and compare the results. If they're different, this might be the culprit.
 
-In order to fix this, [find the firenvim script](#make-sure-the-firenvim-script-has-been-created) and edit it to manually export the right `$PATH`, e.g.
-
-```diff
- #!/bin/sh
- cd $HOME/.local/share/firenvim
-+export PATH="/path/to/somewhere:/path/to/elsewhere:$PATH"
- exec '/usr/bin/nvim' --headless -c 'call firenvim#run()'
+In order to fix this, call firenvim#install() and give it a prologue that sets the right path for you, like this:
+```sh
+nvim --headless -c "call firenvim#install(0, 'export PATH=\"$PATH\"')" -c quit
 ```
 
-Please note that this is something you will have to do every time you call `firenvim#install()`.
+Note that this sets your `$PATH` in stone and that in order to update it you'll need to run the above command again.
