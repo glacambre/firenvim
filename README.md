@@ -64,7 +64,7 @@ Firenvim currently requires the following permissions for the following reasons:
 Firenvim is configured by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionnary containing the key "localSettings". `g:firenvim_config["localSettings"]` is a dictionnary the keys of which have to be a javascript pattern matching a url and the values of which are dictionnaries containing settings that apply for all urls matched by the javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used.
 
 Here's an example `g:firenvim_config` that matches the default configuration:
-```vimscript
+```
 let g:firenvim_config = {
     \ 'localSettings': {
         \ '.*': {
@@ -108,7 +108,7 @@ autocmd UIEnter * call OnUIEnter(deepcopy(v:event))
 
 Similarly, you can detect when firenvim disconnects from a neovim instance with the `UILeave` autocommand.
 
-If you want to use different settings depending on the textarea you're currently editing, you can use autocommands to do that too. All buffers are named like this: `domainname_page_selector.txt` (see [this function](src/utils/utils.ts)). This means that you can for example set the file type to markdown for all github buffers:
+If you want to use different settings depending on the textarea you're currently editing, you can use autocommands to do that too. All buffers are named like this: `domainname_page_selector.txt` (see the [toFileName function](src/utils/utils.ts)). This means that you can for example set the file type to markdown for all github buffers:
 ```
 au BufEnter github.com_*.txt set filetype=markdown
 ```
