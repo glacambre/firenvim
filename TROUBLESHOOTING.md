@@ -73,4 +73,4 @@ In order to fix this, call firenvim#install() and give it a prologue that sets t
 nvim --headless -c "call firenvim#install(0, 'export PATH=\"$PATH\"')" -c quit
 ```
 
-Note that this sets your `$PATH` in stone and that in order to update it you'll need to run the above command again.
+Note that this sets your `$PATH` in stone and that in order to update it you'll need to run the above command again. If you want to avoid doing that, you could also try the methode described [here](https://github.com/glacambre/firenvim/issues/122#issuecomment-536348171).
