@@ -18,12 +18,12 @@ async function updateDisableButton() {
         },
         funcName: ["exec"],
     }))[0].id;
-    const disabled = JSON.parse((await browser.runtime.sendMessage({
+    const disabled = (await browser.runtime.sendMessage({
         args: [tabId, "disabled"],
         funcName: ["getTabValueFor"],
-    })));
+    }));
     const button = document.getElementById("disableFirenvim");
-    if (disabled === true) {
+    if (disabled === "true") {
         button.innerText = "Enable in this tab";
     } else {
         button.innerText = "Disable in this tab";
