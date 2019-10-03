@@ -9,6 +9,34 @@ export function isFirefox() {
     return curBrowser === "firefox";
 }
 
+export function getCodeMirrorParent(elem: HTMLElement): HTMLElement {
+    function isCodeMirror(element: HTMLElement) {
+       return element.className.match(/CodeMirror/gi);
+    }
+    if (elem.parentElement) {
+        // We check both parentElement and parentElement.parentElement because
+        // some CodeMirror elements have internal elements the className of
+        // which doesn't contain "CodeMirror"
+        if (isCodeMirror(elem.parentElement)) {
+            return getCodeMirrorParent(elem.parentElement);
+        }
+        if (isCodeMirror(elem.parentElement.parentElement)) {
+            return getCodeMirrorParent(elem.parentElement.parentElement);
+        }
+    }
+    return elem;
+}
+
+export function getAceParent(elem: HTMLElement): HTMLElement {
+    function isAce(element: HTMLElement) {
+        return element.className.match(/ace_editor/gi);
+    }
+    if (elem.parentElement && isAce(elem.parentElement)) {
+        return getAceParent(elem.parentElement);
+    }
+    return elem;
+}
+
 export function svgPathToImageData(path: string, dimensions = "32x32") {
     const [width, height] = dimensions.split("x").map(x => parseInt(x, 10));
     if (!width || !height) {
