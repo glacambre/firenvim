@@ -62,8 +62,6 @@ In your browser, open the background console. This requires the following steps:
 
 Then, navigate to a page with a textarea (I really like `http://txti.es` for this). Open the content console (`<CS-I>` on both firefox and chrome/ium). If you're using firefox, also open and clear the Browser Console (`<CS-J>`). Then, click on the textarea. This should result in messages being printed in the console. If it doesn't, try clicking on the Firenvim icon next to the urlbar. If no messages are logged there either, try clicking on the `Reload settings` button.
 
-If none of the messages help you understand what's wrong or if you're not getting any messages, please open a new github issue.
-
 ## Make sure it's not your init.vim
 
 Clone the firenvim repository somewhere (e.g. `git clone https://git.sr.ht/~glacambre/firenvim /tmp/firenvim`) and edit the [firenvim script](#make-sure-the-firenvim-script-has-been-created) so that it doesn't load your init.vim but loads firenvim, like this:
