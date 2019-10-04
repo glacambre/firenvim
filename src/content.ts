@@ -210,6 +210,9 @@ browser.storage.local.get("localSettings").then(async ({ localSettings }: { [key
         }
         return val;
     }
+    if (localSettings === undefined) {
+        throw new Error("Error: your settings are undefined. Try reloading the page. If this error persists, try the troubleshooting guide: https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md");
+    }
     const [, conf] = Array.from(Object.entries(localSettings))
         .sort((e1, e2) => (or1(e2[1].priority) - or1(e1[1].priority)))
         .find(([pat, sel]) => (new RegExp(pat)).test(document.location.href));
