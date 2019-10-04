@@ -214,7 +214,7 @@ Object.assign(window, {
 browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResponse: any) => {
     const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
     if (!fn) {
-        throw new Error(`Error: unhandled content request: ${request.toString()}.`);
+        throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
     }
     return fn(sender, request.args !== undefined ? request.args : []);
 });
@@ -224,3 +224,10 @@ browser.tabs.onActivated.addListener(async ({ tabId }: { tabId: number }) => {
 });
 
 updateIcon();
+
+browser.commands.onCommand.addListener(async (command: string) => {
+    if (command === "nvimify") {
+        const id = (await browser.tabs.query({ active: true }))[0].id;
+        browser.tabs.sendMessage(id, { args: [], funcName: ["forceNvimify"] });
+    }
+});

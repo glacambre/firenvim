@@ -61,6 +61,26 @@ export function getFunctions(global: {
     disabled: boolean | Promise<boolean>,
 }) {
     return {
+        forceNvimify: () => {
+            let elem = document.activeElement;
+            if (!elem || elem === document.documentElement || elem === document.body) {
+                function isVisible(e: HTMLElement) {
+                    const rect = e.getBoundingClientRect();
+                    const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+                    return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+                }
+                elem = Array.from(document.getElementsByTagName("textarea"))
+                    .find(isVisible);
+                if (!elem) {
+                    elem = Array.from(document.getElementsByTagName("input"))
+                        .find(e => e.type === "text" && isVisible(e));
+                }
+                if (!elem) {
+                    return;
+                }
+            }
+            global.nvimify({ target: elem } as any);
+        },
         getEditorLocation: () => {
             // global.lastEditorLocation[1] is a selector. If no selector is
             // defined, we're not the script that should answer this question

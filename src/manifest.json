@@ -1,9 +1,23 @@
 {
-  "manifest_version": 2,
-  "name": "Firenvim",
-  "version": "FIRENVIM_VERSION",
+  "background": {
+    "scripts": ["background.js"]
+  },
 
-  "description": "PACKAGE_JSON_DESCRIPTION",
+  "browser_action": {
+    "browser_style": true,
+    "default_icon": "firenvim.svg",
+    "default_title": "Firenvim",
+    "default_popup": "browserAction.html"
+  },
+
+  "commands": {
+    "nvimify": {
+      "suggested_key": {
+        "default": "Ctrl+E"
+      },
+      "description": "Turn the currently focused element into a neovim iframe."
+    }
+  },
 
   "content_scripts": [
     {
@@ -17,25 +31,21 @@
     }
   ],
 
-  "background": {
-    "scripts": ["background.js"]
-  },
-
-  "web_accessible_resources": ["NeovimFrame.html"],
-
-  BROWSER_SPECIFIC_SETTINGS,
-
-  "browser_action": {
-    "browser_style": true,
-    "default_icon": "firenvim.svg",
-    "default_title": "Firenvim",
-    "default_popup": "browserAction.html"
-  },
-
-
-  "permissions": ["nativeMessaging", "storage", "tabs"],
+  "description": "PACKAGE_JSON_DESCRIPTION",
 
   "icons": {
     "48": "firenvim.svg"
-  }
+  },
+
+  "manifest_version": 2,
+
+  "name": "Firenvim",
+
+  "permissions": ["nativeMessaging", "storage", "tabs"],
+
+  "version": "FIRENVIM_VERSION",
+
+  "web_accessible_resources": ["NeovimFrame.html"],
+
+  BROWSER_SPECIFIC_SETTINGS
 }
