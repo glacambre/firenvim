@@ -121,7 +121,7 @@ browser.runtime.onMessage.addListener(async (
 ) => {
     const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
     if (!fn) {
-        throw new Error(`Error: unhandled content request: ${request.toString()}.`);
+        throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
     }
     // If this is a selector-specific request and we don't know about this
     // selector, the message is not for us, so we mustn't reply. It'd be better
