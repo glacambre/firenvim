@@ -64,6 +64,17 @@ Then, navigate to a page with a textarea (I really like `http://txti.es` for thi
 
 If none of the messages help you understand what's wrong or if you're not getting any messages, please open a new github issue.
 
+## Make sure it's not your init.vim
+
+Clone the firenvim repository somewhere (e.g. `git clone https://git.sr.ht/~glacambre/firenvim /tmp/firenvim`) and edit the [firenvim script](make-sure-the-firenvim-script-has-been-created) so that it doesn't load your init.vim but loads firenvim, like this:
+
+```diff
+-exec '/usr/bin/nvim' --headless -c 'call firenvim#run()'
++exec '/usr/bin/nvim' -u NORC --cmd 'set rtp+=/tmp/firenvim' --headless -c 'call firenvim#run()'
+```
+
+Then, try reloading your config twice/focusing a textarea twice. If firenvim suddenly starts working, this might be a `$PATH` issue on your end. See [this section](make-sure-firenvims-path-is-the-same-as-neovims) in order to fix it.
+
 ## Make sure firenvim's $PATH is the same as neovim's
 
 Some operating systems (such as OSX) empty your browser's `$PATH`. This could be a problem if you want to use plugins that depend on other executables. In order to check if this is indeed happening, just run `echo $PATH` in your shell and `:!echo $PATH` in firenvim and compare the results. If they're different, this might be the culprit.
