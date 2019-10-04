@@ -71,7 +71,7 @@ Clone the firenvim repository somewhere (e.g. `git clone https://git.sr.ht/~glac
 +exec '/usr/bin/nvim' -u NORC --cmd 'set rtp+=/tmp/firenvim' --headless -c 'call firenvim#run()'
 ```
 
-Then, try reloading your config twice/focusing a textarea twice. If firenvim suddenly starts working, this might be a `$PATH` issue on your end. See [this section](#make-sure-firenvims-path-is-the-same-as-neovims) in order to fix it.
+Then, try reloading your config twice/focusing a textarea twice. If firenvim suddenly starts working, this might be a `$PATH` issue on your end. Revert the changes you just made and try the instructions in [this section](#make-sure-firenvims-path-is-the-same-as-neovims) in order to fix it.
 
 ## Make sure firenvim's $PATH is the same as neovim's
 
@@ -82,4 +82,4 @@ In order to fix this, call firenvim#install() and give it a prologue that sets t
 nvim --headless -c "call firenvim#install(0, 'export PATH=\"$PATH\"')" -c quit
 ```
 
-Note that this sets your `$PATH` in stone and that in order to update it you'll need to run the above command again. If you want to avoid doing that, you could also try the methode described [here](https://github.com/glacambre/firenvim/issues/122#issuecomment-536348171).
+Note that this sets your `$PATH` in stone and that in order to update it you'll need to run the above command again. If you want to avoid doing that, you could also try the method described [here](https://github.com/glacambre/firenvim/issues/122#issuecomment-536348171).
