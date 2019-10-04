@@ -36,7 +36,7 @@
   "scripts": {
     "build": "tslint --fix --project . && webpack && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest",
     "clean": "rm -rf target",
-    "install_manifests": "nvim --headless -c \":set rtp+=.\" -c \"call firenvim#install(1)\" -c \"quit\"",
+    "install_manifests": "nvim --headless -u NORC -c \":set rtp+=.\" -c \"call firenvim#install(1)\" -c \"quit\"",
     "test": "jest"
   },
   "jest": {
