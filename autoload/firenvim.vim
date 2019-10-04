@@ -139,10 +139,27 @@ function! s:get_chromium_manifest_dir_path()
 endfunction
 
 function! s:get_progpath()
-        if $APPIMAGE == ""
-                return v:progpath
+        let l:result = v:progpath
+        if $APPIMAGE != ""
+                " v:progpath is different every time you run neovim appimages
+                let l:result = $APPIMAGE
         endif
-        return $APPIMAGE
+        if match(l:result, '^/usr/local/Cellar/') == 0
+                let l:warning = "Warning: homebrew path detected. "
+                " On OSX, if v:progpath points to homebrew's cellar, it's
+                " going to be a version-specific path that will break when
+                " users update neovim.
+                let l:constant_path = '/usr/local/opt/nvim'
+                if executable(l:constant_path)
+                        let l:result = l:constant_path
+                        let l:warning = l:warning . "Using '" . l:constant_path . 
+                                                \ "' instead of '" . v:progpath
+                else
+                        let l:warning = "Firenvim may break next time you update neovim."
+                endif
+                echo l:warning
+        endif
+        return l:result
 endfunction
 
 function! s:get_executable_content(data_dir, prolog)
