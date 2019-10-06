@@ -12,6 +12,7 @@ export async function neovim(
     ) {
     let stdin: Stdin;
     let stdout: Stdout;
+    const functions: any = {};
     const requests = new Map<number, { resolve: any, reject: any }>();
 
     const socket = new WebSocket(`ws://127.0.0.1:${port}/${password}`);
@@ -57,7 +58,9 @@ export async function neovim(
     stdout.addListener("notification", async (name: string, args: any[]) => {
         switch (name) {
             case "redraw":
-                onRedraw(args, element, selector);
+                if (args) {
+                    onRedraw(functions, args, element, selector);
+                }
                 break;
             case "firenvim_bufwrite":
                 const data = args[0] as { text: string[], cursor: [number, number] };
@@ -74,7 +77,7 @@ export async function neovim(
     });
 
     const { 1: apiInfo } = (await request("nvim_get_api_info", [])) as INvimApiInfo;
-    return apiInfo.functions
+    Object.assign(functions, apiInfo.functions
         .filter(f => f.deprecated_since === undefined)
         .reduce((acc, cur) => {
             let name = cur.name;
@@ -83,5 +86,6 @@ export async function neovim(
             }
             acc[name] = (...args: any[]) => request(cur.name, args);
             return acc;
-        }, {} as {[k: string]: (...args: any[]) => any});
+        }, {} as {[k: string]: (...args: any[]) => any}));
+    return functions;
 }

@@ -1,8 +1,8 @@
 // lgtm[js/unused-local-variable]
 import * as browser from "webextension-polyfill";
 import { page } from "../page/proxy";
-import { toCss, toHexCss } from "../utils/CSSUtils";
-import { getCharSize } from "../utils/utils";
+import { guifontsToCSS, toCss, toHexCss } from "../utils/CSSUtils";
+import { getCharSize, getGridSize } from "../utils/utils";
 import { Grid } from "./Grid";
 
 const defaultColors = { background: 16777215, foreground: 0 };
@@ -11,8 +11,17 @@ const highlights: HighlightArray = [{ background: "#FFFFFF", foreground: "#00000
 const cursorStyles: string[] = [];
 const nvimCursorStyle = document.getElementById("nvim_cursor_style");
 const nvimHighlightStyle = document.getElementById("nvim_highlight_style");
+const nvimLinespace = document.getElementById("nvim_linespace");
+const nvimGuifont = document.getElementById("nvim_guifont");
+const mouseCursor = document.getElementById("mouse_cursor");
 
 const redrawFuncs = {
+    busy_start: () => {
+        mouseCursor.innerText = `html { cursor: wait; }`;
+    },
+    busy_stop: () => {
+        mouseCursor.innerText = `html { cursor: default; }`;
+    },
     default_colors_set: (elem: HTMLElement,
                          selector: string,
                          [fg, bg, sp, _, __]: [number, number, number, number, number]) => {
@@ -96,15 +105,48 @@ const redrawFuncs = {
             });
         }
     },
+    option_set: (elem: HTMLElement,
+                 selector: string,
+                 [name, value]: [string, any],
+                 nvimFunctions: any) => {
+        switch (name) {
+            case "guifont":
+            case "guifontset":
+            case "guifontwide":
+                let fonts = "font-family: monospace;";
+                if (value !== "") {
+                    fonts = guifontsToCSS(value);
+                }
+                nvimGuifont.innerHTML = `* { ${fonts} }`;
+                const [width, height] = getGridSize(elem);
+                nvimFunctions.ui_try_resize(width, height);
+                break;
+            case "linespace":
+                nvimLinespace.innerText = `.nvim_row { border-bottom: ${value}px }`;
+                break;
+            default:
+                // arabicshape: too hard to implement
+                // ambiwidth: too hard to implement
+                // emoji: too hard to implement
+                // pumblend: irrelevant
+                // showtabline: irrelevant
+                // termguicolors: irrelevant
+                // ext_linegrid: already implemented
+                // ext_multigrid: not needed
+                // ext_hlstate: not needed
+                // ext_termcolors: not needed
+                break;
+        }
+    },
 };
 
-export function onRedraw(events: any[], elem: HTMLPreElement, selector: string) {
+export function onRedraw(nvimFunctions: any, events: any[], elem: HTMLPreElement, selector: string) {
     events.forEach(evt => {
         const [name, ...evts]: [keyof typeof redrawFuncs, any] = evt;
         if (redrawFuncs[name] !== undefined) {
-            evts.forEach((args) => redrawFuncs[name](elem, selector, args));
+            evts.forEach((args) => redrawFuncs[name](elem, selector, args, nvimFunctions));
         } else {
-            console.log(`Unhandled redraw event: ${name}.`);
+            console.log(`Unhandled redraw event: ${name}.`, evts);
         }
     });
 }
