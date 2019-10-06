@@ -185,13 +185,12 @@ function! s:key_to_ps1_str(key, manifest_path)
         let l:key_arr = split(a:key, '\')
         let l:i = 0
         for l:i in range(2, len(l:key_arr) - 1)
-                let l:ps1_content = l:ps1_content . "\nNew-Item -Path \"" . join(key_arr[0:i], '\') . '" -ErrorAction SilentlyContinue'
+                let l:ps1_content = l:ps1_content . "\nNew-Item -Path \"" . join(key_arr[0:i], '\') . '"'
         endfor
         " Then, assign a value to it
         return l:ps1_content . "\nSet-Item -Path \"" .
                                 \ a:key .
-                                \ '\" -Value "' . a:manifest_path . '" ' .
-                                \ '-ErrorAction SilentlyContinue'
+                                \ '\" -Value "' . a:manifest_path . '"'
 endfunction
 
 " Installing firenvim requires several steps:
@@ -273,16 +272,19 @@ function! firenvim#install(...)
                 echo "Installed native manifest for " . l:name . "."
 
                 if has('win32')
-                        echo "Creating registry key for " . l:name . ". This may take a while."
                         " On windows, also create a registry key. We
                         " do this by writing a powershell script to a
                         " file and executing it.
                         let l:ps1_content = s:key_to_ps1_str(l:cur_browser["registry_key"],
                                                 \ l:manifest_path)
                         let l:ps1_path = s:build_path([l:manifest_dir_path, l:name . ".ps1"])
+                        echo "Creating registry key for " . l:name . ". This may take a while. Script: " . l:ps1_path
                         call writefile(split(l:ps1_content, "\n"), l:ps1_path)
                         call setfperm(l:ps1_path, "rwx------")
-                        call system('powershell "' . l:ps1_path . '"')
+                        let o = system(['powershell', '-Command', '-'], readfile(l:ps1_path))
+                        if v:shell_error
+                          echo o
+                        endif
 
                         echo "Created registry key for " . l:name . "."
                 endif
