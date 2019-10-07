@@ -81,11 +81,11 @@ let g:firenvim_config = {
         \ '.*': {
             \ 'selector': '',
             \ 'priority': 0,
-        \ }
+        \ },
         \ 'github\.com': {
             \ 'selector': 'textarea',
             \ 'priority': 1,
-        \ }
+        \ },
     \ }
 \ }
 ```
