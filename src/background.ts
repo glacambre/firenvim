@@ -15,7 +15,7 @@
  * content scripts. It rarely acts on its own.
  */
 import * as browser from "webextension-polyfill";
-import { isFirefox, svgPathToImageData } from "./utils/utils";
+import { getIconImageData, IconKind, isFirefox } from "./utils/utils";
 
 // We can't use the sessions.setTabValue/getTabValue apis firefox has because
 // chrome doesn't support them. Instead, we create a map of tabid => {} kept in
@@ -38,29 +38,8 @@ function getTabValue(tabid: any, item: any) {
     return obj[item];
 }
 
-const svgs = {
-    disabled: "firenvim-disabled.svg",
-    error: "firenvim-error.svg",
-    normal: "firenvim.svg",
-    notification: "firenvim-notification.svg",
-};
-// Return a `details` object suitable for use with browserAction.setIcon().
-// This is needed because firefox allows using svg urls but Chrome requires
-// svgs to be rendered to a canvas.
-async function getIcon(name: keyof typeof svgs) {
-    if (svgs[name] === undefined) {
-        throw new Error(`Unknown svg icon ${name}!`);
-    }
-    const path = svgs[name];
-    let details: any = { path };
-    if (!isFirefox()) {
-        const id = await svgPathToImageData(path);
-        details = { imageData: id };
-    }
-    return details;
-}
 function updateIcon(tabId?: number) {
-    let name: keyof typeof svgs = "normal";
+    let name: IconKind = "normal";
     if (tabId !== undefined && getTabValue(tabId, "disabled") === "true") {
         name = "disabled";
     } else if (error !== "") {
@@ -68,7 +47,7 @@ function updateIcon(tabId?: number) {
     } else if (warning !== "") {
         name = "notification";
     }
-    return getIcon(name).then((icon: any) => browser.browserAction.setIcon(icon));
+    return getIconImageData(name).then((imageData: any) => browser.browserAction.setIcon({ imageData }));
 }
 
 // Os is win/mac/linux/androis/cros. We only use it to add information to error
@@ -85,8 +64,8 @@ function getError() {
 }
 
 async function registerErrors(nvim: any, reject: any) {
+    error = "";
     nvim.onDisconnect.addListener(async (p: any) => {
-        error = "";
         updateIcon();
         if (p.error) {
             const errstr = p.error.toString();
@@ -110,6 +89,9 @@ async function registerErrors(nvim: any, reject: any) {
 
 // Last warning message
 let warning = "";
+function getWarning() {
+    return warning;
+}
 async function checkVersion(nvimVersion: string) {
     const manifest = browser.runtime.getManifest();
     warning = "";
@@ -195,7 +177,7 @@ Object.assign(window, {
     // call to be able to find it on Chrome
     browser,
     exec: (sender: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
-    getError: (sender: any, args: any) => getError(),
+    getError,
     getNewNeovimInstance: (sender: any, args: any) => {
         const result = preloadedInstance;
         preloadedInstance = createNewInstance();
@@ -204,6 +186,7 @@ Object.assign(window, {
     getTab: (sender: any, args: any) => sender.tab,
     getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
     getTabValueFor: (sender: any, args: any) => getTabValue(args[0], args[1]),
+    getWarning,
     messageOwnTab: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id, args),
     messageTab: (sender: any, args: any) => browser.tabs.sendMessage(args[0], args.slice(1)),
     setTabValue: (sender: any, args: any) => setTabValue(sender.tab.id, args[0], args[1]),

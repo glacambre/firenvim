@@ -37,7 +37,45 @@ export function getAceParent(elem: HTMLElement): HTMLElement {
     return elem;
 }
 
-export function svgPathToImageData(path: string, dimensions = "32x32") {
+const svgpath = "firenvim.svg";
+const transformations = {
+    disabled: (img: Uint8ClampedArray) => {
+        for (let i = 0; i < img.length; i += 4) {
+            // Skip transparent pixels
+            if (img[i + 3] === 0) {
+                continue;
+            }
+            const mean = Math.floor((img[i] + img[i + 1] + img[i + 2]) / 3);
+            img[i] = mean;
+            img[i + 1] = mean;
+            img[i + 2] = mean;
+        }
+    },
+    error: (img: Uint8ClampedArray) => {
+        for (let i = 0; i < img.length; i += 4) {
+            // Turn transparent pixels red
+            if (img[i + 3] === 0) {
+                img[i] = 255;
+                img[i + 3] = 255;
+            }
+        }
+    },
+    normal: ((img: Uint8ClampedArray) => (undefined as never)),
+    notification: (img: Uint8ClampedArray) => {
+        for (let i = 0; i < img.length; i += 4) {
+            // Turn transparent pixels yellow
+            if (img[i + 3] === 0) {
+                img[i] = 255;
+                img[i + 1] = 255;
+                img[i + 3] = 255;
+            }
+        }
+    },
+};
+
+export type IconKind = keyof typeof transformations;
+
+export function getIconImageData(kind: IconKind, dimensions = "32x32") {
     const [width, height] = dimensions.split("x").map(x => parseInt(x, 10));
     if (!width || !height) {
         throw new Error("Dimensions not correctly formated");
@@ -48,9 +86,10 @@ export function svgPathToImageData(path: string, dimensions = "32x32") {
     const result = new Promise((resolve) => img.addEventListener("load", (e) => {
         ctx.drawImage(img, 0, 0, width, height);
         const id = ctx.getImageData(0, 0, width, height);
+        transformations[kind](id.data);
         resolve(id);
     }));
-    img.src = path;
+    img.src = "firenvim.svg";
     return result;
 }
 

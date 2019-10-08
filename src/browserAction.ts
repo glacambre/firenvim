@@ -1,13 +1,17 @@
 import * as browser from "webextension-polyfill";
 
-function displayErrors() {
-    function insertError(error: any) {
-        console.log(error);
-        document.getElementById("errors").innerText = error;
+function displayMessages(func: "getError" | "getWarning", id: "errors" | "warnings") {
+    function insertMessage(msg: any) {
+        console.log(msg);
+        document.getElementById(id).innerText = msg;
     }
-    return browser.runtime.sendMessage({ funcName: ["getError"] })
-        .then(insertError)
-        .catch(insertError);
+    return browser.runtime.sendMessage({ funcName: [func] })
+        .then(insertMessage)
+        .catch(insertMessage);
+}
+
+function displayErrorsAndWarnings() {
+    return Promise.all([displayMessages("getWarning", "warnings"), displayMessages("getError", "errors")]);
 }
 
 async function updateDisableButton() {
@@ -33,13 +37,13 @@ async function updateDisableButton() {
 addEventListener("DOMContentLoaded", () => {
     document.getElementById("reloadSettings").addEventListener("click", () => {
         browser.runtime.sendMessage( { funcName: ["updateSettings"] })
-            .then(displayErrors)
-            .catch(displayErrors);
+            .then(displayErrorsAndWarnings)
+            .catch(displayErrorsAndWarnings);
     });
     document.getElementById("disableFirenvim").addEventListener("click", () => {
         browser.runtime.sendMessage( { funcName: ["toggleDisabled"] })
             .then(updateDisableButton);
     });
-    displayErrors();
+    displayErrorsAndWarnings();
     updateDisableButton();
 });
