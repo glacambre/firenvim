@@ -96,7 +96,7 @@ Note that it is not necessary to specify the `priority` key because it defaults 
 You can detect when firenvim connects to neovim with the following code:
 ```
 function! OnUIEnter(event)
-    let l:ui = nvim_get_chan_info(a:event.channel)
+    let l:ui = nvim_get_chan_info(a:event.chan)
     if has_key(l:ui, 'client') && has_key(l:ui.client, "name")
         if l:ui.client.name == "Firenvim"
             set laststatus=0
