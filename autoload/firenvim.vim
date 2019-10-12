@@ -171,6 +171,7 @@ function! s:get_executable_content(data_dir, prolog)
         endif
         return "#!/bin/sh\n" .
                                 \ "cd " . a:data_dir . "\n" .
+                                \ "unset NVIM_LISTEN_ADDRESS\n" .
                                 \ 'export PATH="$PATH:' . $PATH . "\"\n" .
                                 \ a:prolog . "\n" .
                                 \ "exec '" . s:get_progpath() . "' --headless -c 'call firenvim#run()'\n"
