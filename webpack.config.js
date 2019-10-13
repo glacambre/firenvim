@@ -18,9 +18,6 @@ const CopyWebPackFiles = [
   "src/NeovimFrame.html",
   "src/browserAction.html",
   "static/firenvim.svg",
-  "static/firenvim-disabled.svg",
-  "static/firenvim-notification.svg",
-  "static/firenvim-error.svg",
 ]
 
 const config = {
