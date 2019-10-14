@@ -14,11 +14,37 @@ Before installing anything, please read [SECURITY.md](SECURITY.md) and make sure
 
 ## Pre-built
 
-First, make sure you are using neovim 0.4.0 or later.
+1. Make make sure you are using [Neovim][nvim] 0.4.0 or later. This plugin will not work with vanilla [VIM][vim].
 
-Then, install Firenvim as a neovim plugin ([using](https://github.com/junegunn/vim-plug) [your](https://github.com/Shougo/dein.vim) [favourite](https://github.com/tpope/vim-pathogen) [plugin](https://github.com/k-takata/minpac) [manager](https://github.com/VundleVim/Vundle.vim)) and after that, run the following command in your shell: `nvim --headless -c "call firenvim#install(0)" -c "quit"`.
+2. Install Firenvim as a VIM plugin as you would any other, then run the built in post-install hook script.
 
-The final step is to install Firenvim in your browser from [mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
+    * [vim-plug](https://github.com/junegunn/vim-plug)
+
+        ```vim
+        Plug 'glacambre/firenvim', { 'do': function('firenvim#install') }
+        ```
+
+    * [dein](https://github.com/Shougo/dein.vim)
+
+        ```vim
+        call dein#add('glacambre/firenvim', { 'hook_post_update': function('firenvim#install') })
+        ```
+
+    * [minpac](https://github.com/k-takata/minpac)
+
+        ```vim
+        call minpac#add('glacambre/firenvim', { 'do': function('firenvim#install') })
+        ```
+
+    * [pathogen](https://github.com/tpope/vim-pathogen), [vundle](https://github.com/VundleVim/Vundle.vim), others
+
+        Install the plugin as you usually would, then run this shell command:
+
+        ```sh
+        $ nvim --headless -c "call firenvim#install(0)" -c "quit"`.
+        ```
+
+3. Finally install Firenvim in your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
 
 ## From source
 
@@ -123,3 +149,6 @@ The main issue with Firenvim is that some keybindings (e.g. `<C-w>`) are not ove
 - [GhostText](https://github.com/GhostText/GhostText), lets you edit text areas in your editor with a single click. Requires installing a plugin in your editor too. Features live updates!
 - [Textern](https://github.com/jlebon/textern), a Firefox addon that lets you edit text areas in your editor without requiring you to install a plugin in your editor.
 - [withExEditor](https://github.com/asamuzaK/withExEditor), same thing as Textern, except you can also edit/view a page's source with your editor.
+
+ [nvim]: https://neovim.io
+ [vim]: https://www.vim.org
