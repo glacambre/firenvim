@@ -8,7 +8,7 @@ const Until = webdriver.until;
 const By = webdriver.By;
 const Options = require("selenium-webdriver/firefox").Options
 
-import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testCodemirror, testAce, killDriver } from "./_common"
+import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testModifiers, testCodemirror, testAce, killDriver } from "./_common"
 
 describe("Firefox", () => {
 
@@ -51,6 +51,7 @@ describe("Firefox", () => {
         afterAll(() => killDriver(driver));
 
         test("Firenvim works on txti.es", () => testTxties(driver));
+        test("Firenvim modifiers work", () => testModifiers(driver));
         test("Firenvim works on CodeMirror", () => testCodemirror(driver));
         test("Firenvim works on Ace", () => testAce(driver));
 })

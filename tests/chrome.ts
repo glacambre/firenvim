@@ -7,7 +7,7 @@ const webdriver = require("selenium-webdriver");
 const Until = webdriver.until;
 const By = webdriver.By;
 
-import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testCodemirror, testAce, killDriver } from "./_common"
+import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testModifiers, testCodemirror, testAce, killDriver } from "./_common"
 
 describe("Chrome", () => {
 
@@ -51,5 +51,6 @@ describe("Chrome", () => {
 
         nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
         nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
         nonHeadlessTest()("Firenvim works on txti.es", () => testTxties(driver));
 })
