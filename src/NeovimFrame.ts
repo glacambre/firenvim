@@ -23,6 +23,7 @@ const nonLiteralKeys: {[key: string]: string} = {
     "|": "<Bar>",
 };
 
+// Turns a non-literal key (e.g. "Enter") into a vim-equivalent "<Enter>"
 function translateKey(key: string) {
     if (nonLiteralKeys[key] !== undefined) {
         return nonLiteralKeys[key];
@@ -30,6 +31,8 @@ function translateKey(key: string) {
     return key;
 }
 
+// Add modifier `mod` (`A`, `C`, `S`…) to `text` (a vim key `b`, `<Enter>`,
+// `<CS-x>`…)
 function addModifier(mod: string, text: string) {
     let match;
     let modifiers = "";
@@ -145,14 +148,16 @@ window.addEventListener("load", async () => {
         keyHandler.style.left = `0px`;
         keyHandler.style.top = `0px`;
 
-        const specialKeys = [["altKey", "A"], ["ctrlKey", "C"], ["metaKey", "M"]];
+        // Note: order of this array is important, we need to check OS before checking metaa
+        const specialKeys = [["Alt", "A"], ["Control", "C"], ["OS", "D"], ["Meta", "D"]];
         // The event has to be trusted and either have a modifier or a non-literal representation
         if (evt.isTrusted
             && (nonLiteralKeys[evt.key] !== undefined
-                || specialKeys.find(([attr, _]: [string, string]) => (evt as any)[attr]))) {
-            const text = specialKeys.concat(["shiftKey", "S"])
+                || specialKeys.find(([mod, _]: [string, string]) =>
+                                    evt.key !== mod && (evt as any).getModifierState(mod)))) {
+            const text = specialKeys.concat(["Shift", "S"])
                 .reduce((key: string, [attr, mod]: [string, string]) => {
-                    if ((evt as any)[attr]) {
+                    if ((evt as any).getModifierState(attr)) {
                         return addModifier(mod, key);
                     }
                     return key;

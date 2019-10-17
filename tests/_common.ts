@@ -35,10 +35,12 @@ export function getNewestFileMatching(directory: string, pattern: string | RegEx
                 .then((stats: any[]) => (stats.sort((stat1, stat2) => stat2.mtime - stat1.mtime)[0] || {}).path)
 }
 
+const keyDelay = 100;
+
 export async function sendKeys(driver: any, keys: any[]) {
         return keys.reduce((prom, key) => prom
                 .then((action: any) => action.sendKeys(key))
-                .then((action: any) => action.pause(100))
+                .then((action: any) => action.pause(keyDelay))
                 , Promise.resolve(driver.actions())).then((action: any) => action.perform());
 }
 
@@ -64,6 +66,62 @@ export async function testTxties(driver: any) {
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
         await driver.wait(async () => (await input.getAttribute("value")) === "Test");
+}
+
+export async function testModifiers(driver: any) {
+        console.log("Navigating to txti.es…");
+        await driver.get("http://txti.es");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(7)")));
+        console.log("Sleeping for a sec…");
+        await driver.sleep(1000);
+        console.log("Typing <C-v><C-a><C-v><A-v><C-v><D-a>…");
+        await driver.actions()
+                .keyDown("a")
+                .keyUp("a")
+                .pause(keyDelay)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .pause(keyDelay)
+                .keyDown("a")
+                .keyUp("a")
+                .pause(keyDelay)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .pause(keyDelay)
+                .keyDown(webdriver.Key.ALT)
+                .keyDown("a")
+                .keyUp("a")
+                .keyUp(webdriver.Key.ALT)
+                .pause(keyDelay)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .pause(keyDelay)
+                .keyDown(webdriver.Key.COMMAND)
+                .keyDown("a")
+                .keyUp("a")
+                .keyUp(webdriver.Key.COMMAND)
+                .pause(keyDelay)
+                .perform();
+        await driver.sleep(1000);
+        console.log("Writing keycodes.");
+        await sendKeys(driver, [webdriver.Key.ESCAPE]
+                       .concat(":wq!".split(""))
+                       .concat(webdriver.Key.ENTER))
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+        console.log("Waiting for value update…");
+        await driver.sleep(1000);
+        await driver.wait(async () => (await input.getAttribute("value") === "\u0001<M-a><D-a>"));
 }
 
 export async function testCodemirror(driver: any) {
