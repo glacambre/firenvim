@@ -202,7 +202,46 @@ window.addEventListener("load", async () => {
         keyHandler.style.left = `${evt.clientX}px`;
         keyHandler.style.top = `${evt.clientY}px`;
     });
-    window.addEventListener("click", _ => keyHandler.focus());
+    function onMouse(evt: MouseEvent, action: string) {
+        let button;
+        if (evt instanceof WheelEvent) {
+            button = "wheel";
+        } else {
+            if (evt.button !== 0 && evt.button !== 2) {
+                // Neovim doesn't handle other mouse buttons for now
+                return;
+            }
+            button = evt.button === 0 ? "left" : "right";
+        }
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+
+        const modifiers = (evt.altKey ? "A" : "") +
+            (evt.ctrlKey ? "V" : "") +
+            (evt.metaKey ? "D" : "") +
+            (evt.shiftKey ? "S" : "");
+        const [cWidth, cHeight] = getCharSize(host);
+        nvim.input_mouse(button,
+                         action,
+                         modifiers,
+                         0,
+                         Math.floor(evt.pageY / cHeight), Math.floor(evt.pageX / cWidth));
+    }
+    window.addEventListener("mousedown", e => {
+        onMouse(e, "press");
+        keyHandler.focus();
+    });
+    window.addEventListener("mouseup", e => {
+        onMouse(e, "release");
+        keyHandler.focus();
+    });
+    window.addEventListener("wheel", evt => {
+        if (Math.abs(evt.deltaY) >= Math.abs(evt.deltaX)) {
+            onMouse(evt, evt.deltaY < 0 ? "up" : "down");
+        } else {
+            onMouse(evt, evt.deltaX < 0 ? "right" : "left");
+        }
+    });
     // Let users know when they focus/unfocus the frame
     function setFocusedStyle() {
         document.documentElement.style.opacity = "1";
