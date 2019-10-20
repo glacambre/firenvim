@@ -155,7 +155,7 @@ function! s:get_progpath()
                         let l:warning = l:warning . "Using '" . l:constant_path . 
                                                 \ "' instead of '" . v:progpath
                 else
-                        let l:warning = "Firenvim may break next time you update neovim."
+                        let l:warning = l:warning . "Firenvim may break next time you update neovim."
                 endif
                 echo l:warning
         endif
