@@ -25,7 +25,7 @@ install:
   - nvim --version
   - ps: New-Item -ItemType Directory -Force -Path "C:\Users\appveyor\AppData\Local\nvim"
   - ps: Set-Content -Path "C:\Users\appveyor\AppData\Local\nvim\init.vim" -Value "set rtp+=C:\projects\firenvim"
-  - npm install
+  - npm ci
   - npm run build
   - ps: New-Item -Path "HKCU:\Software\Mozilla\NativeMessagingHosts"
   - ps: New-Item -Path "HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim"
