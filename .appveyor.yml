@@ -13,6 +13,7 @@ environment:
   APPVEYOR: 1
 install:
   - ps: Install-Product node $env:nodejs_version
+  - npm install -g npm
   - choco --version
   - choco install firefox-dev --pre
   - ps: $env:Path += ";C:\Program Files\Firefox Developer Edition"
