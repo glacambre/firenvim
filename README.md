@@ -41,7 +41,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
         Install the plugin as you usually would, then run this shell command:
 
         ```sh
-        $ nvim --headless -c "call firenvim#install(0)" -c "quit"`.
+        $ nvim --headless "+call firenvim#install(0) | q"
         ```
 
 3. Finally install Firenvim in your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
