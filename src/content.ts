@@ -166,6 +166,9 @@ function setupListeners(selector: string) {
     function addNvimListener(elem: Element) {
         elem.removeEventListener("focus", global.nvimify);
         elem.addEventListener("focus", global.nvimify);
+        if (document.activeElement === elem) {
+            functions.forceNvimify();
+        }
     }
 
     (new MutationObserver((changes, observer) => {
