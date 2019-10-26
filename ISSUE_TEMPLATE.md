@@ -10,4 +10,3 @@ If you're opening a feature request, feel free to ggdG ;)
 - Browser Version:
 - What I tried to do:
 - What happened:
-- What I expected:
