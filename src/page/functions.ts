@@ -48,9 +48,6 @@ function _getElementContent(e: any): Promise<string> {
     if (e.value !== undefined) {
         return Promise.resolve(e.value);
     }
-    if (e.textContent !== undefined) {
-        return Promise.resolve(e.textContent);
-    }
     return Promise.resolve(e.innerText);
 }
 
@@ -133,7 +130,7 @@ export function getFunctions(global: {
             if (e.value !== undefined) {
                 e.value = text;
             } else {
-                e.textContent = text;
+                e.innerText = text;
             }
             e.dispatchEvent(new Event("keydown",     { bubbles: true }));
             e.dispatchEvent(new Event("keyup",       { bubbles: true }));

@@ -109,14 +109,33 @@ function applySettings(settings: any) {
             obj[name] = value;
         }
     }
+    function makeDefaultLocalSetting(sett: { localSettings: { [key: string]: any } },
+                                     site: string,
+                                     conf: { selector: string, priority: number }) {
+        makeDefaults(sett.localSettings, site, {});
+        for (const key of (Object.keys(conf) as Array<keyof typeof conf>)) {
+            makeDefaults(sett.localSettings[site], key, conf[key]);
+        }
+    }
     if (settings === undefined) {
         settings = {};
     }
     makeDefaults(settings, "globalSettings", {});
     makeDefaults(settings, "localSettings", {});
-    makeDefaults(settings.localSettings, ".*", {});
-    makeDefaults(settings.localSettings[".*"], "selector", "textarea");
-    makeDefaults(settings.localSettings[".*"], "priority", 0);
+
+    makeDefaultLocalSetting(settings, ".*", {
+        priority: 0,
+        selector: "textarea",
+    });
+    makeDefaultLocalSetting(settings, "outlook.live.com", {
+        priority: 1,
+        selector: 'div[role="textbox"]',
+    });
+    makeDefaultLocalSetting(settings, "mail.google.com", {
+        priority: 1,
+        selector: 'div[role="textbox"]',
+    });
+
     browser.storage.local.set(settings);
 }
 

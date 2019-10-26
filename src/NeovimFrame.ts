@@ -225,15 +225,16 @@ window.addEventListener("load", async () => {
                          action,
                          modifiers,
                          0,
-                         Math.floor(evt.pageY / cHeight), Math.floor(evt.pageX / cWidth));
+                         Math.floor(evt.pageY / cHeight),
+                         Math.floor(evt.pageX / cWidth));
+        keyHandler.focus();
+        setTimeout(() => keyHandler.focus(), 10);
     }
     window.addEventListener("mousedown", e => {
         onMouse(e, "press");
-        keyHandler.focus();
     });
     window.addEventListener("mouseup", e => {
         onMouse(e, "release");
-        keyHandler.focus();
     });
     window.addEventListener("wheel", evt => {
         if (Math.abs(evt.deltaY) >= Math.abs(evt.deltaX)) {

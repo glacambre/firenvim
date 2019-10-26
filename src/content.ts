@@ -29,7 +29,9 @@ const global = {
         const selector = computeSelector(elem);
 
         // If this element already has a neovim frame, stop
-        if (global.selectorToElems.get(selector) !== undefined) {
+        const alreadyRunning = global.selectorToElems.get(selector);
+        if (alreadyRunning !== undefined) {
+            alreadyRunning.iframe.focus();
             return;
         }
 
