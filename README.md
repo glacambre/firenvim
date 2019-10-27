@@ -14,7 +14,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
 
 ## Pre-built
 
-1. Make sure you are using [Neovim][nvim] 0.4.0 or later. This plugin will not work with vanilla [VIM][vim].
+1. Make sure you are using [Neovim][nvim] 0.4.0 or later. This plugin will not work with vanilla [VIM][vim] or [Vimr](vimr).
 
 2. Install Firenvim as a VIM plugin as you would any other, then run the built in post-install hook script.
 
@@ -152,3 +152,4 @@ The main issue with Firenvim is that some keybindings (e.g. `<C-w>`) are not ove
 
  [nvim]: https://neovim.io
  [vim]: https://www.vim.org
+ [vimr]: https://github.com/qvacua/vimr
