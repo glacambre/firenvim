@@ -16,7 +16,9 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
 
 1. Make sure you are using [Neovim][nvim] 0.4.0 or later. This plugin will not work with vanilla [VIM][vim] or [Vimr](vimr).
 
-2. Install Firenvim as a VIM plugin as you would any other, then run the built in post-install hook script.
+2. Check if the luabitop package is available by running `:lua bit.band(1,1)` in Neovim. If this throws an error, you will need to install it.
+
+3. Install Firenvim as a VIM plugin as you would any other, then run the built in post-install hook script.
 
     * [vim-plug](https://github.com/junegunn/vim-plug)
 
@@ -44,7 +46,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
         $ nvim --headless "+call firenvim#install(0) | q"
         ```
 
-3. Finally install Firenvim in your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
+4. Finally install Firenvim in your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
 
 ## From source
 
