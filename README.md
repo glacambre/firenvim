@@ -6,7 +6,7 @@ Turn your browser into a Neovim client.
 
 # How to use
 
-Just click on any textarea and it will be immediately replaced by an instance of Firenvim. When you want to set the content of the now hidden textarea to the content of the Neovim instance, just `:w`. If you want to close the Firenvim overlay and return to the textarea run `:q`.
+Just click on any textarea and it will be immediately replaced by an instance of Firenvim. When you want to set the content of the now hidden textarea to the content of the Neovim instance, just `:w`. If you want to close the Firenvim overlay and return to the textarea run `:q`. If you selected an element where you expected the Firenvim frame to appear and it didn't, try pressing `<C-e>` (you can configure this binding in `about://addons` or `chome://extensions`), this should manually trigger firenvim. Please also open an issue in order to let us know the website and element this happened on.
 
 # Installing
 
