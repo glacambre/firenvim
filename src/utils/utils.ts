@@ -1,4 +1,4 @@
-import * as browser from "webextension-polyfill";
+import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 
 let curBrowser = "firefox";
 if (window.browser === undefined) {
@@ -89,7 +89,7 @@ export function getIconImageData(kind: IconKind, dimensions = "32x32") {
         transformations[kind](id.data);
         resolve(id);
     }));
-    img.src = "firenvim.svg";
+    img.src = svgpath;
     return result;
 }
 
