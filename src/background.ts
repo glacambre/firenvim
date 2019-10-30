@@ -15,7 +15,7 @@
  * content scripts. It rarely acts on its own.
  */
 import * as browser from "webextension-polyfill";
-import { getIconImageData, IconKind, isFirefox } from "./utils/utils";
+import { getIconImageData, IconKind } from "./utils/utils";
 
 // We can't use the sessions.setTabValue/getTabValue apis firefox has because
 // chrome doesn't support them. Instead, we create a map of tabid => {} kept in

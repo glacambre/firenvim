@@ -1,5 +1,4 @@
-// lgtm[js/unused-local-variable]
-import * as browser from "webextension-polyfill";
+import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 
 // Parses a guifont declaration as described in `:h E244`
 export function parseGuifont(guifont: string) {
