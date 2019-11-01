@@ -119,6 +119,31 @@ let g:firenvim_config = {
 ```
 Note that it is not necessary to specify the `priority` key because it defaults to 1, except for the `.*` pattern, which has a priority of 0.
 
+Since Firenvim just uses the BufWrite event in order to detect when it needs to write neovim's buffers to the page, Firenvim can be made to automatically synchronize all changes like this:
+```
+au TextChanged * ++nested write
+au TextChangedI * ++nested write
+```
+Depending on how large the edited buffer is, this could be a little slow. A better approach would then be to delay writes, like this:
+```
+let g:dont_write = v:false
+function! My_Write(timer) abort
+	let g:dont_write = v:false
+	write
+endfunction
+
+function! Delay_My_Write() abort
+	if g:dont_write
+		return
+	end
+	let g:dont_write = v:true
+	call timer_start(10000, 'My_Write')
+endfunction
+
+au TextChanged * ++nested call Delay_My_Write()
+au TextChangedI * ++nested call Delay_My_Write()
+```
+
 ## Configuring Neovim's behavior
 
 You can detect when Firenvim connects to Neovim with the following code:
