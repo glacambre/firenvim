@@ -145,7 +145,8 @@ function fetchSettings() {
         registerErrors(nvim, reject);
         nvim.onMessage.addListener((resp: any) => {
             checkVersion(resp.version);
-            return resolve(resp.settings);
+            resolve(resp.settings);
+            nvim.disconnect();
         });
         nvim.postMessage({
             newInstance: false,
