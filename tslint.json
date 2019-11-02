@@ -3,6 +3,7 @@
   "rules": {
     "arrow-parens": false,
     "cognitive-complexity": false,
+    "comment-format": false,
     "max-line-length": [
       true,
       {
