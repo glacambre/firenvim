@@ -8,13 +8,25 @@ const Until = webdriver.until;
 const By = webdriver.By;
 const Options = require("selenium-webdriver/firefox").Options
 
-import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testModifiers, testCodemirror, testAce, killDriver } from "./_common"
+import {
+ extensionDir,
+ getNewestFileMatching,
+ killDriver,
+ sendKeys,
+ testAce,
+ testCodemirror,
+ testModifiers,
+ testTxties,
+ testVimrcFailure,
+} from "./_common"
+import { setupVimrc } from "./_vimrc";
 
 describe("Firefox", () => {
 
         let driver: any = undefined
 
         beforeAll(async () => {
+                setupVimrc();
                 const extensionPath = await getNewestFileMatching(path.join(extensionDir, "xpi"), ".*.zip");
 
                 // Temporary workaround until
@@ -52,6 +64,7 @@ describe("Firefox", () => {
 
         test("Firenvim works on txti.es", () => testTxties(driver));
         test("Firenvim modifiers work", () => testModifiers(driver));
+        test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
         test("Firenvim works on CodeMirror", () => testCodemirror(driver));
         test("Firenvim works on Ace", () => testAce(driver));
 })

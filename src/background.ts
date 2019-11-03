@@ -63,9 +63,15 @@ function getError() {
     return error;
 }
 
-async function registerErrors(nvim: any, reject: any) {
+function registerErrors(nvim: any, reject: any) {
     error = "";
+    const timeout = setTimeout(() => {
+        error = "Neovim is not responding.";
+        updateIcon();
+        reject(error);
+    }, 1000);
     nvim.onDisconnect.addListener(async (p: any) => {
+        clearTimeout(timeout);
         updateIcon();
         if (p.error) {
             const errstr = p.error.toString();
@@ -85,6 +91,7 @@ async function registerErrors(nvim: any, reject: any) {
             reject(p.error);
         }
     });
+    return timeout;
 }
 
 // Last warning message
@@ -142,8 +149,9 @@ function applySettings(settings: any) {
 function fetchSettings() {
     return new Promise((resolve, reject) => {
         const nvim = browser.runtime.connectNative("firenvim");
-        registerErrors(nvim, reject);
+        const errorTimeout = registerErrors(nvim, reject);
         nvim.onMessage.addListener((resp: any) => {
+            clearTimeout(errorTimeout);
             checkVersion(resp.version);
             resolve(resp.settings);
             nvim.disconnect();
@@ -164,8 +172,9 @@ function createNewInstance() {
         window.crypto.getRandomValues(password);
 
         const nvim = browser.runtime.connectNative("firenvim");
-        registerErrors(nvim, reject);
+        const errorTimeout = registerErrors(nvim, reject);
         nvim.onMessage.addListener((resp: any) => {
+            clearTimeout(errorTimeout);
             checkVersion(resp.version);
             applySettings(resp.settings);
             resolve({ password: password[0], port: resp.port });

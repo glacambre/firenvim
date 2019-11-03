@@ -7,13 +7,25 @@ const webdriver = require("selenium-webdriver");
 const Until = webdriver.until;
 const By = webdriver.By;
 
-import { extensionDir, getNewestFileMatching, sendKeys, testTxties, testModifiers, testCodemirror, testAce, killDriver } from "./_common"
+import {
+ extensionDir,
+ getNewestFileMatching,
+ killDriver,
+ sendKeys,
+ testAce,
+ testCodemirror,
+ testModifiers,
+ testTxties,
+ testVimrcFailure,
+} from "./_common"
+import { setupVimrc } from "./_vimrc";
 
 describe("Chrome", () => {
 
         let nonHeadlessTest = () => env["HEADLESS"] ? test.skip : test;
         let driver: any = undefined;
         beforeAll(() => {
+                setupVimrc();
                 // Disabling the GPU is required on windows
                 const options = (new (require("selenium-webdriver/chrome").Options)())
                         .addArguments("--disable-gpu")
@@ -49,8 +61,9 @@ describe("Chrome", () => {
 
         afterAll(() => killDriver(driver));
 
-        nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
-        nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        // nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
+        // nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
         nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
-        nonHeadlessTest()("Firenvim works on txti.es", () => testTxties(driver));
+        // nonHeadlessTest()("Firenvim works on txti.es", () => testTxties(driver));
+        // nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
 })
