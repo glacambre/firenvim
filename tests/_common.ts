@@ -1,10 +1,11 @@
 
-const env = require("process").env;
 const fs = require("fs");
 const path = require("path");
 const webdriver = require("selenium-webdriver");
 const Until = webdriver.until;
 const By = webdriver.By;
+
+import { readVimrc, writeVimrc } from "./_vimrc";
 
 jest.setTimeout(40000)
 
@@ -121,7 +122,7 @@ export async function testModifiers(driver: any) {
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
         await driver.sleep(1000);
-        await driver.wait(async () => (await input.getAttribute("value") === "\u0001<M-a><D-a>"));
+        await driver.wait(async () => ["\u0011<M-q><D-q>", "\u0001<M-a><D-a>"].includes(await input.getAttribute("value")));
 }
 
 export async function testCodemirror(driver: any) {
@@ -172,7 +173,40 @@ export async function testAce(driver: any) {
         await driver.wait(async () => /\/\*\*Test/.test(await input.getAttribute("innerText")));
 }
 
-
+export async function testVimrcFailure(driver: any) {
+        // First, write buggy vimrc
+        console.log("Backing up vimrc…");
+        const backup = await readVimrc();
+        console.log("Overwriting it…");
+        await writeVimrc("call\n");
+        // Then, use preloaded instance, so that firenvim preloads a buggy instance
+        console.log("Navigating to txti.es…");
+        await driver.get("http://txti.es");
+        console.log("Locating textarea…");
+        let input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(7)")));
+        console.log("Sleeping for a sec…");
+        await driver.sleep(1000);
+        // We can restore our vimrc
+        await writeVimrc(backup);
+        // Reload, to get the buggy instance
+        console.log("Navigating to txti.es…");
+        await driver.get("http://txti.es");
+        console.log("Locating textarea…");
+        input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(7)")));
+        // The firenvim frame should disappear after a second
+        console.log("Waiting for span to disappear…");
+        await driver.wait(Until.stalenessOf(span));
+};
 
 export async function killDriver(driver: any) {
         try {
