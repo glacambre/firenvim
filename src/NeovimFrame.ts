@@ -193,11 +193,13 @@ window.addEventListener("load", async () => {
             }
         });
         keyHandler.addEventListener("input", (evt: any) => {
-            nvim.input(evt.target.value);
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
-            evt.target.innerText = "";
-            evt.target.value = "";
+            if (evt.isTrusted && !evt.isComposing) {
+                nvim.input(evt.target.value);
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+                evt.target.innerText = "";
+                evt.target.value = "";
+            }
         });
         window.addEventListener("mousemove", (evt: MouseEvent) => {
             keyHandler.style.left = `${evt.clientX}px`;
