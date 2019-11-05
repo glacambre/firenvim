@@ -168,9 +168,6 @@ function setupListeners(selector: string) {
     function addNvimListener(elem: Element) {
         elem.removeEventListener("focus", global.nvimify);
         elem.addEventListener("focus", global.nvimify);
-        if (document.activeElement === elem) {
-            functions.forceNvimify();
-        }
     }
 
     (new MutationObserver((changes, observer) => {
@@ -182,6 +179,21 @@ function setupListeners(selector: string) {
         // listeners again, in case a new textarea/input field has been added.
         Array.from(document.querySelectorAll(selector))
             .forEach(elem => addNvimListener(elem));
+
+        // We also need to check if the currently focused element is among the
+        // newly created elements and if it is, nvimify it.
+        // Note that we can't do this unconditionally: we would turn the active
+        // element into a neovim frame even for unrelated dom changes.
+        for (const mr of changes) {
+            for (const node of mr.addedNodes) {
+                const walker = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT);
+                while (walker.nextNode()) {
+                    if (document.activeElement === walker.currentNode) {
+                        functions.forceNvimify();
+                    }
+                }
+            }
+        }
     })).observe(window.document, { subtree: true, childList: true });
 
     Array.from(document.querySelectorAll(selector))
