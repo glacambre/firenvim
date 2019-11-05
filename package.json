@@ -12,7 +12,7 @@
     "msgpack-lite": "0.1.26",
     "selenium-webdriver": "4.0.0-alpha.5",
     "ts-jest": "24.1.0",
-    "tslint": "5.20.0",
+    "tslint": "5.20.1",
     "tslint-sonarts": "1.9.0",
     "typescript": "3.7.2",
     "web-ext": "3.2.0",
