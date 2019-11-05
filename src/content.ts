@@ -12,6 +12,24 @@ const global = {
         // Note: this relies on setDisabled existing in the object returned by
         // getFunctions and attached to the window object
         .then((disabled: boolean) => (window as any).setDisabled(!!disabled)),
+        getConfForUrl: (url: string) => {
+            return browser.storage.local.get("localSettings")
+                .then(async ({ localSettings }: { [key: string]: { [key: string]: any }}) => {
+                    function or1(val: number) {
+                        if (val === undefined) {
+                            return 1;
+                        }
+                        return val;
+                    }
+                    if (localSettings === undefined) {
+                        throw new Error("Error: your settings are undefined. Try reloading the page. If this error persists, try the troubleshooting guide: https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md");
+                    }
+                    const [, conf] = Array.from(Object.entries(localSettings))
+                    .sort((e1, e2) => (or1(e2[1].priority) - or1(e1[1].priority)))
+                    .find(([pat, sel]) => (new RegExp(pat)).test(url));
+                    return conf;
+                });
+    },
     // lastEditorLocation: a [url, selector, cursor] tuple indicating the page
     // the last iframe was created on, the selector of the corresponding
     // textarea and the number of characters before the cursor.
@@ -220,20 +238,9 @@ function setupListeners(selector: string) {
     window.addEventListener("wheel", () => onScroll(true));
 }
 
-browser.storage.local.get("localSettings").then(async ({ localSettings }: { [key: string]: { [key: string]: any }}) => {
-    function or1(val: number) {
-        if (val === undefined) {
-            return 1;
+global.getConfForUrl(document.location.href)
+    .then((conf: { selector: string, priority: number })  => {
+        if (conf.selector) {
+            setupListeners(conf.selector);
         }
-        return val;
-    }
-    if (localSettings === undefined) {
-        throw new Error("Error: your settings are undefined. Try reloading the page. If this error persists, try the troubleshooting guide: https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md");
-    }
-    const [, conf] = Array.from(Object.entries(localSettings))
-        .sort((e1, e2) => (or1(e2[1].priority) - or1(e1[1].priority)))
-        .find(([pat, sel]) => (new RegExp(pat)).test(document.location.href));
-    if (conf.selector) {
-        setupListeners(conf.selector);
-    }
-});
+}).catch(console.error);

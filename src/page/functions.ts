@@ -52,6 +52,7 @@ function _getElementContent(e: any): Promise<string> {
 }
 
 export function getFunctions(global: {
+    getConfForUrl: (url: string) => Promise<{ selector: string, priority: number }>,
     lastEditorLocation: [string, string, number],
     nvimify: (evt: FocusEvent) => void,
     selectorToElems: Map<string, PageElements>,
@@ -104,7 +105,16 @@ export function getFunctions(global: {
             global.selectorToElems.delete(selector);
             input.removeEventListener("focus", global.nvimify);
             input.focus();
-            input.addEventListener("focus", global.nvimify);
+            // Only re-add event listener if input's selector matches the ones
+            // that should be autonvimified
+            global.getConfForUrl(document.location.href).then(conf => {
+                if (conf.selector) {
+                    const elems = Array.from(document.querySelectorAll(conf.selector));
+                    if (elems.includes(input)) {
+                        input.addEventListener("focus", global.nvimify);
+                    }
+                }
+            });
         },
         resizeEditor: (selector: string, width: number, height: number) => {
             const { iframe } = global.selectorToElems.get(selector);
