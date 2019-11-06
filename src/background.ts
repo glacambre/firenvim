@@ -69,7 +69,7 @@ function registerErrors(nvim: any, reject: any) {
         error = "Neovim is not responding.";
         updateIcon();
         reject(error);
-    }, 1000);
+    }, 10000);
     nvim.onDisconnect.addListener(async (p: any) => {
         clearTimeout(timeout);
         updateIcon();
