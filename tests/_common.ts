@@ -7,7 +7,7 @@ const By = webdriver.By;
 
 import { readVimrc, writeVimrc } from "./_vimrc";
 
-jest.setTimeout(40000)
+jest.setTimeout(120000)
 
 export const extensionDir = path.resolve("target");
 
