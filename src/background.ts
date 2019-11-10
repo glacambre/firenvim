@@ -66,6 +66,7 @@ function getError() {
 function registerErrors(nvim: any, reject: any) {
     error = "";
     const timeout = setTimeout(() => {
+        nvim.timedOut = true;
         error = "Neovim is not responding.";
         updateIcon();
         nvim.disconnect();
@@ -90,6 +91,10 @@ function registerErrors(nvim: any, reject: any) {
             }
             updateIcon();
             reject(p.error);
+        } else if (!nvim.replied && !nvim.timedOut) {
+            error = "Neovim died without answering.";
+            updateIcon();
+            reject(error);
         }
     });
     return timeout;
@@ -152,6 +157,7 @@ function fetchSettings() {
         const nvim = browser.runtime.connectNative("firenvim");
         const errorTimeout = registerErrors(nvim, reject);
         nvim.onMessage.addListener((resp: any) => {
+            nvim.replied = true;
             clearTimeout(errorTimeout);
             checkVersion(resp.version);
             resolve(resp.settings);
@@ -175,6 +181,7 @@ function createNewInstance() {
         const nvim = browser.runtime.connectNative("firenvim");
         const errorTimeout = registerErrors(nvim, reject);
         nvim.onMessage.addListener((resp: any) => {
+            nvim.replied = true;
             clearTimeout(errorTimeout);
             checkVersion(resp.version);
             applySettings(resp.settings);

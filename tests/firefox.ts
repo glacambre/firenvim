@@ -12,7 +12,6 @@ import {
  extensionDir,
  getNewestFileMatching,
  killDriver,
- sendKeys,
  testAce,
  testCodemirror,
  testModifiers,
@@ -64,7 +63,7 @@ describe("Firefox", () => {
 
         test("Firenvim works on txti.es", () => testTxties(driver));
         test("Firenvim modifiers work", () => testModifiers(driver));
-        // test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
+        test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
         test("Firenvim works on CodeMirror", () => testCodemirror(driver));
         test("Firenvim works on Ace", () => testAce(driver));
 })
