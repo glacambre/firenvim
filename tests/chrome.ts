@@ -13,6 +13,7 @@ import {
  killDriver,
  testAce,
  testCodemirror,
+ testDynamicTextareas,
  testManualNvimify,
  testModifiers,
  testTxties,
@@ -61,11 +62,13 @@ describe("Chrome", () => {
 
         afterAll(() => killDriver(driver));
 
+        nonHeadlessTest()("Firenvim works on txti.es", () => testTxties(driver));
+        nonHeadlessTest()("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
+        nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
+        nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
+        // Note: this test shouldn't be performed first because it needs a preloaded nvim process
+        nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
         // Disabled because Chrome doesn't pass keyboard shortcuts to webextensions…
         // nonHeadlessTest()("Manually calling firenvim works", () => testManualNvimify(driver));
-        nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
-        nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
-        nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
-        nonHeadlessTest()("Firenvim works on txti.es", () => testTxties(driver));
-        nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
 })

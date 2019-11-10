@@ -174,6 +174,30 @@ export async function testAce(driver: any) {
         await driver.wait(async () => /\/\*\*Test/.test(await input.getAttribute("innerText")));
 }
 
+export async function testDynamicTextareas(driver: any) {
+        await loadLocalPage(driver, "dynamic.html");
+        console.log("Locating button…");
+        const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", btn);
+        console.log("Clicking on btn…");
+        await driver.actions().click(btn).perform();
+        console.log("Waiting for span to be created…");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
+        await driver.sleep(1000);
+        console.log("Typing things…");
+        await sendKeys(driver, "aTest".split("")
+                .concat(webdriver.Key.ESCAPE)
+                .concat(":wq!".split(""))
+                .concat(webdriver.Key.ENTER)
+        );
+        console.log("Waiting for span to be removed…");
+        await driver.wait(Until.stalenessOf(span));
+        console.log("Waiting for value update…");
+        const txtarea = await driver.wait(Until.elementLocated(By.css("body > textarea")));
+        await driver.wait(async () => (await txtarea.getAttribute("value")) === "Test");
+}
+
+
 // Purges a preloaded instance by creating a new frame, focusing it and quitting it
 export async function killPreloadedInstance(driver: any) {
         console.log("Killing preloaded instance.");
