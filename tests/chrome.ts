@@ -16,6 +16,7 @@ import {
  testDynamicTextareas,
  testManualNvimify,
  testModifiers,
+ testNestedDynamicTextareas,
  testTxties,
  testVimrcFailure,
 } from "./_common"
@@ -63,6 +64,7 @@ describe("Chrome", () => {
         afterAll(() => killDriver(driver));
 
         nonHeadlessTest()("Firenvim works on txti.es", () => testTxties(driver));
+        nonHeadlessTest()("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
         nonHeadlessTest()("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
         nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
         nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));

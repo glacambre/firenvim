@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+        <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Test Page</title>
+        </head>
+        <body>
+                <button id="insert-textarea">Insert textarea</button>
+                <script>
+                        const btn = document.getElementById("insert-textarea");
+                        btn.addEventListener("click", () => {
+                                const div = document.createElement("div");
+                                const textarea = document.createElement("textarea");
+                                div.appendChild(textarea);
+                                document.body.appendChild(div);
+                                textarea.focus();
+                        });
+                </script>
+        </body>
+</html>
