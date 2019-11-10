@@ -11,7 +11,6 @@ import {
  extensionDir,
  getNewestFileMatching,
  killDriver,
- sendKeys,
  testAce,
  testCodemirror,
  testModifiers,
@@ -63,7 +62,7 @@ describe("Chrome", () => {
 
         nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
         nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
-        // nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
+        nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
         nonHeadlessTest()("Firenvim works on txti.es", () => testTxties(driver));
         nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
 })

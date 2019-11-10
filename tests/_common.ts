@@ -9,6 +9,7 @@ import { readVimrc, writeVimrc } from "./_vimrc";
 
 jest.setTimeout(40000)
 
+export const pagesDir = path.resolve(path.join("tests", "pages"));
 export const extensionDir = path.resolve("target");
 
 export function getNewestFileMatching(directory: string, pattern: string | RegExp) {
@@ -38,11 +39,15 @@ export function getNewestFileMatching(directory: string, pattern: string | RegEx
 
 const keyDelay = 100;
 
-export async function sendKeys(driver: any, keys: any[]) {
+function sendKeys(driver: any, keys: any[]) {
         return keys.reduce((prom, key) => prom
                 .then((action: any) => action.sendKeys(key))
                 .then((action: any) => action.pause(keyDelay))
                 , Promise.resolve(driver.actions())).then((action: any) => action.perform());
+}
+
+function loadLocalPage(driver: any, page: string) {
+        return driver.get("file://" + path.join(pagesDir, page));
 }
 
 export async function testTxties(driver: any) {
@@ -70,15 +75,14 @@ export async function testTxties(driver: any) {
 }
 
 export async function testModifiers(driver: any) {
-        console.log("Navigating to txti.es…");
-        await driver.get("http://txti.es");
+        await loadLocalPage(driver, "simple.html");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(7)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         console.log("Sleeping for a sec…");
         await driver.sleep(1000);
         console.log("Typing <C-v><C-a><C-v><A-v><C-v><D-a>…");
@@ -178,31 +182,29 @@ export async function testVimrcFailure(driver: any) {
         console.log("Backing up vimrc…");
         const backup = await readVimrc();
         console.log("Overwriting it…");
-        await writeVimrc("call\n");
+        await writeVimrc("call\nlet x = 'y'");
         // Then, use preloaded instance, so that firenvim preloads a buggy instance
-        console.log("Navigating to txti.es…");
-        await driver.get("http://txti.es");
+        await loadLocalPage(driver, "simple.html");
         console.log("Locating textarea…");
         let input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
-        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(7)")));
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         console.log("Sleeping for a sec…");
         await driver.sleep(1000);
         // We can restore our vimrc
         await writeVimrc(backup);
         // Reload, to get the buggy instance
-        console.log("Navigating to txti.es…");
-        await driver.get("http://txti.es");
+        await loadLocalPage(driver, "simple.html");
         console.log("Locating textarea…");
         input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
-        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(7)")));
+        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         // The firenvim frame should disappear after a second
         console.log("Waiting for span to disappear…");
         await driver.wait(Until.stalenessOf(span));
