@@ -47,7 +47,8 @@ function sendKeys(driver: any, keys: any[]) {
 }
 
 function loadLocalPage(driver: any, page: string) {
-        return driver.get("file://" + path.join(pagesDir, page));
+        return driver.get("file://" + path.join(pagesDir, page))
+                .then(() => driver.executeScript("document.documentElement.focus()"));
 }
 
 export async function testTxties(driver: any) {
@@ -60,7 +61,6 @@ export async function testTxties(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(7)")));
-        console.log("Sleeping for a sec…");
         await driver.sleep(1000);
         console.log("Typing things…");
         await sendKeys(driver, "aTest".split("")
@@ -83,7 +83,6 @@ export async function testModifiers(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        console.log("Sleeping for a sec…");
         await driver.sleep(1000);
         console.log("Typing <C-v><C-a><C-v><A-v><C-v><D-a>…");
         await driver.actions()
@@ -139,7 +138,6 @@ export async function testCodemirror(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")));
-        console.log("Sleeping for a sec…");
         await driver.sleep(1000);
         console.log("Typing stuff…");
         await sendKeys(driver, "iTest".split("")
@@ -163,7 +161,6 @@ export async function testAce(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(10)")));
-        console.log("Sleeping for a sec…");
         await driver.sleep(1000);
         console.log("Typing stuff…");
         await sendKeys(driver, "ATest".split("")
@@ -177,37 +174,120 @@ export async function testAce(driver: any) {
         await driver.wait(async () => /\/\*\*Test/.test(await input.getAttribute("innerText")));
 }
 
+// Purges a preloaded instance by creating a new frame, focusing it and quitting it
+export async function killPreloadedInstance(driver: any) {
+        console.log("Killing preloaded instance.");
+        const id = "firenvim-" + Math.round(Math.random() * 1000);
+        await driver.executeScript(`
+                const txtarea = document.createElement("textarea");
+                txtarea.id = "${id}";
+                document.body.appendChild(txtarea);
+                txtarea.scrollIntoView(true);`);
+        const txtarea = await driver.wait(Until.elementLocated(By.id(id)));
+        await driver.actions().click(txtarea).perform();
+        await driver.actions()
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("e")
+                .pause(keyDelay)
+                .keyUp("e")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await driver.sleep(1000);
+        await driver.executeScript(`
+                const elem = document.getElementById("${id}");
+                elem.parentElement.removeChild(elem);
+        `);
+};
+
 export async function testVimrcFailure(driver: any) {
         // First, write buggy vimrc
         console.log("Backing up vimrc…");
         const backup = await readVimrc();
         console.log("Overwriting it…");
-        await writeVimrc("call\nlet x = 'y'");
-        // Then, use preloaded instance, so that firenvim preloads a buggy instance
+        await writeVimrc("call");
         await loadLocalPage(driver, "simple.html");
-        console.log("Locating textarea…");
-        let input = await driver.wait(Until.elementLocated(By.id("content-input")));
-        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        console.log("Clicking on input…");
-        await driver.actions().click(input).perform();
-        console.log("Waiting for span to be created…");
-        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        console.log("Sleeping for a sec…");
-        await driver.sleep(1000);
+        await killPreloadedInstance(driver);
         // We can restore our vimrc
         await writeVimrc(backup);
         // Reload, to get the buggy instance
         await loadLocalPage(driver, "simple.html");
         console.log("Locating textarea…");
-        input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
-        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         // The firenvim frame should disappear after a second
         console.log("Waiting for span to disappear…");
         await driver.wait(Until.stalenessOf(span));
+};
+
+export async function testManualNvimify(driver: any) {
+        await loadLocalPage(driver, "simple.html");
+        console.log("Backing up vimrc…");
+        const backup = await readVimrc();
+        console.log("Overwriting it…");
+        await writeVimrc(`
+let g:firenvim_config = {
+    \\ 'localSettings': {
+        \\ '.*': {
+            \\ 'selector': '',
+            \\ 'priority': 0,
+        \\ }
+    \\ }
+\\ }
+${backup}
+                `);
+        await killPreloadedInstance(driver);
+        await loadLocalPage(driver, "simple.html");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Making sure a frame didn't pop up.");
+        await driver.sleep(1000);
+        await driver.findElement(By.css("body > span:nth-child(2)"))
+                .catch((): void => undefined)
+                .then((e: any) => {
+                        if (e !== undefined) {
+                                throw new Error("Frame automatically created while disabled by config.");
+                        }
+                });
+        await driver.actions()
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("e")
+                .pause(keyDelay)
+                .keyUp("e")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.sleep(1000);
+        console.log("Typing things…");
+        await sendKeys(driver, "aTest".split("")
+                .concat(webdriver.Key.ESCAPE)
+                .concat(":wq!".split(""))
+                .concat(webdriver.Key.ENTER)
+        );
+        console.log("Waiting for span to be removed…");
+        await driver.wait(Until.stalenessOf(span));
+        console.log("Waiting for value update…");
+        await driver.wait(async () => (await input.getAttribute("value")) === "Test");
+        // Unfocus element
+        await driver.executeScript("arguments[0].blur();", input);
+        await driver.sleep(1000);
+        await driver.actions().click(input).perform();
+        console.log("Making sure a frame didn't pop up.");
+        await driver.sleep(1000);
+        await driver.findElement(By.css("body > span:nth-child(2)"))
+                .catch((): void => undefined)
+                .then((e: any) => {
+                        if (e !== undefined) {
+                                throw new Error("Frame automatically created while disabled by config.");
+                        }
+                });
+        await writeVimrc(backup);
+        await killPreloadedInstance(driver);
 };
 
 export async function killDriver(driver: any) {
