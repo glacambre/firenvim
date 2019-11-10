@@ -204,10 +204,15 @@ function setupListeners(selector: string) {
         // element into a neovim frame even for unrelated dom changes.
         for (const mr of changes) {
             for (const node of mr.addedNodes) {
+                if (document.activeElement === node) {
+                    functions.forceNvimify();
+                    return;
+                }
                 const walker = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT);
                 while (walker.nextNode()) {
                     if (document.activeElement === walker.currentNode) {
                         functions.forceNvimify();
+                        return;
                     }
                 }
             }

@@ -14,6 +14,7 @@ import {
  killDriver,
  testAce,
  testCodemirror,
+ testDynamicTextareas,
  testManualNvimify,
  testModifiers,
  testTxties,
@@ -62,11 +63,13 @@ describe("Firefox", () => {
 
         afterAll(() => killDriver(driver));
 
+        test("Firenvim modifiers work", () => testModifiers(driver));
+        // Note: this test shouldn't be performed first because it needs a preloaded nvim process
+        test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
+        test("Firenvim works on Ace", () => testAce(driver));
+        test("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        test("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
         test("Firenvim works on txti.es", () => testTxties(driver));
         // Disabled because Firefox doesn't pass keyboard shortcuts to webextensions…
         // test("Manually calling firenvim works", () => testManualNvimify(driver));
-        test("Firenvim modifiers work", () => testModifiers(driver));
-        test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
-        test("Firenvim works on CodeMirror", () => testCodemirror(driver));
-        test("Firenvim works on Ace", () => testAce(driver));
 })
