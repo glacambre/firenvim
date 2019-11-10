@@ -13,6 +13,7 @@ import {
  killDriver,
  testAce,
  testCodemirror,
+ testManualNvimify,
  testModifiers,
  testTxties,
  testVimrcFailure,
@@ -60,6 +61,8 @@ describe("Chrome", () => {
 
         afterAll(() => killDriver(driver));
 
+        // Disabled because Chrome doesn't pass keyboard shortcuts to webextensions…
+        // nonHeadlessTest()("Manually calling firenvim works", () => testManualNvimify(driver));
         nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
         nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
         nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));

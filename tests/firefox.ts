@@ -14,6 +14,7 @@ import {
  killDriver,
  testAce,
  testCodemirror,
+ testManualNvimify,
  testModifiers,
  testTxties,
  testVimrcFailure,
@@ -62,6 +63,8 @@ describe("Firefox", () => {
         afterAll(() => killDriver(driver));
 
         test("Firenvim works on txti.es", () => testTxties(driver));
+        // Disabled because Firefox doesn't pass keyboard shortcuts to webextensions…
+        // test("Manually calling firenvim works", () => testManualNvimify(driver));
         test("Firenvim modifiers work", () => testModifiers(driver));
         test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
         test("Firenvim works on CodeMirror", () => testCodemirror(driver));
