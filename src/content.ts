@@ -195,8 +195,12 @@ function setupListeners(selector: string) {
         // This mutation observer is triggered every time an element is
         // added/removed from the page. When this happens, try to apply
         // listeners again, in case a new textarea/input field has been added.
-        Array.from(document.querySelectorAll(selector))
-            .forEach(elem => addNvimListener(elem));
+        const toPossiblyNvimify = Array.from(document.querySelectorAll(selector));
+        toPossiblyNvimify.forEach(elem => addNvimListener(elem));
+
+        function shouldNvimify(node: any) {
+            return document.activeElement === node && toPossiblyNvimify.includes(node);
+        }
 
         // We also need to check if the currently focused element is among the
         // newly created elements and if it is, nvimify it.
@@ -204,13 +208,13 @@ function setupListeners(selector: string) {
         // element into a neovim frame even for unrelated dom changes.
         for (const mr of changes) {
             for (const node of mr.addedNodes) {
-                if (document.activeElement === node) {
+                if (shouldNvimify(node)) {
                     functions.forceNvimify();
                     return;
                 }
                 const walker = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT);
                 while (walker.nextNode()) {
-                    if (document.activeElement === walker.currentNode) {
+                    if (shouldNvimify(walker.currentNode)) {
                         functions.forceNvimify();
                         return;
                     }
