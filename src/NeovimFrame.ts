@@ -174,7 +174,7 @@ window.addEventListener("load", async () => {
             if (evt.key === "Alt" && evt.location === 2) {
                 pressingAltGr = false;
             }
-        })
+        });
         keyHandler.addEventListener("keydown", (evt) => {
             keyHandler.style.left = `0px`;
             keyHandler.style.top = `0px`;
