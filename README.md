@@ -6,7 +6,7 @@ Turn your browser into a Neovim client.
 
 # How to use
 
-Just click on any textarea and it will be immediately replaced by an instance of Firenvim. When you want to set the content of the now hidden textarea to the content of the Neovim instance, just `:w`. If you want to close the Firenvim overlay and return to the textarea run `:q`. If you selected an element where you expected the Firenvim frame to appear and it didn't, try pressing `<C-e>` (you can configure this binding in `about://addons` or `chome://extensions`), this should manually trigger firenvim. Please also open an issue in order to let us know the website and element this happened on.
+Just click on any textarea and it will be immediately replaced by an instance of Firenvim. When you want to set the content of the now hidden textarea to the content of the Neovim instance, just `:w`. If you want to close the Firenvim overlay and return to the textarea run `:q`. If you selected an element where you expected the Firenvim frame to appear and it didn't, try pressing `<C-e>`.
 
 # Installing
 
@@ -89,7 +89,9 @@ Firenvim currently requires the following permissions for the following reasons:
 
 ## Configuring the browser addon behavior
 
-Firenvim is configured by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionary containing the key "localSettings". `g:firenvim_config["localSettings"]` is a dictionary the keys of which have to be a Javascript pattern matching a URL and the values of which are dictionaries containing settings that apply for all URLs matched by the Javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used.
+You can configure the keybinding to manually trigger Firenvim (`<C-e>` by default) in [the shortcuts menu in `about://addons`](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) on Firefox, or in `chrome://extensions/shortcuts` on Chrome.
+
+The rest of Firenvim is configured by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionary containing the key "localSettings". `g:firenvim_config["localSettings"]` is a dictionary the keys of which have to be a Javascript pattern matching a URL and the values of which are dictionaries containing settings that apply for all URLs matched by the Javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used.
 
 Here's an example `g:firenvim_config` that matches the default configuration:
 ```
@@ -102,7 +104,7 @@ let g:firenvim_config = {
     \ }
 \ }
 ```
-This means that for all URLs ("`.*`"), textareas will be turned into Firenvim instances. Here's an example that disables Firenvim everywhere but enables it on GitHub:
+This means that for all URLs ("`.*`"), textareas will be turned into Firenvim instances. Here's an example that will make Firenvim not take over any elements, except for Github's textareas:
 ```vimscript
 let g:firenvim_config = {
     \ 'localSettings': {
@@ -117,7 +119,7 @@ let g:firenvim_config = {
     \ }
 \ }
 ```
-Note that it is not necessary to specify the `priority` key because it defaults to 1, except for the `.*` pattern, which has a priority of 0.
+Note that even with this config, manually triggering Firenvim will still work on every page.
 
 Since Firenvim just uses the BufWrite event in order to detect when it needs to write neovim's buffers to the page, Firenvim can be made to automatically synchronize all changes like this:
 ```
