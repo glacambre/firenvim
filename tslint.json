@@ -11,6 +11,7 @@
         "limit": 120
       }
     ],
+    "no-big-function": false,
     "no-conditional-assignment": false,
     "no-console": false,
     "no-namespace": false,
