@@ -112,11 +112,10 @@ const redrawFuncs = {
             case "guifont":
             case "guifontset":
             case "guifontwide":
-                let fonts = "font-family: monospace;";
-                if (value !== "") {
-                    fonts = guifontsToCSS(value);
+                if (value === "") {
+                    break;
                 }
-                nvimGuifont.innerHTML = `* { ${fonts} }`;
+                nvimGuifont.innerHTML = `* { ${guifontsToCSS(value)} }`;
                 const [width, height] = getGridSize(elem);
                 nvimFunctions.ui_try_resize(width, height);
                 break;
