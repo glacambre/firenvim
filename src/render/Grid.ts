@@ -65,27 +65,30 @@ export class Grid {
         this.height = height;
     }
 
-    public scroll(top: number, bot: number, left: number, right: number, rowCount: number, cols: number) {
-        if (rowCount > 0) {
-            const toDelete = this.rows.splice(top, rowCount);
-            toDelete.forEach(row => row.detach());
-            for (let i = 0; i < rowCount; ++i) {
-                this.rows.push(new Row(this.width));
-                this.rows[this.rows.length - 1].attach(this.elem);
+    public scroll(top: number, bot: number, left: number, right: number, rows: number, cols: number) {
+        if (rows > 0) {
+            for (let i = top; i <= bot; ++i) {
+                const rowCount = i - rows;
+                const toRow = this.rows[rowCount < 0 ? 0 : rowCount];
+                const fromRow = this.rows[i];
+                for (let j = left; j < right; ++j) {
+                    const toCell = toRow.get(j);
+                    const fromCell = fromRow.get(j);
+                    toCell.value = fromCell.value;
+                    toCell.highlight = fromCell.highlight;
+                }
             }
         } else {
-            rowCount = -rowCount;
-            const toDelete = this.rows.slice(this.rows.length - rowCount);
-            toDelete.forEach(row => row.detach());
-            const newRows = [];
-            for (let i = 0; i < rowCount; ++i) {
-                newRows.push(new Row(this.width));
-                newRows[newRows.length - 1].attachBefore(this.rows[top].elem);
+            for (let i = bot + rows - 1; i >= top; --i) {
+                const toRow = this.rows[i - rows];
+                const fromRow = this.rows[i];
+                for (let j = left; j < right; ++j) {
+                    const toCell = toRow.get(j);
+                    const fromCell = fromRow.get(j);
+                    toCell.value = fromCell.value;
+                    toCell.highlight = fromCell.highlight;
+                }
             }
-            this.rows = this.rows.slice(0, top)
-                .concat(newRows)
-                .concat(this.rows.slice(top, this.rows.length - newRows.length));
         }
-        this.cursor_goto(this.cursor.x, this.cursor.y);
     }
 }
