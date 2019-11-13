@@ -196,7 +196,7 @@ function createNewInstance() {
 }
 
 async function toggleDisabled() {
-    const tabId = (await browser.tabs.query({ active: true }))[0].id;
+    const tabId = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
     const tabValue = getTabValue(tabId, "disabled");
     const disabled = !JSON.parse((tabValue as string) || "false");
     setTabValue(tabId, "disabled", `${disabled}`);
@@ -239,15 +239,21 @@ browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResp
     return fn(sender, request.args !== undefined ? request.args : []);
 });
 
-browser.tabs.onActivated.addListener(async ({ tabId }: { tabId: number }) => {
+browser.tabs.onActivated.addListener(({ tabId }: { tabId: number }) => {
     updateIcon(tabId);
+});
+browser.windows.onFocusChanged.addListener(async (windowId: number) => {
+    const tabs = await browser.tabs.query({ active: true, windowId });
+    if (tabs.length >= 1) {
+        updateIcon(tabs[0].id);
+    }
 });
 
 updateIcon();
 
 browser.commands.onCommand.addListener(async (command: string) => {
     if (command === "nvimify") {
-        const id = (await browser.tabs.query({ active: true }))[0].id;
+        const id = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
         browser.tabs.sendMessage(id, { args: [], funcName: ["forceNvimify"] });
     }
 });
