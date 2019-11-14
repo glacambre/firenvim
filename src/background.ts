@@ -38,9 +38,12 @@ function getTabValue(tabid: any, item: any) {
     return obj[item];
 }
 
-function updateIcon(tabId?: number) {
+async function updateIcon(tabId?: number) {
     let name: IconKind = "normal";
-    if (tabId !== undefined && getTabValue(tabId, "disabled") === "true") {
+    if (tabId === undefined) {
+        tabId = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
+    }
+    if (getTabValue(tabId, "disabled") === "true") {
         name = "disabled";
     } else if (error !== "") {
         name = "error";
