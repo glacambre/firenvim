@@ -174,6 +174,29 @@ export async function testAce(driver: any) {
         await driver.wait(async () => /\/\*\*Test/.test(await input.getAttribute("innerText")));
 }
 
+export async function testMonaco(driver: any) {
+        console.log("Navigating to microsoft.github.io…");
+        await driver.get("https://microsoft.github.io/monaco-editor/");
+        console.log("Looking for monaco div…");
+        const input = await driver.wait(Until.elementLocated(By.css("#editor > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(13)")));
+        await driver.sleep(1000);
+        console.log("Typing stuff…");
+        await sendKeys(driver, "iTest".split("")
+                .concat(webdriver.Key.ESCAPE)
+                .concat(":wq!".split(""))
+                .concat(webdriver.Key.ENTER)
+        );
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+        console.log("Waiting for value update…");
+        await driver.wait(async () => /^Test\/\*/.test(await input.getAttribute("innerText")));
+}
+
 export async function testDynamicTextareas(driver: any) {
         await loadLocalPage(driver, "dynamic.html");
         console.log("Locating button…");

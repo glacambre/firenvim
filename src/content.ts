@@ -1,7 +1,7 @@
 import * as browser from "webextension-polyfill";
 import { getFunctions } from "./page/functions";
 import { computeSelector } from "./utils/CSSUtils";
-import { getAceParent, getCodeMirrorParent } from "./utils/utils";
+import { getEditorElement } from "./utils/utils";
 
 const global = {
     // Whether Firenvim is disabled in this tab
@@ -43,7 +43,7 @@ const global = {
         if (global.disabled) {
             return;
         }
-        const elem = getAceParent(getCodeMirrorParent(evt.target as HTMLElement));
+        const elem = getEditorElement(evt.target as HTMLElement);
         const selector = computeSelector(elem);
 
         // If this element already has a neovim frame, stop

@@ -34,15 +34,21 @@ function executeInPage(code: string): Promise<any> {
 
 function _getElementContent(e: any): Promise<string> {
     if (e.className.match(/CodeMirror/gi)) {
-        const selector = computeSelector(e);
         return executeInPage(`(${(selec: string) => {
             const elem = document.querySelector(selec) as any;
             return elem.CodeMirror.getValue();
-        }})(${JSON.stringify(selector)})`);
+        }})(${JSON.stringify(computeSelector(e))})`);
     } else if (e.className.match(/ace_editor/gi)) {
         return executeInPage(`(${(selec: string) => {
             const elem = document.querySelector(selec) as any;
             return (window as any).ace.edit(elem).getValue();
+        }})(${JSON.stringify(computeSelector(e))})`);
+    } else if (e.className.match(/monaco/gi)) {
+        return executeInPage(`(${(selec: string, str: string) => {
+            const elem = document.querySelector(selec) as any;
+            const uri = elem.getAttribute("data-uri");
+            const model = (window as any).monaco.editor.getModel(uri);
+            return model.getValue();
         }})(${JSON.stringify(computeSelector(e))})`);
     }
     if (e.value !== undefined) {
@@ -135,6 +141,13 @@ export function getFunctions(global: {
                 return executeInPage(`(${(selec: string, str: string) => {
                     const elem = document.querySelector(selec) as any;
                     return (window as any).ace.edit(elem).setValue(str);
+                }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
+            } else if (e.className.match(/monaco-editor/)) {
+                return executeInPage(`(${(selec: string, str: string) => {
+                    const elem = document.querySelector(selec) as any;
+                    const uri = elem.getAttribute("data-uri");
+                    const model = (window as any).monaco.editor.getModel(uri);
+                    return model.setValue(str);
                 }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
             }
             if (e.value !== undefined) {
