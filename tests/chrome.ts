@@ -17,6 +17,7 @@ import {
  testGuifont,
  testManualNvimify,
  testModifiers,
+ testMonaco,
  testNestedDynamicTextareas,
  testTxties,
  testVimrcFailure,
@@ -66,6 +67,7 @@ describe("Chrome", () => {
 
         nonHeadlessTest()("Guifont works", () => testGuifont(driver));
         nonHeadlessTest()("Firenvim works on txti.es", () => testTxties(driver));
+        nonHeadlessTest()("Firenvim works on Monaco", () => testMonaco(driver));
         nonHeadlessTest()("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
         nonHeadlessTest()("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
         nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));

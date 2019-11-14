@@ -13,15 +13,14 @@ export function getCodeMirrorParent(elem: HTMLElement): HTMLElement {
     function isCodeMirror(element: HTMLElement) {
        return element.className.match(/CodeMirror/gi);
     }
-    if (elem.parentElement) {
-        // We check both parentElement and parentElement.parentElement because
-        // some CodeMirror elements have internal elements the className of
-        // which doesn't contain "CodeMirror"
-        if (isCodeMirror(elem.parentElement)) {
-            return getCodeMirrorParent(elem.parentElement);
-        }
-        if (isCodeMirror(elem.parentElement.parentElement)) {
-            return getCodeMirrorParent(elem.parentElement.parentElement);
+    let parent = elem;
+    // We check both parentElement and parentElement.parentElement because
+    // some CodeMirror elements have internal elements the className of
+    // which doesn't contain "CodeMirror"
+    for (let i = 0; i < 2; ++i) {
+        parent = parent.parentElement;
+        if (parent && isCodeMirror(parent)) {
+            return getCodeMirrorParent(parent);
         }
     }
     return elem;
@@ -35,6 +34,28 @@ export function getAceParent(elem: HTMLElement): HTMLElement {
         return getAceParent(elem.parentElement);
     }
     return elem;
+}
+
+export function getMonacoParent(elem: HTMLElement): HTMLElement {
+    if (elem.className.match(/monaco-editor/gi) && elem.getAttribute("data-uri").match("inmemory://")) {
+        return elem;
+    }
+    function isMonaco(element: HTMLElement) {
+        return element.className.match(/monaco/gi);
+    }
+    let parent = elem;
+    // Check if parent, grand-parent or great grand-parent is monaco
+    for (let i = 0; i < 3; ++i) {
+        parent = parent.parentElement;
+        if (parent && isMonaco(parent)) {
+            return getMonacoParent(parent);
+        }
+    }
+    return elem;
+}
+
+export function getEditorElement(elem: HTMLElement): HTMLElement {
+    return getMonacoParent(getAceParent(getCodeMirrorParent(elem)));
 }
 
 const svgpath = "firenvim.svg";
