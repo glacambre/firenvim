@@ -174,7 +174,7 @@ function! s:get_executable_content(data_dir, prolog) abort
                                 \ "unset NVIM_LISTEN_ADDRESS\n" .
                                 \ 'export PATH="$PATH:' . $PATH . "\"\n" .
                                 \ a:prolog . "\n" .
-                                \ "exec '" . s:get_progpath() . "' --headless -c 'call firenvim#run()'\n"
+                                \ "exec '" . s:get_progpath() . "' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'\n"
 endfunction
 
 function! s:get_manifest_beginning(execute_nvim_path) abort

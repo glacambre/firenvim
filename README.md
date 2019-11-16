@@ -148,7 +148,16 @@ au TextChangedI * ++nested call Delay_My_Write()
 
 ## Configuring Neovim's behavior
 
-You can detect when Firenvim connects to Neovim with the following code:
+When it starts Neovim, Firenvim sets the variable `g:started_by_firenvim` which you can check to run different code in your init.vim. For example:
+```
+if exists('g:started_by_firenvim')
+  set laststatus=0
+else
+  set laststatus=2
+endif
+```
+
+Alternatively, you can detect Firenvim using the `UIEnter` autocmd event:
 ```
 function! OnUIEnter(event)
     let l:ui = nvim_get_chan_info(a:event.chan)
