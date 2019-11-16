@@ -67,29 +67,28 @@ const global = {
             .createElementNS("http://www.w3.org/1999/xhtml", "iframe") as HTMLIFrameElement;
         pageElements.iframe = iframe;
 
+        global.putEditorAtInputOrigin(pageElements);
         // We don't need the iframe to be appended to the page in order to
         // resize it because we're just using the corresponding
         // input/textarea's size
-        putEditorOverInput(pageElements);
-        // Resizing a textarea changes its "style" attribute
-        // This is a hack. We should ideally use a ResizeObserver (
-        // https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver )
-        // but this API doesn't exist in Firefox yet :(
+        setEditorSizeToInputSize(pageElements);
+
         let resizeReqId = 0;
-        new MutationObserver((changes, observer) => {
-            const { dimChanged, newRect: rect } = putEditorOverInput(pageElements);
-            if (dimChanged) {
+        (new ((window as any).ResizeObserver)((entries: any[]) => {
+            const entry = entries.find((ent: any) => ent.target === elem);
+            if (entry) {
+                const { newRect } = setEditorSizeToInputSize(pageElements);
                 resizeReqId += 1;
                 browser.runtime.sendMessage({
                     args: {
-                        args: [resizeReqId, rect.width, rect.height],
+                        args: [resizeReqId, newRect.width, newRect.height],
                         funcName : ["resize"],
                         selector,
                     },
                     funcName: ["messageOwnTab"],
                 });
             }
-        }).observe(elem, { attributes: true, attributeOldValue: true, attributeFilter: ["style"] });
+        })).observe(elem, { box: "border-box" });
 
         iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
         span.attachShadow({ mode: "closed" }).appendChild(iframe);
@@ -126,6 +125,22 @@ const global = {
             }
         }, { root: null, threshold: 0.1 })).observe(elem);
     },
+    putEditorAtInputOrigin: ({ iframe, input }: PageElements) => {
+        const rect = input.getBoundingClientRect();
+        // Save attributes
+        const posAttrs = ["left", "position", "top", "zIndex"];
+        const oldPosAttrs = posAttrs.map((attr: any) => iframe.style[attr]);
+
+        // Assign new values
+        iframe.style.left = `${rect.left + window.scrollX}px`;
+        iframe.style.position = "absolute";
+        iframe.style.top = `${rect.top + window.scrollY}px`;
+        iframe.style.zIndex = "2147483647";
+
+        const posChanged = !!posAttrs.find((attr: any, index) => iframe.style[attr] !== oldPosAttrs[index]);
+        return { posChanged, newRect: rect };
+    },
+
     // selectorToElems: a map of selectors->{input, span, iframe} objects
     selectorToElems: new Map<string, PageElements>(),
 };
@@ -153,7 +168,7 @@ browser.runtime.onMessage.addListener(async (
     return fn(...request.args);
 });
 
-function putEditorOverInput({ iframe, input, selector }: PageElements) {
+function setEditorSizeToInputSize({ iframe, input }: PageElements) {
     const rect = input.getBoundingClientRect();
     // Make sure there isn't any extra width/height
     iframe.style.padding = "0px";
@@ -162,24 +177,16 @@ function putEditorOverInput({ iframe, input, selector }: PageElements) {
     // We still need a border, use a shadow for that
     iframe.style.boxShadow = "0px 0px 1px 1px black";
 
-    // Save attributes
-    const posAttrs = ["left", "position", "top", "zIndex"];
-    const oldPosAttrs = posAttrs.map((attr: any) => iframe.style[attr]);
     const dimAttrs = ["height", "width"];
     const oldDimAttrs = dimAttrs.map((attr: any) => iframe.style[attr]);
 
     // Assign new values
     iframe.style.height = `${rect.height}px`;
-    iframe.style.left = `${rect.left + window.scrollX}px`;
-    iframe.style.position = "absolute";
-    iframe.style.top = `${rect.top + window.scrollY}px`;
     iframe.style.width = `${rect.width}px`;
-    iframe.style.zIndex = "2147483647";
 
-    const posChanged = !!posAttrs.find((attr: any, index) => iframe.style[attr] !== oldPosAttrs[index]);
     const dimChanged = !!dimAttrs.find((attr: any, index) => iframe.style[attr] !== oldDimAttrs[index]);
 
-    return { posChanged, dimChanged, newRect: rect };
+    return { dimChanged, newRect: rect };
 }
 
 function setupListeners(selector: string) {
@@ -229,7 +236,7 @@ function setupListeners(selector: string) {
     function onScroll(cont: boolean) {
         window.requestAnimationFrame(() => {
             const posChanged = Array.from(global.selectorToElems.entries())
-                .map(([_, elems]) => putEditorOverInput(elems))
+                .map(([_, elems]) => global.putEditorAtInputOrigin(elems))
                 .find(changed => changed.posChanged);
             if (posChanged) {
                 // As long as one editor changes position, try to resize
@@ -245,6 +252,7 @@ function setupListeners(selector: string) {
     }
     window.addEventListener("scroll", () => onScroll(true));
     window.addEventListener("wheel", () => onScroll(true));
+    window.addEventListener("resize", () => onScroll(true));
 }
 
 global.getConfForUrl(document.location.href)

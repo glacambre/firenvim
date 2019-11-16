@@ -123,6 +123,7 @@ window.addEventListener("load", async () => {
                 const nCols = Math.floor(width / cellWidth);
                 const nRows = Math.floor(height / cellHeight);
                 nvim.ui_try_resize(nCols, nRows);
+                page.resizeEditor(selector, nCols * cellWidth, nRows * cellHeight);
             }
         });
 

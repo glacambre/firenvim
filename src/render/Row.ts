@@ -38,7 +38,7 @@ export class Row {
             this.cells.slice(width).forEach(cell => cell.detach());
             this.cells = this.cells.slice(0, width);
         } else {
-            for (let i = this.width; i <= width; ++i) {
+            for (let i = this.width; i < width; ++i) {
                 this.cells.push(new Cell());
                 this.cells[this.cells.length - 1].attach(this.elem);
             }

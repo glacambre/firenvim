@@ -67,26 +67,31 @@ export class Grid {
 
     public scroll(top: number, bot: number, left: number, right: number, rows: number, cols: number) {
         if (rows > 0) {
-            for (let i = top; i <= bot; ++i) {
-                const rowCount = i - rows;
-                const toRow = this.rows[rowCount < 0 ? 0 : rowCount];
-                const fromRow = this.rows[i];
+            for (let i = top + 1; i < bot; ++i) {
+                const srcRow = this.rows[i];
+                const dstRow = this.rows[i - rows];
+                if (dstRow === undefined) {
+                    continue;
+                }
                 for (let j = left; j < right; ++j) {
-                    const toCell = toRow.get(j);
-                    const fromCell = fromRow.get(j);
-                    toCell.value = fromCell.value;
-                    toCell.highlight = fromCell.highlight;
+                    const srcCell = srcRow.get(j);
+                    const dstCell = dstRow.get(j);
+                    dstCell.value = srcCell.value;
+                    dstCell.highlight = srcCell.highlight;
                 }
             }
-        } else {
-            for (let i = bot + rows - 1; i >= top; --i) {
-                const toRow = this.rows[i - rows];
-                const fromRow = this.rows[i];
+        } else if (rows < 0) {
+            for (let i = bot - 1 + rows; i >= top; --i) {
+                const srcRow = this.rows[i];
+                const dstRow = this.rows[i - rows];
+                if (dstRow === undefined) {
+                    continue;
+                }
                 for (let j = left; j < right; ++j) {
-                    const toCell = toRow.get(j);
-                    const fromCell = fromRow.get(j);
-                    toCell.value = fromCell.value;
-                    toCell.highlight = fromCell.highlight;
+                    const srcCell = srcRow.get(j);
+                    const dstCell = dstRow.get(j);
+                    dstCell.value = srcCell.value;
+                    dstCell.highlight = srcCell.highlight;
                 }
             }
         }

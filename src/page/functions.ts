@@ -61,6 +61,7 @@ export function getFunctions(global: {
     getConfForUrl: (url: string) => Promise<{ selector: string, priority: number }>,
     lastEditorLocation: [string, string, number],
     nvimify: (evt: FocusEvent) => void,
+    putEditorAtInputOrigin: ({ iframe, input }: PageElements) => void,
     selectorToElems: Map<string, PageElements>,
     disabled: boolean | Promise<boolean>,
 }) {
@@ -123,9 +124,10 @@ export function getFunctions(global: {
             });
         },
         resizeEditor: (selector: string, width: number, height: number) => {
-            const { iframe } = global.selectorToElems.get(selector);
-            iframe.style.width = `${width}px`;
-            iframe.style.height = `${height}px`;
+            const pageElems = global.selectorToElems.get(selector);
+            pageElems.iframe.style.width = `${width}px`;
+            pageElems.iframe.style.height = `${height}px`;
+            global.putEditorAtInputOrigin(pageElems);
         },
         setDisabled: (disabled: boolean) => {
             global.disabled = disabled;
