@@ -3,7 +3,7 @@
   "dependencies": {
     "@types/jest": "24.0.23",
     "@types/msgpack-lite": "0.1.7",
-    "@types/node": "12.12.7",
+    "@types/node": "12.12.8",
     "awesome-typescript-loader": "5.2.1",
     "chromedriver": "78.0.1",
     "copy-webpack-plugin": "5.0.5",
