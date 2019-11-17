@@ -1,6 +1,20 @@
 let s:firenvim_done = 0
 let s:script_dir = expand('<sfile>:p:h:h')
 
+" Asks the browser extension to release focus from the frame and focus the
+" page instead
+function! firenvim#focus_page() abort
+        let l:uis = filter(nvim_list_uis(),
+                \ {i, ui -> nvim_get_chan_info(ui.chan).client.name ==? 'Firenvim'})
+        if len(l:uis) != 1
+                if len(l:uis) == 0
+                        throw 'firenvim#focus_page(): No firenvim ui found!'
+                endif
+                throw 'firenvim#focus_page(): Too many UIs found!'
+        endif
+        call rpcnotify(uis[0].chan, 'firenvim_focus_page')
+endfunction
+
 " Simple helper to build the right path depending on the platform.
 function! s:build_path(list) abort
         let l:path_separator = '/'

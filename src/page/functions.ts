@@ -66,6 +66,9 @@ export function getFunctions(global: {
     disabled: boolean | Promise<boolean>,
 }) {
     return {
+        focusPage: () => {
+            document.documentElement.focus();
+        },
         forceNvimify: () => {
             let elem = document.activeElement;
             if (!elem || elem === document.documentElement || elem === document.body) {

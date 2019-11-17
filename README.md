@@ -158,6 +158,12 @@ au TextChanged * ++nested call Delay_My_Write()
 au TextChangedI * ++nested call Delay_My_Write()
 ```
 
+You can also focus move focus from the editor back to the page by calling `firenvim#focus_page`. Here's an example that does exactly this if you press `<Esc>` twice while in normal mode:
+
+```vim
+nnoremap <Esc><Esc> :call firenvim#focus_page()<CR>
+```
+
 ### Configuring Neovim's behavior
 
 When it starts Neovim, Firenvim sets the variable `g:started_by_firenvim` which you can check to run different code in your init.vim. For example:
