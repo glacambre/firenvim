@@ -4,15 +4,15 @@ Turn your browser into a Neovim client.
 
 ![Firenvim demo](firenvim.gif)
 
-# How to use
+## How to use
 
 Just click on any textarea and it will be immediately replaced by an instance of Firenvim. When you want to set the content of the now hidden textarea to the content of the Neovim instance, just `:w`. If you want to close the Firenvim overlay and return to the textarea run `:q`. If you selected an element where you expected the Firenvim frame to appear and it didn't, try pressing `<C-e>`.
 
-# Installing
+## Installing
 
 Before installing anything please read [SECURITY.md](SECURITY.md) and make sure you're okay with everything mentioned. In the event you think of a way to compromise Firenvim, please send me an email (you can find my address in my commits).
 
-## Pre-built
+### Pre-built
 
 1. Make sure you are using [Neovim][nvim] 0.4.0 or later. This plugin will not work with vanilla [VIM][vim] or [Vimr](vimr).
 
@@ -48,17 +48,18 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
 
 4. Finally install Firenvim in your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
 
-## From source
+### From source
 
-### Requirements
+#### Requirements
 
 Installing from source requires NodeJS, `npm`, and Neovim >= 0.4.
 
-### Cross-browser steps
+#### Cross-browser steps
 
 First, install Firenvim like a regular vim plugin (either by changing your runtime path manually or by using your favourite plugin manager).
 
 Then, run the following commands:
+
 ```sh
 git clone https://git.sr.ht/~glacambre/firenvim
 cd firenvim
@@ -66,18 +67,22 @@ npm install
 npm run build
 npm run install_manifests
 ```
+
 These commands should create three directories: `target/chrome`, `target/firefox` and `target/xpi`.
 
-### Firefox-specific steps
+#### Firefox-specific steps
+
 Go to `about:addons`, click on the cog icon and select `install addon from file` (note: this might require setting `xpinstall.signatures.required` to false in `about:config`).
 
-### Google Chrome/Chromium-specific steps
+#### Google Chrome/Chromium-specific steps
+
 Go to `chrome://extensions`, enable "Developer mode", click on `Load unpacked` and select the `target/chrome` directory.
 
-### Other browsers
+#### Other browsers
+
 Other browsers aren't supported for now. Opera, Vivaldi and other Chromium-based browsers should however work just like in Chromium and have similar install steps. Brave and Edge might work, Safari doesn't (it doesn't support Webextensions).
 
-# Permissions
+## Permissions
 
 Firenvim currently requires the following permissions for the following reasons:
 
@@ -85,16 +90,17 @@ Firenvim currently requires the following permissions for the following reasons:
 - [Exchange messages with programs other than Firefox](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions?as=u#w_exchange-messages-with-programs-other-than-firefox): this is necessary in order to be able to start neovim instances.
 - [Access browser tabs](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions?as=u#w_access-browser-tabs): This is required in order to find out what the currently active tab is.
 
-# Configuring Firenvim
+## Configuring Firenvim
 
-## Configuring the browser addon behavior
+### Configuring the browser addon behavior
 
 You can configure the keybinding to manually trigger Firenvim (`<C-e>` by default) in [the shortcuts menu in `about://addons`](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) on Firefox, or in `chrome://extensions/shortcuts` on Chrome.
 
 The rest of Firenvim is configured by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionary containing the key "localSettings". `g:firenvim_config["localSettings"]` is a dictionary the keys of which have to be a Javascript pattern matching a URL and the values of which are dictionaries containing settings that apply for all URLs matched by the Javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used.
 
 Here's an example `g:firenvim_config` that matches the default configuration:
-```
+
+```vim
 let g:firenvim_config = {
     \ 'localSettings': {
         \ '.*': {
@@ -104,8 +110,10 @@ let g:firenvim_config = {
     \ }
 \ }
 ```
+
 This means that for all URLs ("`.*`"), textareas will be turned into Firenvim instances. Here's an example that will make Firenvim not take over any elements, except for Github's textareas:
-```vimscript
+
+```vim
 let g:firenvim_config = {
     \ 'localSettings': {
         \ '.*': {
@@ -119,15 +127,19 @@ let g:firenvim_config = {
     \ }
 \ }
 ```
+
 Note that even with this config, manually triggering Firenvim will still work on every page.
 
 Since Firenvim just uses the BufWrite event in order to detect when it needs to write neovim's buffers to the page, Firenvim can be made to automatically synchronize all changes like this:
-```
+
+```vim
 au TextChanged * ++nested write
 au TextChangedI * ++nested write
 ```
+
 Depending on how large the edited buffer is, this could be a little slow. A better approach would then be to delay writes, like this:
-```
+
+```vim
 let g:dont_write = v:false
 function! My_Write(timer) abort
 	let g:dont_write = v:false
@@ -146,10 +158,11 @@ au TextChanged * ++nested call Delay_My_Write()
 au TextChangedI * ++nested call Delay_My_Write()
 ```
 
-## Configuring Neovim's behavior
+### Configuring Neovim's behavior
 
 When it starts Neovim, Firenvim sets the variable `g:started_by_firenvim` which you can check to run different code in your init.vim. For example:
-```
+
+```vim
 if exists('g:started_by_firenvim')
   set laststatus=0
 else
@@ -158,14 +171,21 @@ endif
 ```
 
 Alternatively, you can detect Firenvim using the `UIEnter` autocmd event:
-```
-function! OnUIEnter(event)
-    let l:ui = nvim_get_chan_info(a:event.chan)
-    if has_key(l:ui, 'client') && has_key(l:ui.client, "name")
-        if l:ui.client.name == "Firenvim"
-            set laststatus=0
-        endif
-    endif
+
+```vim
+function! s:IsFirenvimActive() abort
+  if !exists('*nvim_get_chan_info')
+    return 0
+  endif
+  let l:ui = nvim_get_chan_info(a:event.chan)
+  return has_key(l:ui, 'client') && has_key(l:ui.client, "name") &&
+      \ l:ui.client.name is# "Firenvim"
+endfunction
+
+function! OnUIEnter(event) abort
+  if s:IsFirenvimActive(a:event)
+    set laststatus=0
+  endif
 endfunction
 autocmd UIEnter * call OnUIEnter(deepcopy(v:event))
 ```
@@ -173,15 +193,16 @@ autocmd UIEnter * call OnUIEnter(deepcopy(v:event))
 Similarly, you can detect when Firenvim disconnects from a Neovim instance with the `UILeave` autocommand.
 
 If you want to use different settings depending on the textarea you're currently editing, you can use autocommands to do that too. All buffers are named like this: `domainname_page_selector.txt` (see the [toFileName function](src/utils/utils.ts)). This means that you can for example set the file type to markdown for all GitHub buffers:
-```
+
+```vim
 au BufEnter github.com_*.txt set filetype=markdown
 ```
 
-# Drawbacks
+## Drawbacks
 
 The main issue with Firenvim is that some keybindings (e.g. `<C-w>`) are not overridable. I circumvent this issue by running a [patched](https://github.com/glacambre/firefox-patches) version of Firefox.
 
-# You might also like
+## You might also like
 
 - [Tridactyl](https://github.com/tridactyl/tridactyl), provides vim-like keybindings to use Firefox. Also lets you edit input fields and text areas in your favourite editor with its `:editor` command.
 - [GhostText](https://github.com/GhostText/GhostText), lets you edit text areas in your editor with a single click. Requires installing a plugin in your editor too. Features live updates!
