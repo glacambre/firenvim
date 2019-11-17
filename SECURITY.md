@@ -50,3 +50,6 @@ The neovim process binds itself to 127.0.0.1, so malicious actors on your LAN sh
 
 Malicious software on your computer could try to connect to the neovim process but they would have to find out what port, password and extension hash are needed. This information lives either in firefox or neovim's RAM. If you're running malicious software that can read your RAM, you probably have bigger problems than a webextension that lets you use neovim from your browser.
 
+## Sandboxing Firenvim
+
+There is an ongoing discussion about sandboxing in [this github issue](https://github.com/glacambre/firenvim/issues/238). Feel free to participate!
