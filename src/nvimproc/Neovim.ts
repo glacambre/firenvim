@@ -66,6 +66,9 @@ export async function neovim(
                 page.setElementContent(selector, data.text.join("\n"));
                 page.setElementCursor(selector, ...(data.cursor));
                 break;
+            case "firenvim_focus_page":
+                page.focusPage();
+                break;
             case "firenvim_vimleave":
                 page.killEditor(selector);
                 break;
