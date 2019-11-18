@@ -82,7 +82,7 @@ const global = {
                 browser.runtime.sendMessage({
                     args: {
                         args: [resizeReqId, newRect.width, newRect.height],
-                        funcName : ["resize"],
+                        funcName: ["resize"],
                         selector,
                     },
                     funcName: ["messageOwnTab"],

@@ -19,6 +19,7 @@ import {
  testModifiers,
  testMonaco,
  testNestedDynamicTextareas,
+ testPageFocus,
  testTxties,
  testVimrcFailure,
 } from "./_common"
@@ -75,6 +76,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
         // Note: this test shouldn't be performed first because it needs a preloaded nvim process
         nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
+        nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
         // Disabled because Chrome doesn't pass keyboard shortcuts to webextensions…
         // nonHeadlessTest()("Manually calling firenvim works", () => testManualNvimify(driver));
 })
