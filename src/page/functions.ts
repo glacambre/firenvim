@@ -67,6 +67,7 @@ export function getFunctions(global: {
 }) {
     return {
         focusPage: () => {
+            (document.activeElement as any).blur();
             document.documentElement.focus();
         },
         forceNvimify: () => {
