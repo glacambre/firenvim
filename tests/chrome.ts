@@ -20,7 +20,6 @@ import {
  testMonaco,
  testNestedDynamicTextareas,
  testPageFocus,
- testTxties,
  testVimrcFailure,
 } from "./_common"
 import { setupVimrc } from "./_vimrc";
