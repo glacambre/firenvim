@@ -75,7 +75,6 @@ describe("Firefox", () => {
         test("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
         test("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
         test("Firenvim works on Monaco", () => testMonaco(driver));
-        test("Firenvim works on txti.es", () => testTxties(driver));
         test("Guifont works", () => testGuifont(driver));
         test("PageFocus works", () => testPageFocus(driver));
         // Disabled because Firefox doesn't pass keyboard shortcuts to webextensions…

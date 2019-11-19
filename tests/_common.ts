@@ -51,29 +51,6 @@ function loadLocalPage(driver: any, page: string) {
                 .then(() => driver.executeScript("document.documentElement.focus()"));
 }
 
-export async function testTxties(driver: any) {
-        console.log("Navigating to txti.es…");
-        await driver.get("http://txti.es");
-        console.log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
-        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        console.log("Clicking on input…");
-        await driver.actions().click(input).perform();
-        console.log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(7)")));
-        await driver.sleep(1000);
-        console.log("Typing things…");
-        await sendKeys(driver, "aTest".split("")
-                .concat(webdriver.Key.ESCAPE)
-                .concat(":wq!".split(""))
-                .concat(webdriver.Key.ENTER)
-        );
-        console.log("Waiting for span to be removed…");
-        await driver.wait(Until.stalenessOf(span));
-        console.log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("value")) === "Test");
-}
-
 export async function testModifiers(driver: any) {
         await loadLocalPage(driver, "simple.html");
         console.log("Locating textarea…");
