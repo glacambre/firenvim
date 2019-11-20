@@ -141,17 +141,8 @@ function applySettings(settings: any) {
 
     makeDefaultLocalSetting(settings, ".*", {
         priority: 0,
-        selector: "textarea",
+        selector: 'textarea, div[role="textbox"]',
     });
-    makeDefaultLocalSetting(settings, "outlook.live.com", {
-        priority: 1,
-        selector: 'div[role="textbox"]',
-    });
-    makeDefaultLocalSetting(settings, "mail.google.com", {
-        priority: 1,
-        selector: 'div[role="textbox"]',
-    });
-
     browser.storage.local.set(settings);
 }
 

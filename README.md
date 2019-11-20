@@ -104,7 +104,7 @@ Here's an example `g:firenvim_config` that matches the default configuration:
 let g:firenvim_config = {
     \ 'localSettings': {
         \ '.*': {
-            \ 'selector': 'textarea',
+            \ 'selector': 'textarea, div[role="textbox"]',
             \ 'priority': 0,
         \ }
     \ }
