@@ -14,6 +14,7 @@ function deepCopy (obj) {
 };
 
 const CopyWebPackFiles = [
+  "ISSUE_TEMPLATE.md",
   "src/manifest.json",
   "src/NeovimFrame.html",
   "src/browserAction.html",

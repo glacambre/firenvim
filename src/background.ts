@@ -108,7 +108,9 @@ let warning = "";
 function getWarning() {
     return warning;
 }
+let nvimPluginVersion = "";
 async function checkVersion(nvimVersion: string) {
+    nvimPluginVersion = nvimVersion;
     const manifest = browser.runtime.getManifest();
     warning = "";
     if (manifest.version !== nvimVersion) {
@@ -214,6 +216,7 @@ Object.assign(window, {
         preloadedInstance = createNewInstance();
         return result;
     },
+    getNvimPluginVersion: () => nvimPluginVersion,
     getTab: (sender: any, args: any) => sender.tab,
     getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
     getTabValueFor: (sender: any, args: any) => getTabValue(args[0], args[1]),

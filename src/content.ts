@@ -1,7 +1,12 @@
 import * as browser from "webextension-polyfill";
+import { autofill } from "./autofill";
 import { getFunctions } from "./page/functions";
 import { computeSelector } from "./utils/CSSUtils";
 import { getEditorElement } from "./utils/utils";
+
+if (document.location.href === "https://github.com/glacambre/firenvim/issues/new") {
+    addEventListener("load", autofill);
+}
 
 const global = {
     // Whether Firenvim is disabled in this tab

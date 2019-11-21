@@ -45,7 +45,7 @@
 
   "version": "FIRENVIM_VERSION",
 
-  "web_accessible_resources": ["NeovimFrame.html"],
+  "web_accessible_resources": ["NeovimFrame.html", "ISSUE_TEMPLATE.md"],
 
   BROWSER_SPECIFIC_SETTINGS
 }

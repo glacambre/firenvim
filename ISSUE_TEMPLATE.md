@@ -8,5 +8,7 @@ If you're opening a feature request, feel free to ggdG ;)
 
 - OS Version:
 - Browser Version:
+- Browser Addon Version:
+- Neovim Plugin Version:
 - What I tried to do:
 - What happened:
