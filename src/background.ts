@@ -185,7 +185,6 @@ function createNewInstance() {
         });
         nvim.postMessage({
             newInstance: true,
-            origin: browser.runtime.getURL("").slice(0, -1),
             password: password[0],
         });
     });
