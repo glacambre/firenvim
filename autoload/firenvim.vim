@@ -68,8 +68,7 @@ function! firenvim#run() abort
 
                 if has_key(l:params, 'newInstance') && l:params['newInstance']
                         let l:port = luaeval("require('firenvim').start_server('" .
-                                                \ l:params['password'] . "', '" .
-                                                \ l:params['origin'] .
+                                                \ l:params['password'] .
                                                 \ "')")
                         let l:result['port'] = l:port
                 endif

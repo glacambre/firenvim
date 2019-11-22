@@ -11,7 +11,7 @@ local function close_server(server)
         end)
 end
 
-local function firenvim_start_server(token, origin)
+local function firenvim_start_server(token)
         local server = vim.loop.new_tcp()
         server:nodelay(true)
         server:bind('127.0.0.1', 0)
@@ -39,10 +39,8 @@ local function firenvim_start_server(token, origin)
                                         -- because it isn't complete yet
                                         return
                                 end
-                                local origin_pattern = "^" .. string.gsub(origin, "-", "%%-") .. "$"
                                 if not (string.match(request, "^GET /" .. token .. " HTTP/1.1\r\n$")
                                         and string.match(headers["Connection"] or "", "Upgrade")
-                                        and string.match(headers["Origin"] or "", origin_pattern)
                                         and string.match(headers["Upgrade"] or "", "websocket"))
                                 then
                                         -- Connection didn't give us the right
