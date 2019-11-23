@@ -1,9 +1,17 @@
 import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 
+// Make tslint happy
+const fontFamily = "font-family";
+
 // Parses a guifont declaration as described in `:h E244`
-export function parseGuifont(guifont: string) {
+// defaults: default value for each of
+export function parseGuifont(guifont: string, defaults: any) {
     const options = guifont.split(":");
-    const result = { "font-family": options[0] };
+    const result = Object.assign({}, defaults);
+    result[fontFamily] = JSON.stringify(options[0]);
+    if (defaults[fontFamily]) {
+        result[fontFamily] += `, ${defaults[fontFamily]}`;
+    }
     return options.slice(1).reduce((acc, option) => {
             switch (option[0]) {
                 case "h":
@@ -30,15 +38,23 @@ export function parseGuifont(guifont: string) {
 }
 
 export function guifontToMultiDecl(guifont: string) {
-    return Object.entries(parseGuifont(guifont))
+    const defaults: any = {};
+    defaults[fontFamily] = "monospace";
+    defaults["font-size"] = "9pt";
+    return Object.entries(parseGuifont(guifont, defaults))
         .map(([key, value]) => `${key}: ${value};\n`)
         .join("\n");
 }
 
 export function guifontsToFontFamily(guifonts: string[]) {
-    return "font-family: " + guifonts
-        .map(guifont => parseGuifont(guifont)["font-family"])
-        .join(", ") + ";";
+    const defaults: any = {};
+    defaults[fontFamily] = "monospace";
+    defaults["font-size"] = "9pt";
+    const reducedGuifonts = guifonts
+        .slice()
+        .reverse()
+        .reduce((acc, cur) => parseGuifont(cur, acc), defaults);
+    return `font-family: ${reducedGuifonts[fontFamily]}; font-size: ${reducedGuifonts["font-size"]};`;
 }
 
 export function guifontsToCSS(guifont: string) {
