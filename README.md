@@ -179,7 +179,7 @@ endif
 Alternatively, you can detect Firenvim using the `UIEnter` autocmd event:
 
 ```vim
-function! s:IsFirenvimActive() abort
+function! s:IsFirenvimActive(event) abort
   if !exists('*nvim_get_chan_info')
     return 0
   endif
