@@ -36,7 +36,15 @@ const redrawFuncs = {
     },
     flush: (elem: HTMLElement) => nvimHighlightStyle.innerText = toCss(highlights),
     grid_clear: (elem: HTMLElement, selector: string, [id]: [number]) => grids[id].clear(),
-    grid_cursor_goto: (elem: HTMLElement, selector: string, [id, y, x]: GotoUpdate) => grids[id].cursor_goto(x, y),
+    grid_cursor_goto: (elem: HTMLElement, selector: string, [id, y, x]: GotoUpdate) => {
+        grids[id].cursor_goto(x, y);
+        setTimeout(() => {
+            const keyHandler = document.getElementById("keyhandler");
+            const [cellWidth, cellHeight] = getCharSize(elem);
+            keyHandler.style.left = `${cellWidth * x}px`;
+            keyHandler.style.top = `${cellHeight * y}px`;
+        });
+    },
     grid_line: (elem: HTMLElement, selector: string, [id, row, col, contents]: LineUpdate) =>
     contents.reduce(({ prevCol, highlight }, content) => {
         const [chara, high = highlight, repeat = 1] = content;

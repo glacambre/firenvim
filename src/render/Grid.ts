@@ -42,7 +42,7 @@ export class Grid {
     }
 
     public get(n: number) {
-        if (n < 0 || n >= this.width) {
+        if (n < 0 || n >= this.height) {
             throw new Error(`Out of bounds access: ${n}`);
         }
         return this.rows[n];
