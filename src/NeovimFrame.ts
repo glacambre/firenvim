@@ -177,9 +177,6 @@ window.addEventListener("load", async () => {
             }
         });
         keyHandler.addEventListener("keydown", (evt) => {
-            keyHandler.style.left = `0px`;
-            keyHandler.style.top = `0px`;
-
             // Special case AltRight: both AltLeft and AltRight cause keyevents
             // to have their `altKey` attribute set to true, but only AltLeft
             // events should be treated as special keys.
