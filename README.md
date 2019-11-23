@@ -23,19 +23,19 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
     * [vim-plug](https://github.com/junegunn/vim-plug)
 
         ```vim
-        Plug 'glacambre/firenvim', { 'do': function('firenvim#install') }
+        Plug 'glacambre/firenvim', { 'do': { _ -> firenvim#install(0) } }
         ```
 
     * [dein](https://github.com/Shougo/dein.vim)
 
         ```vim
-        call dein#add('glacambre/firenvim', { 'hook_post_update': function('firenvim#install') })
+        call dein#add('glacambre/firenvim', { 'hook_post_update': { _ -> firenvim#install(0) } })
         ```
 
     * [minpac](https://github.com/k-takata/minpac)
 
         ```vim
-        call minpac#add('glacambre/firenvim', { 'do': function('firenvim#install') })
+        call minpac#add('glacambre/firenvim', { 'do': { _ -> firenvim#install(0) } })
         ```
 
     * [pathogen](https://github.com/tpope/vim-pathogen), [vundle](https://github.com/VundleVim/Vundle.vim), others
