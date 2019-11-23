@@ -124,6 +124,7 @@ const global = {
         // by other elements), so we use an intersection observer, which is
         // triggered every time the element becomes more or less visible.
         (new IntersectionObserver((entries, observer) => {
+            console.log(entries, observer);
             if (!elem.ownerDocument.contains(elem)
                 || (elem.offsetWidth === 0 && elem.offsetHeight === 0 && elem.getClientRects().length === 0)) {
                 functions.killEditor(selector);
