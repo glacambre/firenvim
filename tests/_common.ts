@@ -106,8 +106,7 @@ export async function testModifiers(driver: any) {
 }
 
 export async function testCodemirror(driver: any) {
-        console.log("Navigating to codemirror.net…");
-        await driver.get("https://codemirror.net");
+        await loadLocalPage(driver, "codemirror.html");
         console.log("Looking for codemirror div…");
         const input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -129,15 +128,14 @@ export async function testCodemirror(driver: any) {
 }
 
 export async function testAce(driver: any) {
-        console.log("Navigating to ace.c9.io…");
-        await driver.get("https://ace.c9.io");
+        await loadLocalPage(driver, "ace.html");
         console.log("Looking for ace div…");
-        const input = await driver.wait(Until.elementLocated(By.css("div.ace_content")));
+        const input = await driver.wait(Until.elementLocated(By.css("#editor")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(10)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
         await driver.sleep(1000);
         console.log("Typing stuff…");
         await sendKeys(driver, "ATest".split("")
@@ -148,19 +146,18 @@ export async function testAce(driver: any) {
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.wait(async () => /\/\*\*Test/.test(await input.getAttribute("innerText")));
+        await driver.wait(async () => /some textTest/.test(await input.getAttribute("innerText")));
 }
 
 export async function testMonaco(driver: any) {
-        console.log("Navigating to microsoft.github.io…");
-        await driver.get("https://microsoft.github.io/monaco-editor/");
+        await loadLocalPage(driver, "monaco.html");
         console.log("Looking for monaco div…");
-        const input = await driver.wait(Until.elementLocated(By.css("#editor > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)")));
+        const input = await driver.wait(Until.elementLocated(By.css("#container")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(13)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(9)")));
         await driver.sleep(1000);
         console.log("Typing stuff…");
         await sendKeys(driver, "iTest".split("")
@@ -171,7 +168,7 @@ export async function testMonaco(driver: any) {
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.wait(async () => /^Test\/\*/.test(await input.getAttribute("innerText")));
+        await driver.wait(async () => /^1\n2\n3\nTestfunction/.test(await input.getAttribute("innerText")));
 }
 
 export async function testDynamicTextareas(driver: any) {
