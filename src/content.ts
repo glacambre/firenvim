@@ -78,22 +78,24 @@ const global = {
         // input/textarea's size
         setEditorSizeToInputSize(pageElements);
 
-        let resizeReqId = 0;
-        (new ((window as any).ResizeObserver)((entries: any[]) => {
-            const entry = entries.find((ent: any) => ent.target === elem);
-            if (entry) {
-                const { newRect } = setEditorSizeToInputSize(pageElements);
-                resizeReqId += 1;
-                browser.runtime.sendMessage({
-                    args: {
-                        args: [resizeReqId, newRect.width, newRect.height],
-                        funcName: ["resize"],
-                        selector,
-                    },
-                    funcName: ["messageOwnTab"],
-                });
-            }
-        })).observe(elem, { box: "border-box" });
+        if ((window as any).ResizeObserver !== undefined) {
+            let resizeReqId = 0;
+            (new ((window as any).ResizeObserver)((entries: any[]) => {
+                const entry = entries.find((ent: any) => ent.target === elem);
+                if (entry) {
+                    const { newRect } = setEditorSizeToInputSize(pageElements);
+                    resizeReqId += 1;
+                    browser.runtime.sendMessage({
+                        args: {
+                            args: [resizeReqId, newRect.width, newRect.height],
+                            funcName: ["resize"],
+                            selector,
+                        },
+                        funcName: ["messageOwnTab"],
+                    });
+                }
+            })).observe(elem, { box: "border-box" });
+        }
 
         iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
         span.attachShadow({ mode: "closed" }).appendChild(iframe);
@@ -124,7 +126,6 @@ const global = {
         // by other elements), so we use an intersection observer, which is
         // triggered every time the element becomes more or less visible.
         (new IntersectionObserver((entries, observer) => {
-            console.log(entries, observer);
             if (!elem.ownerDocument.contains(elem)
                 || (elem.offsetWidth === 0 && elem.offsetHeight === 0 && elem.getClientRects().length === 0)) {
                 functions.killEditor(selector);
