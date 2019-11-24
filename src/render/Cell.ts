@@ -4,10 +4,12 @@ import { toHighlightClassName } from "../utils/CSSUtils";
 export class Cell {
     private highlightValue: number;
     private elem: HTMLSpanElement;
+    private val: string;
 
     constructor() {
         this.elem = document.createElement("span");
-        this.elem.innerText = " ";
+        this.val = " ";
+        this.elem.innerText = this.val;
         this.elem.className = "nvim_cell";
         this.highlight = 0;
     }
@@ -31,11 +33,12 @@ export class Cell {
     }
 
     get value() {
-        return this.elem.innerText;
+        return this.val;
     }
 
     set value(v: string) {
-        this.elem.innerText = v;
+        this.val = v;
+        this.elem.innerText = this.val;
     }
 
     public clear() {
