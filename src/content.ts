@@ -197,9 +197,39 @@ function setEditorSizeToInputSize({ iframe, input }: PageElements) {
 }
 
 function setupListeners(selector: string) {
+    function onScroll(cont: boolean) {
+        window.requestAnimationFrame(() => {
+            const posChanged = Array.from(global.selectorToElems.entries())
+                .map(([_, elems]) => global.putEditorAtInputOrigin(elems))
+                .find(changed => changed.posChanged);
+            if (posChanged) {
+                // As long as one editor changes position, try to resize
+                onScroll(true);
+            } else if (cont) {
+                // No editor has moved, but this might be because the website
+                // implements some kind of smooth scrolling that doesn't make
+                // the textarea move immediately. In order to deal with these
+                // cases, schedule a last redraw in a few milliseconds
+                setTimeout(() => onScroll(false), 50);
+            }
+        });
+    }
+    function doScroll() {
+        return onScroll(true);
+    }
+    window.addEventListener("scroll", doScroll);
+    window.addEventListener("wheel", doScroll);
+    window.addEventListener("resize", doScroll);
+
     function addNvimListener(elem: Element) {
         elem.removeEventListener("focus", global.nvimify);
         elem.addEventListener("focus", global.nvimify);
+        let parent = elem.parentElement;
+        while (parent) {
+            parent.removeEventListener("scroll", doScroll);
+            parent.addEventListener("scroll", doScroll);
+            parent = parent.parentElement;
+        }
     }
 
     (new MutationObserver((changes, observer) => {
@@ -240,26 +270,6 @@ function setupListeners(selector: string) {
     Array.from(document.querySelectorAll(selector))
         .forEach(elem => addNvimListener(elem));
 
-    function onScroll(cont: boolean) {
-        window.requestAnimationFrame(() => {
-            const posChanged = Array.from(global.selectorToElems.entries())
-                .map(([_, elems]) => global.putEditorAtInputOrigin(elems))
-                .find(changed => changed.posChanged);
-            if (posChanged) {
-                // As long as one editor changes position, try to resize
-                onScroll(true);
-            } else if (cont) {
-                // No editor has moved, but this might be because the website
-                // implements some kind of smooth scrolling that doesn't make
-                // the textarea move immediately. In order to deal with these
-                // cases, schedule a last redraw in a few milliseconds
-                setTimeout(() => onScroll(false), 50);
-            }
-        });
-    }
-    window.addEventListener("scroll", () => onScroll(true));
-    window.addEventListener("wheel", () => onScroll(true));
-    window.addEventListener("resize", () => onScroll(true));
 }
 
 global.getConfForUrl(document.location.href)
