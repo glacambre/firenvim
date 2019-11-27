@@ -74,6 +74,7 @@ function addModifier(mod: string, text: string) {
 
 const locationPromise = page.getEditorLocation();
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNewNeovimInstance"] });
+const settingsPromise = browser.storage.local.get("globalSettings");
 
 window.addEventListener("load", async () => {
     try {
@@ -170,26 +171,11 @@ window.addEventListener("load", async () => {
                             augroup END`).split("\n").map(command => ["nvim_command", [command]]));
             });
 
-        let pressingAltGr = false;
-        keyHandler.addEventListener("keyup", (evt) => {
-            if (evt.key === "Alt" && evt.location === 2) {
-                pressingAltGr = false;
-            }
-        });
+        const settings = (await settingsPromise).globalSettings;
         keyHandler.addEventListener("keydown", (evt) => {
-            // Special case AltRight: both AltLeft and AltRight cause keyevents
-            // to have their `altKey` attribute set to true, but only AltLeft
-            // events should be treated as special keys.
-            if (evt.key === "Alt" && evt.location === 2) {
-                pressingAltGr = true;
+            if (evt.altKey && settings.alt === "alphanum" && !/[a-zA-Z0-9]/.test(evt.key)) {
+                return;
             }
-            // This shouldn't be necessary thanks to the keyup event handler
-            // but just to make sure, we reset pressingAltGr when no alt key is
-            // pressed.
-            if (!evt.altKey) {
-                pressingAltGr = false;
-            }
-
             // Note: order of this array is important, we need to check OS before checking meta
             const specialKeys = [["Alt", "A"], ["Control", "C"], ["OS", "D"], ["Meta", "D"]];
             // The event has to be trusted and either have a modifier or a non-literal representation
@@ -199,7 +185,7 @@ window.addEventListener("load", async () => {
                                         evt.key !== mod && (evt as any).getModifierState(mod)))) {
                 const text = specialKeys.concat(["Shift", "S"])
                     .reduce((key: string, [attr, mod]: [string, string]) => {
-                        if ((evt as any).getModifierState(attr) && (attr !== "Alt" || !pressingAltGr)) {
+                        if ((evt as any).getModifierState(attr)) {
                             return addModifier(mod, key);
                         }
                         return key;

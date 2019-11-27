@@ -94,7 +94,11 @@ Firenvim currently requires the following permissions for the following reasons:
 
 ### Configuring the browser addon behavior
 
+#### Manually triggering Firenvim
+
 You can configure the keybinding to manually trigger Firenvim (`<C-e>` by default) in [the shortcuts menu in `about://addons`](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) on Firefox, or in `chrome://extensions/shortcuts` on Chrome.
+
+#### Configuring what sites Firenvim should automatically appear on
 
 The rest of Firenvim is configured by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionary containing the key "localSettings". `g:firenvim_config["localSettings"]` is a dictionary the keys of which have to be a Javascript pattern matching a URL and the values of which are dictionaries containing settings that apply for all URLs matched by the Javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used.
 
@@ -130,6 +134,8 @@ let g:firenvim_config = {
 
 Note that even with this config, manually triggering Firenvim will still work on every page.
 
+#### Automatically syncing changes to the page
+
 Since Firenvim just uses the BufWrite event in order to detect when it needs to write neovim's buffers to the page, Firenvim can be made to automatically synchronize all changes like this:
 
 ```vim
@@ -163,6 +169,18 @@ You can also focus move focus from the editor back to the page by calling `firen
 ```vim
 nnoremap <Esc><Esc> :call firenvim#focus_page()<CR>
 ```
+
+#### Special characters on OSX
+
+On OSX, on certain layouts (e.g. the swedish layout), pressing special characters (e.g. `@`) requires combining `Alt` and another key. Because of browser/OS limitations, it is impossible to tell the difference between a user trying to press `<A-@>` and just `@`. Because of that, on OSX, Firenvim decides to ignore the Alt key when you press any non-alphanumerical key. This behavior can be changed by setting the `alt` setting of the `globalSettings` configuration to `all`, like this:
+```
+let g:firenvim_config = {
+	\ "globalSettings": {
+		\ "alt": "all"
+	\}
+\}
+```
+Non-OSX users can get the default OSX behavior by setting the `alt` setting to `alphanum` (but they shouldn't ever need to do that).
 
 ### Configuring Neovim's behavior
 

@@ -139,8 +139,16 @@ function applySettings(settings: any) {
         settings = {};
     }
     makeDefaults(settings, "globalSettings", {});
-    makeDefaults(settings, "localSettings", {});
+    // "alt": "all" | "alphanum"
+    // #202: Only register alt key on alphanums to let swedish osx users type
+    //       special chars
+    if (os === "mac") {
+        makeDefaults(settings.globalSettings, "alt", "alphanum");
+    } else {
+        makeDefaults(settings.globalSettings, "alt", "all");
+    }
 
+    makeDefaults(settings, "localSettings", {});
     makeDefaultLocalSetting(settings, ".*", {
         priority: 0,
         selector: 'textarea, div[role="textbox"]',
