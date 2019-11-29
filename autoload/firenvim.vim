@@ -79,6 +79,23 @@ function! firenvim#run() abort
         let l:chanid = stdioopen({ 'on_stdin': 'OnStdin' })
 endfunction
 
+function! firenvim#configure_site(...) abort
+	let l:domain = get(a:, 1, v:null)
+	let l:selector = get(a:, 2, v:null)
+	let l:priority = get(a:, 3, 1)
+	let l:filetype = get(a:, 4, v:null)
+	if !exists('g:firenvim_config') || type(l:domain) == type(v:null)
+		let g:firenvim_config = { 'localSettings': { '.*': { 'selector': 'textarea', 'priority': 0 } } }
+		if type(l:domain) == type(v:null) | return | endif
+	endif
+	if type(l:selector) != type(v:null)
+		let g:firenvim_config['localSettings'][l:domain] = { 'selector': l:selector, 'priority': l:priority }
+		if l:filetype | execute printf('autocmd FirenvimSites BufEnter %s_*.txt set filetype=%s', l:domain, l:filetype) | endif
+	elseif has_key(g:firenvim_config['localSettings'], l:domain)
+		unlet g:firenvim_config['localSettings'][l:domain]
+	endif
+endfunction
+
 function! s:get_executable_name() abort
         if has('win32')
                 return 'firenvim.bat'
