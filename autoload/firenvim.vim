@@ -79,20 +79,42 @@ function! firenvim#run() abort
         let l:chanid = stdioopen({ 'on_stdin': 'OnStdin' })
 endfunction
 
-function! firenvim#configure_site(...) abort
-	let l:domain = get(a:, 1, v:null)
-	let l:selector = get(a:, 2, v:null)
+function! firenvim#reset_sites (...) abort
+	let l:reset = get(a:, 1, v:true)
+	if !exists('g:firenvim_config') || l:reset
+		let g:firenvim_config = { 'localSettings': { } }
+	endif
+endfunction
+
+function! firenvim#default_sites () abort
+	call firenvim#reset_sites()
+	call firenvim#configure_site('.*', 'textarea', 0)
+endfunction
+
+function! firenvim#configure_site (...) abort
+	let l:domain = get(a:, 1)
+	let l:selector = get(a:, 2, 'textarea')
 	let l:priority = get(a:, 3, 1)
 	let l:filetype = get(a:, 4, v:null)
-	if !exists('g:firenvim_config') || type(l:domain) == type(v:null)
-		let g:firenvim_config = { 'localSettings': { '.*': { 'selector': 'textarea', 'priority': 0 } } }
-		if type(l:domain) == type(v:null) | return | endif
-	endif
-	if type(l:selector) != type(v:null)
-		let g:firenvim_config['localSettings'][l:domain] = { 'selector': l:selector, 'priority': l:priority }
-		if l:filetype | execute printf('autocmd FirenvimSites BufEnter %s_*.txt set filetype=%s', l:domain, l:filetype) | endif
-	elseif has_key(g:firenvim_config['localSettings'], l:domain)
-		unlet g:firenvim_config['localSettings'][l:domain]
+	call firenvim#reset_sites(v:false)
+	let g:firenvim_config['localSettings'][l:domain] = { 'selector': l:selector, 'priority': l:priority }
+	if l:filetype | call firenvim#configure_site_filetype(l:domain, l:filetype) | endif
+endfunction
+
+function! firenvim#configure_site_filetype (domain, filetype) abort
+	call firenvim#reset_sites(v:false)
+	execute printf('autocmd FirenvimSites BufEnter %s_*.txt set filetype=%s', a:domain, a:filetype)
+endfunction
+
+function! firenvim#disable_site (domain) abort
+	call firenvim#reset_sites(v:false)
+	call firenvim#configure_site(a:domain, '')
+endfunction
+
+function! firenvim#unconfigure_site (domain) abort
+	call firenvim#reset_sites(v:false)
+	if has_key(g:firenvim_config['localSettings'], a:domain)
+		unlet g:firenvim_config['localSettings'][a:domain]
 	endif
 endfunction
 
