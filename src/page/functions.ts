@@ -57,15 +57,35 @@ function _getElementContent(e: any): Promise<string> {
     return Promise.resolve(e.innerText);
 }
 
-export function getFunctions(global: {
-    getConfForUrl: (url: string) => Promise<{ selector: string, priority: number }>,
-    lastEditorLocation: [string, string, number],
-    nvimify: (evt: FocusEvent) => void,
-    putEditorAtInputOrigin: ({ iframe, input }: PageElements) => void,
-    selectorToElems: Map<string, PageElements>,
-    disabled: boolean | Promise<boolean>,
-}) {
+interface IGlobalState {
+    getConfForUrl: (url: string) => Promise<{ selector: string, priority: number }>;
+    lastEditorLocation: [string, string, number];
+    nvimify: (evt: FocusEvent) => void;
+    putEditorAtInputOrigin: ({ iframe, input }: PageElements) => void;
+    selectorToElems: Map<string, PageElements>;
+    disabled: boolean | Promise<boolean>;
+}
+
+function _focusInput(global: IGlobalState, selector: string) {
+    const { input } = global.selectorToElems.get(selector);
+    (document.activeElement as any).blur();
+    input.removeEventListener("focus", global.nvimify);
+    input.focus();
+    // Only re-add event listener if input's selector matches the ones
+    // that should be autonvimified
+    global.getConfForUrl(document.location.href).then(conf => {
+        if (conf.selector) {
+            const elems = Array.from(document.querySelectorAll(conf.selector));
+            if (elems.includes(input)) {
+                input.addEventListener("focus", global.nvimify);
+            }
+        }
+    });
+}
+
+export function getFunctions(global: IGlobalState) {
     return {
+        focusInput: (selector: string) => _focusInput(global, selector),
         focusPage: () => {
             (document.activeElement as any).blur();
             document.documentElement.focus();
@@ -111,21 +131,10 @@ export function getFunctions(global: {
         },
         getElementContent: (selector: string) => _getElementContent(global.selectorToElems.get(selector).input),
         killEditor: (selector: string) => {
-            const { span, input } = global.selectorToElems.get(selector);
+            const { span } = global.selectorToElems.get(selector);
             span.parentNode.removeChild(span);
             global.selectorToElems.delete(selector);
-            input.removeEventListener("focus", global.nvimify);
-            input.focus();
-            // Only re-add event listener if input's selector matches the ones
-            // that should be autonvimified
-            global.getConfForUrl(document.location.href).then(conf => {
-                if (conf.selector) {
-                    const elems = Array.from(document.querySelectorAll(conf.selector));
-                    if (elems.includes(input)) {
-                        input.addEventListener("focus", global.nvimify);
-                    }
-                }
-            });
+            _focusInput(global, selector);
         },
         resizeEditor: (selector: string, width: number, height: number) => {
             const pageElems = global.selectorToElems.get(selector);

@@ -69,6 +69,9 @@ export async function neovim(
             case "firenvim_focus_page":
                 page.focusPage();
                 break;
+            case "firenvim_focus_input":
+                page.focusInput(selector);
+                break;
             case "firenvim_vimleave":
                 page.killEditor(selector);
                 break;

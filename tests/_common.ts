@@ -388,8 +388,26 @@ export async function testPageFocus(driver: any) {
         console.log("Typing :call firenvim#focus_page()<CR>…");
         await sendKeys(driver, ":call firenvim#focus_page()".split("")
                 .concat(webdriver.Key.ENTER));
-        console.log(await driver.switchTo().activeElement().getAttribute("id"));
+        console.log("Checking that the page is focused…");
         await driver.wait(async () => ["html", "body"].includes(await driver.switchTo().activeElement().getAttribute("id")));
+}
+
+export async function testInputFocus(driver: any) {
+        await loadLocalPage(driver, "simple.html");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.sleep(1000);
+        console.log("Typing :call firenvim#focus_input()<CR>…");
+        await sendKeys(driver, ":call firenvim#focus_input()".split("")
+                .concat(webdriver.Key.ENTER));
+        console.log(await driver.switchTo().activeElement().getAttribute("id"));
+        console.log("Checking that the input is focused…");
+        await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")));
 }
 
 export async function killDriver(driver: any) {

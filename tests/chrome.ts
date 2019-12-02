@@ -15,6 +15,7 @@ import {
  testCodemirror,
  testDynamicTextareas,
  testGuifont,
+ testInputFocus,
  testManualNvimify,
  testModifiers,
  testMonaco,
@@ -65,6 +66,8 @@ describe("Chrome", () => {
 
         afterAll(() => killDriver(driver));
 
+        nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
+        nonHeadlessTest()("InputFocus works", () => testInputFocus(driver));
         nonHeadlessTest()("Guifont works", () => testGuifont(driver));
         nonHeadlessTest()("Firenvim works on Monaco", () => testMonaco(driver));
         nonHeadlessTest()("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
@@ -74,7 +77,6 @@ describe("Chrome", () => {
         nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
         // Note: this test shouldn't be performed first because it needs a preloaded nvim process
         nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
-        nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
         // Disabled because Chrome doesn't pass keyboard shortcuts to webextensions…
         // nonHeadlessTest()("Manually calling firenvim works", () => testManualNvimify(driver));
 })
