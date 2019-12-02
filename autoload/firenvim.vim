@@ -1,9 +1,7 @@
 let s:firenvim_done = 0
 let s:script_dir = expand('<sfile>:p:h:h')
 
-" Asks the browser extension to release focus from the frame and focus the
-" page instead
-function! firenvim#focus_page() abort
+function! firenvim#get_chan() abort
         let l:uis = filter(nvim_list_uis(),
                 \ {i, ui -> nvim_get_chan_info(ui.chan).client.name ==? 'Firenvim'})
         if len(l:uis) != 1
@@ -12,7 +10,17 @@ function! firenvim#focus_page() abort
                 endif
                 throw 'firenvim#focus_page(): Too many UIs found!'
         endif
-        call rpcnotify(uis[0].chan, 'firenvim_focus_page')
+        return uis[0].chan
+endfunction
+
+function! firenvim#focus_input() abort
+        call rpcnotify(firenvim#get_chan(), 'firenvim_focus_input')
+endfunction
+
+" Asks the browser extension to release focus from the frame and focus the
+" page instead
+function! firenvim#focus_page() abort
+        call rpcnotify(firenvim#get_chan(), 'firenvim_focus_page')
 endfunction
 
 " Simple helper to build the right path depending on the platform.

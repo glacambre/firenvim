@@ -16,6 +16,7 @@ import {
  testCodemirror,
  testDynamicTextareas,
  testGuifont,
+ testInputFocus,
  testManualNvimify,
  testModifiers,
  testMonaco,
@@ -75,6 +76,7 @@ describe("Firefox", () => {
         test("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
         test("Firenvim works on Monaco", () => testMonaco(driver));
         test("Guifont works", () => testGuifont(driver));
+        test("InputFocus works", () => testInputFocus(driver));
         test("PageFocus works", () => testPageFocus(driver));
         // Disabled because Firefox doesn't pass keyboard shortcuts to webextensions…
         // test("Manually calling firenvim works", () => testManualNvimify(driver));
