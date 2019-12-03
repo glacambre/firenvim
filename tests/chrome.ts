@@ -21,6 +21,7 @@ import {
  testMonaco,
  testNestedDynamicTextareas,
  testPageFocus,
+ testPressKeys,
  testVimrcFailure,
 } from "./_common"
 import { setupVimrc } from "./_vimrc";
@@ -66,6 +67,7 @@ describe("Chrome", () => {
 
         afterAll(() => killDriver(driver));
 
+        nonHeadlessTest()("PressKeys works", () => testPressKeys(driver));
         nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
         nonHeadlessTest()("InputFocus works", () => testInputFocus(driver));
         nonHeadlessTest()("Guifont works", () => testGuifont(driver));

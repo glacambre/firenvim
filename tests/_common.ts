@@ -101,7 +101,6 @@ export async function testModifiers(driver: any) {
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.sleep(1000);
         await driver.wait(async () => ["\u0011<M-q><D-q>", "\u0001<M-a><D-a>"].includes(await input.getAttribute("value")));
 }
 
@@ -408,6 +407,29 @@ export async function testInputFocus(driver: any) {
         console.log(await driver.switchTo().activeElement().getAttribute("id"));
         console.log("Checking that the input is focused…");
         await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")));
+}
+
+export async function testPressKeys(driver: any) {
+        await loadLocalPage(driver, "chat.html");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.sleep(1000);
+        console.log("Typing iHello<Esc>:w<CR>:call firenvim#press_keys('<CR>')<CR>:q!<CR>…");
+        await sendKeys(driver, "iHello".split("")
+                .concat(webdriver.Key.ESCAPE)
+                .concat(":w".split(""))
+                .concat(webdriver.Key.ENTER)
+                .concat(":call firenvim#press_keys('<CR>')".split(""))
+                .concat(webdriver.Key.ENTER)
+                .concat(":q!".split(""))
+                .concat(webdriver.Key.ENTER));
+        console.log("Checking that the input contains 'Message sent!'…");
+        await driver.wait(async () => (await input.getAttribute("value")) === "Message sent!");
 }
 
 export async function killDriver(driver: any) {
