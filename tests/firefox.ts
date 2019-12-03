@@ -22,6 +22,7 @@ import {
  testMonaco,
  testNestedDynamicTextareas,
  testPageFocus,
+ testPressKeys,
  testVimrcFailure,
 } from "./_common"
 import { setupVimrc } from "./_vimrc";
@@ -78,6 +79,7 @@ describe("Firefox", () => {
         test("Guifont works", () => testGuifont(driver));
         test("InputFocus works", () => testInputFocus(driver));
         test("PageFocus works", () => testPageFocus(driver));
+        test("PressKeys works", () => testPressKeys(driver));
         // Disabled because Firefox doesn't pass keyboard shortcuts to webextensions…
         // test("Manually calling firenvim works", () => testManualNvimify(driver));
 })

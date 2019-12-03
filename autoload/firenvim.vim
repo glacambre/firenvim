@@ -13,6 +13,8 @@ function! firenvim#get_chan() abort
         return uis[0].chan
 endfunction
 
+" Asks the browser extension to release focus from the frame and focus the
+" page instead
 function! firenvim#focus_input() abort
         call rpcnotify(firenvim#get_chan(), 'firenvim_focus_input')
 endfunction
@@ -21,6 +23,25 @@ endfunction
 " page instead
 function! firenvim#focus_page() abort
         call rpcnotify(firenvim#get_chan(), 'firenvim_focus_page')
+endfunction
+
+" Asks the browser extension to send one or multiple key events to the
+" underlying input field.
+function! firenvim#press_keys(...) abort
+        if a:0 < 1
+                throw 'firenvim#press_keys expects at least one argument'
+        endif
+        let l:keys = copy(a:000)
+        if type(l:keys[0]) == type([])
+                if a:0 > 1
+                        throw 'firenvim#press_keys expects a single list argument'
+                endif
+                let l:keys = l:keys[0]
+        endif
+        if len(filter(copy(l:keys), { key, value -> type(value) == type("") })) != len(l:keys)
+                throw 'Key symbols must be strings.'
+        endif
+        call rpcnotify(firenvim#get_chan(), 'firenvim_press_keys', l:keys)
 endfunction
 
 " Simple helper to build the right path depending on the platform.

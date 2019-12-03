@@ -1,76 +1,8 @@
 import * as browser from "webextension-polyfill";
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
+import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, toFileName } from "./utils/utils";
-
-const nonLiteralKeys: {[key: string]: string} = {
-    " ": "<Space>",
-    "<": "<lt>",
-    "ArrowDown": "<Down>",
-    "ArrowLeft": "<Left>",
-    "ArrowRight": "<Right>",
-    "ArrowUp": "<Up>",
-    "Backspace": "<BS>",
-    "Delete": "<Del>",
-    "End": "<End>",
-    "Enter": "<CR>",
-    "Escape": "<Esc>",
-    "F1": "<F1>",
-    "F10": "<F10>",
-    "F11": "<F11>",
-    "F12": "<F12>",
-    "F13": "<F13>",
-    "F14": "<F14>",
-    "F15": "<F15>",
-    "F16": "<F16>",
-    "F17": "<F17>",
-    "F18": "<F18>",
-    "F19": "<F19>",
-    "F2": "<F2>",
-    "F20": "<F20>",
-    "F21": "<F21>",
-    "F22": "<F22>",
-    "F23": "<F23>",
-    "F24": "<F24>",
-    "F3": "<F3>",
-    "F4": "<F4>",
-    "F5": "<F5>",
-    "F6": "<F6>",
-    "F7": "<F7>",
-    "F8": "<F8>",
-    "F9": "<F9>",
-    "Home": "<Home>",
-    "PageDown": "<PageDown>",
-    "PageUp": "<PageUp>",
-    "Tab": "<Tab>",
-    "\\": "<Bslash>",
-    "|": "<Bar>",
-};
-
-// Turns a non-literal key (e.g. "Enter") into a vim-equivalent "<Enter>"
-function translateKey(key: string) {
-    if (nonLiteralKeys[key] !== undefined) {
-        return nonLiteralKeys[key];
-    }
-    return key;
-}
-
-// Add modifier `mod` (`A`, `C`, `S`…) to `text` (a vim key `b`, `<Enter>`,
-// `<CS-x>`…)
-function addModifier(mod: string, text: string) {
-    let match;
-    let modifiers = "";
-    let key = "";
-    if ((match = text.match(/^<([A-Z]{1,5})-(.+)>$/))) {
-        modifiers = match[1];
-        key = match[2];
-    } else if ((match = text.match(/^<(.+)>$/))) {
-        key = match[1];
-    } else {
-        key = text;
-    }
-    return "<" + mod + modifiers + "-" + key + ">";
-}
 
 const locationPromise = page.getEditorLocation();
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNewNeovimInstance"] });

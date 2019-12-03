@@ -1,5 +1,6 @@
 import * as browser from "webextension-polyfill";
 import { computeSelector } from "../utils/CSSUtils";
+import { keysToEvents } from "../utils/keys";
 
 function executeInPage(code: string): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -133,8 +134,12 @@ export function getFunctions(global: IGlobalState) {
         killEditor: (selector: string) => {
             const { span } = global.selectorToElems.get(selector);
             span.parentNode.removeChild(span);
-            global.selectorToElems.delete(selector);
             _focusInput(global, selector);
+            global.selectorToElems.delete(selector);
+        },
+        pressKeys: (selector: string, keys: string[]) => {
+            const { input } = global.selectorToElems.get(selector);
+            keysToEvents(keys).forEach(ev => input.dispatchEvent(ev));
         },
         resizeEditor: (selector: string, width: number, height: number) => {
             const pageElems = global.selectorToElems.get(selector);
