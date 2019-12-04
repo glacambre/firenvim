@@ -2,7 +2,6 @@ import * as browser from "webextension-polyfill";
 
 function displayMessages(func: "getError" | "getWarning", id: "errors" | "warnings") {
     function insertMessage(msg: any) {
-        console.log(msg);
         document.getElementById(id).innerText = msg;
     }
     return browser.runtime.sendMessage({ funcName: [func] })

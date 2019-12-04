@@ -104,8 +104,6 @@ const redrawFuncs = {
                         cssStr += `background: ${highlights[0].foreground};`;
                         cssStr += `color: ${highlights[0].background};`;
                         break;
-                    default:
-                        console.log(`Unhandled cursor shape: ${shape}`);
                 }
                 cssStr += "}";
                 cursorStyles[idx] = cssStr;
@@ -151,8 +149,6 @@ export function onRedraw(nvimFunctions: any, events: any[], elem: HTMLPreElement
         const [name, ...evts]: [keyof typeof redrawFuncs, any] = evt;
         if (redrawFuncs[name] !== undefined) {
             evts.forEach((args) => redrawFuncs[name](elem, selector, args, nvimFunctions));
-        } else {
-            console.log(`Unhandled redraw event: ${name}.`, evts);
         }
     });
 }

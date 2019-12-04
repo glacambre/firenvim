@@ -46,8 +46,6 @@ export class Stdout {
         const arr = this.listeners.get(name);
         if (arr) {
             arr.forEach(l => l(reqId, data1, data2));
-        } else {
-            console.log(`No handlers for message kind '${name}'`);
         }
 
         // FIXME: This is a hack to deal with coallesced messages, there has to be a better way

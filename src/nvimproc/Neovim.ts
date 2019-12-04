@@ -20,7 +20,6 @@ export async function neovim(
     });
     socket.binaryType = "arraybuffer";
     socket.addEventListener("close", ((_: any) => {
-        console.log(`Port disconnected for element ${selector}.`);
         page.killEditor(selector);
     }));
     await (new Promise(resolve => socket.addEventListener("open", () => {
@@ -38,7 +37,7 @@ export async function neovim(
         });
     };
     stdout.addListener("request", (id: any, name: any, args: any) => {
-        console.log("received request", id, name, args);
+        return undefined;
     });
     stdout.addListener("response", (id: any, error: any, result: any) => {
         const r = requests.get(id);
@@ -77,9 +76,6 @@ export async function neovim(
                 break;
             case "firenvim_vimleave":
                 page.killEditor(selector);
-                break;
-            default:
-                console.log(`Unhandled notification '${name}':`, args);
                 break;
         }
     });
