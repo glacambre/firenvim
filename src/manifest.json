@@ -16,6 +16,9 @@
         "default": "Ctrl+E"
       },
       "description": "Turn the currently focused element into a neovim iframe."
+    },
+    "toggle_firenvim": {
+      "description": "Toggle Firenvim in the current tab."
     }
   },
 

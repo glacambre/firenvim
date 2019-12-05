@@ -256,8 +256,13 @@ browser.windows.onFocusChanged.addListener(async (windowId: number) => {
 updateIcon();
 
 browser.commands.onCommand.addListener(async (command: string) => {
-    if (command === "nvimify") {
-        const id = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
-        browser.tabs.sendMessage(id, { args: [], funcName: ["forceNvimify"] });
+    switch (command) {
+        case "nvimify":
+            const id = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
+            browser.tabs.sendMessage(id, { args: [], funcName: ["forceNvimify"] });
+            break;
+        case "toggle_firenvim":
+            await toggleDisabled();
+            break;
     }
 });
