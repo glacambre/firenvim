@@ -16,12 +16,14 @@ import {
  testDynamicTextareas,
  testGuifont,
  testInputFocus,
+ testInputFocusedAfterLeave,
  testManualNvimify,
  testModifiers,
  testMonaco,
  testNestedDynamicTextareas,
  testPageFocus,
  testPressKeys,
+ testTakeoverOnce,
  testVimrcFailure,
 } from "./_common"
 import { setupVimrc } from "./_vimrc";
@@ -68,7 +70,9 @@ describe("Chrome", () => {
         afterAll(() => killDriver(driver));
 
         nonHeadlessTest()("PressKeys works", () => testPressKeys(driver));
+        nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(driver));
         nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
+        nonHeadlessTest()("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
         nonHeadlessTest()("InputFocus works", () => testInputFocus(driver));
         nonHeadlessTest()("Guifont works", () => testGuifont(driver));
         nonHeadlessTest()("Firenvim works on Monaco", () => testMonaco(driver));

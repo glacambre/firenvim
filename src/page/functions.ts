@@ -1,4 +1,5 @@
 import * as browser from "webextension-polyfill";
+import { getConf } from "../utils/configuration";
 import { computeSelector } from "../utils/CSSUtils";
 import { keysToEvents } from "../utils/keys";
 
@@ -59,7 +60,6 @@ function _getElementContent(e: any): Promise<string> {
 }
 
 interface IGlobalState {
-    getConfForUrl: (url: string) => Promise<{ selector: string, priority: number }>;
     lastEditorLocation: [string, string, number];
     nvimify: (evt: FocusEvent) => void;
     putEditorAtInputOrigin: ({ iframe, input }: PageElements) => void;
@@ -67,26 +67,28 @@ interface IGlobalState {
     disabled: boolean | Promise<boolean>;
 }
 
-function _focusInput(global: IGlobalState, selector: string) {
+// FIXME: Can't focus codemirror/ace/monaco since input != selector?
+function _focusInput(global: IGlobalState, selector: string, addListener: boolean) {
     const { input } = global.selectorToElems.get(selector);
     (document.activeElement as any).blur();
     input.removeEventListener("focus", global.nvimify);
     input.focus();
-    // Only re-add event listener if input's selector matches the ones
-    // that should be autonvimified
-    global.getConfForUrl(document.location.href).then(conf => {
-        if (conf.selector) {
+    if (addListener) {
+        // Only re-add event listener if input's selector matches the ones
+        // that should be autonvimified
+        const conf = getConf();
+        if (conf.selector && conf.selector !== "") {
             const elems = Array.from(document.querySelectorAll(conf.selector));
             if (elems.includes(input)) {
                 input.addEventListener("focus", global.nvimify);
             }
         }
-    });
+    }
 }
 
 export function getFunctions(global: IGlobalState) {
     return {
-        focusInput: (selector: string) => _focusInput(global, selector),
+        focusInput: (selector: string) => _focusInput(global, selector, true),
         focusPage: () => {
             (document.activeElement as any).blur();
             document.documentElement.focus();
@@ -134,7 +136,8 @@ export function getFunctions(global: IGlobalState) {
         killEditor: (selector: string) => {
             const { span } = global.selectorToElems.get(selector);
             span.parentNode.removeChild(span);
-            _focusInput(global, selector);
+            const conf = getConf();
+            _focusInput(global, selector, conf.takeover === "always");
             global.selectorToElems.delete(selector);
         },
         pressKeys: (selector: string, keys: string[]) => {
