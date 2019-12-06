@@ -432,6 +432,64 @@ export async function testPressKeys(driver: any) {
         await driver.wait(async () => (await input.getAttribute("value")) === "Message sent!");
 }
 
+export async function testInputFocusedAfterLeave(driver: any) {
+        await loadLocalPage(driver, "simple.html");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.sleep(1000);
+        console.log("Typing :q!<CR>…");
+        await sendKeys(driver, ":q!".split("")
+                .concat(webdriver.Key.ENTER));
+        console.log(await driver.switchTo().activeElement().getAttribute("id"));
+        console.log("Checking that the input is focused…");
+        await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")));
+};
+
+export async function testTakeoverOnce(driver: any) {
+        await loadLocalPage(driver, "simple.html");
+        console.log("Backing up vimrc…");
+        const backup = await readVimrc();
+        console.log("Overwriting it…");
+        await writeVimrc(`
+let g:firenvim_config = { 'localSettings': { '.*': { 'selector': 'textarea', 'takeover': 'once' } } }
+${backup}
+                `);
+        await killPreloadedInstance(driver);
+        await writeVimrc(backup);
+        await loadLocalPage(driver, "simple.html");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.sleep(1000);
+        console.log("Typing :q!<CR>…");
+        await sendKeys(driver, ":q!".split("")
+                .concat(webdriver.Key.ENTER));
+        console.log("Focusing body…");
+        const body = await driver.wait(Until.elementLocated(By.id("body")));
+        await driver.actions().click(body).perform();
+        await driver.sleep(1000);
+        console.log("Focusing input again…");
+        await driver.actions().click(input).perform();
+        await driver.sleep(1000);
+        console.log("Making sure span didn't pop up.");
+        await driver.findElement(By.css("body > span:nth-child(2)"))
+                .catch((): void => undefined)
+                .then((e: any) => {
+                        if (e !== undefined) {
+                                throw new Error("Frame automatically created while disabled by config.");
+                        }
+                });
+}
+
 export async function killDriver(driver: any) {
         try {
                 await driver.close()

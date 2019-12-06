@@ -15,6 +15,7 @@
  * content scripts. It rarely acts on its own.
  */
 import * as browser from "webextension-polyfill";
+import { ISiteConfig } from "./utils/configuration";
 import { getIconImageData, IconKind } from "./utils/utils";
 
 // We can't use the sessions.setTabValue/getTabValue apis firefox has because
@@ -129,7 +130,7 @@ function applySettings(settings: any) {
     }
     function makeDefaultLocalSetting(sett: { localSettings: { [key: string]: any } },
                                      site: string,
-                                     conf: { selector: string, priority: number }) {
+                                     conf: ISiteConfig) {
         makeDefaults(sett.localSettings, site, {});
         for (const key of (Object.keys(conf) as Array<keyof typeof conf>)) {
             makeDefaults(sett.localSettings[site], key, conf[key]);
@@ -138,6 +139,7 @@ function applySettings(settings: any) {
     if (settings === undefined) {
         settings = {};
     }
+
     makeDefaults(settings, "globalSettings", {});
     // "alt": "all" | "alphanum"
     // #202: Only register alt key on alphanums to let swedish osx users type
@@ -152,6 +154,9 @@ function applySettings(settings: any) {
     makeDefaultLocalSetting(settings, ".*", {
         priority: 0,
         selector: 'textarea, div[role="textbox"]',
+        // "takeover": "always" | "once"
+        // #265: On "once", don't automatically bring back after :q'ing it
+        takeover: "always",
     });
     browser.storage.local.set(settings);
 }

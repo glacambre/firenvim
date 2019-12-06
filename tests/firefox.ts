@@ -17,12 +17,14 @@ import {
  testDynamicTextareas,
  testGuifont,
  testInputFocus,
+ testInputFocusedAfterLeave,
  testManualNvimify,
  testModifiers,
  testMonaco,
  testNestedDynamicTextareas,
  testPageFocus,
  testPressKeys,
+ testTakeoverOnce,
  testVimrcFailure,
 } from "./_common"
 import { setupVimrc } from "./_vimrc";
@@ -78,8 +80,10 @@ describe("Firefox", () => {
         test("Firenvim works on Monaco", () => testMonaco(driver));
         test("Guifont works", () => testGuifont(driver));
         test("InputFocus works", () => testInputFocus(driver));
+        test("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
         test("PageFocus works", () => testPageFocus(driver));
         test("PressKeys works", () => testPressKeys(driver));
+        test.only("Takeover: once works", () => testTakeoverOnce(driver));
         // Disabled because Firefox doesn't pass keyboard shortcuts to webextensions…
         // test("Manually calling firenvim works", () => testManualNvimify(driver));
 })
