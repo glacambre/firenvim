@@ -98,6 +98,10 @@ Firenvim currently requires the following permissions for the following reasons:
 
 You can configure the keybinding to manually trigger Firenvim (`<C-e>` by default) in [the shortcuts menu in `about://addons`](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) on Firefox, or in `chrome://extensions/shortcuts` on Chrome.
 
+#### Temporarily disabling Firenvim in a tab
+
+Temporarily disabling (and re-enabling) Firenvim in a tab can be done either by clicking on the firenvim button next to the urlbar or by configuring a browser shortcut (see the previous section to find out how browser shortcuts can be configured).
+
 #### Configuring what sites Firenvim should automatically appear on
 
 The rest of Firenvim is configured by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionary containing the key "localSettings". `g:firenvim_config["localSettings"]` is a dictionary the keys of which have to be a Javascript pattern matching a URL and the values of which are dictionaries containing settings that apply for all URLs matched by the Javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used.
@@ -110,6 +114,7 @@ let g:firenvim_config = {
         \ '.*': {
             \ 'selector': 'textarea, div[role="textbox"]',
             \ 'priority': 0,
+            \ 'takeover': 'always',
         \ }
     \ }
 \ }
@@ -133,6 +138,22 @@ let g:firenvim_config = {
 ```
 
 Note that even with this config, manually triggering Firenvim will still work on every page.
+
+#### Configuring Firenvim to only automatically appear once
+
+It is possible to make firenvim automatically take over an element only the first time the element is selected by setting the `takeover` setting to `once`:
+
+```vim
+let g:firenvim_config = {
+    \ 'localSettings': {
+        \ '.*': {
+            \ 'selector': 'textarea, div[role="textbox"]',
+            \ 'priority': 0,
+            \ 'takeover': 'once',
+        \ }
+    \ }
+\ }
+```
 
 #### Automatically syncing changes to the page
 
@@ -164,11 +185,21 @@ au TextChanged * ++nested call Delay_My_Write()
 au TextChangedI * ++nested call Delay_My_Write()
 ```
 
-You can also focus move focus from the editor back to the page by calling `firenvim#focus_page`. Here's an example that does exactly this if you press `<Esc>` twice while in normal mode:
+#### Interacting with the page
+
+You can move focus from the editor back to the page or the input field by calling `firenvim#focus_page` or `firenvim#focus_input`. Here's an example that does exactly this if you press `<Esc>` twice while in normal mode:
 
 ```vim
 nnoremap <Esc><Esc> :call firenvim#focus_page()<CR>
 ```
+
+There is also a function named `firenvim#press_keys()` that allows you to send key events to the underlying input field by taking a list of vim-like keys (e.g. `a`, `<CR>`, `<Space>`…) as argument. Note that this only "triggers" an event, it does not add text to the input field. It can be useful with chat apps, if used like this:
+
+```vim
+au BufEnter riot.im_* inoremap <CR> <Esc>:w<CR>:call firenvim#press_keys("<LT>CR>")<CR>ggdGa
+```
+
+Known Issues: some chat apps do not react to firenvim#press_keys (e.g. Slack). Others steal focus from the neovim frame (e.g. Riot.im).
 
 #### Special characters on OSX
 
