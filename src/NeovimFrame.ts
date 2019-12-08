@@ -190,6 +190,7 @@ window.addEventListener("load", async () => {
         }
         window.addEventListener("focus", setFocusedStyle);
         window.addEventListener("blur", setBluredStyle);
+        window.addEventListener("focus", () => keyHandler.focus());
         keyHandler.focus();
         setTimeout(() => keyHandler.focus(), 10);
     } catch (e) {

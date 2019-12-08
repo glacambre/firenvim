@@ -2,6 +2,7 @@ import * as browser from "webextension-polyfill";
 import { getConf } from "../utils/configuration";
 import { computeSelector } from "../utils/CSSUtils";
 import { keysToEvents } from "../utils/keys";
+import { isFirefox } from "../utils/utils";
 
 function executeInPage(code: string): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -86,6 +87,22 @@ function _focusInput(global: IGlobalState, selector: string, addListener: boolea
     }
 }
 
+function _refocus(span: any, iframe: any) {
+    const sel = document.getSelection();
+    sel.removeAllRanges();
+    const range = document.createRange();
+    range.setStart(span, 0);
+    range.collapse(true);
+    sel.addRange(range);
+    // On chrome, you can't refocus the iframe once the body has been focused…
+    if (isFirefox()) {
+        window.focus();
+        document.documentElement.focus();
+        document.body.focus();
+    }
+    iframe.focus();
+}
+
 export function getFunctions(global: IGlobalState) {
     return {
         focusInput: (selector: string) => _focusInput(global, selector, true),
@@ -141,8 +158,9 @@ export function getFunctions(global: IGlobalState) {
             global.selectorToElems.delete(selector);
         },
         pressKeys: (selector: string, keys: string[]) => {
-            const { input } = global.selectorToElems.get(selector);
+            const { input, iframe, span } = global.selectorToElems.get(selector);
             keysToEvents(keys).forEach(ev => input.dispatchEvent(ev));
+            _refocus(span, iframe);
         },
         resizeEditor: (selector: string, width: number, height: number) => {
             const pageElems = global.selectorToElems.get(selector);
@@ -154,18 +172,18 @@ export function getFunctions(global: IGlobalState) {
             global.disabled = disabled;
         },
         setElementContent: (selector: string, text: string) => {
-            const { input: e } = global.selectorToElems.get(selector) as any;
-            if (e.className.match(/CodeMirror/gi)) {
+            const { input, iframe, span } = global.selectorToElems.get(selector) as any;
+            if (input.className.match(/CodeMirror/gi)) {
                 return executeInPage(`(${(selec: string, str: string) => {
                     const elem = document.querySelector(selec) as any;
                     return elem.CodeMirror.setValue(str);
                 }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
-            } else if (e.className.match(/ace_editor/gi)) {
+            } else if (input.className.match(/ace_editor/gi)) {
                 return executeInPage(`(${(selec: string, str: string) => {
                     const elem = document.querySelector(selec) as any;
                     return (window as any).ace.edit(elem).setValue(str);
                 }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
-            } else if (e.className.match(/monaco-editor/)) {
+            } else if (input.className.match(/monaco-editor/)) {
                 return executeInPage(`(${(selec: string, str: string) => {
                     const elem = document.querySelector(selec) as any;
                     const uri = elem.getAttribute("data-uri");
@@ -173,17 +191,18 @@ export function getFunctions(global: IGlobalState) {
                     return model.setValue(str);
                 }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
             }
-            if (e.value !== undefined) {
-                e.value = text;
+            if (input.value !== undefined) {
+                input.value = text;
             } else {
-                e.innerText = text;
+                input.innerText = text;
             }
-            e.dispatchEvent(new Event("keydown",     { bubbles: true }));
-            e.dispatchEvent(new Event("keyup",       { bubbles: true }));
-            e.dispatchEvent(new Event("keypress",    { bubbles: true }));
-            e.dispatchEvent(new Event("beforeinput", { bubbles: true }));
-            e.dispatchEvent(new Event("input",       { bubbles: true }));
-            e.dispatchEvent(new Event("change",      { bubbles: true }));
+            input.dispatchEvent(new Event("keydown",     { bubbles: true }));
+            input.dispatchEvent(new Event("keyup",       { bubbles: true }));
+            input.dispatchEvent(new Event("keypress",    { bubbles: true }));
+            input.dispatchEvent(new Event("beforeinput", { bubbles: true }));
+            input.dispatchEvent(new Event("input",       { bubbles: true }));
+            input.dispatchEvent(new Event("change",      { bubbles: true }));
+            _refocus(span, iframe);
         },
         setElementCursor: async (selector: string, line: number, column: number) => {
             const { input } = global.selectorToElems.get(selector) as any;

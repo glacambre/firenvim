@@ -64,6 +64,7 @@ export async function neovim(
                 const data = args[0] as { text: string[], cursor: [number, number] };
                 page.setElementContent(selector, data.text.join("\n"));
                 page.setElementCursor(selector, ...(data.cursor));
+                window.focus();
                 break;
             case "firenvim_focus_page":
                 page.focusPage();
