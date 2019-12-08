@@ -90,14 +90,22 @@ const global = {
         // actually stop refocusing the iframe a second after it is created.
         function refocus() {
             setTimeout(() => {
-                elem.blur();
+                const sel = document.getSelection();
+                sel.removeAllRanges();
+                const range = document.createRange();
+                range.setStart(span, 0);
+                range.collapse(true);
+                sel.addRange(range);
+                window.focus();
+                document.documentElement.focus();
+                document.body.focus();
                 iframe.focus();
             }, 0);
         }
         iframe.addEventListener("blur", refocus);
         elem.addEventListener("focus", refocus);
         setTimeout(() => {
-            iframe.focus();
+            refocus();
             iframe.removeEventListener("blur", refocus);
             elem.removeEventListener("focus", refocus);
         }, 100);
