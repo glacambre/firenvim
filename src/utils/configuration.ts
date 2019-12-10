@@ -15,6 +15,12 @@ export const confReady = new Promise(resolve => {
     });
 });
 
+browser.storage.onChanged.addListener((changes: any) => {
+    Object
+        .entries(changes)
+        .forEach(([key, value]: [string, any]) => conf[key] = value.newValue);
+});
+
 export function getConf() {
     return getConfForUrl(document.location.href);
 }
