@@ -35,7 +35,7 @@ function executeInPage(code: string): Promise<any> {
     });
 }
 
-function _getElementContent(e: any): Promise<string> {
+export function _getElementContent(e: any): Promise<string> {
     if (e.className.match(/CodeMirror/gi)) {
         return executeInPage(`(${(selec: string) => {
             const elem = document.querySelector(selec) as any;
@@ -154,7 +154,7 @@ export function getFunctions(global: IGlobalState) {
             const { span } = global.selectorToElems.get(selector);
             span.parentNode.removeChild(span);
             const conf = getConf();
-            _focusInput(global, selector, conf.takeover === "always");
+            _focusInput(global, selector, conf.takeover !== "once");
             global.selectorToElems.delete(selector);
         },
         pressKeys: (selector: string, keys: string[]) => {

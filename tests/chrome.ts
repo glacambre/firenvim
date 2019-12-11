@@ -23,6 +23,7 @@ import {
  testNestedDynamicTextareas,
  testPageFocus,
  testPressKeys,
+ testTakeoverEmpty,
  testTakeoverOnce,
  testVimrcFailure,
 } from "./_common"
@@ -71,6 +72,7 @@ describe("Chrome", () => {
 
         nonHeadlessTest()("PressKeys works", () => testPressKeys(driver));
         nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(driver));
+        nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(driver));
         nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
         nonHeadlessTest()("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
         nonHeadlessTest()("InputFocus works", () => testInputFocus(driver));

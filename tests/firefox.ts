@@ -24,6 +24,7 @@ import {
  testNestedDynamicTextareas,
  testPageFocus,
  testPressKeys,
+ testTakeoverEmpty,
  testTakeoverOnce,
  testVimrcFailure,
 } from "./_common"
@@ -83,6 +84,7 @@ describe("Firefox", () => {
         test("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
         test("PageFocus works", () => testPageFocus(driver));
         test("PressKeys works", () => testPressKeys(driver));
+        test("Takeover: empty works", () => testTakeoverEmpty(driver));
         test("Takeover: once works", () => testTakeoverOnce(driver));
         // Disabled because Firefox doesn't pass keyboard shortcuts to webextensions…
         // test("Manually calling firenvim works", () => testManualNvimify(driver));
