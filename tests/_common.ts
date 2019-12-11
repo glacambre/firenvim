@@ -460,7 +460,6 @@ let g:firenvim_config = { 'localSettings': { '.*': { 'selector': 'textarea', 'ta
 ${backup}
                 `);
         await killPreloadedInstance(driver);
-        await writeVimrc(backup);
         await loadLocalPage(driver, "simple.html");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
@@ -470,6 +469,7 @@ ${backup}
         console.log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await driver.sleep(1000);
+        await writeVimrc(backup);
         console.log("Typing :q!<CR>…");
         await sendKeys(driver, ":q!".split("")
                 .concat(webdriver.Key.ENTER));
@@ -486,6 +486,47 @@ ${backup}
                 .then((e: any) => {
                         if (e !== undefined) {
                                 throw new Error("Frame automatically created while disabled by config.");
+                        }
+                });
+}
+
+export async function testTakeoverEmpty(driver: any) {
+        await loadLocalPage(driver, "simple.html");
+        console.log("Backing up vimrc…");
+        const backup = await readVimrc();
+        console.log("Overwriting it…");
+        await writeVimrc(`
+let g:firenvim_config = { 'localSettings': { '.*': { 'takeover': 'empty' } } }
+${backup}
+                `);
+        await killPreloadedInstance(driver);
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.sleep(1000);
+        console.log("Typing ii<Esc>:wq!<CR>…");
+        await sendKeys(driver, "ii".split("")
+            .concat(webdriver.Key.ESCAPE)
+            .concat(":wq!".split(""))
+            .concat(webdriver.Key.ENTER));
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+        await writeVimrc(backup);
+        console.log("Waiting for value update…");
+        await driver.wait(async () => (await input.getAttribute("value")) === "i");
+        console.log("Focusing input again…");
+        await driver.actions().click(input).perform();
+        await driver.sleep(1000);
+        console.log("Making sure span didn't pop up.");
+        await driver.findElement(By.css("body > span:nth-child(2)"))
+                .catch((): void => undefined)
+                .then((e: any) => {
+                        if (e !== undefined) {
+                                throw new Error("Frame created while takeover = empty!.");
                         }
                 });
 }

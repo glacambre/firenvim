@@ -1,6 +1,6 @@
 import * as browser from "webextension-polyfill";
 import { autofill } from "./autofill";
-import { getFunctions } from "./page/functions";
+import { _getElementContent, getFunctions } from "./page/functions";
 import { confReady, getConf } from "./utils/configuration";
 import { computeSelector } from "./utils/CSSUtils";
 import { getEditorElement } from "./utils/utils";
@@ -39,6 +39,13 @@ const global = {
         if (alreadyRunning !== undefined) {
             alreadyRunning.iframe.focus();
             return;
+        }
+
+        if (getConf().takeover === "empty") {
+            const content = await _getElementContent(elem);
+            if (content !== "") {
+                return;
+            }
         }
 
         const pageElements = { input: elem, selector } as PageElements;

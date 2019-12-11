@@ -154,7 +154,7 @@ function applySettings(settings: any) {
     makeDefaultLocalSetting(settings, ".*", {
         priority: 0,
         selector: 'textarea, div[role="textbox"]',
-        // "takeover": "always" | "once"
+        // "takeover": "always" | "once" | "empty"
         // #265: On "once", don't automatically bring back after :q'ing it
         takeover: "always",
     });

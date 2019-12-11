@@ -139,17 +139,15 @@ let g:firenvim_config = {
 
 Note that even with this config, manually triggering Firenvim will still work on every page.
 
-#### Configuring Firenvim to only automatically appear once
+#### Configuring Firenvim to not always take over elements
 
-It is possible to make firenvim automatically take over an element only the first time the element is selected by setting the `takeover` setting to `once`:
+Firenvim has a setting named `takeover` that can be set to `always`, `empty` or `once`. When set to `always`, firenvim will always take over elements for you. When set to `empty`, firenvim will only take over empty elements. When set to `once`, Firenvim will take over elements the first time you select them, which means that after `:q`'ing firenvim, you'll have to manually trigger it to make it appear again. Here's how to use the `takeover` setting:
 
 ```vim
 let g:firenvim_config = {
     \ 'localSettings': {
         \ '.*': {
-            \ 'selector': 'textarea, div[role="textbox"]',
-            \ 'priority': 0,
-            \ 'takeover': 'once',
+            \ 'takeover': 'empty',
         \ }
     \ }
 \ }
