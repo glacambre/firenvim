@@ -23,10 +23,16 @@ local function firenvim_start_server(token)
                 end)
                 local sock = vim.loop.new_tcp()
                 server:accept(sock)
-                local header_parser = coroutine.create(websocket.parse_headers, sock)
+
+                local header_parser = coroutine.create(websocket.parse_headers)
                 coroutine.resume(header_parser, "")
                 local request, headers, rest = nil, nil, nil
+
+                local frame_decoder = coroutine.create(websocket.decode_frame)
+                coroutine.resume(frame_decoder, chunk)
+                local decoded_frame = nil
                 local current_payload = ""
+
                 sock:read_start(function(err, chunk)
                         assert(not err, err)
                         if not chunk then
@@ -60,9 +66,8 @@ local function firenvim_start_server(token)
                                 end)
                                 return
                         end
-                        while chunk ~= "" do
-                                local decoded_frame = websocket.decode_frame(chunk)
-                                chunk = decoded_frame.rest
+                        _, decoded_frame = coroutine.resume(frame_decoder, chunk)
+                        while decoded_frame ~= nil do
                                 if decoded_frame.opcode == websocket.opcodes.binary then
                                         current_payload = current_payload .. decoded_frame.payload
                                         if decoded_frame.fin then
@@ -80,6 +85,7 @@ local function firenvim_start_server(token)
                                         close_server(server)
                                         return
                                 end
+                                _, decoded_frame = coroutine.resume(frame_decoder, "")
                         end
                 end)
         end)

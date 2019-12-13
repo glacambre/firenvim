@@ -531,6 +531,24 @@ ${backup}
                 });
 }
 
+export async function testLargeBuffers(driver: any) {
+        await loadLocalPage(driver, "simple.html");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript(`arguments[0].scrollIntoView(true);
+                                   arguments[0].value = (new Array(10000)).fill("a").join("");`, input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.sleep(1000);
+        await sendKeys(driver, ":wq!".split("").concat(webdriver.Key.ENTER))
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+        console.log("Waiting for value update…");
+        await driver.wait(async () => (await input.getAttribute("value")) == (new Array(10000)).fill("a").join(""));
+}
+
 export async function killDriver(driver: any) {
         try {
                 await driver.close()

@@ -18,6 +18,7 @@ import {
  testGuifont,
  testInputFocus,
  testInputFocusedAfterLeave,
+ testLargeBuffers,
  testManualNvimify,
  testModifiers,
  testMonaco,
@@ -79,6 +80,7 @@ describe("Firefox", () => {
         test("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
         test("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
         test("Firenvim works on Monaco", () => testMonaco(driver));
+        test("Firenvim works with large buffers", () => testLargeBuffers(driver));
         test("Guifont works", () => testGuifont(driver));
         test("InputFocus works", () => testInputFocus(driver));
         test("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
