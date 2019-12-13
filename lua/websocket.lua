@@ -47,42 +47,70 @@ local function accept_connection(headers)
 end
 
 -- Frames are described here: https://tools.ietf.org/html/rfc6455#section-5.2
-local function decode_frame(frame)
+local function decode_frame()
+        local frame = ""
         local result = {}
-        local current_byte = 1
-        result.fin = bit.band(bit.rshift(string.byte(frame, current_byte), 7), 1) == 1
-        result.rsv1 = bit.band(bit.rshift(string.byte(frame, current_byte), 6), 1) == 1
-        result.rsv2 = bit.band(bit.rshift(string.byte(frame, current_byte), 5), 1) == 1
-        result.rsv3 = bit.band(bit.rshift(string.byte(frame, current_byte), 4), 1) == 1
-        result.opcode = bit.band(string.byte(frame, current_byte), 15)
-        current_byte = current_byte + 1
-        result.mask = bit.rshift(string.byte(frame, current_byte), 7) == 1
-        result.payload_length = bit.band(string.byte(frame, current_byte), 127)
-        current_byte = current_byte + 1
-        if result.payload_length == 126 then
-                result.payload_length = utils.to_16_bits_number(string.sub(frame, current_byte))
-                current_byte = current_byte + 2
-        elseif result.payload_length == 127 then
-                result.payload_length = utils.to_64_bits_number(string.sub(frame, current_byte))
-                print("Warning: payload length on 64 bits. Estimated:" .. result.payload_length)
-                current_byte = current_byte + 8
-        end
-        result.masking_key = string.sub(frame, current_byte, current_byte + 4)
-        current_byte = current_byte + 4
+        while true do
+                local current_byte = 1
+                -- We need at least the first two bytes of header in order to
+                -- start doing any kind of useful work:
+                -- - One for the fin/rsv/opcode fields
+                -- - One for the mask + payload length
+                while (string.len(frame) < 2) do
+                        frame = frame .. coroutine.yield(nil)
+                end
 
-        result.payload = ""
-        local payload_end = current_byte + result.payload_length - 1
-        local j = 1
-        for current_byte = current_byte, payload_end do
-                result.payload = result.payload .. string.char(bit.bxor(
-                        string.byte(frame, current_byte),
-                        string.byte(result.masking_key, j)
-                ))
-                j = (j % 4) + 1
+                result.fin = bit.band(bit.rshift(string.byte(frame, current_byte), 7), 1) == 1
+                result.rsv1 = bit.band(bit.rshift(string.byte(frame, current_byte), 6), 1) == 1
+                result.rsv2 = bit.band(bit.rshift(string.byte(frame, current_byte), 5), 1) == 1
+                result.rsv3 = bit.band(bit.rshift(string.byte(frame, current_byte), 4), 1) == 1
+                result.opcode = bit.band(string.byte(frame, current_byte), 15)
+                current_byte = current_byte + 1
+
+                result.mask = bit.rshift(string.byte(frame, current_byte), 7) == 1
+                result.payload_length = bit.band(string.byte(frame, current_byte), 127)
+                current_byte = current_byte + 1
+
+                if result.payload_length == 126 then
+                        -- Payload length is on the next two bytes, make sure
+                        -- they're present
+                        while (string.len(frame) < current_byte + 2) do
+                                frame = frame .. coroutine.yield(nil)
+                        end
+
+                        result.payload_length = utils.to_16_bits_number(string.sub(frame, current_byte))
+                        current_byte = current_byte + 2
+                elseif result.payload_length == 127 then
+                        -- Payload length is on the next eight bytes, make sure
+                        -- they're present
+                        while (string.len(frame) < current_byte + 8) do
+                                frame = frame .. coroutine.yield(nil)
+                        end
+                        result.payload_length = utils.to_64_bits_number(string.sub(frame, current_byte))
+                        print("Warning: payload length on 64 bits. Estimated:" .. result.payload_length)
+                        current_byte = current_byte + 8
+                end
+
+                while string.len(frame) < current_byte + result.payload_length do
+                        frame = frame .. coroutine.yield(nil)
+                end
+
+                result.masking_key = string.sub(frame, current_byte, current_byte + 4)
+                current_byte = current_byte + 4
+
+                result.payload = ""
+                local payload_end = current_byte + result.payload_length - 1
+                local j = 1
+                for current_byte = current_byte, payload_end do
+                        result.payload = result.payload .. string.char(bit.bxor(
+                                        string.byte(frame, current_byte),
+                                        string.byte(result.masking_key, j)
+                                ))
+                        j = (j % 4) + 1
+                end
+                current_byte = payload_end + 1
+                frame = string.sub(frame, current_byte) .. coroutine.yield(result)
         end
-        current_byte = payload_end + 1
-        result.rest = string.sub(frame, current_byte)
-        return result
 end
 
 -- The format is the same as the client's (

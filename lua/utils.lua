@@ -92,9 +92,12 @@ local function to_64_bits_str(number)
 end
 
 -- Returns a number representing the 8 first characters of the argument string
--- Returns incorrect results on numbers larger than 2^32
+-- Returns incorrect results on numbers larger than 2^48
 local function to_64_bits_number(str)
-        return bit.lshift(string.byte(str, 5), 24) +
+        return bit.lshift(string.byte(str, 2), 48) +
+                bit.lshift(string.byte(str, 3), 40) +
+                bit.lshift(string.byte(str, 4), 32) +
+                bit.lshift(string.byte(str, 5), 24) +
                 bit.lshift(string.byte(str, 6), 16) +
                 bit.lshift(string.byte(str, 7), 8) +
                 string.byte(str, 8)
