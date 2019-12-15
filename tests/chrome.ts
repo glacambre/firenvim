@@ -24,6 +24,7 @@ import {
  testPageFocus,
  testPressKeys,
  testTakeoverEmpty,
+ testTakeoverNonEmpty,
  testTakeoverOnce,
  testVimrcFailure,
 } from "./_common"
@@ -70,22 +71,22 @@ describe("Chrome", () => {
 
         afterAll(() => killDriver(driver));
 
-        nonHeadlessTest()("PressKeys works", () => testPressKeys(driver));
-        nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(driver));
-        nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(driver));
-        nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
+        nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
+        nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
+        nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
+        nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        nonHeadlessTest()("Firenvim works on Monaco", () => testMonaco(driver));
+        nonHeadlessTest()("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
+        nonHeadlessTest()("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
+        nonHeadlessTest()("Firenvim works with large buffers", () => testLargeBuffers(driver));
+        nonHeadlessTest()("Guifont works", () => testGuifont(driver));
         nonHeadlessTest()("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
         nonHeadlessTest()("InputFocus works", () => testInputFocus(driver));
-        nonHeadlessTest()("Guifont works", () => testGuifont(driver));
-        nonHeadlessTest()("Firenvim works with large buffers", () => testLargeBuffers(driver));
-        nonHeadlessTest()("Firenvim works on Monaco", () => testMonaco(driver));
-        nonHeadlessTest()("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
-        nonHeadlessTest()("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
-        nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
-        nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
-        nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
-        // Note: this test shouldn't be performed first because it needs a preloaded nvim process
-        nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
+        nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
+        nonHeadlessTest()("PressKeys works", () => testPressKeys(driver));
+        nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(driver));
+        nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
+        nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(driver));
         // Disabled because Chrome doesn't pass keyboard shortcuts to webextensions…
-        // nonHeadlessTest()("Manually calling firenvim works", () => testManualNvimify(driver));
+        // test("Manually calling firenvim works", () => testManualNvimify(driver));
 })

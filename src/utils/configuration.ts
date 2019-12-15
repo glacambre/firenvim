@@ -3,7 +3,7 @@ import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variab
 export interface ISiteConfig {
     selector: string;
     priority: number;
-    takeover: "always" | "once";
+    takeover: "always" | "once" | "empty" | "nonempty";
 }
 
 let conf: {[key: string]: ISiteConfig} = {};

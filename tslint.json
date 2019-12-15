@@ -11,6 +11,7 @@
         "limit": 120
       }
     ],
+    "max-union-size": false,
     "no-big-function": false,
     "no-conditional-assignment": false,
     "no-console": false,

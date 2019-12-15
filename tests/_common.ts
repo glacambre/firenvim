@@ -37,7 +37,7 @@ export function getNewestFileMatching(directory: string, pattern: string | RegEx
                 .then((stats: any[]) => (stats.sort((stat1, stat2) => stat2.mtime - stat1.mtime)[0] || {}).path)
 }
 
-const keyDelay = 100;
+const keyDelay = 50;
 
 function sendKeys(driver: any, keys: any[]) {
         return keys.reduce((prom, key) => prom
@@ -60,7 +60,7 @@ export async function testModifiers(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing <C-v><C-a><C-v><A-v><C-v><D-a>…");
         await driver.actions()
                 .keyDown("a")
@@ -93,7 +93,7 @@ export async function testModifiers(driver: any) {
                 .keyUp(webdriver.Key.COMMAND)
                 .pause(keyDelay)
                 .perform();
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Writing keycodes.");
         await sendKeys(driver, [webdriver.Key.ESCAPE]
                        .concat(":wq!".split(""))
@@ -113,7 +113,7 @@ export async function testCodemirror(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing stuff…");
         await sendKeys(driver, "iTest".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -135,7 +135,7 @@ export async function testAce(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing stuff…");
         await sendKeys(driver, "ATest".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -157,7 +157,7 @@ export async function testMonaco(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(9)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing stuff…");
         await sendKeys(driver, "iTest".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -179,7 +179,7 @@ export async function testDynamicTextareas(driver: any) {
         await driver.actions().click(btn).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing things…");
         await sendKeys(driver, "aTest".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -202,7 +202,7 @@ export async function testNestedDynamicTextareas(driver: any) {
         await driver.actions().click(btn).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing things…");
         await sendKeys(driver, "aTest".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -219,7 +219,7 @@ export async function testNestedDynamicTextareas(driver: any) {
 // Purges a preloaded instance by creating a new frame, focusing it and quitting it
 export async function killPreloadedInstance(driver: any) {
         console.log("Killing preloaded instance.");
-        const id = "firenvim-" + Math.round(Math.random() * 1000);
+        const id = "firenvim-" + Math.round(Math.random() * 500);
         await driver.executeScript(`
                 const txtarea = document.createElement("textarea");
                 txtarea.id = "${id}";
@@ -234,7 +234,7 @@ export async function killPreloadedInstance(driver: any) {
                 .keyUp("e")
                 .keyUp(webdriver.Key.CONTROL)
                 .perform();
-        await driver.sleep(1000);
+        await driver.sleep(500);
         await driver.executeScript(`
                 const elem = document.getElementById("${id}");
                 elem.parentElement.removeChild(elem);
@@ -288,7 +288,7 @@ ${backup}
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Making sure a frame didn't pop up.");
-        await driver.sleep(1000);
+        await driver.sleep(500);
         await driver.findElement(By.css("body > span:nth-child(2)"))
                 .catch((): void => undefined)
                 .then((e: any) => {
@@ -304,7 +304,7 @@ ${backup}
                 .keyUp(webdriver.Key.CONTROL)
                 .perform();
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing things…");
         await sendKeys(driver, "aTest".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -317,10 +317,10 @@ ${backup}
         await driver.wait(async () => (await input.getAttribute("value")) === "Test");
         // Unfocus element
         await driver.executeScript("arguments[0].blur();", input);
-        await driver.sleep(1000);
+        await driver.sleep(500);
         await driver.actions().click(input).perform();
         console.log("Making sure a frame didn't pop up.");
-        await driver.sleep(1000);
+        await driver.sleep(500);
         await driver.findElement(By.css("body > span:nth-child(2)"))
                 .catch((): void => undefined)
                 .then((e: any) => {
@@ -351,7 +351,7 @@ ${backup}
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing 30aa<Esc>^gjib<Esc>:wq!<Enter>…");
         await sendKeys(driver, "30aa".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -364,7 +364,7 @@ ${backup}
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing ^gjib<Esc>:wq!<Enter>…");
         await sendKeys(driver, "^gjib".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -383,7 +383,7 @@ export async function testPageFocus(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing :call firenvim#focus_page()<CR>…");
         await sendKeys(driver, ":call firenvim#focus_page()".split("")
                 .concat(webdriver.Key.ENTER));
@@ -400,7 +400,7 @@ export async function testInputFocus(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing :call firenvim#focus_input()<CR>…");
         await sendKeys(driver, ":call firenvim#focus_input()".split("")
                 .concat(webdriver.Key.ENTER));
@@ -418,7 +418,7 @@ export async function testPressKeys(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing iHello<Esc>:w<CR>:call firenvim#press_keys('<CR>')<CR>:q!<CR>…");
         await sendKeys(driver, "iHello".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -441,7 +441,7 @@ export async function testInputFocusedAfterLeave(driver: any) {
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing :q!<CR>…");
         await sendKeys(driver, ":q!".split("")
                 .concat(webdriver.Key.ENTER));
@@ -468,7 +468,7 @@ ${backup}
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         await writeVimrc(backup);
         console.log("Typing :q!<CR>…");
         await sendKeys(driver, ":q!".split("")
@@ -476,10 +476,10 @@ ${backup}
         console.log("Focusing body…");
         const body = await driver.wait(Until.elementLocated(By.id("body")));
         await driver.actions().click(body).perform();
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Focusing input again…");
         await driver.actions().click(input).perform();
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Making sure span didn't pop up.");
         await driver.findElement(By.css("body > span:nth-child(2)"))
                 .catch((): void => undefined)
@@ -507,7 +507,7 @@ ${backup}
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Typing ii<Esc>:wq!<CR>…");
         await sendKeys(driver, "ii".split("")
             .concat(webdriver.Key.ESCAPE)
@@ -520,7 +520,7 @@ ${backup}
         await driver.wait(async () => (await input.getAttribute("value")) === "i");
         console.log("Focusing input again…");
         await driver.actions().click(input).perform();
-        await driver.sleep(1000);
+        await driver.sleep(500);
         console.log("Making sure span didn't pop up.");
         await driver.findElement(By.css("body > span:nth-child(2)"))
                 .catch((): void => undefined)
@@ -531,22 +531,64 @@ ${backup}
                 });
 }
 
+export async function testTakeoverNonEmpty(driver: any) {
+        await loadLocalPage(driver, "simple.html");
+        console.log("Backing up vimrc…");
+        const backup = await readVimrc();
+        console.log("Overwriting it…");
+        await writeVimrc(`
+let g:firenvim_config = { 'localSettings': { '.*': { 'takeover': 'nonempty' } } }
+${backup}
+                `);
+        await killPreloadedInstance(driver);
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        await driver.sleep(500);
+        console.log("Making sure span didn't pop up.");
+        await driver.findElement(By.css("body > span:nth-child(2)"))
+                .catch((): void => undefined)
+                .then((e: any) => {
+                        if (e !== undefined) {
+                                throw new Error("Frame created while takeover = empty!.");
+                        }
+                });
+        await writeVimrc(backup);
+        console.log("Setting input value.");
+        await driver.executeScript(`arguments[0].value = 'i';
+                                    arguments[0].blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`, input);
+        console.log("Focusing input again…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.sleep(500);
+        console.log("Typing :q!<CR>…");
+        await sendKeys(driver, ":q!".split("").concat(webdriver.Key.ENTER));
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+}
+
+
 export async function testLargeBuffers(driver: any) {
         await loadLocalPage(driver, "simple.html");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript(`arguments[0].scrollIntoView(true);
-                                   arguments[0].value = (new Array(10000)).fill("a").join("");`, input);
+                                   arguments[0].value = (new Array(5000)).fill("a").join("");`, input);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        await driver.sleep(1000);
+        await driver.sleep(500);
         await sendKeys(driver, ":wq!".split("").concat(webdriver.Key.ENTER))
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("value")) == (new Array(10000)).fill("a").join(""));
+        await driver.wait(async () => (await input.getAttribute("value")) == (new Array(5000)).fill("a").join(""));
 }
 
 export async function killDriver(driver: any) {
