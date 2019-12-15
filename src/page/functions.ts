@@ -46,7 +46,7 @@ export function _getElementContent(e: any): Promise<string> {
             const elem = document.querySelector(selec) as any;
             return (window as any).ace.edit(elem).getValue();
         }})(${JSON.stringify(computeSelector(e))})`);
-    } else if (e.className.match(/monaco/gi)) {
+    } else if (e.className.match(/monaco-editor/gi)) {
         return executeInPage(`(${(selec: string, str: string) => {
             const elem = document.querySelector(selec) as any;
             const uri = elem.getAttribute("data-uri");

@@ -41,7 +41,7 @@ export function getMonacoParent(elem: HTMLElement): HTMLElement {
         return elem;
     }
     function isMonaco(element: HTMLElement) {
-        return element.className.match(/monaco/gi);
+        return element.className.match(/monaco-editor/gi);
     }
     let parent = elem;
     // Check if parent, grand-parent or great grand-parent is monaco
