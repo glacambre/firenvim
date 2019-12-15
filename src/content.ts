@@ -41,9 +41,11 @@ const global = {
             return;
         }
 
-        if (getConf().takeover === "empty") {
+        const takeover = getConf().takeover;
+        if (takeover === "empty" || takeover === "nonempty") {
             const content = await _getElementContent(elem);
-            if (content !== "") {
+            if ((content !== "" && takeover === "empty")
+                || (content === "" && takeover === "nonempty")) {
                 return;
             }
         }

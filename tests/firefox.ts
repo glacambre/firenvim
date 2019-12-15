@@ -26,6 +26,7 @@ import {
  testPageFocus,
  testPressKeys,
  testTakeoverEmpty,
+ testTakeoverNonEmpty,
  testTakeoverOnce,
  testVimrcFailure,
 } from "./_common"
@@ -73,20 +74,20 @@ describe("Firefox", () => {
         afterAll(() => killDriver(driver));
 
         test("Firenvim modifiers work", () => testModifiers(driver));
-        // Note: this test shouldn't be performed first because it needs a preloaded nvim process
         test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
         test("Firenvim works on Ace", () => testAce(driver));
         test("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        test("Firenvim works on Monaco", () => testMonaco(driver));
         test("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
         test("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
-        test("Firenvim works on Monaco", () => testMonaco(driver));
         test("Firenvim works with large buffers", () => testLargeBuffers(driver));
         test("Guifont works", () => testGuifont(driver));
-        test("InputFocus works", () => testInputFocus(driver));
         test("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
+        test("InputFocus works", () => testInputFocus(driver));
         test("PageFocus works", () => testPageFocus(driver));
         test("PressKeys works", () => testPressKeys(driver));
         test("Takeover: empty works", () => testTakeoverEmpty(driver));
+        test("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
         test("Takeover: once works", () => testTakeoverOnce(driver));
         // Disabled because Firefox doesn't pass keyboard shortcuts to webextensions…
         // test("Manually calling firenvim works", () => testManualNvimify(driver));
