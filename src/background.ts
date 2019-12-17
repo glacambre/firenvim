@@ -152,6 +152,9 @@ function applySettings(settings: any) {
 
     makeDefaults(settings, "localSettings", {});
     makeDefaultLocalSetting(settings, ".*", {
+        // "cmdline": "neovim" | "firenvim"
+        // #168: Use an external commandline to preserve space
+        cmdline: "neovim",
         priority: 0,
         selector: 'textarea, div[role="textbox"]',
         // "takeover": "always" | "once" | "empty"

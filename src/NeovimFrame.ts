@@ -1,6 +1,7 @@
 import * as browser from "webextension-polyfill";
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
+import { confReady, getConfForUrl } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, toFileName } from "./utils/utils";
 
@@ -11,10 +12,12 @@ const settingsPromise = browser.storage.local.get("globalSettings");
 window.addEventListener("load", async () => {
     try {
         const host = document.getElementById("host") as HTMLPreElement;
+        const extCmdline = document.getElementById("ext_cmdline") as HTMLSpanElement;
+        const extMessages = document.getElementById("ext_messages") as HTMLSpanElement;
         const keyHandler = document.getElementById("keyhandler");
         const [[url, selector, cursor], connectionData] = await Promise.all([locationPromise, connectionPromise]);
         (window as any).selector = selector;
-        const nvimPromise = neovim(host, selector, connectionData);
+        const nvimPromise = neovim(host, extCmdline, extMessages, selector, connectionData);
         const contentPromise = page.getElementContent(selector);
 
         const [cols, rows] = getGridSize(host);
@@ -32,8 +35,10 @@ window.addEventListener("load", async () => {
             {},
         );
 
+        await confReady;
         nvim.ui_attach(cols, rows, {
             ext_linegrid: true,
+            ext_messages: getConfForUrl(url).cmdline === "firenvim",
             rgb: true,
         });
         let resizeReqId = 0;
