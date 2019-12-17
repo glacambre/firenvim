@@ -26,6 +26,30 @@
                 display: inline-block;
                 width: 1ch;
             }
+            #ext_cmdline, #ext_messages {
+                display: none;
+                position: absolute;
+                border: solid white 1px;
+                box-shadow: 0px 0px 1px 1px black;
+                position: absolute;
+                margin: auto;
+                min-height: 1ch;
+                max-height: 90%;
+                min-width: 10ch;
+                overflow: hidden;
+                word-break: break-all;
+            }
+            #ext_cmdline {
+                width: 90%;
+            }
+            #ext_cmdline > span {
+                width: 1ch;
+                display: inline-block;
+            }
+            #ext_messages {
+                bottom: 0px;
+                right: 0px;
+            }
         </style>
         <style id="nvim_highlight_style"></style>
         <style id="nvim_cursor_style"></style>
@@ -34,8 +58,5 @@
         <style id="mouse_cursor"></style>
         <script type="application/javascript" src="nvimui.js"></script>
     </head>
-    <body>
-        <textarea id="keyhandler"></textarea>
-        <pre id="host"></pre>
-    </body>
+    <body><textarea id="keyhandler"></textarea><pre id="host"></pre><span id="ext_cmdline" class="nvim_highlight_0"></span><span id="ext_messages" class="nvim_highlight_0"></span></body>
 </html>

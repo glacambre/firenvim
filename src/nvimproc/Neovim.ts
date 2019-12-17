@@ -6,6 +6,8 @@ import { Stdout } from "./Stdout";
 
 export async function neovim(
         element: HTMLPreElement,
+        extCmdline: HTMLSpanElement,
+        extMessages: HTMLSpanElement,
         selector: string,
         { port, password }: { port: number, password: number },
     ) {
@@ -57,7 +59,7 @@ export async function neovim(
         switch (name) {
             case "redraw":
                 if (args) {
-                    onRedraw(functions, args, element, selector);
+                    onRedraw(functions, args, element, extCmdline, extMessages, selector);
                 }
                 break;
             case "firenvim_bufwrite":

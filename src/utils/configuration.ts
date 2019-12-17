@@ -4,6 +4,7 @@ export interface ISiteConfig {
     selector: string;
     priority: number;
     takeover: "always" | "once" | "empty" | "nonempty";
+    cmdline: "neovim" | "firenvim";
 }
 
 let conf: {[key: string]: ISiteConfig} = {};
@@ -25,7 +26,7 @@ export function getConf() {
     return getConfForUrl(document.location.href);
 }
 
-function getConfForUrl(url: string) {
+export function getConfForUrl(url: string) {
     const localSettings = conf.localSettings;
     function or1(val: number) {
         if (val === undefined) {
