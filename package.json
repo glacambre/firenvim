@@ -1,7 +1,7 @@
 {
   "author": "glacambre",
   "dependencies": {
-    "@types/jest": "24.0.23",
+    "@types/jest": "24.0.24",
     "@types/msgpack-lite": "0.1.7",
     "@types/node": "12.12.20",
     "ace-builds": "^1.4.7",
