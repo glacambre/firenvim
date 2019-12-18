@@ -25,6 +25,11 @@ function! firenvim#focus_page() abort
         call rpcnotify(firenvim#get_chan(), 'firenvim_focus_page')
 endfunction
 
+" Asks the browser extension to hide the firenvim frame
+function! firenvim#hide_frame() abort
+        call rpcnotify(firenvim#get_chan(), 'firenvim_hide_frame')
+endfunction
+
 " Asks the browser extension to send one or multiple key events to the
 " underlying input field.
 function! firenvim#press_keys(...) abort

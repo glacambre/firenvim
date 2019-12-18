@@ -37,6 +37,7 @@ const global = {
         // If this element already has a neovim frame, stop
         const alreadyRunning = global.selectorToElems.get(selector);
         if (alreadyRunning !== undefined) {
+            alreadyRunning.iframe.style.display = "initial";
             alreadyRunning.iframe.focus();
             return;
         }
