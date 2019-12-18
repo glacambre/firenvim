@@ -150,6 +150,11 @@ export function getFunctions(global: IGlobalState) {
             return Promise.resolve(result);
         },
         getElementContent: (selector: string) => _getElementContent(global.selectorToElems.get(selector).input),
+        hideEditor: (selector: string) => {
+            const { iframe } = global.selectorToElems.get(selector);
+            iframe.style.display = "none";
+            _focusInput(global, selector, true);
+        },
         killEditor: (selector: string) => {
             const { span } = global.selectorToElems.get(selector);
             span.parentNode.removeChild(span);

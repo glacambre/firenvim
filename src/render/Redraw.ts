@@ -40,7 +40,6 @@ const redrawFuncs = {
          }
          cmdlineCursorPos = pos;
          extCmdline.children[cmdlineCursorPos].className = "nvim_cursor";
-         extCmdline.children[cmdlineCursorPos].scrollIntoView();
    },
    cmdline_show: (_: any,
                   __: any,
@@ -65,7 +64,6 @@ const redrawFuncs = {
          }
          cmdlineCursorPos = pos;
          extCmdline.children[cmdlineCursorPos].className = "nvim_cursor";
-         extCmdline.children[cmdlineCursorPos].scrollIntoView();
          extCmdline.style.display = "block";
          const rect = extCmdline.getBoundingClientRect();
          extCmdline.style.top = ((window.innerHeight - rect.height) / 2) + "px";
@@ -232,8 +230,6 @@ export function onRedraw(nvimFunctions: any,
       const [name, ...evts]: [keyof typeof redrawFuncs, any] = evt;
       if (redrawFuncs[name] !== undefined) {
          evts.forEach((args) => redrawFuncs[name](elem, selector, args, nvimFunctions, extCmdline, extMessages));
-      } else {
-         console.log(evt);
       }
    });
 }
