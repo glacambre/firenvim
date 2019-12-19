@@ -125,14 +125,8 @@ This means that for all URLs ("`.*`"), textareas will be turned into Firenvim in
 ```vim
 let g:firenvim_config = {
     \ 'localSettings': {
-        \ '.*': {
-            \ 'selector': '',
-            \ 'priority': 0,
-        \ },
-        \ 'github\.com': {
-            \ 'selector': 'textarea',
-            \ 'priority': 1,
-        \ },
+        \ '.*': { 'selector': '', 'priority': 0, },
+        \ 'github\.com': { 'selector': 'textarea', 'priority': 1 },
     \ }
 \ }
 ```
@@ -146,9 +140,7 @@ Firenvim has a setting named `takeover` that can be set to `always`, `empty` or 
 ```vim
 let g:firenvim_config = {
     \ 'localSettings': {
-        \ '.*': {
-            \ 'takeover': 'empty',
-        \ }
+        \ '.*': { 'takeover': 'empty' }
     \ }
 \ }
 ```
@@ -191,13 +183,31 @@ You can move focus from the editor back to the page or the input field by callin
 nnoremap <Esc><Esc> :call firenvim#focus_page()<CR>
 ```
 
-There is also a function named `firenvim#press_keys()` that allows you to send key events to the underlying input field by taking a list of vim-like keys (e.g. `a`, `<CR>`, `<Space>`…) as argument. Note that this only "triggers" an event, it does not add text to the input field. It can be useful with chat apps, if used like this:
+There is also a function named `firenvim#hide_frame()` which will temporarily hide the firenvim frame. You will then be able to bring the neovim frame back either by unfocusing and refocusing the textarea or by using the [keybinding to manually trigger firenvim](https://github.com/glacambre/firenvim#manually-triggering-firenvim).
+
+```vim
+nnoremap <C-z> :call firenvim#hide_frame()<CR>
+```
+
+A function named `firenvim#press_keys()` will allow you to send key events to the underlying input field by taking a list of vim-like keys (e.g. `a`, `<CR>`, `<Space>`…) as argument. Note that this only "triggers" an event, it does not add text to the input field. It can be useful with chat apps, if used like this:
 
 ```vim
 au BufEnter riot.im_* inoremap <CR> <Esc>:w<CR>:call firenvim#press_keys("<LT>CR>")<CR>ggdGa
 ```
 
 Known Issues: some chat apps do not react to firenvim#press_keys (e.g. Slack). Others steal focus from the neovim frame (e.g. Riot.im).
+
+#### Using the external command line
+
+You can chose to use an external command line (and thus save a line of space) by setting the localSetting named `cmdline` to `firenvim`:
+
+```vim
+let g:firenvim_config = {
+	\ 'localSettings': {
+		\ '.*': { 'cmdline' : 'firenvim' }
+	\}
+\}
+```
 
 #### Special characters on OSX
 
