@@ -157,7 +157,7 @@ function applySettings(settings: any) {
         cmdline: "neovim",
         priority: 0,
         selector: 'textarea, div[role="textbox"]',
-        // "takeover": "always" | "once" | "empty"
+        // "takeover": "always" | "once" | "empty" | "nonempty" | "never"
         // #265: On "once", don't automatically bring back after :q'ing it
         takeover: "always",
     });

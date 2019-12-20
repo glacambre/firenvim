@@ -92,60 +92,151 @@ Firenvim currently requires the following permissions for the following reasons:
 
 ## Configuring Firenvim
 
-### Configuring the browser addon behavior
-
-#### Manually triggering Firenvim
+### Manually triggering Firenvim
 
 You can configure the keybinding to manually trigger Firenvim (`<C-e>` by default) in [the shortcuts menu in `about://addons`](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) on Firefox, or in `chrome://extensions/shortcuts` on Chrome.
 
-#### Temporarily disabling Firenvim in a tab
+### Temporarily disabling Firenvim in a tab
 
-Temporarily disabling (and re-enabling) Firenvim in a tab can be done either by clicking on the firenvim button next to the urlbar or by configuring a browser shortcut (see the previous section to find out how browser shortcuts can be configured).
+Temporarily disabling (and re-enabling) Firenvim in a tab can be done either by clicking on the Firenvim button next to the urlbar or by configuring a browser shortcut (see the previous section to find out how browser shortcuts can be configured).
 
-#### Configuring what sites Firenvim should automatically appear on
+### Building a Firenvim-specific config
 
-The rest of Firenvim is configured by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionary containing the key "localSettings". `g:firenvim_config["localSettings"]` is a dictionary the keys of which have to be a Javascript pattern matching a URL and the values of which are dictionaries containing settings that apply for all URLs matched by the Javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used.
-
-Here's an example `g:firenvim_config` that matches the default configuration:
+When it starts Neovim, Firenvim sets the variable `g:started_by_firenvim` which you can check to run different code in your init.vim. For example:
 
 ```vim
-let g:firenvim_config = {
+if exists('g:started_by_firenvim')
+  set laststatus=0
+else
+  set laststatus=2
+endif
+```
+
+Alternatively, you can detect when Firenvim connects to Neovim by using the `UIEnter` autocmd event:
+
+```vim
+function! s:IsFirenvimActive(event) abort
+  if !exists('*nvim_get_chan_info')
+    return 0
+  endif
+  let l:ui = nvim_get_chan_info(a:event.chan)
+  return has_key(l:ui, 'client') && has_key(l:ui.client, "name") &&
+      \ l:ui.client.name is# "Firenvim"
+endfunction
+
+function! OnUIEnter(event) abort
+  if s:IsFirenvimActive(a:event)
+    set laststatus=0
+  endif
+endfunction
+autocmd UIEnter * call OnUIEnter(deepcopy(v:event))
+```
+
+Similarly, you can detect when Firenvim disconnects from a Neovim instance with the `UILeave` autocommand.
+
+### Using different settings depending on the page/element being edited
+
+If you want to use different settings depending on the textarea you're currently editing, you can use autocommands to do that too. All buffers are named like this: `domainname_page_selector.txt` (see the [toFileName function](src/utils/utils.ts)). This means that you can for example set the file type to markdown for all GitHub buffers:
+
+```vim
+au BufEnter github.com_*.txt set filetype=markdown
+```
+
+### Understanding Firenvim's configuration object
+
+You can configure the rest of Firenvim by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionary containing the keys "globalSettings" and "localSettings". `g:firenvim_config["localSettings"]` is a dictionary the keys of which have to be a Javascript pattern matching a URL and the values of which are dictionaries containing settings that apply for all URLs matched by the Javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used. Here is an example (the settings and their possible values will be explained in the next subsections):
+
+```vim
+let g:firenvim_config = { 
+    \ 'globalSettings': {
+        \ 'alt': 'all',
+    \  },
     \ 'localSettings': {
         \ '.*': {
-            \ 'selector': 'textarea, div[role="textbox"]',
+            \ 'cmdline': 'neovim',
             \ 'priority': 0,
+            \ 'selector': 'textarea',
             \ 'takeover': 'always',
-        \ }
+        \ },
     \ }
 \ }
 ```
 
-This means that for all URLs ("`.*`"), textareas will be turned into Firenvim instances. Here's an example that will make Firenvim not take over any elements, except for Github's textareas:
+With this configuration, `takeover` will be set to `always` on all websites. If we wanted to override this value on british websites, we could add the following lines to our init.vim. Notice how the priority of this new regex is higher than that of the `.*` regex:
+
+```vim
+let fc = g:firenvim_config['localSettings']
+let fc['https?://[^/]+\.co\.uk/'] = { 'takeover': 'never', 'priority': 1 }
+```
+
+From now on, localSettings examples will use the `let fc[...] = ...` shorthand, assuming that you have a line like `let fc = g:firenvim_config['localSettings']` in your config.
+
+### Configuring what elements Firenvim should appear on
+
+The `selector` attribute of a localSetting controls what elements Firenvim automatically takes over. Here's the default value:
+
+```vim
+let fc['.*'] = { 'selector': 'textarea, div[role="textbox"]' } }
+```
+
+If you don't want to use Firenvim with rich text editors (e.g. Gmail, Outlook, Slack…) as a general rule, you might want to restrict Firenvim to simple textareas:
+
+```vim
+let fc['.*'] = { 'selector': 'textarea' } }
+```
+
+### Configuring Firenvim to not always take over elements
+
+Firenvim has a setting named `takeover` that can be set to `always`, `empty`, `never`, `nonempty` or `once`. When set to `always`, Firenvim will always take over elements for you. When set to `empty`, Firenvim will only take over empty elements. When set to `never`, Firenvim will never automatically appear, thus forcing you to use a keyboard shortcut in order to make the Firenvim frame appear. When set to `nonempty`, Firenvim will only take over elements that aren't empty. When set to `once`, Firenvim will take over elements the first time you select them, which means that after `:q`'ing Firenvim, you'll have to use the keyboard shortcut to make it appear again. Here's how to use the `takeover` setting:
+
+```vim
+let fc['.*'] = { 'takeover': 'always' } }
+```
+
+### Using the external command line
+
+You can chose to use an external command line (and thus save a line of space) by setting the localSetting named `cmdline` to `firenvim`. It's default value is `neovim`:
+
+```vim
+let fc['.*'] = { 'cmdline' : 'firenvim' }
+```
+
+### Special characters on OSX
+
+On OSX, on certain layouts (e.g. the swedish layout), pressing special characters (e.g. `@`) requires combining `Alt` and another key. Because of browser/OS limitations, it is impossible to tell the difference between a user trying to press `<A-@>` and just `@`. Because of that, on OSX, Firenvim decides to ignore the Alt key when you press any non-alphanumerical key. This behavior can be changed by setting the `alt` setting of the `globalSettings` configuration to `all`, like this:
 
 ```vim
 let g:firenvim_config = {
-    \ 'localSettings': {
-        \ '.*': { 'selector': '', 'priority': 0, },
-        \ 'github\.com': { 'selector': 'textarea', 'priority': 1 },
-    \ }
-\ }
+	\ "globalSettings": {
+		\ "alt": "all"
+	\}
+\}
 ```
+Non-OSX users can get the default OSX behavior by setting the `alt` setting to `alphanum` (but they shouldn't ever need to do that).
 
-Note that even with this config, manually triggering Firenvim will still work on every page.
+### Interacting with the page
 
-#### Configuring Firenvim to not always take over elements
-
-Firenvim has a setting named `takeover` that can be set to `always`, `empty` or `once`. When set to `always`, firenvim will always take over elements for you. When set to `empty`, firenvim will only take over empty elements. When set to `once`, Firenvim will take over elements the first time you select them, which means that after `:q`'ing firenvim, you'll have to manually trigger it to make it appear again. Here's how to use the `takeover` setting:
+You can move focus from the editor back to the page or the input field by calling `firenvim#focus_page` or `firenvim#focus_input`. Here's an example that does exactly this if you press `<Esc>` twice while in normal mode:
 
 ```vim
-let g:firenvim_config = {
-    \ 'localSettings': {
-        \ '.*': { 'takeover': 'empty' }
-    \ }
-\ }
+nnoremap <Esc><Esc> :call firenvim#focus_page()<CR>
 ```
 
-#### Automatically syncing changes to the page
+There is also a function named `firenvim#hide_frame()` which will temporarily hide the Firenvim frame. You will then be able to bring the neovim frame back either by unfocusing and refocusing the textarea or by using the [keybinding to manually trigger Firenvim](https://github.com/glacambre/firenvim#manually-triggering-firenvim).
+
+```vim
+nnoremap <C-z> :call firenvim#hide_frame()<CR>
+```
+
+A function named `firenvim#press_keys()` will allow you to send key events to the underlying input field by taking a list of vim-like keys (e.g. `a`, `<CR>`, `<Space>`…) as argument. Note that this only "triggers" an event, it does not add text to the input field. It can be useful with chat apps, if used like this:
+
+```vim
+au BufEnter riot.im_* inoremap <CR> <Esc>:w<CR>:call firenvim#press_keys("<LT>CR>")<CR>ggdGa
+```
+
+Known Issues: some chat apps do not react to firenvim#press_keys (e.g. Slack). Others steal focus from the neovim frame (e.g. Riot.im).
+
+### Automatically syncing changes to the page
 
 Since Firenvim just uses the BufWrite event in order to detect when it needs to write neovim's buffers to the page, Firenvim can be made to automatically synchronize all changes like this:
 
@@ -173,92 +264,6 @@ endfunction
 
 au TextChanged * ++nested call Delay_My_Write()
 au TextChangedI * ++nested call Delay_My_Write()
-```
-
-#### Interacting with the page
-
-You can move focus from the editor back to the page or the input field by calling `firenvim#focus_page` or `firenvim#focus_input`. Here's an example that does exactly this if you press `<Esc>` twice while in normal mode:
-
-```vim
-nnoremap <Esc><Esc> :call firenvim#focus_page()<CR>
-```
-
-There is also a function named `firenvim#hide_frame()` which will temporarily hide the firenvim frame. You will then be able to bring the neovim frame back either by unfocusing and refocusing the textarea or by using the [keybinding to manually trigger firenvim](https://github.com/glacambre/firenvim#manually-triggering-firenvim).
-
-```vim
-nnoremap <C-z> :call firenvim#hide_frame()<CR>
-```
-
-A function named `firenvim#press_keys()` will allow you to send key events to the underlying input field by taking a list of vim-like keys (e.g. `a`, `<CR>`, `<Space>`…) as argument. Note that this only "triggers" an event, it does not add text to the input field. It can be useful with chat apps, if used like this:
-
-```vim
-au BufEnter riot.im_* inoremap <CR> <Esc>:w<CR>:call firenvim#press_keys("<LT>CR>")<CR>ggdGa
-```
-
-Known Issues: some chat apps do not react to firenvim#press_keys (e.g. Slack). Others steal focus from the neovim frame (e.g. Riot.im).
-
-#### Using the external command line
-
-You can chose to use an external command line (and thus save a line of space) by setting the localSetting named `cmdline` to `firenvim`:
-
-```vim
-let g:firenvim_config = {
-	\ 'localSettings': {
-		\ '.*': { 'cmdline' : 'firenvim' }
-	\}
-\}
-```
-
-#### Special characters on OSX
-
-On OSX, on certain layouts (e.g. the swedish layout), pressing special characters (e.g. `@`) requires combining `Alt` and another key. Because of browser/OS limitations, it is impossible to tell the difference between a user trying to press `<A-@>` and just `@`. Because of that, on OSX, Firenvim decides to ignore the Alt key when you press any non-alphanumerical key. This behavior can be changed by setting the `alt` setting of the `globalSettings` configuration to `all`, like this:
-```
-let g:firenvim_config = {
-	\ "globalSettings": {
-		\ "alt": "all"
-	\}
-\}
-```
-Non-OSX users can get the default OSX behavior by setting the `alt` setting to `alphanum` (but they shouldn't ever need to do that).
-
-### Configuring Neovim's behavior
-
-When it starts Neovim, Firenvim sets the variable `g:started_by_firenvim` which you can check to run different code in your init.vim. For example:
-
-```vim
-if exists('g:started_by_firenvim')
-  set laststatus=0
-else
-  set laststatus=2
-endif
-```
-
-Alternatively, you can detect Firenvim using the `UIEnter` autocmd event:
-
-```vim
-function! s:IsFirenvimActive(event) abort
-  if !exists('*nvim_get_chan_info')
-    return 0
-  endif
-  let l:ui = nvim_get_chan_info(a:event.chan)
-  return has_key(l:ui, 'client') && has_key(l:ui.client, "name") &&
-      \ l:ui.client.name is# "Firenvim"
-endfunction
-
-function! OnUIEnter(event) abort
-  if s:IsFirenvimActive(a:event)
-    set laststatus=0
-  endif
-endfunction
-autocmd UIEnter * call OnUIEnter(deepcopy(v:event))
-```
-
-Similarly, you can detect when Firenvim disconnects from a Neovim instance with the `UILeave` autocommand.
-
-If you want to use different settings depending on the textarea you're currently editing, you can use autocommands to do that too. All buffers are named like this: `domainname_page_selector.txt` (see the [toFileName function](src/utils/utils.ts)). This means that you can for example set the file type to markdown for all GitHub buffers:
-
-```vim
-au BufEnter github.com_*.txt set filetype=markdown
 ```
 
 ## Drawbacks
