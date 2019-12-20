@@ -24,13 +24,18 @@ const global = {
     lastEditorLocation: ["", "", 0] as [string, string, number],
     // nvimify: triggered when an element is focused, takes care of creating
     // the editor iframe, appending it to the page and focusing it.
-    nvimify: async (evt: FocusEvent) => {
+    nvimify: async (evt: { target: EventTarget }) => {
         if (global.disabled instanceof Promise) {
             await global.disabled;
         }
-        if (global.disabled) {
+
+        const takeover = getConf().takeover;
+        // Checking evt instanceof FocusEvent because we don't want to prevent
+        // forceNvimify from working
+        if (global.disabled || (evt instanceof FocusEvent && takeover === "never")) {
             return;
         }
+
         const elem = getEditorElement(evt.target as HTMLElement);
         const selector = computeSelector(elem);
 
@@ -42,7 +47,6 @@ const global = {
             return;
         }
 
-        const takeover = getConf().takeover;
         if (takeover === "empty" || takeover === "nonempty") {
             const content = await _getElementContent(elem);
             if ((content !== "" && takeover === "empty")
