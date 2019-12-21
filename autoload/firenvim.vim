@@ -2,6 +2,9 @@ let s:firenvim_done = 0
 let s:script_dir = expand('<sfile>:p:h:h')
 
 function! firenvim#get_chan() abort
+        if (exists('g:last_focused_firenvim_channel'))
+                return g:last_focused_firenvim_channel
+        endif
         let l:uis = filter(nvim_list_uis(),
                 \ {i, ui -> nvim_get_chan_info(ui.chan).client.name ==? 'Firenvim'})
         if len(l:uis) != 1
