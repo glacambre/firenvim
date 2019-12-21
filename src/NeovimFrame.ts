@@ -28,7 +28,7 @@ window.addEventListener("load", async () => {
         // info to be available when UIEnter is triggered
         const extInfo = browser.runtime.getManifest();
         const [major, minor, patch] = extInfo.version.split(".");
-        const clientInfoPromise = nvim.set_client_info(extInfo.name,
+        nvim.set_client_info(extInfo.name,
             { major, minor, patch },
             "ui",
             {},
@@ -83,30 +83,28 @@ window.addEventListener("load", async () => {
                 return promise.then((__: any) => nvim.win_set_cursor(0, [line, col]));
             });
 
-        // Wait for client info to be set and ask for notifications when the file
-        // is written/nvim is closed
-        clientInfoPromise.then(() => nvim.list_chans())
-            .then((channels: any) => {
-                const self: any = Object.values(channels)
-                    .find((channel: any) => channel.client
-                        && channel.client.name
-                        && channel.client.name.match(new RegExp(extInfo.name, "i")));
-                if (!self) {
-                    throw new Error("Couldn't find own channel.");
-                }
-                nvim.call_atomic((`augroup FirenvimAugroup
-                                au!
-                                autocmd BufWrite ${filename} `
-                                    + `call rpcnotify(${self.id}, `
-                                        + `'firenvim_bufwrite', `
-                                        + `{`
-                                            + `'text': nvim_buf_get_lines(0, 0, -1, 0),`
-                                            + `'cursor': nvim_win_get_cursor(0),`
-                                        + `})
-                                autocmd VimLeave * call delete('${filename}')
-                                autocmd VimLeave * call rpcnotify(${self.id}, 'firenvim_vimleave')
-                            augroup END`).split("\n").map(command => ["nvim_command", [command]]));
-            });
+        // Keep track of last active instance (necessary for firenvim#focus_input() & others)
+        const chan = nvim.get_current_channel();
+        function setCurrentChan() {
+            nvim.set_var("last_focused_firenvim_channel", chan);
+        }
+        setCurrentChan();
+        window.addEventListener("focus", setCurrentChan);
+        window.addEventListener("click", setCurrentChan);
+
+        // Ask for notifications when user writes/leaves firenvim
+        nvim.call_atomic((`augroup FirenvimAugroup
+                        au!
+                        autocmd BufWrite ${filename} `
+                            + `call rpcnotify(${chan}, `
+                                + `'firenvim_bufwrite', `
+                                + `{`
+                                    + `'text': nvim_buf_get_lines(0, 0, -1, 0),`
+                                    + `'cursor': nvim_win_get_cursor(0),`
+                                + `})
+                        autocmd VimLeave * call delete('${filename}')
+                        autocmd VimLeave * call rpcnotify(${chan}, 'firenvim_vimleave')
+                    augroup END`).split("\n").map(command => ["nvim_command", [command]]));
 
         const settings = (await settingsPromise).globalSettings;
         keyHandler.addEventListener("keydown", (evt) => {
