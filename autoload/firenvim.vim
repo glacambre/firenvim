@@ -217,7 +217,7 @@ function! s:get_executable_content(data_dir, prolog) abort
                 return  "@echo off\r\n" .
                                         \ "cd \"" . a:data_dir . "\"\r\n" .
                                         \ a:prolog . "\r\n" .
-                                        \ "\"" . s:get_progpath() . "\" --headless -c \"call firenvim#run()\"\r\n"
+                                        \ "\"" . s:get_progpath() . "\" --headless --cmd \"let g:started_by_firenvim = v:true\" -c \"call firenvim#run()\"\r\n"
         endif
         return "#!/bin/sh\n" .
                                 \ 'cd ' . a:data_dir . "\n" .
