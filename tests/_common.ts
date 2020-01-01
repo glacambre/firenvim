@@ -104,6 +104,36 @@ export async function testModifiers(driver: any) {
         await driver.wait(async () => ["\u0011<M-q><D-q>", "\u0001<M-a><D-a>"].includes(await input.getAttribute("value")));
 }
 
+export async function testGStartedByFirenvim(driver: any) {
+        await loadLocalPage(driver, "simple.html");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.sleep(500);
+        console.log("Typing a<C-r>=g:started_by_firenvim<CR><Esc>:wq<CR>…");
+        await sendKeys(driver, ["a"])
+        await driver.actions()
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("r")
+                .keyUp("r")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await sendKeys(driver, "=g:started_by_firenvim".split("")
+                       .concat([webdriver.Key.ENTER])
+                       .concat([webdriver.Key.ESCAPE])
+                       .concat(":wq!".split(""))
+                       .concat(webdriver.Key.ENTER));
+        await driver.sleep(500);
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+        console.log("Waiting for value update…");
+        await driver.wait(async () => (await input.getAttribute("value")) === "true");
+}
+
 export async function testCodemirror(driver: any) {
         await loadLocalPage(driver, "codemirror.html");
         console.log("Looking for codemirror div…");
