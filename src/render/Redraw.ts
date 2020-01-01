@@ -24,6 +24,49 @@ export function onKeyPressed(key: string) {
       historyShown = false;
    }
 }
+function getGrid(id: number, elem: HTMLElement) {
+   if (grids[id] === undefined) {
+      const lastGrid = grids[grids.length - 1] || { width: 0, height: 0 };
+      grids[id] = new Grid(lastGrid.width, lastGrid.height);
+      grids[id].attach(elem);
+   }
+   return grids[id];
+}
+
+let windowId: number;
+export function selectWindow(wid: number) {
+   if (windowId !== undefined) {
+      return;
+   }
+   windowId = wid;
+}
+export function getWindowId() {
+   return windowId;
+}
+function matchesSelectedWindow(wid: number) {
+   return windowId === undefined || windowId === wid;
+}
+
+let gridId: number;
+function selectGrid(gid: number) {
+   if (gridId !== undefined) {
+      return;
+   }
+   gridId = gid;
+   grids.forEach((grid, i) => {
+      if (i !== gridId) {
+         grid.detach();
+      }
+   });
+}
+
+export function getGridId() {
+   return gridId || 0;
+}
+
+function matchesSelectedGrid(gid: number) {
+   return gridId === undefined || gridId === gid;
+}
 
 const redrawFuncs = {
    busy_start: () => {
@@ -92,9 +135,17 @@ const redrawFuncs = {
          nvimHighlightStyle.innerText = toCss(highlights);
    },
    flush: (elem: HTMLElement) => nvimHighlightStyle.innerText = toCss(highlights),
-   grid_clear: (elem: HTMLElement, selector: string, [id]: [number]) => grids[id].clear(),
+   grid_clear: (elem: HTMLElement, selector: string, [id]: [number]) => {
+      if (!matchesSelectedGrid(id)) {
+         return;
+      }
+      getGrid(id, elem).clear();
+   },
    grid_cursor_goto: (elem: HTMLElement, selector: string, [id, y, x]: GotoUpdate) => {
-      grids[id].cursor_goto(x, y);
+      if (!matchesSelectedGrid(id)) {
+         return;
+      }
+      getGrid(id, elem).cursor_goto(x, y);
       setTimeout(() => {
          const keyHandler = document.getElementById("keyhandler");
          const [cellWidth, cellHeight] = getCharSize(elem);
@@ -102,32 +153,37 @@ const redrawFuncs = {
          keyHandler.style.top = `${cellHeight * y}px`;
       });
    },
-   grid_line: (elem: HTMLElement, selector: string, [id, row, col, contents]: LineUpdate) =>
-   contents.reduce(({ prevCol, highlight }, content) => {
-      const [chara, high = highlight, repeat = 1] = content;
-      const limit = prevCol + repeat;
-      for (let i = prevCol; i < limit; i += 1) {
-         grids[id].get(row).get(i).value = chara;
-         grids[id].get(row).get(i).highlight = high;
+   grid_line: (elem: HTMLElement, selector: string, [id, row, col, contents]: LineUpdate) => {
+      if (!matchesSelectedGrid(id)) {
+         return;
       }
-      return { prevCol: limit, highlight: high };
-   }, { prevCol: col, highlight: 0 }),
+      contents.reduce(({ prevCol, highlight }, content) => {
+         const [chara, high = highlight, repeat = 1] = content;
+         const limit = prevCol + repeat;
+         for (let i = prevCol; i < limit; i += 1) {
+            getGrid(id, elem).get(row).get(i).value = chara;
+            getGrid(id, elem).get(row).get(i).highlight = high;
+         }
+         return { prevCol: limit, highlight: high };
+      }, { prevCol: col, highlight: 0 });
+   },
    grid_resize: (elem: HTMLElement, selector: string, resize: ResizeUpdate) => {
       const [id, width, height] = resize;
-      if (grids[id] !== undefined) {
-         grids[id].resize(width, height);
-      } else {
-         grids[id] = new Grid(width, height);
-         grids[id].attach(elem);
+      if (!matchesSelectedGrid(id)) {
+         return;
       }
+      getGrid(id, elem).resize(width, height);
       const [cellWidth, cellHeight] = getCharSize(elem);
       page.resizeEditor(selector, width * cellWidth, height * cellHeight);
    },
    grid_scroll: (elem: HTMLElement,
                  selector: string,
                  [id, ...rest]: [number, number, number, number, number, number, number]) => {
-         grids[id].scroll(...rest);
-      },
+      if (!matchesSelectedGrid(id)) {
+         return;
+      }
+      getGrid(id, elem).scroll(...rest);
+   },
    hl_attr_define: (elem: HTMLElement, selector: string, [id, {
       background,
       bold,
@@ -245,7 +301,12 @@ const redrawFuncs = {
                }
                nvimGuifont.innerHTML = `* { ${guifontsToCSS(value)} }`;
                const [width, height] = getGridSize(elem);
-               nvimFunctions.ui_try_resize(width, height);
+               const gId = getGridId();
+               if (gId) {
+                  nvimFunctions.ui_try_resize_grid(gId, width, height);
+               } else {
+                  nvimFunctions.ui_try_resize(width, height);
+               }
                break;
             case "linespace":
                nvimLinespace.innerText = `.nvim_row { border-bottom: ${value}px }`;
@@ -263,6 +324,11 @@ const redrawFuncs = {
                // ext_termcolors: not needed
                break;
          }
+   },
+   win_external_pos: (_: any, __: any, [grid, win]: number[]) => {
+      if (windowId !== undefined && matchesSelectedWindow(win)) {
+         selectGrid(grid);
+      }
    },
 };
 

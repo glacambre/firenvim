@@ -3,6 +3,7 @@ if bit == nil then
 end
 
 local utils = require("utils")
+local io = require("io")
 
 local opcodes = {
         text = 1,

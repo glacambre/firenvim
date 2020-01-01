@@ -3,6 +3,7 @@ import { Cursor } from "./Cursor";
 import { Row } from "./Row";
 
 export class Grid {
+    public parent: HTMLElement;
     private elem: HTMLDivElement;
     private rows: Row[] = [];
     private cursorLine: Row = undefined;
@@ -17,8 +18,9 @@ export class Grid {
         }
     }
 
-    public attach(parent: HTMLElement) {
-        parent.appendChild(this.elem);
+    public attach(p: HTMLElement) {
+        this.parent = p;
+        this.parent.appendChild(this.elem);
     }
 
     public clear() {

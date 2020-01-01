@@ -17,9 +17,6 @@ export async function neovim(
     const requests = new Map<number, { resolve: any, reject: any }>();
 
     const socket = new WebSocket(`ws://127.0.0.1:${port}/${password}`);
-    document.addEventListener("beforeunload", () => {
-        socket.close();
-    });
     socket.binaryType = "arraybuffer";
     socket.addEventListener("close", ((_: any) => {
         page.killEditor(selector);
@@ -87,6 +84,9 @@ export async function neovim(
     });
 
     const { 0: channel, 1: apiInfo } = (await request("nvim_get_api_info", [])) as INvimApiInfo;
+
+    stdout.setTypes(apiInfo.types);
+
     Object.assign(functions, apiInfo.functions
         .filter(f => f.deprecated_since === undefined)
         .reduce((acc, cur) => {

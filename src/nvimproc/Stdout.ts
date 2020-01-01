@@ -6,6 +6,7 @@ export class Stdout {
     private messageNames = new Map([[0, "request"], [1, "response"], [2, "notification"]]);
     // Holds previously-received, incomplete and unprocessed messages
     private prev = new Uint8Array(0);
+    private msgpackConfig = {} as msgpack.DecoderOptions;
 
     constructor(private socket: WebSocket) {
         this.socket.addEventListener("message", this.onMessage.bind(this));
@@ -20,6 +21,17 @@ export class Stdout {
         arr.push(listener);
     }
 
+    public setTypes(types: {[key: string]: { id: number }}) {
+        this.msgpackConfig.codec = msgpack.createCodec({ preset: true });
+        Object
+            .entries(types)
+            .forEach(([name, { id }]) =>
+                     this
+                        .msgpackConfig
+                        .codec
+                        .addExtUnpacker(id, (data: any) => msgpack.decode(data, this.msgpackConfig)));
+    }
+
     private onMessage(msg: any) {
         const data = new Uint8Array(msg.data);
         const uint8arr = new Uint8Array(this.prev.length + data.length);
@@ -27,7 +39,7 @@ export class Stdout {
         uint8arr.set(data, this.prev.length);
         let decoded;
         try {
-            decoded = msgpack.decode(uint8arr);
+            decoded = msgpack.decode(uint8arr, this.msgpackConfig);
         } catch (e) {
             // Buffer shortage means rpc messages are split
             if (e.message !== "BUFFER_SHORTAGE") {
@@ -35,6 +47,11 @@ export class Stdout {
                 throw e;
             }
             this.prev = uint8arr;
+            return;
+        }
+        if (typeof decoded[Symbol.iterator] !== "function") {
+            // TODO: find out why we sometimes get a non-iterable but msgpack-decodable byte
+            // This started happening when custom messagepack codecs were added
             return;
         }
         this.prev = new Uint8Array(0);
