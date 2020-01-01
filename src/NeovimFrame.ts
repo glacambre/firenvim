@@ -1,13 +1,13 @@
 import * as browser from "webextension-polyfill";
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
-import { onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
-import { confReady, getConfForUrl } from "./utils/configuration";
+import { getGridId, getWindowId, onKeyPressed as rendererOnKeyPressed, selectWindow } from "./render/Redraw";
+import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, isFirefox, toFileName } from "./utils/utils";
 
 const locationPromise = page.getEditorLocation();
-const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNewNeovimInstance"] });
+const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
 const settingsPromise = browser.storage.local.get("globalSettings");
 
 window.addEventListener("load", async () => {
@@ -29,7 +29,7 @@ window.addEventListener("load", async () => {
         // info to be available when UIEnter is triggered
         const extInfo = browser.runtime.getManifest();
         const [major, minor, patch] = extInfo.version.split(".");
-        nvim.set_client_info(extInfo.name,
+        nvim.set_client_info(extInfo.name + Math.random(),
             { major, minor, patch },
             "ui",
             {},
@@ -37,11 +37,14 @@ window.addEventListener("load", async () => {
         );
 
         await confReady;
+        const persistent = getGlobalConf().server === "persistent";
         nvim.ui_attach(cols, rows, {
             ext_linegrid: true,
-            ext_messages: getConfForUrl(url).cmdline === "firenvim",
+            ext_messages: getConfForUrl(url).cmdline === "firenvim" || persistent,
+            ext_multigrid: persistent,
             rgb: true,
         });
+
         let resizeReqId = 0;
         browser.runtime.onMessage.addListener((request: any, sender: any, sendResponse: any) => {
             if (request.selector === selector
@@ -61,17 +64,32 @@ window.addEventListener("load", async () => {
                 const [cellWidth, cellHeight] = getCharSize(host);
                 const nCols = Math.floor(width / cellWidth);
                 const nRows = Math.floor(height / cellHeight);
-                nvim.ui_try_resize(nCols, nRows);
+                nvim.ui_try_resize_grid(getGridId(), nCols, nRows);
                 page.resizeEditor(selector, nCols * cellWidth, nRows * cellHeight);
             }
         });
 
+        if (persistent) {
+            await nvim
+                .open_win(0, true, { width: cols, height: rows, focusable: true, external: true })
+                .then(selectWindow);
+        }
+        // Create file, set its content to the textarea's, write it
         const filename = toFileName(url, selector);
         const content = await contentPromise;
         const [line, col] = cursor;
         nvim.call_function("writefile", [content.split("\n"), filename])
             .then(() => nvim.command(`noswapfile edit ${filename} `
                                      + `| call nvim_win_set_cursor(0, [${line}, ${col}])`));
+
+        window.addEventListener("beforeunload", () => {
+            nvim.ui_detach();
+            if (persistent) {
+                nvim.win_close(getWindowId(), true);
+            } else {
+                nvim.command("qall!");
+            }
+        });
 
         // Keep track of last active instance (necessary for firenvim#focus_input() & others)
         const chan = nvim.get_current_channel();
@@ -82,8 +100,22 @@ window.addEventListener("load", async () => {
         window.addEventListener("focus", setCurrentChan);
         window.addEventListener("click", setCurrentChan);
 
+        const augroupName = `FirenvimAugroupChan${chan}`;
+        // Cleanup means:
+        // - notify frontend that we're shutting down
+        // - delete file
+        // - remove own augroup
+        const cleanup = `call rpcnotify(${chan}, 'firenvim_vimleave') | `
+                    + `call delete('${filename}')`;
+        let winCleanup = "";
+        if (persistent) {
+            winCleanup = `autocmd WinClosed * `
+                + `if expand("<afile>") == ${getWindowId()} | `
+                    + cleanup
+                + ` | endif`;
+        }
         // Ask for notifications when user writes/leaves firenvim
-        nvim.call_atomic((`augroup FirenvimAugroup
+        nvim.call_atomic((`augroup ${augroupName}
                         au!
                         autocmd BufWrite ${filename} `
                             + `call rpcnotify(${chan}, `
@@ -92,8 +124,8 @@ window.addEventListener("load", async () => {
                                     + `'text': nvim_buf_get_lines(0, 0, -1, 0),`
                                     + `'cursor': nvim_win_get_cursor(0),`
                                 + `})
-                        autocmd VimLeave * call delete('${filename}')
-                        autocmd VimLeave * call rpcnotify(${chan}, 'firenvim_vimleave')
+                        ${winCleanup}
+                        au VimLeave * ${cleanup}
                     augroup END`).split("\n").map(command => ["nvim_command", [command]]));
 
         const settings = (await settingsPromise).globalSettings;
@@ -182,7 +214,7 @@ window.addEventListener("load", async () => {
             nvim.input_mouse(button,
                              action,
                              modifiers,
-                             0,
+                             getGridId(),
                              Math.floor(evt.pageY / cHeight),
                              Math.floor(evt.pageX / cWidth));
             keyHandler.focus();

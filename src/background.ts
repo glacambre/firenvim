@@ -15,8 +15,10 @@
  * content scripts. It rarely acts on its own.
  */
 import * as browser from "webextension-polyfill";
-import { ISiteConfig } from "./utils/configuration";
+import { getGlobalConf, ISiteConfig } from "./utils/configuration";
 import { getIconImageData, IconKind } from "./utils/utils";
+
+let preloadedInstance: Promise<any>;
 
 // We can't use the sessions.setTabValue/getTabValue apis firefox has because
 // chrome doesn't support them. Instead, we create a map of tabid => {} kept in
@@ -100,6 +102,9 @@ function registerErrors(nvim: any, reject: any) {
             updateIcon();
             reject(error);
         }
+        if (getGlobalConf().server === "persistent") {
+            preloadedInstance = createNewInstance();
+        }
     });
     return timeout;
 }
@@ -130,10 +135,10 @@ function applySettings(settings: any) {
     }
     function makeDefaultLocalSetting(sett: { localSettings: { [key: string]: any } },
                                      site: string,
-                                     conf: ISiteConfig) {
+                                     obj: ISiteConfig) {
         makeDefaults(sett.localSettings, site, {});
-        for (const key of (Object.keys(conf) as (keyof typeof conf)[])) {
-            makeDefaults(sett.localSettings[site], key, conf[key]);
+        for (const key of (Object.keys(obj) as (keyof typeof obj)[])) {
+            makeDefaults(sett.localSettings[site], key, obj[key]);
         }
     }
     if (settings === undefined) {
@@ -141,6 +146,13 @@ function applySettings(settings: any) {
     }
 
     makeDefaults(settings, "globalSettings", {});
+    // "server": "persistent" | "ephemeral"
+    // #197: Allow multiple firenvim instances to connect to a single server
+    makeDefaults(settings.globalSettings, "server", "ephemeral");
+    // "server_url": string
+    // The domain name + port firenvim should connect to. e.g. localhost:8000
+    // Leaving this empty will let firenvim connect to a random port
+    makeDefaults(settings.globalSettings, "server_url", "");
     // "alt": "all" | "alphanum"
     // #202: Only register alt key on alphanums to let swedish osx users type
     //       special chars
@@ -206,6 +218,11 @@ function createNewInstance() {
     });
 }
 
+// Creating this first instance serves two purposes: make creating new neovim
+// frames fast and also initialize settings the first time Firenvim is enabled
+// in a browser.
+preloadedInstance = createNewInstance();
+
 async function toggleDisabled() {
     const tabId = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
     const tabValue = getTabValue(tabId, "disabled");
@@ -215,20 +232,17 @@ async function toggleDisabled() {
     return browser.tabs.sendMessage(tabId, { args: [disabled], funcName: ["setDisabled"] });
 }
 
-// Creating this first instance serves two purposes: make creating new neovim
-// frames fast and also initialize settings the first time Firenvim is enabled
-// in a browser.
-let preloadedInstance = createNewInstance();
-
 Object.assign(window, {
     // We need to stick the browser polyfill in `window` if we want the `exec`
     // call to be able to find it on Chrome
     browser,
     exec: (sender: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
     getError,
-    getNewNeovimInstance: (sender: any, args: any) => {
+    getNeovimInstance: (sender: any, args: any) => {
         const result = preloadedInstance;
-        preloadedInstance = createNewInstance();
+        if (getGlobalConf().server === "ephemeral") {
+            preloadedInstance = createNewInstance();
+        }
         return result;
     },
     getNvimPluginVersion: () => nvimPluginVersion,

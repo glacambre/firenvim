@@ -3,11 +3,20 @@ import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variab
 export interface ISiteConfig {
     selector: string;
     priority: number;
-    takeover: "always" | "once" | "empty" | "nonempty";
+    takeover: "always" | "once" | "empty" | "nonempty" | "never";
     cmdline: "neovim" | "firenvim";
 }
 
-let conf: {[key: string]: ISiteConfig} = {};
+export interface IConfig {
+    globalSettings: {
+        alt: "alphanum" | "all",
+        server: "persistent" | "ephemeral",
+        server_url: string,
+    };
+    localSettings: { [key: string]: ISiteConfig };
+}
+
+let conf: IConfig = {} as IConfig;
 
 export const confReady = new Promise(resolve => {
     browser.storage.local.get().then((obj: any) => {
@@ -19,14 +28,18 @@ export const confReady = new Promise(resolve => {
 browser.storage.onChanged.addListener((changes: any) => {
     Object
         .entries(changes)
-        .forEach(([key, value]: [string, any]) => conf[key] = value.newValue);
+        .forEach(([key, value]: [keyof IConfig, any]) => conf[key] = value.newValue);
 });
+
+export function getGlobalConf() {
+    return conf.globalSettings;
+}
 
 export function getConf() {
     return getConfForUrl(document.location.href);
 }
 
-export function getConfForUrl(url: string) {
+export function getConfForUrl(url: string): ISiteConfig {
     const localSettings = conf.localSettings;
     function or1(val: number) {
         if (val === undefined) {
@@ -40,5 +53,5 @@ export function getConfForUrl(url: string) {
     return Array.from(Object.entries(localSettings))
         .filter(([pat, sel]) => (new RegExp(pat)).test(url))
         .sort((e1, e2) => (or1(e1[1].priority) - or1(e2[1].priority)))
-        .reduce((acc, [_, cur]) => Object.assign(acc, cur), {});
+        .reduce((acc, [_, cur]) => Object.assign(acc, cur), {} as ISiteConfig);
 }
