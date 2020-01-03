@@ -263,6 +263,29 @@ function! s:key_to_ps1_str(key, manifest_path) abort
                                 \ '\" -Value "' . a:manifest_path . '"'
 endfunction
 
+function! s:get_browser_configuration() abort
+        return {
+                \'firefox': {
+                        \ 'has_config': s:firefox_config_exists(),
+                        \ 'manifest_content': function('s:get_firefox_manifest'),
+                        \ 'manifest_dir_path': function('s:get_firefox_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim',
+                \},
+                \'chrome': {
+                        \ 'has_config': s:chrome_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_chrome_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \},
+                \'chromium': {
+                        \ 'has_config': s:chromium_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_chromium_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Chromium\NativeMessagingHosts\firenvim',
+                \},
+        \}
+endfunction
+
 " Installing firenvim requires several steps:
 " - Create a batch/shell script that takes care of starting neovim with the
 "   right arguments. This is needed because the webextension api doesn't let
@@ -304,29 +327,10 @@ function! firenvim#install(...) abort
         call writefile(split(l:execute_nvim, "\n"), l:execute_nvim_path)
         call setfperm(l:execute_nvim_path, 'rwx------')
 
-        let l:browsers = {
-                                \'firefox': {
-                                \ 'has_config': s:firefox_config_exists(),
-                                \ 'manifest_content': function('s:get_firefox_manifest'),
-                                \ 'manifest_dir_path': function('s:get_firefox_manifest_dir_path'),
-                                \ 'registry_key': 'HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim',
-                                \},
-                                \'chrome': {
-                                \ 'has_config': s:chrome_config_exists(),
-                                \ 'manifest_content': function('s:get_chrome_manifest'),
-                                \ 'manifest_dir_path': function('s:get_chrome_manifest_dir_path'),
-                                \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
-                                \},
-                                \'chromium': {
-                                \ 'has_config': s:chromium_config_exists(),
-                                \ 'manifest_content': function('s:get_chrome_manifest'),
-                                \ 'manifest_dir_path': function('s:get_chromium_manifest_dir_path'),
-                                \ 'registry_key': 'HKCU:\Software\Chromium\NativeMessagingHosts\firenvim',
-                                \},
-                                \}
+        let l:browsers = s:get_browser_configuration()
 
         let l:powershell_script = ''
-        for l:name in ['firefox', 'chrome', 'chromium']
+        for l:name in keys(l:browsers)
                 let l:cur_browser = l:browsers[l:name]
                 if !l:cur_browser['has_config'] && !l:force_install
                         echo 'No config detected for ' . l:name . '. Skipping.'
@@ -337,10 +341,6 @@ function! firenvim#install(...) abort
                 let l:manifest_dir_path = l:cur_browser['manifest_dir_path']()
                 let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim.json'])
                 
-                if has('win32')
-                        let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim-' . l:name . '.json'])
-                endif
-
                 if has('win32')
                         let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim-' . l:name . '.json'])
                 endif
@@ -368,5 +368,41 @@ function! firenvim#install(...) abort
 
                         echo 'Created registry key for ' . l:name . '.'
                 endif
+        endfor
+endfunction
+
+" Removes files created by Firenvim during its installation process
+function! firenvim#uninstall() abort
+
+        let l:data_dir = s:get_data_dir_path()
+        call delete(l:data_dir, 'rf')
+        echo 'Removed firenvim data directory.'
+
+        let l:browsers = s:get_browser_configuration()
+
+        for l:name in keys(l:browsers)
+                let l:cur_browser = l:browsers[l:name]
+                if !l:cur_browser['has_config']
+                        continue
+                endif
+
+                let l:manifest_dir_path = l:cur_browser['manifest_dir_path']()
+                let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim.json'])
+
+                if has('win32')
+                        let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim-' . l:name . '.json'])
+                endif
+
+                if has('win32')
+                        let l:ps1_content = 'Remove-Item -Path "' . l:cur_browser['registry_key'] . '" -Recurse'
+                        let o = system(['powershell', '-Command', '-'], [l:ps1_content])
+                        if v:shell_error
+                          echo o
+                        endif
+                        echo 'Removed registry key for ' . l:name . '.'
+                endif
+
+                call delete(l:manifest_path)
+                echo 'Removed native manifest for ' . l:name . '.'
         endfor
 endfunction
