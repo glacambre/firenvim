@@ -135,11 +135,10 @@ const redrawFuncs = {
       nvimCursorStyle.innerText = cursorStyles[modeid];
    },
    mode_info_set: (elem: HTMLElement, selector: string, [cursorStyleEnabled, modeInfo]: [boolean, any]) => {
-      if (cursorStyleEnabled) {
-         modeInfo.forEach((info: any, idx: number) => {
-            const { cursor_shape: shape } = info;
-            let cssStr = `html body span.nvim_cursor { `;
-            switch (shape) {
+      modeInfo.forEach((info: any, idx: number) => {
+         const { cursor_shape: shape } = info;
+         let cssStr = `html body span.nvim_cursor { `;
+         switch (shape) {
                case "vertical":
                   cssStr += `box-sizing: border-box;`;
                   cssStr += `border-left: solid 1px ${highlights[0].foreground};`;
@@ -153,10 +152,9 @@ const redrawFuncs = {
                   cssStr += `color: ${highlights[0].background};`;
                   break;
             }
-            cssStr += "}";
-            cursorStyles[idx] = cssStr;
+         cssStr += "}";
+         cursorStyles[idx] = cssStr;
          });
-      }
    },
    msg_clear: (_: any,
                __: any,
