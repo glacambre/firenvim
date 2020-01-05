@@ -215,7 +215,7 @@ function setupListeners(selector: string) {
                 // implements some kind of smooth scrolling that doesn't make
                 // the textarea move immediately. In order to deal with these
                 // cases, schedule a last redraw in a few milliseconds
-                setTimeout(() => onScroll(false), 50);
+                setTimeout(() => onScroll(false), 100);
             }
         });
     }
@@ -224,7 +224,13 @@ function setupListeners(selector: string) {
     }
     window.addEventListener("scroll", doScroll);
     window.addEventListener("wheel", doScroll);
-    window.addEventListener("resize", doScroll);
+    if ((window as any).ResizeObserver !== undefined) {
+        (new ((window as any).ResizeObserver)((entries: any[]) => {
+            onScroll(true);
+        })).observe(document.documentElement);
+    } else {
+        window.addEventListener("resize", doScroll);
+    }
 
     function addNvimListener(elem: Element) {
         elem.removeEventListener("focus", global.nvimify);
