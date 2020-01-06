@@ -1,3 +1,7 @@
+if bit == nil then
+        bit = require("bit")
+end
+
 local utils = require("utils")
 
 local opcodes = {
