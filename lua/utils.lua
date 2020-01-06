@@ -1,3 +1,6 @@
+if bit == nil then
+        bit = require("bit")
+end
 
 -- base64 algorithm implemented from https://en.wikipedia.org/wiki/Base64
 -- It's really simple: for each group of three bytes, concat the bits and then
