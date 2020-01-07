@@ -14,7 +14,7 @@
     "monaco-editor": "^0.19.2",
     "msgpack-lite": "0.1.26",
     "selenium-webdriver": "4.0.0-alpha.5",
-    "ts-jest": "24.2.0",
+    "ts-jest": "24.3.0",
     "tslint": "5.20.1",
     "tslint-sonarts": "1.9.0",
     "typescript": "3.7.4",
