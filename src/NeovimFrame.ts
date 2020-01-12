@@ -65,13 +65,14 @@ window.addEventListener("load", async () => {
             }
         });
 
-        // Create file, set its content to the textarea's, write it
         const filename = toFileName(url, selector);
-        Promise.all([nvim.command(`noswapfile edit ${filename}`), contentPromise])
-            .then(([_, content]: [any, any]) => {
-                const promise = nvim.buf_set_lines(0, 0, -1, 0, content.split("\n"))
-                    .then((__: any) => nvim.command(":w!"));
-
+        const content = await contentPromise;
+        const cmd = "call writefile("
+            + `${JSON.stringify(content.split("\n"))}`
+            + `, '${filename}')`;
+        nvim.command(cmd)
+            .then(() => nvim.command(`noswapfile edit ${filename}`))
+            .then(() => {
                 const beforeCursor = content.slice(0, cursor);
                 const newlines = beforeCursor.match(/\n.*/g);
                 let line = 1;
@@ -80,7 +81,7 @@ window.addEventListener("load", async () => {
                     line = newlines.length + 1;
                     col = newlines[newlines.length - 1].length - 1;
                 }
-                return promise.then((__: any) => nvim.win_set_cursor(0, [line, col]));
+                return nvim.win_set_cursor(0, [line, col]);
             });
 
         // Keep track of last active instance (necessary for firenvim#focus_input() & others)
