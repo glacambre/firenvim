@@ -67,10 +67,7 @@ window.addEventListener("load", async () => {
 
         const filename = toFileName(url, selector);
         const content = await contentPromise;
-        const cmd = "call writefile("
-            + `${JSON.stringify(content.split("\n"))}`
-            + `, '${filename}')`;
-        nvim.command(cmd)
+        nvim.call_function("writefile", [content.split("\n"), filename])
             .then(() => nvim.command(`noswapfile edit ${filename}`))
             .then(() => {
                 const beforeCursor = content.slice(0, cursor);
