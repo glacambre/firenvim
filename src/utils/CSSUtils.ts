@@ -102,6 +102,6 @@ export function toCss(highlights: HighlightArray) {
     const bg = highlights[0].background;
     const fg = highlights[0].foreground;
     return highlights.reduce((css, elem, id) => css +
-        `.${toHighlightClassName(id)} { background: ${elem.background || bg}; color: ${elem.foreground || fg}; }`
+        `.${toHighlightClassName(id)}{background: ${elem.background || bg};color:${elem.foreground || fg};font-style:${elem.italic ? "italic" : "normal"};font-weight:${elem.bold ? "bold" : "normal"};text-decoration-line:${(elem.undercurl || elem.underline) ? "underline" : (elem.strikethrough ? "line-through" : "none")};text-decoration-style:${elem.undercurl ? "wavy" : "solid"};}`
         , "");
 }
