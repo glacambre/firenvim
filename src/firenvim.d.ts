@@ -34,10 +34,32 @@ interface INvimApiInfo {
     };
 }
 
-type HighlightUpdate = [number, { foreground: number, background: number }];
 type ResizeUpdate = [number, number, number];
 type GotoUpdate = [number, number, number];
 type LineUpdate = [number, number, number, Array<[string, number, number?]>];
-type HighlightArray = Array<{ foreground: string, background: string }>;
+type HighlightUpdateElement = {
+      background?: number,
+      blend?: number,
+      bold?: boolean,
+      foreground?: number,
+      italic?: boolean,
+      reverse?: boolean,
+      special?: number,
+      strikethrough?: boolean,
+      undercurl?: boolean,
+      underline?: boolean,
+}
+type HighlightUpdate = [number, HighlightUpdateElement];
+type HighlightElement = {
+      background?: string,
+      bold?: boolean,
+      foreground?: string,
+      italic?: boolean,
+      special?: number,
+      strikethrough?: boolean,
+      undercurl?: boolean,
+      underline?: boolean,
+}
+type HighlightArray = Array<HighlightElement>;
 
 type PageElements = { input: HTMLElement, span: HTMLSpanElement, iframe: HTMLIFrameElement, selector: string };

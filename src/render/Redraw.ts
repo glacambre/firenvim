@@ -119,12 +119,35 @@ const redrawFuncs = {
                  [id, ...rest]: [number, number, number, number, number, number, number]) => {
          grids[id].scroll(...rest);
       },
-   hl_attr_define: (elem: HTMLElement, selector: string, [id, { foreground, background }]: HighlightUpdate) => {
+   hl_attr_define: (elem: HTMLElement, selector: string, [id, {
+      background,
+      bold,
+      foreground,
+      italic,
+      reverse,
+      special,
+      strikethrough,
+      undercurl,
+      underline,
+   }]: HighlightUpdate) => {
       if (highlights[id] === undefined) {
          highlights[id] = { background: undefined, foreground: undefined };
       }
-      highlights[id].foreground = foreground ? toHexCss(foreground) : undefined;
-      highlights[id].background = background ? toHexCss(background) : undefined;
+      let f = foreground ? toHexCss(foreground) : undefined;
+      let b = background ? toHexCss(background) : undefined;
+      if (reverse) {
+         const tmp = f;
+         f = b;
+         b = tmp;
+      }
+      highlights[id].foreground = f;
+      highlights[id].background = b;
+      highlights[id].bold = bold;
+      highlights[id].italic = italic;
+      highlights[id].special = special;
+      highlights[id].strikethrough = strikethrough;
+      highlights[id].undercurl = undercurl;
+      highlights[id].underline = underline;
    },
    mode_change: (elem: HTMLElement, selector: string, [modename, modeid]: [string, number]) => {
       const modePrefix = "nvim_mode_";
