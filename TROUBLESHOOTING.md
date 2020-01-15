@@ -67,8 +67,8 @@ Then, navigate to a page with a textarea (I really like `http://txti.es` for thi
 Clone the firenvim repository somewhere (e.g. `git clone https://git.sr.ht/~glacambre/firenvim /tmp/firenvim`) and edit the [firenvim script](#make-sure-the-firenvim-script-has-been-created) so that it doesn't load your init.vim but loads firenvim, like this:
 
 ```diff
--exec '/usr/bin/nvim' --headless -c 'call firenvim#run()'
-+exec '/usr/bin/nvim' -u NORC --cmd 'set rtp+=/tmp/firenvim' --headless -c 'call firenvim#run()'
+-exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'
++exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()' -u NORC --cmd 'set rtp+=/tmp/firenvim'
 ```
 
 Then, try reloading your config twice/focusing a textarea twice. If firenvim suddenly starts working, this might be a `$PATH` issue on your end. Revert the changes you just made and try the instructions in [this section](#make-sure-firenvims-path-is-the-same-as-neovims) in order to fix it.
@@ -83,3 +83,14 @@ nvim --headless -c "call firenvim#install(0, 'export PATH=\"$PATH\"')" -c quit
 ```
 
 Note that this sets your `$PATH` in stone and that in order to update it you'll need to run the above command again. If you want to avoid doing that, you could also try the method described [here](https://github.com/glacambre/firenvim/issues/122#issuecomment-536348171).
+
+## Print-debugging your init.vim
+
+You can't use `echo` or `echom` in your init.vim before Firenvim has been loaded and initialized. If you need to debug your init.vim, you could try one of these two apparoaches:
+- Append the messages you would normally `echom` to a list which you will only display after the `UiEnter` autocommand has been triggered.
+- Use `echoerr` instead and redirect Neovim's stderr to a file on your disk in the [firenvim script](#make-sure-the-firenvim-script-has-been-created) like this:
+
+```diff
+-exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'
++exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()' 2>/tmp/firenvim_errors
+```
