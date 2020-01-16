@@ -28,8 +28,5 @@ install:
   - ps: Set-Content -Path "C:\Users\appveyor\AppData\Local\nvim\init.vim" -Value "set rtp+=C:\projects\firenvim"
   - npm ci
   - npm run build
-  - ps: New-Item -Path "HKCU:\Software\Mozilla\NativeMessagingHosts"
-  - ps: New-Item -Path "HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim"
-  - ps: Set-Item -Path "HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim\" -Value "C:\Users\me\AppData\Local\firenvim\firenvim-firefox.json"
   - npm run install_manifests
   - npm run test firefox

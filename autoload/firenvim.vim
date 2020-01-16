@@ -150,6 +150,36 @@ function! s:get_firefox_manifest_dir_path() abort
         return s:build_path([$HOME, '.mozilla', 'native-messaging-hosts'])
 endfunction
 
+function! s:brave_config_exists() abort
+        let l:p = [$HOME, '.config', 'BraveSoftware']
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'BraveSoftware']
+        elseif has('win32')
+                let l:p = [$HOME, 'AppData', 'Local', 'BraveSoftware']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
+function! s:opera_config_exists() abort
+        let l:p = [$HOME, '.config', 'opera']
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'com.operasoftware.Opera']
+        elseif has('win32')
+                let l:p = [$HOME, 'AppData', 'Local', 'Opera Software']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
+function! s:vivaldi_config_exists() abort
+        let l:p = [$HOME, '.config', 'vivaldi']
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'Vivaldi']
+        elseif has('win32')
+                let l:p = [$HOME, 'AppData', 'Local', 'Vivaldi']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
 function! s:chrome_config_exists() abort
         let l:p = [$HOME, '.config', 'google-chrome']
         if has('mac')
@@ -264,12 +294,13 @@ function! s:key_to_ps1_str(key, manifest_path) abort
 endfunction
 
 function! s:get_browser_configuration() abort
+        " Brave, Opera and Vivaldi all rely on Chrome's native messenger
         return {
-                \'firefox': {
-                        \ 'has_config': s:firefox_config_exists(),
-                        \ 'manifest_content': function('s:get_firefox_manifest'),
-                        \ 'manifest_dir_path': function('s:get_firefox_manifest_dir_path'),
-                        \ 'registry_key': 'HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim',
+                \'brave': {
+                        \ 'has_config': s:brave_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_chrome_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \},
                 \'chrome': {
                         \ 'has_config': s:chrome_config_exists(),
@@ -283,6 +314,24 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_dir_path': function('s:get_chromium_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Chromium\NativeMessagingHosts\firenvim',
                 \},
+                \'firefox': {
+                        \ 'has_config': s:firefox_config_exists(),
+                        \ 'manifest_content': function('s:get_firefox_manifest'),
+                        \ 'manifest_dir_path': function('s:get_firefox_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim',
+                \},
+                \'opera': {
+                        \ 'has_config': s:opera_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_chrome_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \},
+                \'vivaldi': {
+                        \ 'has_config': s:vivaldi_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_chrome_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \}
         \}
 endfunction
 
@@ -351,7 +400,9 @@ function! firenvim#install(...) abort
 
                 echo 'Installed native manifest for ' . l:name . '.'
 
-                if has('win32')
+                " Appveyor hangs when running more than 5 ps1 scripts, so make
+                " sure we only run firefox on it
+                if has('win32') && ($APPVEYOR != 1 || l:name ==# 'firefox')
                         " On windows, also create a registry key. We
                         " do this by writing a powershell script to a
                         " file and executing it.
