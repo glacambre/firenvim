@@ -104,12 +104,16 @@ const global = {
         // actually stop refocusing the iframe a second after it is created.
         function refocus() {
             setTimeout(() => {
+                // First, destroy current selection. Some websites use the
+                // selection to force-focus an element.
                 const sel = document.getSelection();
                 sel.removeAllRanges();
                 const range = document.createRange();
                 range.setStart(span, 0);
                 range.collapse(true);
                 sel.addRange(range);
+                // Then, attempt to "release" the focus from whatever element
+                // is currently focused.
                 window.focus();
                 document.documentElement.focus();
                 document.body.focus();
