@@ -257,8 +257,17 @@ function setupListeners(selector: string) {
         const toPossiblyNvimify = Array.from(document.querySelectorAll(selector));
         toPossiblyNvimify.forEach(elem => addNvimListener(elem));
 
+        const takeover = getConf().takeover;
         function shouldNvimify(node: any) {
-            return document.activeElement === node && toPossiblyNvimify.includes(node);
+            // Ideally, the takeover !== "never" check shouldn't be performed
+            // here: it should live in nvimify(). However, nvimify() only
+            // checks for takeover === "never" if it is called from an event
+            // handler (this is necessary in order to allow manually nvimifying
+            // elements). Thus, we need to check if takeover !== "never" here
+            // too.
+            return takeover !== "never"
+                && document.activeElement === node
+                && toPossiblyNvimify.includes(node);
         }
 
         // We also need to check if the currently focused element is among the
