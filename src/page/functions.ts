@@ -94,6 +94,7 @@ function _refocus(span: any, iframe: any) {
     range.setStart(span, 0);
     range.collapse(true);
     sel.addRange(range);
+    (document.activeElement as any).blur();
     // On chrome, you can't refocus the iframe once the body has been focused…
     if (isFirefox()) {
         window.focus();
