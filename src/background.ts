@@ -265,9 +265,23 @@ updateIcon();
 
 browser.commands.onCommand.addListener(async (command: string) => {
     switch (command) {
+        case "focus_input":
+            browser.tabs.sendMessage(
+                (await browser.tabs.query({ active: true, currentWindow: true }))[0].id,
+                { args: [], funcName: ["focusInput"] },
+            );
+            break;
+        case "focus_page":
+            browser.tabs.sendMessage(
+                (await browser.tabs.query({ active: true, currentWindow: true }))[0].id,
+                { args: [], funcName: ["focusPage"] },
+            );
+            break;
         case "nvimify":
-            const id = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
-            browser.tabs.sendMessage(id, { args: [], funcName: ["forceNvimify"] });
+            browser.tabs.sendMessage(
+                (await browser.tabs.query({ active: true, currentWindow: true }))[0].id,
+                { args: [], funcName: ["forceNvimify"] },
+            );
             break;
         case "toggle_firenvim":
             await toggleDisabled();
