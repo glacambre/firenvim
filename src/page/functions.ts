@@ -106,7 +106,15 @@ function _refocus(span: any, iframe: any) {
 
 export function getFunctions(global: IGlobalState) {
     return {
-        focusInput: (selector: string) => _focusInput(global, selector, true),
+        focusInput: (selector: string) => {
+            if (selector === undefined) {
+                selector = Array.from(global.selectorToElems.keys())
+                    .find((sel: string) => global.selectorToElems.get(sel).span === document.activeElement);
+            }
+            if (selector !== undefined) {
+                _focusInput(global, selector, true);
+            }
+        },
         focusPage: () => {
             (document.activeElement as any).blur();
             document.documentElement.focus();
