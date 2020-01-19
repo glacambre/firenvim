@@ -37,6 +37,8 @@ export function parseGuifont(guifont: string, defaults: any) {
         }, result as any);
 }
 
+// Takes a `guifont` declaration and returns that same font declaration but as
+// a bunch of CSS declarations.
 export function guifontToMultiDecl(guifont: string) {
     const defaults: any = {};
     defaults[fontFamily] = "monospace";
@@ -46,6 +48,8 @@ export function guifontToMultiDecl(guifont: string) {
         .join("\n");
 }
 
+// Takes an array of `guifont` declarations and returns them as a single CSS
+// declaration, using font-family for font fallback.
 export function guifontsToFontFamily(guifonts: string[]) {
     const defaults: any = {};
     defaults[fontFamily] = "monospace";
@@ -57,6 +61,8 @@ export function guifontsToFontFamily(guifonts: string[]) {
     return `font-family: ${reducedGuifonts[fontFamily]}; font-size: ${reducedGuifonts["font-size"]};`;
 }
 
+// Takes a string formatted according to the `guifont` spec and returns a CSS
+// declaration that matches it.
 export function guifontsToCSS(guifont: string) {
     const guifonts = (guifont + ",")
         .match(/.+?[^\\],/g) // split on non-escaped commas
@@ -72,6 +78,7 @@ export function guifontsToCSS(guifont: string) {
     return guifontToMultiDecl(guifonts[0]);
 }
 
+// Computes a unique selector for its argument.
 export function computeSelector(element: HTMLElement) {
     function uniqueSelector(e: HTMLElement): string {
         // Only matching alphanumeric selectors because others chars might have special meaning in CSS
@@ -88,6 +95,7 @@ export function computeSelector(element: HTMLElement) {
     return uniqueSelector(element);
 }
 
+// Turns a number into its hash+6 number hexadecimal representation.
 export function toHexCss(n: number) {
     const str = n.toString(16);
     // Pad with leading zeros
@@ -98,6 +106,7 @@ export function toHighlightClassName(n: number) {
     return "nvim_highlight_" + n;
 }
 
+// Computes a CSS stylesheet that represents the HighlightArray
 export function toCss(highlights: HighlightArray) {
     const bg = highlights[0].background;
     const fg = highlights[0].foreground;

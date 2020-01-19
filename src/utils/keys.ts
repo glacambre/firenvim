@@ -48,6 +48,10 @@ const nonLiteralVimKeys = Object.fromEntries(Object
                                              .entries(nonLiteralKeys)
                                              .map(([x, y]) => [y, x]));
 
+// Given a "special" key representation (e.g. <Enter> or <M-l>), returns an
+// array of three javascript keyevents, the first one representing the
+// corresponding keydown, the second one a keypress and the third one a keyup
+// event.
 function modKeyToEvents(key: string) {
     let mods = "";
     let char = nonLiteralVimKeys[key];
@@ -69,6 +73,8 @@ function modKeyToEvents(key: string) {
     ];
 }
 
+// Given a "simple" key (e.g. `a`, `1`…), returns an array of three javascript
+// events representing the action of pressing the key.
 function keyToEvents(key: string) {
     const shiftKey = key !== key.toLocaleLowerCase();
     return [
@@ -78,6 +84,9 @@ function keyToEvents(key: string) {
     ];
 }
 
+// Given an array of string representation of keys (e.g. ["a", "<Enter>", …]),
+// returns an array of javascript keyboard events that simulate these keys
+// being pressed.
 export function keysToEvents(keys: string[]) {
     // Code to split mod keys and non-mod keys:
     // const keys = str.match(/([<>][^<>]+[<>])|([^<>]+)/g)
