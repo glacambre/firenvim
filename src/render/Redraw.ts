@@ -188,6 +188,21 @@ const redrawFuncs = {
          extMessages.style.display = "none";
          extMessages.innerText = "";
    },
+   msg_history_show: (_: any,
+                      __: any,
+                      entries: any,
+                      ____: any,
+                      _____: any,
+                      extMessages: HTMLSpanElement) => {
+         extMessages.innerText = entries
+                  .map((entry: any) => entry
+                       .map((message: any) => message[1]
+                            .map((info: any) => info[1])
+                            .join(""))
+                       .join("\n"))
+                  .join("\n");
+         extMessages.style.display = "block";
+   },
    msg_show: (_: any,
               __: any,
               [kind, content, replaceLast]: [string, Array<[number, string]>, boolean],
