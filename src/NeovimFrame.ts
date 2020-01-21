@@ -116,7 +116,7 @@ window.addEventListener("load", async () => {
                 && (nonLiteralKeys[evt.key] !== undefined
                     || specialKeys.find(([mod, _]: [string, string]) =>
                                         evt.key !== mod && (evt as any).getModifierState(mod)))) {
-                const text = specialKeys.concat(["Shift", "S"])
+                const text = specialKeys.concat([["Shift", "S"]])
                     .reduce((key: string, [attr, mod]: [string, string]) => {
                         if ((evt as any).getModifierState(attr)) {
                             return addModifier(mod, key);
