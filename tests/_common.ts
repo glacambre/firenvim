@@ -61,7 +61,7 @@ export async function testModifiers(driver: any) {
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await driver.sleep(500);
-        console.log("Typing <C-v><C-a><C-v><A-v><C-v><D-a>…");
+        console.log("Typing <C-v><C-a><C-v><A-v><C-v><D-a><S-Left>…");
         await driver.actions()
                 .keyDown("a")
                 .keyUp("a")
@@ -92,6 +92,16 @@ export async function testModifiers(driver: any) {
                 .keyUp("a")
                 .keyUp(webdriver.Key.COMMAND)
                 .pause(keyDelay)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .pause(keyDelay)
+                .keyDown(webdriver.Key.SHIFT)
+                .keyDown(webdriver.Key.ARROW_LEFT)
+                .keyDown(webdriver.Key.ARROW_LEFT)
+                .keyUp(webdriver.Key.SHIFT)
+                .pause(keyDelay)
                 .perform();
         await driver.sleep(500);
         console.log("Writing keycodes.");
@@ -101,7 +111,7 @@ export async function testModifiers(driver: any) {
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.wait(async () => ["\u0011<M-q><D-q>", "\u0001<M-a><D-a>"].includes(await input.getAttribute("value")));
+        await driver.wait(async () => ["\u0011<M-q><D-q><S-Left>", "\u0001<M-a><D-a><S-Left>"].includes(await input.getAttribute("value")));
 }
 
 export async function testGStartedByFirenvim(driver: any) {
