@@ -29,10 +29,12 @@ const global = {
             await global.disabled;
         }
 
+        // auto is true when nvimify() is called as an event listener, false
+        // when called from forceNvimify()
+        const auto = (evt instanceof FocusEvent);
+
         const takeover = getConf().takeover;
-        // Checking evt instanceof FocusEvent because we don't want to prevent
-        // forceNvimify from working
-        if (global.disabled || (evt instanceof FocusEvent && takeover === "never")) {
+        if (global.disabled || (auto && takeover === "never")) {
             return;
         }
 
@@ -47,7 +49,7 @@ const global = {
             return;
         }
 
-        if (takeover === "empty" || takeover === "nonempty") {
+        if (auto && (takeover === "empty" || takeover === "nonempty")) {
             const content = await _getElementContent(elem);
             if ((content !== "" && takeover === "empty")
                 || (content === "" && takeover === "nonempty")) {
