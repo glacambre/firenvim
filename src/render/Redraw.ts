@@ -16,6 +16,15 @@ const mouseCursor = document.getElementById("mouse_cursor");
 
 let cmdlineCursorPos = 0;
 
+let historyShown = false;
+let externalMessages: any;
+export function onKeyPressed(key: string) {
+   if (historyShown) {
+      externalMessages.style.display = "none";
+      historyShown = false;
+   }
+}
+
 const redrawFuncs = {
    busy_start: () => {
       mouseCursor.innerText = `html { cursor: wait; }`;
@@ -202,6 +211,7 @@ const redrawFuncs = {
                        .join("\n"))
                   .join("\n");
          extMessages.style.display = "block";
+         historyShown = true;
    },
    msg_show: (_: any,
               __: any,
@@ -262,6 +272,7 @@ export function onRedraw(nvimFunctions: any,
                          extCmdline: HTMLSpanElement,
                          extMessages: HTMLSpanElement,
                          selector: string) {
+   externalMessages = extMessages;
    events.forEach(evt => {
       const [name, ...evts]: [keyof typeof redrawFuncs, any] = evt;
       if (redrawFuncs[name] !== undefined) {
