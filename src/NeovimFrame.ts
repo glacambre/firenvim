@@ -1,6 +1,7 @@
 import * as browser from "webextension-polyfill";
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
+import { onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
 import { confReady, getConfForUrl } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, toFileName } from "./utils/utils";
@@ -126,6 +127,7 @@ window.addEventListener("load", async () => {
                 nvim.input(text);
                 evt.preventDefault();
                 evt.stopImmediatePropagation();
+                rendererOnKeyPressed(text);
             }
         });
         keyHandler.addEventListener("input", (evt: any) => {
@@ -135,6 +137,7 @@ window.addEventListener("load", async () => {
                 evt.stopImmediatePropagation();
                 evt.target.innerText = "";
                 evt.target.value = "";
+                rendererOnKeyPressed(evt.target.value);
             }
         });
         window.addEventListener("mousemove", (evt: MouseEvent) => {
