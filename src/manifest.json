@@ -43,7 +43,7 @@
   "description": "PACKAGE_JSON_DESCRIPTION",
 
   "icons": {
-    "48": "firenvim.svg"
+    "128": "firenvim.svg"
   },
 
   "manifest_version": 2,
