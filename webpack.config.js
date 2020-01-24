@@ -1,5 +1,6 @@
-const path = require("path")
+const path = require("path");
 const CopyWebPackPlugin = require("copy-webpack-plugin");
+const sharp = require("sharp");
 
 function deepCopy (obj) {
   if (obj instanceof Array) {
@@ -58,6 +59,7 @@ const config = {
 const package_json = JSON.parse(require("fs").readFileSync(path.join(__dirname, "package.json")))
 
 const chrome_target_dir = path.join(__dirname, "target", "chrome")
+const firefox_target_dir = path.join(__dirname, "target", "firefox")
 
 module.exports = [
   Object.assign(deepCopy(config), {
@@ -75,22 +77,29 @@ module.exports = [
               .replace("FIRENVIM_VERSION", package_json.version)
               .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
               // Chrome doesn't support svgs in its manifest
-              .replace('"default_icon": "firenvim.svg",\n', "")
+              .replace(/"firenvim\.svg"/g, '"firenvim.png"')
             ;
             break;
+          case "firenvim.svg":
+            return sharp(content).resize(128, 128).toBuffer();
         }
         return content;
+      },
+      transformPath: (target, absolute) => {
+        const result = target.replace(/\.svg$/, ".png");
+        console.log(result);
+        return result;
       }
     }))),
     ]
   }),
   Object.assign(deepCopy(config), {
     output: {
-      path: __dirname + "/target/firefox",
+      path: firefox_target_dir,
     },
     plugins: [new CopyWebPackPlugin(CopyWebPackFiles.map(file => ({
       from: file,
-      to: __dirname + "/target/firefox",
+      to: firefox_target_dir,
       transform: (content, src) => {
         switch(path.basename(src)) {
           case "manifest.json":
