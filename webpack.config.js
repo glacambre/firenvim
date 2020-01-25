@@ -86,9 +86,7 @@ module.exports = [
         return content;
       },
       transformPath: (target, absolute) => {
-        const result = target.replace(/\.svg$/, ".png");
-        console.log(result);
-        return result;
+        return target.replace(/\.svg$/, ".png");
       }
     }))),
     ]
