@@ -68,6 +68,7 @@ describe("Chrome", () => {
                         .forBrowser("chrome")
                         .setChromeOptions(options)
                         .build();
+                return Promise.resolve();
         });
 
         afterAll(() => killDriver(driver));
@@ -89,6 +90,4 @@ describe("Chrome", () => {
         nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(driver));
         nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
         nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(driver));
-        // Disabled because Chrome doesn't pass keyboard shortcuts to webextensions…
-        // test("Manually calling firenvim works", () => testManualNvimify(driver));
 })
