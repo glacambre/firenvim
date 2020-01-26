@@ -59,6 +59,8 @@ sed -i "s/\"version\": \"$oldVersion\"/\"version\": \"$newVersion\"/" package.js
 npm audit fix
 npm install
 npm run build
+npm run test firefox
+npm run test chrome
 
 # Add finishing touches to chrome manifest
 chromeManifest="$(paste -sd' ' < target/chrome/manifest.json | sed 's/,\s*"key":\s*"[^"]*"//')"
@@ -69,7 +71,7 @@ rm -f target/chrome.zip
 zip target/chrome.zip target/chrome/*
 source_files="$(echo ./* | sed s@./node_modules@@ | sed s@./target@@)"
 rm -f target/firenvim-sources.tar.gz
-tar -cvzf /target/firenvim-sources.tar.gz $source_files
+tar -cvzf target/firenvim-sources.tar.gz $source_files
 
 # Everything went fine, we can commit our changes, tag them, push them
 git add package.json package-lock.json
@@ -79,3 +81,6 @@ git tag "v$newVersion"
 
 git push
 git push --tags
+
+firefox --private-window 'https://chrome.google.com/webstore/devconsole/g06704558984641971849/egpjdkipkomnmjhjmdamaniclmdlobbo/edit?hl=en'
+firefox --private-window 'https://addons.mozilla.org/en-US/developers/addon/firenvim/versions/submit/'
