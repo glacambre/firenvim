@@ -20,7 +20,6 @@ import {
  testInputFocus,
  testInputFocusedAfterLeave,
  testLargeBuffers,
- testManualNvimify,
  testModifiers,
  testMonaco,
  testNestedDynamicTextareas,
@@ -67,7 +66,7 @@ describe("Firefox", () => {
                         .forBrowser("firefox")
                         .setFirefoxOptions(options)
                         .build();
-                driver.getCapabilities().then((cap: any) => {
+                return driver.getCapabilities().then((cap: any) => {
                         console.log(`${cap.getBrowserName()} ${cap.getBrowserVersion()} ${xpiPath}`);
                 });
         });
@@ -91,6 +90,4 @@ describe("Firefox", () => {
         test("Takeover: empty works", () => testTakeoverEmpty(driver));
         test("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
         test("Takeover: once works", () => testTakeoverOnce(driver));
-        // Disabled because Firefox doesn't pass keyboard shortcuts to webextensions…
-        // test("Manually calling firenvim works", () => testManualNvimify(driver));
 })
