@@ -1,5 +1,5 @@
 {
-  "extends": ["tslint:recommended", "tslint-sonarts"],
+  "extends": ["tslint:recommended"],
   "rules": {
     "arrow-parens": false,
     "cognitive-complexity": false,
