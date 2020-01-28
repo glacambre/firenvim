@@ -123,6 +123,32 @@ function! s:get_executable_name() abort
         return 'firenvim'
 endfunction
 
+function! s:get_runtime_dir_path() abort
+        let l:xdg_runtime_dir = $XDG_RUNTIME_DIR
+        if l:xdg_runtime_dir ==# ''
+                if has('win32')
+                        let l:xdg_runtime_dir = expand('$TEMP')
+                        if l:xdg_runtime_dir ==# ''
+                                let l:xdg_runtime_dir = expand('$TMP')
+                        endif
+                        if l:xdg_runtime_dir ==# ''
+                                let l:xdg_runtime_dir = expand('$USERPROFILE')
+                                if l:xdg_runtime_dir ==# ''
+                                        let l:xdg_runtime_dir = fnamemodify(stdpath('data'), ':h')
+                                else
+                                        let l:xdg_runtime_dir = l:xdg_runtime_dir . '\AppData\Local\Temp'
+                                endif
+                        endif
+                else
+                        let l:xdg_runtime_dir = $TMPDIR
+                        if l:xdg_runtime_dir ==# ''
+                                let l:xdg_runtime_dir = '/tmp/'
+                        endif
+                endif
+        endif
+        return s:build_path([l:xdg_runtime_dir, 'firenvim'])
+endfunction
+
 function! s:get_data_dir_path() abort
         let l:xdg_data_home = $XDG_DATA_HOME
         if l:xdg_data_home ==# ''
@@ -245,11 +271,14 @@ endfunction
 function! s:get_executable_content(data_dir, prolog) abort
         if has('win32')
                 return  "@echo off\r\n" .
+                                        \ "mkdir \"" . a:data_dir . "\" 2>nul\r\n" .
                                         \ "cd \"" . a:data_dir . "\"\r\n" .
                                         \ a:prolog . "\r\n" .
                                         \ "\"" . s:get_progpath() . "\" --headless --cmd \"let g:started_by_firenvim = v:true\" -c \"call firenvim#run()\"\r\n"
         endif
         return "#!/bin/sh\n" .
+                                \ 'mkdir -p ' . a:data_dir . "\n" .
+                                \ 'chmod 007 ' . a:data_dir . "\n" .
                                 \ 'cd ' . a:data_dir . "\n" .
                                 \ "unset NVIM_LISTEN_ADDRESS\n" .
                                 \ 'export PATH="$PATH:' . $PATH . "\"\n" .
@@ -370,7 +399,7 @@ function! firenvim#install(...) abort
         let l:data_dir = s:get_data_dir_path()
         let l:execute_nvim_path = s:build_path([l:data_dir, s:get_executable_name()])
         " Write said script to said path
-        let l:execute_nvim = s:get_executable_content(l:data_dir, l:script_prolog)
+        let l:execute_nvim = s:get_executable_content(s:get_runtime_dir_path(), l:script_prolog)
 
         call mkdir(l:data_dir, 'p', 0700)
         call writefile(split(l:execute_nvim, "\n"), l:execute_nvim_path)
@@ -445,6 +474,7 @@ function! firenvim#uninstall() abort
                 endif
 
                 if has('win32')
+                        echo 'Removing registry key for ' . l:name . '. This may take a while.'
                         let l:ps1_content = 'Remove-Item -Path "' . l:cur_browser['registry_key'] . '" -Recurse'
                         let o = system(['powershell', '-Command', '-'], [l:ps1_content])
                         if v:shell_error
