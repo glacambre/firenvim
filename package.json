@@ -6,7 +6,7 @@
     "@types/node": "13.5.0",
     "ace-builds": "^1.4.8",
     "awesome-typescript-loader": "5.2.1",
-    "chromedriver": "79.0.0",
+    "chromedriver": "79.0.1",
     "codemirror": "^5.51.0",
     "copy-webpack-plugin": "5.1.1",
     "geckodriver": "1.19.1",
