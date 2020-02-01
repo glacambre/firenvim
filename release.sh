@@ -89,5 +89,6 @@ git tag "v$newVersion"
 git push
 git push --tags
 
+git log --pretty=oneline --abbrev-commit --invert-grep --grep='dependabot' "v$oldVersion..v$newVersion" > /tmp/firenvim_changelog
 firefox --private-window 'https://chrome.google.com/webstore/devconsole/g06704558984641971849/egpjdkipkomnmjhjmdamaniclmdlobbo/edit?hl=en'
 firefox --private-window 'https://addons.mozilla.org/en-US/developers/addon/firenvim/versions/submit/'
