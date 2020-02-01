@@ -292,7 +292,7 @@ function! s:get_executable_content(data_dir, prolog) abort
         endif
         return "#!/bin/sh\n" .
                                 \ 'mkdir -p ' . a:data_dir . "\n" .
-                                \ 'chmod 007 ' . a:data_dir . "\n" .
+                                \ 'chmod 700 ' . a:data_dir . "\n" .
                                 \ 'cd ' . a:data_dir . "\n" .
                                 \ "unset NVIM_LISTEN_ADDRESS\n" .
                                 \ 'export PATH="$PATH:' . $PATH . "\"\n" .
