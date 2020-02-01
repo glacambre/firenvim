@@ -83,7 +83,7 @@ tar -cvzf target/firenvim-sources.tar.gz $source_files
 # Everything went fine, we can commit our changes, tag them, push them
 git add package.json package-lock.json
 git commit -m "package.json: bump version $oldVersion -> $newVersion"
-git tag --delete "v$newVersion" || true
+git tag --delete "v$newVersion" 2>/dev/null || true
 git tag "v$newVersion" 
 
 git push
