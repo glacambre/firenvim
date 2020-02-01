@@ -19,11 +19,14 @@ const CopyWebPackFiles = [
   "src/manifest.json",
   "src/NeovimFrame.html",
   "src/browserAction.html",
-  // Important to have firenvim.svg multiple times as it's going to be turned
-  // into different PNG files by CopyWebPack
+  // Important to have firenvim.svg svgConversionsSizes.length times as it's
+  // going to be turned into different PNG files by CopyWebPack
   "static/firenvim.svg",
   "static/firenvim.svg",
   "static/firenvim.svg",
+  "static/firenvim.svg",
+  // We need one more firenvim.svg, which won't be converted, for the
+  // browserAction
   "static/firenvim.svg",
 ]
 
@@ -92,19 +95,23 @@ module.exports = [
                 + '    "128": "firenvim128.png"\n'
               )
             ;
-            break;
           case "firenvim.svg":
-            const dim = svgConversionsSizes[svgConversionsCount];
-            svgConversionsCount += 1;
-            return sharp(content).resize(dim, dim).toBuffer();
+            if (svgConversionsCount < svgConversionsSizes.length) {
+              const dim = svgConversionsSizes[svgConversionsCount];
+              svgConversionsCount += 1;
+              return sharp(content).resize(dim, dim).toBuffer();
+            }
+            return content;
         }
         return content;
       },
       transformPath: (target, absolute) => {
         let result = target;
         if (/firenvim.svg$/.test(target)) {
-          result = `firenvim${svgConversionsSizes[svgRenamesCount]}.png`;
-          svgRenamesCount += 1;
+          if (svgRenamesCount < svgConversionsSizes.length) {
+            result = `firenvim${svgConversionsSizes[svgRenamesCount]}.png`;
+            svgRenamesCount += 1;
+          }
         }
         return result;
       }
