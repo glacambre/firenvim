@@ -19,6 +19,11 @@ const CopyWebPackFiles = [
   "src/manifest.json",
   "src/NeovimFrame.html",
   "src/browserAction.html",
+  // Important to have firenvim.svg multiple times as it's going to be turned
+  // into different PNG files by CopyWebPack
+  "static/firenvim.svg",
+  "static/firenvim.svg",
+  "static/firenvim.svg",
   "static/firenvim.svg",
 ]
 
@@ -61,6 +66,10 @@ const package_json = JSON.parse(require("fs").readFileSync(path.join(__dirname, 
 const chrome_target_dir = path.join(__dirname, "target", "chrome")
 const firefox_target_dir = path.join(__dirname, "target", "firefox")
 
+let svgRenamesCount = 0;
+let svgConversionsCount = 0;
+let svgConversionsSizes = [16, 32, 48, 128];
+
 module.exports = [
   Object.assign(deepCopy(config), {
     output: {
@@ -77,16 +86,27 @@ module.exports = [
               .replace("FIRENVIM_VERSION", package_json.version)
               .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
               // Chrome doesn't support svgs in its manifest
-              .replace(/"firenvim\.svg"/g, '"firenvim.png"')
+              .replace(/"128": *"firenvim\.svg"/g, '"16": "firenvim16.png",\n'
+                + '    "32": "firenvim32.png",\n'
+                + '    "48": "firenvim48.png",\n'
+                + '    "128": "firenvim128.png"\n'
+              )
             ;
             break;
           case "firenvim.svg":
-            return sharp(content).resize(128, 128).toBuffer();
+            const dim = svgConversionsSizes[svgConversionsCount];
+            svgConversionsCount += 1;
+            return sharp(content).resize(dim, dim).toBuffer();
         }
         return content;
       },
       transformPath: (target, absolute) => {
-        return target.replace(/\.svg$/, ".png");
+        let result = target;
+        if (/firenvim.svg$/.test(target)) {
+          result = `firenvim${svgConversionsSizes[svgRenamesCount]}.png`;
+          svgRenamesCount += 1;
+        }
+        return result;
       }
     }))),
     ]
