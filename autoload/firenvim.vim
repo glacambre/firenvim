@@ -257,24 +257,34 @@ function! s:get_progpath() abort
         let l:specific_installs = {
                 \ 'homebrew': {
                         \ 'pattern': '^/usr/local/Cellar/',
-                        \ 'constant_path': '/usr/local/opt/nvim'
+                        \ 'constant_paths': ['/usr/local/opt/nvim']
                 \ },
                 \ 'nix': {
                         \ 'pattern': '^/nix/store/',
-                        \ 'constant_path': expand('$HOME/.nix-profile/bin/nvim')
+                        \ 'constant_paths': [
+                                \ expand('$HOME/.nix-profile/bin/nvim'),
+                                \ '/run/current-system/sw/bin/nvim'
+                        \ ]
                 \ }
         \ }
         for l:package_manager in keys(l:specific_installs)
                 let l:install = l:specific_installs[l:package_manager]
                 if match(l:result, l:install['pattern']) == 0
                         let l:warning = 'Warning: ' . l:package_manager . ' path detected. '
-                        if executable(l:install['constant_path'])
+                        let l:alternative_found = v:false
+                        for l:constant_path in l:install['constant_paths']
+                                if executable(l:constant_path)
+                                        let l:warning = l:warning .
+                                                \ "Using '" . l:constant_path . "'" .
+                                                \ "' instead of '" . l:result . "'"
+                                        let l:result = l:constant_path
+                                        let l:alternative_found = v:true
+                                        break
+                                endif
+                        endfor
+                        if !l:alternative_found
                                 let l:warning = l:warning .
-                                        \ "Using '" . l:install['constant_path'] . "'" .
-                                        \ "' instead of '" . l:result
-                                let l:result = l:install['constant_path']
-                        else
-                                let l:warning = l:warning . 'Firenvim may break next time you update neovim.'
+                                        \ 'Firenvim may break next time you update neovim.'
                         endif
                         echo l:warning
                 endif
