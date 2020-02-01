@@ -132,7 +132,7 @@ function applySettings(settings: any) {
                                      site: string,
                                      conf: ISiteConfig) {
         makeDefaults(sett.localSettings, site, {});
-        for (const key of (Object.keys(conf) as Array<keyof typeof conf>)) {
+        for (const key of (Object.keys(conf) as (keyof typeof conf)[])) {
             makeDefaults(sett.localSettings[site], key, conf[key]);
         }
     }

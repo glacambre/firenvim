@@ -215,7 +215,7 @@ const redrawFuncs = {
    },
    msg_show: (_: any,
               __: any,
-              [kind, content, replaceLast]: [string, Array<[number, string]>, boolean],
+              [kind, content, replaceLast]: [string, [number, string][], boolean],
               ___: any,
               ____: any,
               extMessages: HTMLSpanElement) => {

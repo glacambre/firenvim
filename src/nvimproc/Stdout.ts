@@ -2,7 +2,7 @@ import * as msgpack from "msgpack-lite";
 import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 
 export class Stdout {
-    private listeners = new Map<string, Array<(...args: any[]) => any>>();
+    private listeners = new Map<string, ((...args: any[]) => any)[]>();
     private messageNames = new Map([[0, "request"], [1, "response"], [2, "notification"]]);
     // Holds previously-received, incomplete and unprocessed messages
     private prev = new Uint8Array(0);
