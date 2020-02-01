@@ -56,9 +56,16 @@ echo "Updating firenvim from v$oldVersion to v$newVersion."
 sed -i "s/\"version\": \"$oldVersion\"/\"version\": \"$newVersion\"/" package.json
 
 # Then, do manual update/editing
-npm audit fix
 npm install
+npm audit fix
 npm run build
+
+# Make sure none of the files have changed, except for package-lock.json
+if [ "$(git diff --name-only | grep -v "package\(-lock\)\?.json")" != "" ] ; then
+        echo "Some files have been modified. Aborting."
+        exit 1
+fi
+
 npm run test firefox
 npm run test chrome
 
