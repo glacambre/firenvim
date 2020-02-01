@@ -250,21 +250,35 @@ function! s:get_progpath() abort
                 " v:progpath is different every time you run neovim appimages
                 let l:result = $APPIMAGE
         endif
-        if match(l:result, '^/usr/local/Cellar/') == 0
-                let l:warning = 'Warning: homebrew path detected. '
-                " On OSX, if v:progpath points to homebrew's cellar, it's
-                " going to be a version-specific path that will break when
-                " users update neovim.
-                let l:constant_path = '/usr/local/opt/nvim'
-                if executable(l:constant_path)
-                        let l:result = l:constant_path
-                        let l:warning = l:warning . "Using '" . l:constant_path . 
-                                                \ "' instead of '" . v:progpath
-                else
-                        let l:warning = l:warning . 'Firenvim may break next time you update neovim.'
+        " Some package managers will install neovim in a version-specific path
+        " that v:progpath will point to. This is an issue because the path may
+        " break when neovim is updated. Try to detect these cases, work around
+        " them if possible and warn the user.
+        let l:specific_installs = {
+                \ 'homebrew': {
+                        \ 'pattern': '^/usr/local/Cellar/',
+                        \ 'constant_path': '/usr/local/opt/nvim'
+                \ },
+                \ 'nix': {
+                        \ 'pattern': '^/nix/store/',
+                        \ 'constant_path': expand('$HOME/.nix-profile/bin/nvim')
+                \ }
+        \ }
+        for l:package_manager in keys(l:specific_installs)
+                let l:install = l:specific_installs[l:package_manager]
+                if match(l:result, l:install['pattern']) == 0
+                        let l:warning = 'Warning: ' . l:package_manager . ' path detected. '
+                        if executable(l:install['constant_path'])
+                                let l:warning = l:warning .
+                                        \ "Using '" . l:install['constant_path'] . "'" .
+                                        \ "' instead of '" . l:result
+                                let l:result = l:install['constant_path']
+                        else
+                                let l:warning = l:warning . 'Firenvim may break next time you update neovim.'
+                        endif
+                        echo l:warning
                 endif
-                echo l:warning
-        endif
+        endfor
         return l:result
 endfunction
 
