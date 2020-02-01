@@ -68,7 +68,7 @@ echo "$chromeManifest" > target/chrome/manifest.json
 
 # Generate bundles that need to be uploaded to chrome/firefox stores
 rm -f target/chrome.zip
-zip target/chrome.zip target/chrome/*
+zip --junk-paths target/chrome.zip target/chrome/*
 source_files="$(echo ./* | sed s@./node_modules@@ | sed s@./target@@)"
 rm -f target/firenvim-sources.tar.gz
 tar -cvzf target/firenvim-sources.tar.gz $source_files
