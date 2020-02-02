@@ -12,6 +12,7 @@ import {
  extensionDir,
  getNewestFileMatching,
  killDriver,
+ optimizeFirenvimReady,
  testAce,
  testCodemirror,
  testDynamicTextareas,
@@ -66,6 +67,8 @@ describe("Firefox", () => {
                         .forBrowser("firefox")
                         .setFirefoxOptions(options)
                         .build();
+
+                optimizeFirenvimReady();
                 return driver.getCapabilities().then((cap: any) => {
                         console.log(`${cap.getBrowserName()} ${cap.getBrowserVersion()} ${xpiPath}`);
                 });
