@@ -8,8 +8,7 @@ const By = webdriver.By;
 import { readVimrc, writeVimrc } from "./_vimrc";
 
 jest.setTimeout(15000);
-const keyDelay = 50;
-const FIRENVIM_INIT_DELAY = 450;
+const FIRENVIM_INIT_DELAY = 600;
 
 export const pagesDir = path.resolve(path.join("tests", "pages"));
 export const extensionDir = path.resolve("target");
@@ -55,7 +54,6 @@ export function getNewestFileMatching(directory: string, pattern: string | RegEx
 function sendKeys(driver: any, keys: any[]) {
         return keys.reduce((prom, key) => prom
                 .then((action: any) => action.sendKeys(key))
-                .then((action: any) => action.pause(keyDelay))
                 , Promise.resolve(driver.actions()))
             .then((action: any) => action.perform());
 }
@@ -79,43 +77,34 @@ export async function testModifiers(driver: any) {
         await driver.actions()
                 .keyDown("a")
                 .keyUp("a")
-                .pause(keyDelay)
                 .keyDown(webdriver.Key.CONTROL)
                 .keyDown("v")
                 .keyUp("v")
-                .pause(keyDelay)
                 .keyDown("a")
                 .keyUp("a")
-                .pause(keyDelay)
                 .keyDown("v")
                 .keyUp("v")
                 .keyUp(webdriver.Key.CONTROL)
-                .pause(keyDelay)
                 .keyDown(webdriver.Key.ALT)
                 .keyDown("a")
                 .keyUp("a")
                 .keyUp(webdriver.Key.ALT)
-                .pause(keyDelay)
                 .keyDown(webdriver.Key.CONTROL)
                 .keyDown("v")
                 .keyUp("v")
                 .keyUp(webdriver.Key.CONTROL)
-                .pause(keyDelay)
                 .keyDown(webdriver.Key.COMMAND)
                 .keyDown("a")
                 .keyUp("a")
                 .keyUp(webdriver.Key.COMMAND)
-                .pause(keyDelay)
                 .keyDown(webdriver.Key.CONTROL)
                 .keyDown("v")
                 .keyUp("v")
                 .keyUp(webdriver.Key.CONTROL)
-                .pause(keyDelay)
                 .keyDown(webdriver.Key.SHIFT)
                 .keyDown(webdriver.Key.ARROW_LEFT)
                 .keyDown(webdriver.Key.ARROW_LEFT)
                 .keyUp(webdriver.Key.SHIFT)
-                .pause(keyDelay)
                 .perform();
         console.log("Writing keycodes.");
         await sendKeys(driver, [webdriver.Key.ESCAPE]
@@ -279,13 +268,8 @@ export async function killPreloadedInstance(driver: any) {
                 txtarea.scrollIntoView(true);`);
         const txtarea = await driver.wait(Until.elementLocated(By.id(id)));
         await driver.actions().click(txtarea).perform();
-        await driver.actions()
-                .keyDown(webdriver.Key.CONTROL)
-                .keyDown("e")
-                .pause(keyDelay)
-                .keyUp("e")
-                .keyUp(webdriver.Key.CONTROL)
-                .perform();
+        await sendKeys(driver, ["a"]);
+        await driver.actions().click(txtarea).perform();
         await firenvimReady(driver);
         await driver.executeScript(`
                 const elem = document.getElementById("${id}");
@@ -301,13 +285,13 @@ export async function testVimrcFailure(driver: any) {
         await writeVimrc("call");
         await loadLocalPage(driver, "simple.html");
         await killPreloadedInstance(driver);
-        // We can restore our vimrc
-        await writeVimrc(backup);
         // Reload, to get the buggy instance
         await loadLocalPage(driver, "simple.html");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        // We can restore our vimrc
+        await writeVimrc(backup);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
@@ -425,12 +409,12 @@ export async function testInputFocusedAfterLeave(driver: any) {
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
-        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await firenvimReady(driver);
         console.log("Typing :q!<CR>…");
         await sendKeys(driver, ":q!".split("")
                 .concat(webdriver.Key.ENTER));
-        console.log(await driver.switchTo().activeElement().getAttribute("id"));
+        await driver.wait(Until.stalenessOf(span));
         console.log("Checking that the input is focused…");
         await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")));
 };
