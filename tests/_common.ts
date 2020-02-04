@@ -58,13 +58,13 @@ function sendKeys(driver: any, keys: any[]) {
             .then((action: any) => action.perform());
 }
 
-function loadLocalPage(driver: any, page: string) {
+function loadLocalPage(driver: any, page: string, title = "") {
         return driver.get("file://" + path.join(pagesDir, page))
-                .then(() => driver.executeScript("document.documentElement.focus()"));
+                .then(() => driver.executeScript(`document.documentElement.focus();document.title=${JSON.stringify(title)}`));
 }
 
 export async function testModifiers(driver: any) {
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "Modifier test");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -117,7 +117,7 @@ export async function testModifiers(driver: any) {
 }
 
 export async function testGStartedByFirenvim(driver: any) {
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "g:started_by_firenvim test");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -146,7 +146,7 @@ export async function testGStartedByFirenvim(driver: any) {
 }
 
 export async function testCodemirror(driver: any) {
-        await loadLocalPage(driver, "codemirror.html");
+        await loadLocalPage(driver, "codemirror.html", "CodeMirror test");
         console.log("Looking for codemirror div…");
         const input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -168,7 +168,7 @@ export async function testCodemirror(driver: any) {
 }
 
 export async function testAce(driver: any) {
-        await loadLocalPage(driver, "ace.html");
+        await loadLocalPage(driver, "ace.html", "Ace test");
         console.log("Looking for ace div…");
         const input = await driver.wait(Until.elementLocated(By.css("#editor")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -190,7 +190,7 @@ export async function testAce(driver: any) {
 }
 
 export async function testMonaco(driver: any) {
-        await loadLocalPage(driver, "monaco.html");
+        await loadLocalPage(driver, "monaco.html", "Monaco test");
         console.log("Looking for monaco div…");
         const input = await driver.wait(Until.elementLocated(By.css("#container")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -212,7 +212,7 @@ export async function testMonaco(driver: any) {
 }
 
 export async function testDynamicTextareas(driver: any) {
-        await loadLocalPage(driver, "dynamic.html");
+        await loadLocalPage(driver, "dynamic.html", "Dynamic textareas test");
         console.log("Locating button…");
         const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", btn);
@@ -235,7 +235,7 @@ export async function testDynamicTextareas(driver: any) {
 }
 
 export async function testNestedDynamicTextareas(driver: any) {
-        await loadLocalPage(driver, "dynamic_nested.html");
+        await loadLocalPage(driver, "dynamic_nested.html", "Nested dynamic textareas");
         console.log("Locating button…");
         const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", btn);
@@ -283,10 +283,10 @@ export async function testVimrcFailure(driver: any) {
         const backup = await readVimrc();
         console.log("Overwriting it…");
         await writeVimrc("call");
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "Vimrc failure");
         await killPreloadedInstance(driver);
         // Reload, to get the buggy instance
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "Vimrc failure");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -302,7 +302,7 @@ export async function testVimrcFailure(driver: any) {
 }
 
 export async function testGuifont(driver: any) {
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "Guifont test");
         console.log("Backing up vimrc…");
         const backup = await readVimrc();
         console.log("Overwriting it…");
@@ -312,7 +312,7 @@ ${backup}
                 `);
         await killPreloadedInstance(driver);
         await writeVimrc(backup);
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "Guifont test");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -344,7 +344,7 @@ ${backup}
 }
 
 export async function testPageFocus(driver: any) {
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "PageFocus test");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -361,7 +361,7 @@ export async function testPageFocus(driver: any) {
 }
 
 export async function testInputFocus(driver: any) {
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "InputFocus test");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -379,7 +379,7 @@ export async function testInputFocus(driver: any) {
 }
 
 export async function testPressKeys(driver: any) {
-        await loadLocalPage(driver, "chat.html");
+        await loadLocalPage(driver, "chat.html", "PressKeys test");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -402,7 +402,7 @@ export async function testPressKeys(driver: any) {
 }
 
 export async function testInputFocusedAfterLeave(driver: any) {
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "Input focus after leave test");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -420,7 +420,7 @@ export async function testInputFocusedAfterLeave(driver: any) {
 };
 
 export async function testTakeoverOnce(driver: any) {
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "takeover: once test");
         console.log("Backing up vimrc…");
         const backup = await readVimrc();
         console.log("Overwriting it…");
@@ -429,7 +429,7 @@ let g:firenvim_config = { 'localSettings': { '.*': { 'selector': 'textarea', 'ta
 ${backup}
                 `);
         await killPreloadedInstance(driver);
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "takeover: once test");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -459,7 +459,7 @@ ${backup}
 }
 
 export async function testTakeoverEmpty(driver: any) {
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "takeover: once empty");
         console.log("Backing up vimrc…");
         const backup = await readVimrc();
         console.log("Overwriting it…");
@@ -500,7 +500,7 @@ ${backup}
 }
 
 export async function testTakeoverNonEmpty(driver: any) {
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "takeover: nonempty test");
         console.log("Backing up vimrc…");
         const backup = await readVimrc();
         console.log("Overwriting it…");
@@ -542,7 +542,7 @@ ${backup}
 
 
 export async function testLargeBuffers(driver: any) {
-        await loadLocalPage(driver, "simple.html");
+        await loadLocalPage(driver, "simple.html", "Large buffers test");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript(`arguments[0].scrollIntoView(true);
