@@ -19,14 +19,6 @@ const CopyWebPackFiles = [
   "src/manifest.json",
   "src/NeovimFrame.html",
   "src/browserAction.html",
-  // Important to have firenvim.svg svgConversionsSizes.length times as it's
-  // going to be turned into different PNG files by CopyWebPack
-  "static/firenvim.svg",
-  "static/firenvim.svg",
-  "static/firenvim.svg",
-  "static/firenvim.svg",
-  // We need one more firenvim.svg, which won't be converted, for the
-  // browserAction
   "static/firenvim.svg",
 ]
 
@@ -69,10 +61,6 @@ const package_json = JSON.parse(require("fs").readFileSync(path.join(__dirname, 
 const chrome_target_dir = path.join(__dirname, "target", "chrome")
 const firefox_target_dir = path.join(__dirname, "target", "firefox")
 
-let svgRenamesCount = 0;
-let svgConversionsCount = 0;
-let svgConversionsSizes = [16, 32, 48, 128];
-
 module.exports = [
   Object.assign(deepCopy(config), {
     output: {
@@ -82,9 +70,8 @@ module.exports = [
       from: file,
       to: chrome_target_dir,
       transform: (content, src) => {
-        switch(path.basename(src)) {
-          case "manifest.json":
-            return content.toString()
+        if (path.basename(src) === "manifest.json") {
+            content = content.toString()
               .replace('BROWSER_SPECIFIC_SETTINGS', '"key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk3pkgh862ElxtREZVPLxVNbiFWo9SnvZtZXZavNvs2GsUTY/mB9yHTPBGJiBMJh6J0l+F5JZivXDG7xdQsVD5t39CL3JGtt93M2svlsNkOEYIMM8tHbp69shNUKKjZOfT3t+aZyigK2OUm7PKedcPeHtMoZAY5cC4L1ytvgo6lge+VYQiypKF87YOsO/BGcs3D+MMdS454tLBuMp6LxMqICQEo/Q7nHGC3eubtL3B09s0l17fJeq/kcQphczKbUFhTVnNnIV0JX++UCWi+BP4QOpyk5FqI6+SVi+gxUosbQPOmZR4xCAbWWpg3OqMk4LqHaWpsBfkW9EUt6EMMMAfQIDAQAB"\n')
               .replace("FIRENVIM_VERSION", package_json.version)
               .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
@@ -95,28 +82,17 @@ module.exports = [
                 + '    "128": "firenvim128.png"\n'
               )
             ;
-          case "firenvim.svg":
-            if (svgConversionsCount < svgConversionsSizes.length) {
-              const dim = svgConversionsSizes[svgConversionsCount];
-              svgConversionsCount += 1;
-              return sharp(content).resize(dim, dim).toBuffer();
-            }
-            return content;
         }
         return content;
       },
-      transformPath: (target, absolute) => {
-        let result = target;
-        if (/firenvim.svg$/.test(target)) {
-          if (svgRenamesCount < svgConversionsSizes.length) {
-            result = `firenvim${svgConversionsSizes[svgRenamesCount]}.png`;
-            svgRenamesCount += 1;
-          }
-        }
-        return result;
-      }
-    }))),
-    ]
+    })).concat([16, 32, 48, 128].map(n => ({
+        from: "static/firenvim.svg",
+        to: chrome_target_dir,
+        transformPath: (target) => `firenvim${n}.png`,
+        transform: (content, src) => sharp(content).resize(n, n).toBuffer(),
+      })
+    ))
+    )]
   }),
   Object.assign(deepCopy(config), {
     output: {
