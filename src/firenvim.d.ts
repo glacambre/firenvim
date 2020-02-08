@@ -62,4 +62,4 @@ type HighlightElement = {
 }
 type HighlightArray = Array<HighlightElement>;
 
-type PageElements = { input: HTMLElement, span: HTMLSpanElement, iframe: HTMLIFrameElement, selector: string };
+type PageElements = { editor: any, input: HTMLElement, span: HTMLSpanElement, iframe: HTMLIFrameElement, selector: string };

@@ -1,64 +1,7 @@
-import * as browser from "webextension-polyfill";
+import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 import { getConf } from "../utils/configuration";
-import { computeSelector } from "../utils/CSSUtils";
 import { keysToEvents } from "../utils/keys";
 import { isFirefox } from "../utils/utils";
-
-function executeInPage(code: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        const eventId = (new URL(browser.runtime.getURL(""))).hostname + Math.random();
-        script.innerHTML = `((evId) => {
-            try {
-                let result;
-                result = ${code};
-                window.dispatchEvent(new CustomEvent(evId, {
-                    detail: {
-                        success: true,
-                        result,
-                    }
-                }));
-            } catch (e) {
-                window.dispatchEvent(new CustomEvent(evId, {
-                    detail: { success: false, reason: e },
-                }));
-            }
-        })(${JSON.stringify(eventId)})`;
-        window.addEventListener(eventId, ({ detail }: any) => {
-            script.parentNode.removeChild(script);
-            if (detail.success) {
-                return resolve(detail.result);
-            }
-            return reject(detail.reason);
-        }, { once: true });
-        document.head.appendChild(script);
-    });
-}
-
-export function _getElementContent(e: any): Promise<string> {
-    if (e.className.match(/CodeMirror/gi)) {
-        return executeInPage(`(${(selec: string) => {
-            const elem = document.querySelector(selec) as any;
-            return elem.CodeMirror.getValue();
-        }})(${JSON.stringify(computeSelector(e))})`);
-    } else if (e.className.match(/ace_editor/gi)) {
-        return executeInPage(`(${(selec: string) => {
-            const elem = document.querySelector(selec) as any;
-            return (window as any).ace.edit(elem).getValue();
-        }})(${JSON.stringify(computeSelector(e))})`);
-    } else if (e.className.match(/monaco-editor/gi)) {
-        return executeInPage(`(${(selec: string, str: string) => {
-            const elem = document.querySelector(selec) as any;
-            const uri = elem.getAttribute("data-uri");
-            const model = (window as any).monaco.editor.getModel(uri);
-            return model.getValue();
-        }})(${JSON.stringify(computeSelector(e))})`);
-    }
-    if (e.value !== undefined) {
-        return Promise.resolve(e.value);
-    }
-    return Promise.resolve(e.innerText);
-}
 
 interface IGlobalState {
     lastEditorLocation: [string, string, number];
@@ -158,7 +101,7 @@ export function getFunctions(global: IGlobalState) {
             global.lastEditorLocation = ["", "", 0];
             return Promise.resolve(result);
         },
-        getElementContent: (selector: string) => _getElementContent(global.selectorToElems.get(selector).input),
+        getElementContent: (selector: string) => global.selectorToElems.get(selector).editor.getContent(),
         hideEditor: (selector: string) => {
             const { iframe } = global.selectorToElems.get(selector);
             iframe.style.display = "none";
@@ -186,30 +129,8 @@ export function getFunctions(global: IGlobalState) {
             global.disabled = disabled;
         },
         setElementContent: (selector: string, text: string) => {
-            const { input, iframe, span } = global.selectorToElems.get(selector) as any;
-            if (input.className.match(/CodeMirror/gi)) {
-                return executeInPage(`(${(selec: string, str: string) => {
-                    const elem = document.querySelector(selec) as any;
-                    return elem.CodeMirror.setValue(str);
-                }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
-            } else if (input.className.match(/ace_editor/gi)) {
-                return executeInPage(`(${(selec: string, str: string) => {
-                    const elem = document.querySelector(selec) as any;
-                    return (window as any).ace.edit(elem).setValue(str);
-                }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
-            } else if (input.className.match(/monaco-editor/)) {
-                return executeInPage(`(${(selec: string, str: string) => {
-                    const elem = document.querySelector(selec) as any;
-                    const uri = elem.getAttribute("data-uri");
-                    const model = (window as any).monaco.editor.getModel(uri);
-                    return model.setValue(str);
-                }})(${JSON.stringify(selector)}, ${JSON.stringify(text)})`);
-            }
-            if (input.value !== undefined) {
-                input.value = text;
-            } else {
-                input.innerText = text;
-            }
+            const { editor, input, iframe, span } = global.selectorToElems.get(selector) as any;
+            editor.setContent(text);
             input.dispatchEvent(new Event("keydown",     { bubbles: true }));
             input.dispatchEvent(new Event("keyup",       { bubbles: true }));
             input.dispatchEvent(new Event("keypress",    { bubbles: true }));
@@ -219,11 +140,11 @@ export function getFunctions(global: IGlobalState) {
             _refocus(span, iframe);
         },
         setElementCursor: async (selector: string, line: number, column: number) => {
-            const { input } = global.selectorToElems.get(selector) as any;
+            const { editor, input } = global.selectorToElems.get(selector) as any;
             if (!input.setSelectionRange) {
                 return;
             }
-            const pos = (await _getElementContent(input))
+            const pos = (await editor.getContent())
                 .split("\n")
                 .reduce((acc: number, l: string, index: number) => acc + (index < (line - 1)
                     ? (l.length + 1)

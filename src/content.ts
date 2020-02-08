@@ -1,9 +1,9 @@
 import * as browser from "webextension-polyfill";
 import { autofill } from "./autofill";
-import { _getElementContent, getFunctions } from "./page/functions";
+import { getFunctions } from "./page/functions";
 import { confReady, getConf } from "./utils/configuration";
 import { computeSelector } from "./utils/CSSUtils";
-import { getEditorElement } from "./utils/utils";
+import { getEditor } from "./editors/editors";
 
 if (document.location.href === "https://github.com/glacambre/firenvim/issues/new") {
     addEventListener("load", autofill);
@@ -38,7 +38,8 @@ const global = {
             return;
         }
 
-        const elem = getEditorElement(evt.target as HTMLElement);
+        const editor = getEditor(evt.target as HTMLElement);
+        const elem = editor.getElement();
         const selector = computeSelector(elem);
 
         // If this element already has a neovim frame, stop
@@ -50,14 +51,14 @@ const global = {
         }
 
         if (auto && (takeover === "empty" || takeover === "nonempty")) {
-            const content = await _getElementContent(elem);
+            const content = await editor.getContent();
             if ((content !== "" && takeover === "empty")
                 || (content === "" && takeover === "nonempty")) {
                 return;
             }
         }
 
-        const pageElements = { input: elem, selector } as PageElements;
+        const pageElements = { editor, input: elem, selector } as PageElements;
         global.selectorToElems.set(selector, pageElements);
 
         global.lastEditorLocation = [document.location.href, selector, (elem as any).selectionStart || 0];
