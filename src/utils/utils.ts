@@ -10,62 +10,38 @@ export function isFirefox() {
     return curBrowser === "firefox";
 }
 
-// Takes an element as parameter. If this element lives in an element which is
-// used by CodeMirror, returns the "topmost" CodeMirror element. Otherwise,
-// returns the element itself.
-export function getCodeMirrorParent(elem: HTMLElement): HTMLElement {
-    function isCodeMirror(element: HTMLElement) {
-       return element.className.match(/CodeMirror/gi);
-    }
-    let parent = elem;
-    // We check both parentElement and parentElement.parentElement because
-    // some CodeMirror elements have internal elements the className of
-    // which doesn't contain "CodeMirror"
-    for (let i = 0; i < 2; ++i) {
-        parent = parent.parentElement;
-        if (parent && isCodeMirror(parent)) {
-            return getCodeMirrorParent(parent);
-        }
-    }
-    return elem;
-}
-
-// Takes an element as parameter. If this element lives in an element which is
-// used by AdeEditor, returns the "topmost" AceEditor element. Otherwise,
-// returns the element itself.
-export function getAceParent(elem: HTMLElement): HTMLElement {
-    function isAce(element: HTMLElement) {
-        return element.className.match(/ace_editor/gi);
-    }
-    if (elem.parentElement && isAce(elem.parentElement)) {
-        return getAceParent(elem.parentElement);
-    }
-    return elem;
-}
-
-// Takes an element as parameter. If this element lives in an element which is
-// used by the Monaco Editor, returns the "topmost" Monaco element. Otherwise,
-// returns the element itself.
-export function getMonacoParent(elem: HTMLElement): HTMLElement {
-    if (elem.className.match(/monaco-editor/gi) && elem.getAttribute("data-uri").match("inmemory://")) {
-        return elem;
-    }
-    function isMonaco(element: HTMLElement) {
-        return element.className.match(/monaco-editor/gi);
-    }
-    let parent = elem;
-    // Check if parent, grand-parent or great grand-parent is monaco
-    for (let i = 0; i < 3; ++i) {
-        parent = parent.parentElement;
-        if (parent && isMonaco(parent)) {
-            return getMonacoParent(parent);
-        }
-    }
-    return elem;
-}
-
-export function getEditorElement(elem: HTMLElement): HTMLElement {
-    return getMonacoParent(getAceParent(getCodeMirrorParent(elem)));
+// Runs CODE in the page's context by setting up a custom event listener,
+// embedding a script element that runs the piece of code and emits its result
+// as an event.
+export function executeInPage(code: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        const eventId = (new URL(browser.runtime.getURL(""))).hostname + Math.random();
+        script.innerHTML = `((evId) => {
+            try {
+                let result;
+                result = ${code};
+                window.dispatchEvent(new CustomEvent(evId, {
+                    detail: {
+                        success: true,
+                        result,
+                    }
+                }));
+            } catch (e) {
+                window.dispatchEvent(new CustomEvent(evId, {
+                    detail: { success: false, reason: e },
+                }));
+            }
+        })(${JSON.stringify(eventId)})`;
+        window.addEventListener(eventId, ({ detail }: any) => {
+            script.parentNode.removeChild(script);
+            if (detail.success) {
+                return resolve(detail.result);
+            }
+            return reject(detail.reason);
+        }, { once: true });
+        document.head.appendChild(script);
+    });
 }
 
 // Various filters that are used to change the appearance of the BrowserAction
