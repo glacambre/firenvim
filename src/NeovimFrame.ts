@@ -68,14 +68,7 @@ window.addEventListener("load", async () => {
 
         const filename = toFileName(url, selector);
         const content = await contentPromise;
-        const beforeCursor = content.slice(0, cursor);
-        const newlines = beforeCursor.match(/\n.*/g);
-        let line = 1;
-        let col = beforeCursor.length;
-        if (newlines) {
-            line = newlines.length + 1;
-            col = newlines[newlines.length - 1].length - 1;
-        }
+        const [line, col] = cursor;
         nvim.call_function("writefile", [content.split("\n"), filename])
             .then(() => nvim.command(`noswapfile edit ${filename} `
                                      + `| call nvim_win_set_cursor(0, [${line}, ${col}])`));

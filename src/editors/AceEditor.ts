@@ -36,6 +36,14 @@ export class AceEditor extends AbstractEditor {
         }})(${JSON.stringify(computeSelector(this.elem))})`);
     }
 
+    getCursor () {
+        return executeInPage(`(${(selec: string) => {
+            const elem = document.querySelector(selec) as any;
+            const position = (window as any).ace.edit(elem).getCursorPosition();
+            return [position.row + 1, position.column];
+        }})(${JSON.stringify(computeSelector(this.elem))})`);
+    }
+
     getElement () {
         return this.elem;
     }
@@ -43,7 +51,16 @@ export class AceEditor extends AbstractEditor {
     setContent (text: string) {
         return executeInPage(`(${(selec: string, str: string) => {
             const elem = document.querySelector(selec) as any;
-            return (window as any).ace.edit(elem).setValue(str);
+            return (window as any).ace.edit(elem).setValue(str, 1);
         }})(${JSON.stringify(computeSelector(this.elem))}, ${JSON.stringify(text)})`);
     }
+
+    setCursor (line: number, column: number) {
+        return executeInPage(`(${(selec: string, l: number, c: number) => {
+            const elem = document.querySelector(selec) as any;
+            const selection = (window as any).ace.edit(elem).getSelection();
+            return selection.moveCursorTo(l - 1, c, false);
+        }})(${JSON.stringify(computeSelector(this.elem))}, ${line}, ${column})`);
+    }
+
 }

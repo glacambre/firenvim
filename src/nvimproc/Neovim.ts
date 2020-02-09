@@ -64,9 +64,9 @@ export async function neovim(
                 break;
             case "firenvim_bufwrite":
                 const data = args[0] as { text: string[], cursor: [number, number] };
-                page.setElementContent(selector, data.text.join("\n"));
-                page.setElementCursor(selector, ...(data.cursor));
-                window.focus();
+                page.setElementContent(selector, data.text.join("\n"))
+                    .then(() => page.setElementCursor(selector, ...(data.cursor)))
+                    .then(() => window.focus());
                 break;
             case "firenvim_focus_page":
                 page.focusPage();
