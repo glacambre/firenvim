@@ -39,6 +39,12 @@ export class MonacoEditor extends AbstractEditor {
         }})(${JSON.stringify(computeSelector(this.elem))})`);
     }
 
+    // It's impossible to get Monaco's cursor position:
+    // https://github.com/Microsoft/monaco-editor/issues/258
+    getCursor () {
+        return Promise.resolve([1, 0] as [number, number]);
+    }
+
     getElement () {
         return this.elem;
     }
@@ -51,4 +57,11 @@ export class MonacoEditor extends AbstractEditor {
             return model.setValue(str);
         }})(${JSON.stringify(computeSelector(this.elem))}, ${JSON.stringify(text)})`);
     }
+
+    // It's impossible to set Monaco's cursor position:
+    // https://github.com/Microsoft/monaco-editor/issues/258
+    setCursor (line: number, column: number) {
+        return Promise.resolve();
+    }
+
 }

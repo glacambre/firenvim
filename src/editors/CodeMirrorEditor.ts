@@ -36,6 +36,14 @@ export class CodeMirrorEditor extends AbstractEditor {
         }})(${JSON.stringify(computeSelector(this.elem))})`);
     }
 
+    getCursor () {
+        return executeInPage(`(${(selec: string) => {
+            const elem = document.querySelector(selec) as any;
+            const position = elem.CodeMirror.getCursor();
+            return [position.line + 1, position.ch];
+        }})(${JSON.stringify(computeSelector(this.elem))})`);
+    }
+
     getElement () {
         return this.elem;
     }
@@ -45,5 +53,12 @@ export class CodeMirrorEditor extends AbstractEditor {
             const elem = document.querySelector(selec) as any;
             return elem.CodeMirror.setValue(str);
         }})(${JSON.stringify(computeSelector(this.elem))}, ${JSON.stringify(text)})`);
+    }
+
+    setCursor (line: number, column: number) {
+        return executeInPage(`(${(selec: string, l: number, c: number) => {
+            const elem = document.querySelector(selec) as any;
+            return elem.CodeMirror.getCursor(l - 1, c);
+        }})(${JSON.stringify(computeSelector(this.elem))}, ${line}, ${column})`);
     }
 }

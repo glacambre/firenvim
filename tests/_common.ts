@@ -156,7 +156,7 @@ export async function testCodemirror(driver: any) {
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")));
         await firenvimReady(driver);
         console.log("Typing stuff…");
-        await sendKeys(driver, "iTest".split("")
+        await sendKeys(driver, "ggITest".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)

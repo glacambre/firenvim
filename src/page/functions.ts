@@ -4,7 +4,7 @@ import { keysToEvents } from "../utils/keys";
 import { isFirefox } from "../utils/utils";
 
 interface IGlobalState {
-    lastEditorLocation: [string, string, number];
+    lastEditorLocation: [string, string, [number, number]];
     nvimify: (evt: FocusEvent) => void;
     putEditorAtInputOrigin: ({ iframe, input }: PageElements) => void;
     selectorToElems: Map<string, PageElements>;
@@ -98,7 +98,7 @@ export function getFunctions(global: IGlobalState) {
             // proper fix would be depending on frameIDs, but we can't do that
             // efficiently
             const result = global.lastEditorLocation;
-            global.lastEditorLocation = ["", "", 0];
+            global.lastEditorLocation = ["", "", [0, 0]];
             return Promise.resolve(result);
         },
         getElementContent: (selector: string) => global.selectorToElems.get(selector).editor.getContent(),
@@ -140,16 +140,8 @@ export function getFunctions(global: IGlobalState) {
             _refocus(span, iframe);
         },
         setElementCursor: async (selector: string, line: number, column: number) => {
-            const { editor, input } = global.selectorToElems.get(selector) as any;
-            if (!input.setSelectionRange) {
-                return;
-            }
-            const pos = (await editor.getContent())
-                .split("\n")
-                .reduce((acc: number, l: string, index: number) => acc + (index < (line - 1)
-                    ? (l.length + 1)
-                    : 0), column + 1);
-            input.setSelectionRange(pos, pos);
+            const { editor } = global.selectorToElems.get(selector) as any;
+            return editor.setCursor(line, column);
         },
     };
 }

@@ -21,7 +21,7 @@ const global = {
     // lastEditorLocation: a [url, selector, cursor] tuple indicating the page
     // the last iframe was created on, the selector of the corresponding
     // textarea and the number of characters before the cursor.
-    lastEditorLocation: ["", "", 0] as [string, string, number],
+    lastEditorLocation: ["", "", [1, 1]] as [string, string, [number, number]],
     // nvimify: triggered when an element is focused, takes care of creating
     // the editor iframe, appending it to the page and focusing it.
     nvimify: async (evt: { target: EventTarget }) => {
@@ -61,7 +61,7 @@ const global = {
         const pageElements = { editor, input: elem, selector } as PageElements;
         global.selectorToElems.set(selector, pageElements);
 
-        global.lastEditorLocation = [document.location.href, selector, (elem as any).selectionStart || 0];
+        global.lastEditorLocation = [document.location.href, selector, await editor.getCursor()];
         // We use a span because these are the least likely to disturb the page
         const span = elem.ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLSpanElement;
