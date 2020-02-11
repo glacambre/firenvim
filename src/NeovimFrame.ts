@@ -4,7 +4,7 @@ import { page } from "./page/proxy";
 import { onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
 import { confReady, getConfForUrl } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
-import { getCharSize, getGridSize, toFileName } from "./utils/utils";
+import { getCharSize, getGridSize, isFirefox, toFileName } from "./utils/utils";
 
 const locationPromise = page.getEditorLocation();
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNewNeovimInstance"] });
@@ -121,16 +121,41 @@ window.addEventListener("load", async () => {
                 rendererOnKeyPressed(text);
             }
         });
+
+        function acceptInput (evt: any) {
+            nvim.input(evt.target.value);
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+            evt.target.innerText = "";
+            evt.target.value = "";
+            rendererOnKeyPressed(evt.target.value);
+        }
         keyHandler.addEventListener("input", (evt: any) => {
             if (evt.isTrusted && !evt.isComposing) {
-                nvim.input(evt.target.value);
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
-                evt.target.innerText = "";
-                evt.target.value = "";
-                rendererOnKeyPressed(evt.target.value);
+                acceptInput(evt);
             }
         });
+        // On Firefox, Pinyin input method for a single chinese character will
+        // result in the following sequence of events:
+        // - compositionstart
+        // - input (character)
+        // - compositionend
+        // - input (result)
+        // But on Chrome, we'll get this order:
+        // - compositionstart
+        // - input (character)
+        // - input (result)
+        // - compositionend
+        // So Chrome's input event will still have its isComposing flag set to
+        // true! This means that we need to add a chrome-specific event
+        // listener on compositionend to do what happens on input events for
+        // Firefox.
+        if (!isFirefox()) {
+            keyHandler.addEventListener("compositionend", (evt: any) => {
+                acceptInput(event);
+            });
+        }
+
         window.addEventListener("mousemove", (evt: MouseEvent) => {
             keyHandler.style.left = `${evt.clientX}px`;
             keyHandler.style.top = `${evt.clientY}px`;
