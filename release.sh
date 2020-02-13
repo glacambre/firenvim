@@ -70,8 +70,7 @@ npm run test firefox
 npm run test chrome
 
 # Add finishing touches to chrome manifest
-chromeManifest="$(paste -sd' ' < target/chrome/manifest.json | sed 's/,\s*"key":\s*"[^"]*"//')"
-echo "$chromeManifest" > target/chrome/manifest.json
+sed 's/"key":\s*"[^"]*",//' -i target/chrome/manifest.json
 
 # Generate bundles that need to be uploaded to chrome/firefox stores
 rm -f target/chrome.zip
