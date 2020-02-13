@@ -10,6 +10,8 @@
     "default_popup": "browserAction.html"
   },
 
+  BROWSER_SPECIFIC_SETTINGS,
+
   "commands": {
     "nvimify": {
       "suggested_key": {
@@ -54,7 +56,5 @@
 
   "version": "FIRENVIM_VERSION",
 
-  "web_accessible_resources": ["NeovimFrame.html", "ISSUE_TEMPLATE.md"],
-
-  BROWSER_SPECIFIC_SETTINGS
+  "web_accessible_resources": ["NeovimFrame.html", "ISSUE_TEMPLATE.md"]
 }
