@@ -311,11 +311,11 @@ set guifont=monospace:h50
 ${backup}
                 `);
         await killPreloadedInstance(driver);
-        await writeVimrc(backup);
         await loadLocalPage(driver, "simple.html", "Guifont test");
         console.log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        await writeVimrc(backup);
         console.log("Clicking on input…");
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
@@ -329,7 +329,9 @@ ${backup}
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
         await driver.wait(async () => /a+ba+/.test(await input.getAttribute("value")));
-        await driver.executeScript("arguments[0].blur();", input);
+        await driver.executeScript(`arguments[0].blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`, input);
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
