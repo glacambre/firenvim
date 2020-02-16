@@ -45,8 +45,15 @@ const global = {
         // If this element already has a neovim frame, stop
         const alreadyRunning = global.selectorToElems.get(selector);
         if (alreadyRunning !== undefined) {
+            const focusEditor = () => {
+                if ((evt.target as any).blur !== undefined) {
+                    (evt.target as any).blur();
+                }
+                alreadyRunning.iframe.focus();
+            };
             alreadyRunning.iframe.style.display = "initial";
-            alreadyRunning.iframe.focus();
+            focusEditor();
+            setTimeout(focusEditor, 10);
             return;
         }
 
@@ -154,7 +161,7 @@ const global = {
         iframe.style.left = `${rect.left + window.scrollX}px`;
         iframe.style.position = "absolute";
         iframe.style.top = `${rect.top + window.scrollY}px`;
-        iframe.style.zIndex = "2147483647";
+        iframe.style.zIndex = "2147483645";
 
         const posChanged = !!posAttrs.find((attr: any, index) => iframe.style[attr] !== oldPosAttrs[index]);
         return { posChanged, newRect: rect };
