@@ -142,8 +142,8 @@ const redrawFuncs = {
       if (highlights[id] === undefined) {
          highlights[id] = { background: undefined, foreground: undefined };
       }
-      let f = foreground ? toHexCss(foreground) : undefined;
-      let b = background ? toHexCss(background) : undefined;
+      let f = foreground !== undefined ? toHexCss(foreground) : undefined;
+      let b = background !== undefined ? toHexCss(background) : undefined;
       if (reverse) {
          const tmp = f;
          f = b;
