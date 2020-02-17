@@ -77,7 +77,6 @@ module.exports = [
               .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
               // Chrome doesn't support svgs in its manifest
               .replace(/"128": *"firenvim\.svg"/g, '"16": "firenvim16.png",\n'
-                + '    "32": "firenvim32.png",\n'
                 + '    "48": "firenvim48.png",\n'
                 + '    "128": "firenvim128.png"'
               )
@@ -85,7 +84,7 @@ module.exports = [
         }
         return content;
       },
-    })).concat([16, 32, 48, 128].map(n => ({
+    })).concat([16, 48, 128].map(n => ({
         from: "static/firenvim.svg",
         to: chrome_target_dir,
         transformPath: (target) => `firenvim${n}.png`,
