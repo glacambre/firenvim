@@ -19,7 +19,7 @@ When the NeoVim process notices a new connection, it makes sure that:
 - The password is in the handshake.
 - The handshake really is a websocket handshake.
 
-If any of these conditions isn't met, the NeoVim process closes its socket and port and then shuts itself down.
+If any of these conditions isn't met, the NeoVim process closes its socket and port and then shuts itself down. Note that this will also happen in [persistent mode](https://github.com/glacambre/firenvim#using-a-single-neovim-instance) and might close any Neovim frame started in this mode.
 
 After a successful websocket handshake, the frame script and neovim process communicate with neovim's msgpack-rpc protocol.
 
@@ -27,9 +27,9 @@ After a successful websocket handshake, the frame script and neovim process comm
 
 ### Malicious page
 
-A malicious page could create an infinite amount of textareas and focus them all ; this could result in PID and/or port and/or memory exhaustion. A simple way to prevent this kind of attack is to add a limit to the amount of allowed concurrent processes. This limit isn't implemented yet but it is planned.
+A malicious page could create an infinite amount of textareas and focus them all ; this could result in PID and/or port and/or memory exhaustion. Preventing this kind of attack can be done by [switching to a persistent server](https://github.com/glacambre/firenvim#using-a-single-neovim-instance).
 
-A malicious page could try to connect to the NeoVim process started by the background script with its own-websocket. However, it would have to guess the password the NeoVim process was started with in order to be able to send commands to NeoVim.
+A malicious page could try to connect to the NeoVim process started by the background script with its own-websocket. However, it would have to guess the port and password the NeoVim process was started with in order to be able to send commands to NeoVim.
 
 A malicious page could try to send key events to the neovim frame. However, only the script inside the frame listens for key events and a page can't send key events to a child frame (and even then, the frame script makes sure that [events are trusted](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)).
 

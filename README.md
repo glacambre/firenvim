@@ -211,6 +211,20 @@ You can chose to use an external command line (and thus save a line of space) by
 let fc['.*'] = { 'cmdline' : 'firenvim' }
 ```
 
+### Using a single neovim instance
+
+Firenvim can be made to use a single neovim instance. To do so, set the `server` setting to `'persistent'`. Firenvim will automatically start an instance on Firefox's startup and then launch a new one every time the previous one is `:quit`'ed. In this mode, every new Firenvim window is actually a Neovim floating window. This means that having the cursor move to another window/opening new floating windows can be pretty confusing and should be avoided.
+
+Note: this requires a Neovim compiled at commit a2efc9c or more recent.
+
+```vim
+let g:firenvim_config = {
+	\ "globalSettings": {
+		\ "server": "persistent"
+	\}
+\}
+```
+
 ### Special characters on OSX
 
 On OSX, on certain layouts (e.g. the swedish layout), pressing special characters (e.g. `@`) requires combining `Alt` and another key. Because of browser/OS limitations, it is impossible to tell the difference between a user trying to press `<A-@>` and just `@`. Because of that, on OSX, Firenvim decides to ignore the Alt key when you press any non-alphanumerical key. This behavior can be changed by setting the `alt` setting of the `globalSettings` configuration to `all`, like this:

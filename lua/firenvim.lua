@@ -47,9 +47,7 @@ local function connection_handler(sock, config, token)
                                 -- hasn't been made from a webextension
                                 -- context: abort.
                                 sock:close()
-                                if config.globalSettings.server ~= "persistent" then
-                                        close_server(server)
-                                end
+                                close_server(server)
                                 return
                         end
                         sock:write(websocket.accept_connection(headers))
