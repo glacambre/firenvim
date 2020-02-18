@@ -90,7 +90,7 @@ local function firenvim_start_server(token)
         server:nodelay(true)
 
         local config = {}
-        if vim.fn.exists('g:firenvim_config') == 1 then
+        if vim.fn ~= nil and vim.fn.exists('g:firenvim_config') == 1 then
                 config = vim.api.nvim_get_var('firenvim_config')
         end
 
