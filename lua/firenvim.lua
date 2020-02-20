@@ -11,7 +11,7 @@ local function close_server(server)
         end)
 end
 
-local function connection_handler(sock, config, token)
+local function connection_handler(server, sock, config, token)
         local pipe = vim.loop.new_pipe(false)
         vim.loop.pipe_connect(pipe, os.getenv("NVIM_LISTEN_ADDRESS"), function(err)
                 assert(not err, err)
@@ -94,20 +94,27 @@ local function firenvim_start_server(token)
                 config = vim.api.nvim_get_var('firenvim_config')
         end
 
+        if config.globalSettings == nil then
+                config.globalSettings = {}
+        end
+        if config.localSettings == nil then
+                config.localSettings = {}
+        end
+
         local address = '127.0.0.1'
         local port = 0
-        if config.globalSettings ~= nil
-                and config.globalSettings.server == 'persistent'
+        if config.globalSettings.server == 'persistent'
                 and config.globalSettings.server_url ~= nil
         then
                 address, port = string.match(config.globalSettings.server_url, "([^:]+):(.+)")
         end
+
         server:bind(address, port)
         server:listen(128, function(err)
                 assert(not err, err)
                 local sock = vim.loop.new_tcp()
                 server:accept(sock)
-                sock:read_start(connection_handler(sock, config, token))
+                sock:read_start(connection_handler(server, sock, config, token))
         end)
         if port ~= 0 then
                 return port
