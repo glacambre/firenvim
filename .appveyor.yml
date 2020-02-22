@@ -19,8 +19,7 @@ install:
   - choco --version
   - choco install firefox-dev --pre
   - ps: $env:Path += ";C:\Program Files\Firefox Developer Edition"
-  - ps: Invoke-WebRequest -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.zip" -OutFile "C:\Users\appveyor\nvim-win64.zip"
-  - ps: Add-Type -assembly "system.io.compression.filesystem" ; [io.compression.zipfile]::ExtractToDirectory("C:\Users\appveyor\nvim-win64.zip", "C:\Users\appveyor\nvim")
+  - ps: Invoke-WebRequest -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.zip" -OutFile "C:\Users\appveyor\nvim-win64.zip" ; if ($?) { Remove-Item -Force -Recurse "C:\Users\appveyor\nvim" ; Add-Type -assembly "system.io.compression.filesystem" ; [io.compression.zipfile]::ExtractToDirectory("C:\Users\appveyor\nvim-win64.zip", "C:\Users\appveyor\nvim") }
   - ps: $env:Path += ";C:\Users\appveyor\nvim\Neovim\bin"
   - node --version
   - npm --version
