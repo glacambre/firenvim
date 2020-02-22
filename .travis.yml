@@ -26,5 +26,7 @@ cache:
   directories:
     - node_modules
     - /home/travis/.npm
+    - /home/travis/bin
+    - /home/travis/nvim-osx64
 git:
   depth: false

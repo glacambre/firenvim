@@ -4,7 +4,9 @@ branches:
   - master
 skip_branch_with_pr: true
 clone_depth: 1
-cache: "C:\\projects\\firenvim\\node_modules"
+cache:
+  - C:\projects\firenvim\node_modules
+  - C:\Users\appveyor\nvim\Neovim\bin
 build: off
 test: off
 deploy: off
