@@ -1,6 +1,7 @@
 require("geckodriver");
 
-const env = require("process").env;
+const process = require("process");
+const env = process.env;
 const fs = require("fs");
 const path = require("path");
 const webdriver = require("selenium-webdriver");
@@ -24,6 +25,7 @@ import {
  testModifiers,
  testMonaco,
  testNestedDynamicTextareas,
+ testNoLingeringNeovims,
  testPageFocus,
  testPressKeys,
  testTakeoverEmpty,
@@ -93,4 +95,7 @@ describe("Firefox", () => {
         test("Takeover: empty works", () => testTakeoverEmpty(driver));
         test("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
         test("Takeover: once works", () => testTakeoverOnce(driver));
+        if (process.platform === "linux") {
+                test("No lingering neovim process", () => testNoLingeringNeovims(driver));
+        }
 })
