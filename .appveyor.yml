@@ -6,7 +6,7 @@ skip_branch_with_pr: true
 clone_depth: 1
 cache:
   - C:\projects\firenvim\node_modules
-  - C:\Users\appveyor\nvim\Neovim\bin
+  - C:\Users\appveyor\nvim
 build: off
 test: off
 deploy: off
