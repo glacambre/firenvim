@@ -1,4 +1,6 @@
 
+const process = require("process");
+const spawn = require("child_process").spawn;
 const fs = require("fs");
 const path = require("path");
 const webdriver = require("selenium-webdriver");
@@ -559,6 +561,48 @@ export async function testLargeBuffers(driver: any) {
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
         await driver.wait(async () => (await input.getAttribute("value")) == (new Array(5000)).fill("a").join(""));
+}
+
+export async function testNoLingeringNeovims(driver: any) {
+        // Load neovim once and kill the tab, then load neovim again and kill
+        // the frame.
+        await loadLocalPage(driver, "simple.html", "No lingering neovims test");
+        console.log("Locating textarea…");
+        let input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript(`arguments[0].scrollIntoView(true)`, input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await firenvimReady(driver);
+        console.log("Reloading page…");
+        await loadLocalPage(driver, "simple.html", "No lingering neovims test");
+        console.log("Locating textarea…");
+        input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript(`arguments[0].scrollIntoView(true)`, input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await firenvimReady(driver);
+        await sendKeys(driver, ":q!".split("").concat(webdriver.Key.ENTER))
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+
+        await (new Promise(resolve => setTimeout(resolve, 1000)));
+
+        // All npm packages that promise to return the child process tree do so
+        // by parsing the output of `ps` or of its windows equivalent. I find
+        // completely insane that there's no better way to do this and since
+        // there isn't, there's no point in depending on these packages.
+        const pstree = spawn("pstree", [process.pid]);
+        const data: string = await (new Promise(resolve => {
+                let data = "";
+                pstree.stdout.on("data", (d: any) => data += d);
+                pstree.on("close", () => resolve(data));
+        }));
+        const match = data.match(/-(\d+\*)?[{\[]?nvim[\]}]?/)
+        expect(match[1]).toBe(undefined);
 }
 
 export async function killDriver(driver: any) {

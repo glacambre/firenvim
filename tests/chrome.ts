@@ -1,6 +1,7 @@
 require("chromedriver");
 
-const env = require("process").env;
+const process = require("process");
+const env = process.env;
 const fs = require("fs");
 const path = require("path");
 const webdriver = require("selenium-webdriver");
@@ -22,6 +23,7 @@ import {
  testModifiers,
  testMonaco,
  testNestedDynamicTextareas,
+ testNoLingeringNeovims,
  testPageFocus,
  testPressKeys,
  testTakeoverEmpty,
@@ -90,4 +92,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(driver));
         nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
         nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(driver));
+        if (process.platform === "linux") {
+                nonHeadlessTest()("No lingering neovim process", () => testNoLingeringNeovims(driver));
+        }
 })
