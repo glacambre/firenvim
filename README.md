@@ -205,7 +205,7 @@ let fc['.*'] = { 'takeover': 'always' }
 
 ### Using the external command line
 
-You can chose to use an external command line (and thus save a line of space) by setting the localSetting named `cmdline` to `firenvim`. It's default value is `neovim`:
+You can chose to use an external command line (and thus save a line of space) by setting the localSetting named `cmdline` to `firenvim`. Its default value is `neovim`:
 
 ```vim
 let fc['.*'] = { 'cmdline' : 'firenvim' }
@@ -258,7 +258,7 @@ A function named `firenvim#press_keys()` will allow you to send key events to th
 au BufEnter riot.im_* inoremap <CR> <Esc>:w<CR>:call firenvim#press_keys("<LT>CR>")<CR>ggdGa
 ```
 
-Known Issues: some chat apps do not react to firenvim#press_keys (e.g. Slack). Others steal focus from the neovim frame (e.g. Riot.im).
+Known Issues: some chat apps do not react to firenvim#press_keys (e.g. Slack).
 
 ### Automatically syncing changes to the page
 
