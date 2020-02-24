@@ -19,6 +19,7 @@ import {
  testGuifont,
  testInputFocus,
  testInputFocusedAfterLeave,
+ testInputResizes,
  testLargeBuffers,
  testModifiers,
  testMonaco,
@@ -77,6 +78,7 @@ describe("Chrome", () => {
 
         nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
         nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
+        nonHeadlessTest()("Firenvim frame is resized on input resize", () => testInputResizes(driver));
         nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
         nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
         nonHeadlessTest()("Firenvim works on Monaco", () => testMonaco(driver));

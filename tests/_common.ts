@@ -616,6 +616,33 @@ export async function testNoLingeringNeovims(driver: any) {
         expect(match[1]).toBe(undefined);
 }
 
+export async function testInputResizes(driver: any) {
+        await loadLocalPage(driver, "resize.html", "Input resize test");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
+        await firenvimReady(driver);
+        console.log("Typing 100aa<Esc>^gjib…");
+        await sendKeys(driver, "100aa".split("")
+                       .concat(webdriver.Key.ESCAPE)
+                       .concat("^gjib".split(""))
+                       .concat(webdriver.Key.ESCAPE));
+        const button = await driver.wait(Until.elementLocated(By.id("button")));
+        await driver.actions().click(button).perform();
+        await driver.actions().click(input).perform();
+        await sendKeys(driver, "^gjib".split("")
+                       .concat(webdriver.Key.ESCAPE)
+                       .concat(":wq!".split(""))
+                       .concat(webdriver.Key.ENTER));
+        // We don't test for a specific value because size is dependant on browser config
+        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        expect(await input.getAttribute("value")).toMatch(/a*ba+ba*/);
+};
+
 export async function killDriver(driver: any) {
         try {
                 await driver.close()
