@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en" id="html">
+        <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Test Page</title>
+        </head>
+        <body id="body">
+                <textarea id="content-input" rows="20" cols="80"></textarea>
+                <button id="button">Resize textarea</button>
+                <script>
+const button = document.getElementById("button");
+button.addEventListener("click", evt => {
+  const textarea = document.getElementById("content-input");
+  textarea.rows /= 2;
+  textarea.cols /= 2;
+});
+                </script>
+        </body>
+</html>
