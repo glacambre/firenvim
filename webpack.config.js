@@ -107,7 +107,7 @@ module.exports = [
 `  "browser_specific_settings": {
     "gecko": {
       "id": "firenvim@lacamb.re",
-      "strict_min_version": "65.0"
+      "strict_min_version": "69.0"
     }
   }`)
               .replace("FIRENVIM_VERSION", package_json.version)
