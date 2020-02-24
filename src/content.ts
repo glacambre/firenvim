@@ -2,8 +2,7 @@ import * as browser from "webextension-polyfill";
 import { autofill } from "./autofill";
 import { getFunctions } from "./page/functions";
 import { confReady, getConf } from "./utils/configuration";
-import { computeSelector } from "./utils/CSSUtils";
-import { getEditor } from "./editors/editors";
+import { FirenvimElement } from "./FirenvimElement";
 
 if (document.location.href === "https://github.com/glacambre/firenvim/issues/new") {
     addEventListener("load", autofill);
@@ -38,9 +37,10 @@ const global = {
             return;
         }
 
-        const editor = getEditor(evt.target as HTMLElement);
-        const elem = editor.getElement();
-        const selector = computeSelector(elem);
+        const firenvim = new FirenvimElement(evt.target as HTMLElement);
+        const editor = firenvim.getEditor();
+        const elem = firenvim.getElement();
+        const selector = firenvim.getSelector();
 
         // If this element already has a neovim frame, stop
         const alreadyRunning = global.selectorToElems.get(selector);
@@ -65,32 +65,25 @@ const global = {
             }
         }
 
-        const pageElements = { editor, input: elem, selector } as PageElements;
+        const pageElements = { editor, firenvim, input: elem, selector } as PageElements;
         global.selectorToElems.set(selector, pageElements);
 
         global.lastEditorLocation = [document.location.href, selector, await editor.getCursor()];
-        // We use a span because these are the least likely to disturb the page
-        const span = elem.ownerDocument
-            .createElementNS("http://www.w3.org/1999/xhtml", "span") as HTMLSpanElement;
-        pageElements.span = span;
-        // It's important to create the iframe last because otherwise it might
-        // try to access uninitialized data from the page
-        const iframe = span.ownerDocument
-            .createElementNS("http://www.w3.org/1999/xhtml", "iframe") as HTMLIFrameElement;
-        pageElements.iframe = iframe;
+        pageElements.span = firenvim.getSpan();
+        pageElements.iframe = firenvim.getIframe();
 
-        global.putEditorAtInputOrigin(pageElements);
+        firenvim.putEditorAtInputOrigin();
         // We don't need the iframe to be appended to the page in order to
         // resize it because we're just using the corresponding
         // input/textarea's size
-        setEditorSizeToInputSize(pageElements);
+        firenvim.setEditorSizeToInputSize();
 
         if ((window as any).ResizeObserver !== undefined) {
             let resizeReqId = 0;
             (new ((window as any).ResizeObserver)((entries: any[]) => {
                 const entry = entries.find((ent: any) => ent.target === elem);
                 if (entry) {
-                    const { newRect } = setEditorSizeToInputSize(pageElements);
+                    const { newRect } = pageElements.firenvim.setEditorSizeToInputSize();
                     resizeReqId += 1;
                     browser.runtime.sendMessage({
                         args: {
@@ -104,9 +97,9 @@ const global = {
             })).observe(elem, { box: "border-box" });
         }
 
-        iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
-        span.attachShadow({ mode: "closed" }).appendChild(iframe);
-        elem.ownerDocument.body.appendChild(span);
+        pageElements.iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
+        pageElements.span.attachShadow({ mode: "closed" }).appendChild(pageElements.iframe);
+        elem.ownerDocument.body.appendChild(pageElements.span);
 
         // Some inputs try to grab the focus again after we appended the iframe
         // to the page, so we need to refocus it each time it loses focus. But
@@ -119,7 +112,7 @@ const global = {
                 const sel = document.getSelection();
                 sel.removeAllRanges();
                 const range = document.createRange();
-                range.setStart(span, 0);
+                range.setStart(pageElements.span, 0);
                 range.collapse(true);
                 sel.addRange(range);
                 // Then, attempt to "release" the focus from whatever element
@@ -127,14 +120,14 @@ const global = {
                 window.focus();
                 document.documentElement.focus();
                 document.body.focus();
-                iframe.focus();
+                pageElements.iframe.focus();
             }, 0);
         }
-        iframe.addEventListener("blur", refocus);
+        pageElements.iframe.addEventListener("blur", refocus);
         elem.addEventListener("focus", refocus);
         setTimeout(() => {
             refocus();
-            iframe.removeEventListener("blur", refocus);
+            pageElements.iframe.removeEventListener("blur", refocus);
             elem.removeEventListener("focus", refocus);
         }, 100);
         refocus();
@@ -150,21 +143,6 @@ const global = {
                 functions.killEditor(selector);
             }
         }, { root: null, threshold: 0.1 })).observe(elem);
-    },
-    putEditorAtInputOrigin: ({ iframe, input }: PageElements) => {
-        const rect = input.getBoundingClientRect();
-        // Save attributes
-        const posAttrs = ["left", "position", "top", "zIndex"];
-        const oldPosAttrs = posAttrs.map((attr: any) => iframe.style[attr]);
-
-        // Assign new values
-        iframe.style.left = `${rect.left + window.scrollX}px`;
-        iframe.style.position = "absolute";
-        iframe.style.top = `${rect.top + window.scrollY}px`;
-        iframe.style.zIndex = "2147483645";
-
-        const posChanged = !!posAttrs.find((attr: any, index) => iframe.style[attr] !== oldPosAttrs[index]);
-        return { posChanged, newRect: rect };
     },
 
     // selectorToElems: a map of selectors->{input, span, iframe} objects
@@ -194,32 +172,11 @@ browser.runtime.onMessage.addListener(async (
     return fn(...request.args);
 });
 
-function setEditorSizeToInputSize({ iframe, input }: PageElements) {
-    const rect = input.getBoundingClientRect();
-    // Make sure there isn't any extra width/height
-    iframe.style.padding = "0px";
-    iframe.style.margin = "0px";
-    iframe.style.border = "0px";
-    // We still need a border, use a shadow for that
-    iframe.style.boxShadow = "0px 0px 1px 1px black";
-
-    const dimAttrs = ["height", "width"];
-    const oldDimAttrs = dimAttrs.map((attr: any) => iframe.style[attr]);
-
-    // Assign new values
-    iframe.style.height = `${rect.height}px`;
-    iframe.style.width = `${rect.width}px`;
-
-    const dimChanged = !!dimAttrs.find((attr: any, index) => iframe.style[attr] !== oldDimAttrs[index]);
-
-    return { dimChanged, newRect: rect };
-}
-
 function setupListeners(selector: string) {
     function onScroll(cont: boolean) {
         window.requestAnimationFrame(() => {
             const posChanged = Array.from(global.selectorToElems.entries())
-                .map(([_, elems]) => global.putEditorAtInputOrigin(elems))
+                .map(([_, elems]) => elems.firenvim.putEditorAtInputOrigin())
                 .find(changed => changed.posChanged);
             if (posChanged) {
                 // As long as one editor changes position, try to resize

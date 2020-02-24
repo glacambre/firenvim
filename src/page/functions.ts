@@ -6,7 +6,6 @@ import { isFirefox } from "../utils/utils";
 interface IGlobalState {
     lastEditorLocation: [string, string, [number, number]];
     nvimify: (evt: FocusEvent) => void;
-    putEditorAtInputOrigin: ({ iframe, input }: PageElements) => void;
     selectorToElems: Map<string, PageElements>;
     disabled: boolean | Promise<boolean>;
 }
@@ -123,7 +122,7 @@ export function getFunctions(global: IGlobalState) {
             const pageElems = global.selectorToElems.get(selector);
             pageElems.iframe.style.width = `${width}px`;
             pageElems.iframe.style.height = `${height}px`;
-            global.putEditorAtInputOrigin(pageElems);
+            pageElems.firenvim.putEditorAtInputOrigin();
         },
         setDisabled: (disabled: boolean) => {
             global.disabled = disabled;
