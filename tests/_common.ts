@@ -115,7 +115,9 @@ export async function testModifiers(driver: any) {
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.wait(async () => ["\u0011<M-q><D-q><S-Left>", "\u0001<M-a><D-a><S-Left>"].includes(await input.getAttribute("value")));
+        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        expect(["\u0011<M-q><D-q><S-Left>", "\u0001<M-a><D-a><S-Left>"])
+               .toContain(await input.getAttribute("value"));
 }
 
 export async function testGStartedByFirenvim(driver: any) {
@@ -144,7 +146,8 @@ export async function testGStartedByFirenvim(driver: any) {
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("value")) === "true");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        expect(await input.getAttribute("value")).toMatch("true");
 }
 
 export async function testCodemirror(driver: any) {
@@ -233,7 +236,8 @@ export async function testDynamicTextareas(driver: any) {
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
         const txtarea = await driver.wait(Until.elementLocated(By.css("body > textarea")));
-        await driver.wait(async () => (await txtarea.getAttribute("value")) === "Test");
+        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""));
+        expect(await txtarea.getAttribute("value")).toMatch("Test");
 }
 
 export async function testNestedDynamicTextareas(driver: any) {
@@ -256,7 +260,8 @@ export async function testNestedDynamicTextareas(driver: any) {
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
         const txtarea = await driver.wait(Until.elementLocated(By.css("body > div:nth-child(3) > textarea:nth-child(1)")));
-        await driver.wait(async () => (await txtarea.getAttribute("value")) === "Test");
+        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""));
+        expect(await txtarea.getAttribute("value")).toMatch("Test");
 }
 
 // Purges a preloaded instance by creating a new frame, focusing it and quitting it
@@ -330,7 +335,9 @@ ${backup}
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(async () => /a+ba+/.test(await input.getAttribute("value")));
+        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        const initVal = await input.getAttribute("value");
+        expect(initVal).toMatch(/a+ba+/);
         await driver.executeScript(`arguments[0].blur();
                                     document.documentElement.focus();
                                     document.body.focus();`, input);
@@ -344,7 +351,8 @@ ${backup}
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
         // We don't test for a specific value because size is dependant on browser config
-        await driver.wait(async () => /a*ba+ba*/.test(await input.getAttribute("value")));
+        await driver.wait(async () => (await input.getAttribute("value") !== initVal));
+        expect(await input.getAttribute("value")).toMatch(/a*ba+ba*/);
 }
 
 export async function testPageFocus(driver: any) {
@@ -556,11 +564,14 @@ export async function testLargeBuffers(driver: any) {
         console.log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await firenvimReady(driver);
-        await sendKeys(driver, ":wq!".split("").concat(webdriver.Key.ENTER))
+        await sendKeys(driver, "Aa".split("")
+                .concat(webdriver.Key.ESCAPE)
+                .concat(":wq!".split(""))
+                .concat(webdriver.Key.ENTER));
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("value")) == (new Array(5000)).fill("a").join(""));
+        await driver.wait(async () => (await input.getAttribute("value")) == (new Array(5001)).fill("a").join(""));
 }
 
 export async function testNoLingeringNeovims(driver: any) {
