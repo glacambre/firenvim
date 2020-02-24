@@ -13,13 +13,16 @@ deploy: off
 environment:
   HEADLESS: 1
   APPVEYOR: 1
+  matrix:
+    - NEOVIMURL: "https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.zip"
+    - NEOVIMURL: "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip"
 install:
   - ps: Install-Product node $env:nodejs_version x64
   - npm install -g npm
   - choco --version
   - choco install firefox-dev --pre
   - ps: $env:Path += ";C:\Program Files\Firefox Developer Edition"
-  - ps: Invoke-WebRequest -Uri "https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.zip" -OutFile "C:\Users\appveyor\nvim-win64.zip" ; if ($?) { Remove-Item -Force -Recurse "C:\Users\appveyor\nvim" ; Add-Type -assembly "system.io.compression.filesystem" ; [io.compression.zipfile]::ExtractToDirectory("C:\Users\appveyor\nvim-win64.zip", "C:\Users\appveyor\nvim") }
+  - ps: Try { Invoke-WebRequest -Uri $env:NEOVIMURL -OutFile "C:\Users\appveyor\nvim-win64.zip" ; if ($?) { Remove-Item -ErrorAction Ignore -Force -Recurse "C:\Users\appveyor\nvim" ; Add-Type -assembly "system.io.compression.filesystem" ; [io.compression.zipfile]::ExtractToDirectory("C:\Users\appveyor\nvim-win64.zip", "C:\Users\appveyor\nvim") } } Catch { echo "Using cached neovim." }
   - ps: $env:Path += ";C:\Users\appveyor\nvim\Neovim\bin"
   - node --version
   - npm --version
