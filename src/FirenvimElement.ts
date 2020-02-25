@@ -8,6 +8,8 @@ export class FirenvimElement {
     private span: HTMLSpanElement;
     private iframe: HTMLIFrameElement;
     private frameId: number;
+    // TODO: periodically check if MS implemented a ResizeObserver type
+    private resizeObserver: any;
 
     constructor (elem: HTMLElement, frameIdPromise: Promise<number>) {
         frameIdPromise.then((f: number) => this.frameId = f);
@@ -22,6 +24,32 @@ export class FirenvimElement {
         this.iframe = elem
             .ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "iframe") as HTMLIFrameElement;
+
+        // Use a ResizeObserver to detect when the underlying input element's
+        // size changes and change the size of the FirenvimElement
+        // accordingly
+        let resizeReqId = 0;
+        this.resizeObserver = new ((window as any).ResizeObserver)(((self) => async (entries: any[]) => {
+            const entry = entries.find((ent: any) => ent.target === self.getElement());
+            if (self.frameId === undefined) {
+                await frameIdPromise;
+            }
+            if (entry) {
+                const { newRect } = self.setEditorSizeToInputSize();
+                resizeReqId += 1;
+                browser.runtime.sendMessage({
+                    args: {
+                        frameId: self.frameId,
+                        message: {
+                            args: [resizeReqId, newRect.width, newRect.height],
+                            funcName: ["resize"],
+                        }
+                    },
+                    funcName: ["messageFrame"],
+                });
+            }
+        })(this));
+        this.resizeObserver.observe(elem, { box: "border-box" });
     }
 
     getEditor () {

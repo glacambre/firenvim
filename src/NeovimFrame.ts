@@ -49,9 +49,7 @@ window.addEventListener("load", async () => {
 
         let resizeReqId = 0;
         browser.runtime.onMessage.addListener((request: any, sender: any, sendResponse: any) => {
-            if (request.selector === selector
-                && request.funcName[0] === "resize"
-                && request.args[0] > resizeReqId) {
+            if (request.funcName[0] === "resize" && request.args[0] > resizeReqId) {
                 const [id, width, height] = request.args;
                 resizeReqId = id;
                 // We need to put the keyHandler at the origin in order to avoid

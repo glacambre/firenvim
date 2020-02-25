@@ -250,8 +250,12 @@ Object.assign(window, {
     getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
     getTabValueFor: (sender: any, args: any) => getTabValue(args[0], args[1]),
     getWarning,
-    messageOwnTab: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id, args),
-    messageTab: (sender: any, args: any) => browser.tabs.sendMessage(args[0], args.slice(1)),
+    messageFrame: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id,
+                                                                       args.message,
+                                                                       { frameId: args.frameId }),
+    messagePage: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id,
+                                                                      args,
+                                                                      { frameId: 0 }),
     publishFrameId: (sender: any, args: any) => {
         browser.tabs.sendMessage(sender.tab.id, {
             args: [sender.frameId],

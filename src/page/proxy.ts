@@ -28,7 +28,7 @@ for (funcName in functions) {
                 funcName: [func],
                 selector: (window as any).selector,
             },
-            funcName: ["messageOwnTab"],
+            funcName: ["messagePage"],
         });
     });
 }

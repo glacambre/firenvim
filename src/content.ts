@@ -108,25 +108,6 @@ const global = {
             // input/textarea's size
             firenvim.setEditorSizeToInputSize();
 
-            if ((window as any).ResizeObserver !== undefined) {
-                let resizeReqId = 0;
-                (new ((window as any).ResizeObserver)((entries: any[]) => {
-                    const entry = entries.find((ent: any) => ent.target === elem);
-                    if (entry) {
-                        const { newRect } = pageElements.firenvim.setEditorSizeToInputSize();
-                        resizeReqId += 1;
-                        browser.runtime.sendMessage({
-                            args: {
-                                args: [resizeReqId, newRect.width, newRect.height],
-                                funcName: ["resize"],
-                                selector,
-                            },
-                            funcName: ["messageOwnTab"],
-                        });
-                    }
-                })).observe(elem, { box: "border-box" });
-            }
-
             pageElements.iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
             pageElements.span.attachShadow({ mode: "closed" }).appendChild(pageElements.iframe);
             elem.ownerDocument.body.appendChild(pageElements.span);
@@ -179,6 +160,9 @@ const global = {
 
     // selectorToElems: a map of selectors->{input, span, iframe} objects
     selectorToElems: new Map<string, PageElements>(),
+
+    // resolve the frameId promise for the last-created frame
+    registerNewFrameId: (frameId: number) => frameIdResolve(frameId),
 };
 
 // This works as an rpc mechanism, allowing the frame script to perform calls
