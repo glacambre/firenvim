@@ -12,21 +12,17 @@ interface IGlobalState {
 
 // FIXME: Can't focus codemirror/ace/monaco since input != selector?
 function _focusInput(global: IGlobalState, selector: string, addListener: boolean) {
-    const { input } = global.selectorToElems.get(selector);
-    (document.activeElement as any).blur();
-    input.removeEventListener("focus", global.nvimify);
-    input.focus();
+    const { firenvim } = global.selectorToElems.get(selector);
     if (addListener) {
         // Only re-add event listener if input's selector matches the ones
         // that should be autonvimified
         const conf = getConf();
         if (conf.selector && conf.selector !== "") {
             const elems = Array.from(document.querySelectorAll(conf.selector));
-            if (elems.includes(input)) {
-                input.addEventListener("focus", global.nvimify);
-            }
+            addListener = elems.includes(firenvim.getElement());
         }
     }
+    firenvim.focusOriginalElement(addListener);
 }
 
 export function getFunctions(global: IGlobalState) {
@@ -98,9 +94,8 @@ export function getFunctions(global: IGlobalState) {
             global.selectorToElems.delete(selector);
         },
         pressKeys: (selector: string, keys: string[]) => {
-            const { firenvim, input } = global.selectorToElems.get(selector);
-            keysToEvents(keys).forEach(ev => input.dispatchEvent(ev));
-            firenvim.focus();
+            const { firenvim } = global.selectorToElems.get(selector);
+            firenvim.pressKeys(keysToEvents(keys));
         },
         resizeEditor: (selector: string, width: number, height: number) => {
             const { firenvim } = global.selectorToElems.get(selector);
@@ -112,15 +107,8 @@ export function getFunctions(global: IGlobalState) {
             global.disabled = disabled;
         },
         setElementContent: (selector: string, text: string) => {
-            const { editor, firenvim, input } = global.selectorToElems.get(selector) as any;
-            editor.setContent(text);
-            input.dispatchEvent(new Event("keydown",     { bubbles: true }));
-            input.dispatchEvent(new Event("keyup",       { bubbles: true }));
-            input.dispatchEvent(new Event("keypress",    { bubbles: true }));
-            input.dispatchEvent(new Event("beforeinput", { bubbles: true }));
-            input.dispatchEvent(new Event("input",       { bubbles: true }));
-            input.dispatchEvent(new Event("change",      { bubbles: true }));
-            firenvim.focus();
+            const { firenvim } = global.selectorToElems.get(selector) as any;
+            firenvim.setPageElementContent(text);
         },
         setElementCursor: async (selector: string, line: number, column: number) => {
             const { editor } = global.selectorToElems.get(selector) as any;

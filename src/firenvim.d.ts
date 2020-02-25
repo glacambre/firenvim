@@ -62,4 +62,4 @@ type HighlightElement = {
 }
 type HighlightArray = Array<HighlightElement>;
 
-type PageElements = { editor: any, firenvim: any, input: HTMLElement, selector: string };
+type PageElements = { editor: any, firenvim: any, selector: string };
