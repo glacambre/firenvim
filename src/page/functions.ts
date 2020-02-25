@@ -108,8 +108,8 @@ export function getFunctions(global: IGlobalState) {
             _focusInput(global, selector, true);
         },
         killEditor: (selector: string) => {
-            const { span } = global.selectorToElems.get(selector);
-            span.parentNode.removeChild(span);
+            const { firenvim } = global.selectorToElems.get(selector);
+            firenvim.detachFromPage();
             const conf = getConf();
             _focusInput(global, selector, conf.takeover !== "once");
             global.selectorToElems.delete(selector);
