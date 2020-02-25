@@ -102,59 +102,7 @@ const global = {
             pageElements.span = firenvim.getSpan();
             pageElements.iframe = firenvim.getIframe();
 
-            firenvim.putEditorAtInputOrigin();
-            // We don't need the iframe to be appended to the page in order to
-            // resize it because we're just using the corresponding
-            // input/textarea's size
-            firenvim.setEditorSizeToInputSize();
-
-            pageElements.iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
-            pageElements.span.attachShadow({ mode: "closed" }).appendChild(pageElements.iframe);
-            elem.ownerDocument.body.appendChild(pageElements.span);
-
-            // Some inputs try to grab the focus again after we appended the iframe
-            // to the page, so we need to refocus it each time it loses focus. But
-            // the user might want to stop focusing the iframe at some point, so we
-            // actually stop refocusing the iframe a second after it is created.
-            function refocus() {
-                setTimeout(() => {
-                    // First, destroy current selection. Some websites use the
-                    // selection to force-focus an element.
-                    const sel = document.getSelection();
-                    sel.removeAllRanges();
-                    const range = document.createRange();
-                    range.setStart(pageElements.span, 0);
-                    range.collapse(true);
-                    sel.addRange(range);
-                    // Then, attempt to "release" the focus from whatever element
-                    // is currently focused.
-                    window.focus();
-                    document.documentElement.focus();
-                    document.body.focus();
-                    pageElements.iframe.focus();
-                }, 0);
-            }
-            pageElements.iframe.addEventListener("blur", refocus);
-            elem.addEventListener("focus", refocus);
-            setTimeout(() => {
-                refocus();
-                pageElements.iframe.removeEventListener("blur", refocus);
-                elem.removeEventListener("focus", refocus);
-            }, 100);
-            refocus();
-
-            // We want to remove the frame from the page if the corresponding
-            // element has been removed. It is pretty hard to tell when an element
-            // disappears from the page (either by being removed or by being hidden
-            // by other elements), so we use an intersection observer, which is
-            // triggered every time the element becomes more or less visible.
-            (new IntersectionObserver((entries, observer) => {
-                if (!elem.ownerDocument.contains(elem)
-                    || (elem.offsetWidth === 0 && elem.offsetHeight === 0 && elem.getClientRects().length === 0)) {
-                        functions.killEditor(selector);
-                    }
-            }, { root: null, threshold: 0.1 })).observe(elem);
-
+            firenvim.attachToPage();
         });
     },
 

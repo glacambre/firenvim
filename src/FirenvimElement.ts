@@ -1,3 +1,4 @@
+import * as browser from "webextension-polyfill";
 import { AbstractEditor } from "./editors/AbstractEditor";
 import { getEditor } from "./editors/editors";
 import { computeSelector } from "./utils/CSSUtils";
@@ -10,6 +11,7 @@ export class FirenvimElement {
     private frameId: number;
     // TODO: periodically check if MS implemented a ResizeObserver type
     private resizeObserver: any;
+    private intersectionObserver: IntersectionObserver;
 
     constructor (elem: HTMLElement, frameIdPromise: Promise<number>) {
         frameIdPromise.then((f: number) => this.frameId = f);
@@ -49,7 +51,77 @@ export class FirenvimElement {
                 });
             }
         })(this));
-        this.resizeObserver.observe(elem, { box: "border-box" });
+        this.resizeObserver.observe(this.getElement(), { box: "border-box" });
+    }
+
+    attachToPage () {
+        this.putEditorAtInputOrigin();
+        // We don't need the iframe to be appended to the page in order to
+        // resize it because we're just using the corresponding
+        // input/textarea's size
+        this.setEditorSizeToInputSize();
+
+        this.iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
+        this.span.attachShadow({ mode: "closed" }).appendChild(this.iframe);
+        this.getElement().ownerDocument.body.appendChild(this.span);
+
+        this.focus();
+
+        // We want to remove the frame from the page if the corresponding
+        // element has been removed. It is pretty hard to tell when an element
+        // disappears from the page (either by being removed or by being hidden
+        // by other elements), so we use an intersection observer, which is
+        // triggered every time the element becomes more or less visible.
+        this.intersectionObserver = new IntersectionObserver((self => () => {
+            const elem = self.getElement();
+            if (!elem.ownerDocument.contains(elem)
+                || (elem.offsetWidth === 0
+                    && elem.offsetHeight === 0
+                    && elem.getClientRects().length === 0)
+               ) {
+                   self.detachFromPage();
+               }
+        })(this), { root: null, threshold: 0.1 });
+        this.intersectionObserver.observe(this.getElement());
+    }
+
+    detachFromPage () {
+        this.resizeObserver.unobserve(this.getElement());
+        this.intersectionObserver.unobserve(this.getElement());
+        this.span.parentNode.removeChild(this.span);
+    }
+
+    focus () {
+        // Some inputs try to grab the focus again after we appended the iframe
+        // to the page, so we need to refocus it each time it loses focus. But
+        // the user might want to stop focusing the iframe at some point, so we
+        // actually stop refocusing the iframe a second after it is created.
+        function refocus() {
+            setTimeout(() => {
+                // First, destroy current selection. Some websites use the
+                // selection to force-focus an element.
+                const sel = document.getSelection();
+                sel.removeAllRanges();
+                const range = document.createRange();
+                range.setStart(this.span, 0);
+                range.collapse(true);
+                sel.addRange(range);
+                // Then, attempt to "release" the focus from whatever element
+                // is currently focused.
+                window.focus();
+                document.documentElement.focus();
+                document.body.focus();
+                this.iframe.focus();
+            }, 0);
+        }
+        this.iframe.addEventListener("blur", refocus);
+        this.getElement().addEventListener("focus", refocus);
+        setTimeout(() => {
+            refocus();
+            this.iframe.removeEventListener("blur", refocus);
+            this.getElement().removeEventListener("focus", refocus);
+        }, 100);
+        refocus();
     }
 
     getEditor () {
