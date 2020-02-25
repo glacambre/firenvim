@@ -44,7 +44,7 @@ const global = {
             return;
         }
 
-        const firenvim = new FirenvimElement(evt.target as HTMLElement);
+        const firenvim = new FirenvimElement(evt.target as HTMLElement, global.nvimify);
 
         const editor = firenvim.getEditor();
         const elem = firenvim.getElement();

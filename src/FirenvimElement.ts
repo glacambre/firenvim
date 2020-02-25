@@ -6,24 +6,60 @@ import { computeSelector } from "./utils/CSSUtils";
 
 export class FirenvimElement {
 
+    // editor is an object that provides an interface to interact (e.g.
+    // retrieve/set content, retrieve/set cursor position) consistently with
+    // underlying elements (be they simple textareas, CodeMirror elements or
+    // other).
     private editor: AbstractEditor;
-    private span: HTMLSpanElement;
-    private iframe: HTMLIFrameElement;
-    private frameIdPromise: Promise<number>;
+    // frameId is the webextension id of the neovim frame. We use it to send
+    // commands to the frame.
     private frameId: number;
+    // frameIdPromise is a promise that will resolve to the frameId. The
+    // frameId can't be retrieved synchronously as it needs to be sent by the
+    // background script.
+    private frameIdPromise: Promise<number>;
+    // iframe is the Neovim frame. This is the element that receives all inputs
+    // and displays the editor.
+    private iframe: HTMLIFrameElement;
+    // We use an intersectionObserver to detect when the element the
+    // FirenvimElement is tied to disappears from the page. When this happens,
+    // we also remove the FirenvimElement from the page.
+    private intersectionObserver: IntersectionObserver;
+    // nvimify is the function that listens for focus events and creates
+    // firenvim elements. We need it in order to be able to remove it as an
+    // event listener from the element the user selected when the user wants to
+    // select that element again.
+    private nvimify: (evt: { target: EventTarget }) => Promise<void>;
+    // originalElement is the element a focus event has been triggered on. We
+    // use it to retrieve the element the editor should appear over (e.g., if
+    // elem is an element inside a CodeMirror editor, elem will be a small
+    // invisible textarea and what we really want to put the Firenvim element
+    // over is the parent div that contains it) and to give focus back to the
+    // page when the user asks for that.
+    private originalElement: HTMLElement;
+    // resizeObserver is used in order to detect when the size of the element
+    // being edited changed. When this happens, we resize the neovim frame.
     // TODO: periodically check if MS implemented a ResizeObserver type
     private resizeObserver: any;
-    private intersectionObserver: IntersectionObserver;
+    // span is the span element we use in order to insert the neovim frame in
+    // the page. The neovim frame is attached to its shadow dom. Using a span
+    // is much less disruptive to the page and enables a modicum of privacy
+    // (the page won't be able to check what's in it). In firefox, pages will
+    // still be able to detect the neovim frame by using window.frames though.
+    private span: HTMLSpanElement;
 
-    constructor (elem: HTMLElement) {
-
+    // elem is the element that received the focusEvent.
+    // Nvimify is the function that listens for focus events. We need to know
+    // about it in order to remove it before focusing elem (otherwise we'll
+    // just grab focus again).
+    constructor (elem: HTMLElement, listener: (evt: { target: EventTarget }) => Promise<void>) {
+        this.originalElement = elem;
+        this.nvimify = listener;
         this.editor = getEditor(elem);
-        // We use a span because these are the least likely to disturb the page
+
         this.span = elem
             .ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "span");
-        // It's important to create the iframe last because otherwise it might
-        // try to access uninitialized data from the page
         this.iframe = elem
             .ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "iframe") as HTMLIFrameElement;
@@ -131,6 +167,15 @@ export class FirenvimElement {
         refocus();
     }
 
+    focusOriginalElement (addListener: boolean) {
+        (document.activeElement as any).blur();
+        this.originalElement.removeEventListener("focus", this.nvimify);
+        this.originalElement.focus();
+        if (addListener) {
+            this.originalElement.addEventListener("focus", this.nvimify);
+        }
+    }
+
     getEditor () {
         return this.editor;
     }
@@ -155,6 +200,11 @@ export class FirenvimElement {
         this.iframe.style.display = "none";
     }
 
+    pressKeys (keys: KeyboardEvent[]) {
+        keys.forEach(ev => this.originalElement.dispatchEvent(ev));
+        this.focus();
+    }
+
     putEditorAtInputOrigin () {
         const rect = this.editor.getElement().getBoundingClientRect();
         // Save attributes
@@ -167,6 +217,7 @@ export class FirenvimElement {
         this.iframe.style.top = `${rect.top + window.scrollY}px`;
         this.iframe.style.zIndex = "2147483645";
 
+        // Compare, to know whether the element moved or not
         const posChanged = !!posAttrs.find((attr: any, index) =>
                                            this.iframe.style[attr] !== oldPosAttrs[index]);
         return { posChanged, newRect: rect };
@@ -196,6 +247,19 @@ export class FirenvimElement {
         const dimChanged = !!dimAttrs.find((attr: any, index) => this.iframe.style[attr] !== oldDimAttrs[index]);
 
         return { dimChanged, newRect: rect };
+    }
+
+    setPageElementContent (text: string) {
+        this.editor.setContent(text);
+        [
+            new Event("keydown",     { bubbles: true }),
+            new Event("keyup",       { bubbles: true }),
+            new Event("keypress",    { bubbles: true }),
+            new Event("beforeinput", { bubbles: true }),
+            new Event("input",       { bubbles: true }),
+            new Event("change",      { bubbles: true })
+        ].forEach(ev => this.originalElement.dispatchEvent(ev));
+        this.focus();
     }
 
     show () {
