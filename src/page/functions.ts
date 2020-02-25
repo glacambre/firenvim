@@ -1,7 +1,6 @@
 import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 import { getConf } from "../utils/configuration";
 import { keysToEvents } from "../utils/keys";
-import { isFirefox } from "../utils/utils";
 
 interface IGlobalState {
     lastEditorLocation: [string, string, [number, number]];
@@ -35,7 +34,7 @@ export function getFunctions(global: IGlobalState) {
         focusInput: (selector: string) => {
             if (selector === undefined) {
                 selector = Array.from(global.selectorToElems.keys())
-                    .find((sel: string) => 
+                    .find((sel: string) =>
                           global.selectorToElems.get(sel).firenvim.getSpan() === document.activeElement);
             }
             if (selector !== undefined) {
@@ -87,8 +86,8 @@ export function getFunctions(global: IGlobalState) {
         },
         getElementContent: (selector: string) => global.selectorToElems.get(selector).editor.getContent(),
         hideEditor: (selector: string) => {
-            const { iframe } = global.selectorToElems.get(selector);
-            iframe.style.display = "none";
+            const { firenvim } = global.selectorToElems.get(selector);
+            firenvim.hide();
             _focusInput(global, selector, true);
         },
         killEditor: (selector: string) => {
@@ -104,10 +103,9 @@ export function getFunctions(global: IGlobalState) {
             firenvim.focus();
         },
         resizeEditor: (selector: string, width: number, height: number) => {
-            const pageElems = global.selectorToElems.get(selector);
-            pageElems.iframe.style.width = `${width}px`;
-            pageElems.iframe.style.height = `${height}px`;
-            pageElems.firenvim.putEditorAtInputOrigin();
+            const { firenvim } = global.selectorToElems.get(selector);
+            firenvim.resizeTo(width, height);
+            firenvim.putEditorAtInputOrigin();
         },
         registerNewFrameId: (frameId: number) => global.registerNewFrameId(frameId),
         setDisabled: (disabled: boolean) => {

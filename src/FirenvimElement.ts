@@ -1,4 +1,5 @@
 import * as browser from "webextension-polyfill";
+import { isFirefox } from "./utils/utils";
 import { AbstractEditor } from "./editors/AbstractEditor";
 import { getEditor } from "./editors/editors";
 import { computeSelector } from "./utils/CSSUtils";
@@ -8,13 +9,13 @@ export class FirenvimElement {
     private editor: AbstractEditor;
     private span: HTMLSpanElement;
     private iframe: HTMLIFrameElement;
+    private frameIdPromise: Promise<number>;
     private frameId: number;
     // TODO: periodically check if MS implemented a ResizeObserver type
     private resizeObserver: any;
     private intersectionObserver: IntersectionObserver;
 
-    constructor (elem: HTMLElement, frameIdPromise: Promise<number>) {
-        frameIdPromise.then((f: number) => this.frameId = f);
+    constructor (elem: HTMLElement) {
 
         this.editor = getEditor(elem);
         // We use a span because these are the least likely to disturb the page
@@ -34,7 +35,7 @@ export class FirenvimElement {
         this.resizeObserver = new ((window as any).ResizeObserver)(((self) => async (entries: any[]) => {
             const entry = entries.find((ent: any) => ent.target === self.getElement());
             if (self.frameId === undefined) {
-                await frameIdPromise;
+                await this.frameIdPromise;
             }
             if (entry) {
                 const { newRect } = self.setEditorSizeToInputSize();
@@ -54,7 +55,10 @@ export class FirenvimElement {
         this.resizeObserver.observe(this.getElement(), { box: "border-box" });
     }
 
-    attachToPage () {
+    attachToPage (fip: Promise<number>) {
+        this.frameIdPromise = fip;
+        this.frameIdPromise.then((f: number) => this.frameId = f);
+
         this.putEditorAtInputOrigin();
         // We don't need the iframe to be appended to the page in order to
         // resize it because we're just using the corresponding
@@ -96,6 +100,7 @@ export class FirenvimElement {
         // to the page, so we need to refocus it each time it loses focus. But
         // the user might want to stop focusing the iframe at some point, so we
         // actually stop refocusing the iframe a second after it is created.
+        const self = this;
         function refocus() {
             setTimeout(() => {
                 // First, destroy current selection. Some websites use the
@@ -103,15 +108,17 @@ export class FirenvimElement {
                 const sel = document.getSelection();
                 sel.removeAllRanges();
                 const range = document.createRange();
-                range.setStart(this.span, 0);
+                range.setStart(self.span, 0);
                 range.collapse(true);
                 sel.addRange(range);
                 // Then, attempt to "release" the focus from whatever element
-                // is currently focused.
-                window.focus();
-                document.documentElement.focus();
-                document.body.focus();
-                this.iframe.focus();
+                // is currently focused. This doesn't work on Chrome.
+                if (isFirefox()) {
+                    window.focus();
+                    document.documentElement.focus();
+                    document.body.focus();
+                }
+                self.iframe.focus();
             }, 0);
         }
         this.iframe.addEventListener("blur", refocus);
@@ -144,6 +151,10 @@ export class FirenvimElement {
         return this.span;
     }
 
+    hide () {
+        this.iframe.style.display = "none";
+    }
+
     putEditorAtInputOrigin () {
         const rect = this.editor.getElement().getBoundingClientRect();
         // Save attributes
@@ -159,6 +170,11 @@ export class FirenvimElement {
         const posChanged = !!posAttrs.find((attr: any, index) =>
                                            this.iframe.style[attr] !== oldPosAttrs[index]);
         return { posChanged, newRect: rect };
+    }
+
+    resizeTo (width: number, height: number) {
+        this.iframe.style.width = `${width}px`;
+        this.iframe.style.height = `${height}px`;
     }
 
     setEditorSizeToInputSize () {
@@ -180,6 +196,10 @@ export class FirenvimElement {
         const dimChanged = !!dimAttrs.find((attr: any, index) => this.iframe.style[attr] !== oldDimAttrs[index]);
 
         return { dimChanged, newRect: rect };
+    }
+
+    show () {
+        this.iframe.style.display = "initial";
     }
 
 }
