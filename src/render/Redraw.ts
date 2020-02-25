@@ -61,7 +61,7 @@ function selectGrid(gid: number) {
 }
 
 export function getGridId() {
-   return gridId || 0;
+   return gridId !== undefined ? gridId : 1;
 }
 
 function matchesSelectedGrid(gid: number) {
@@ -301,12 +301,7 @@ const redrawFuncs = {
                }
                nvimGuifont.innerHTML = `* { ${guifontsToCSS(value)} }`;
                const [width, height] = getGridSize(elem);
-               const gId = getGridId();
-               if (gId) {
-                  nvimFunctions.ui_try_resize_grid(gId, width, height);
-               } else {
-                  nvimFunctions.ui_try_resize(width, height);
-               }
+               nvimFunctions.ui_try_resize_grid(getGridId(), width, height);
                break;
             case "linespace":
                nvimLinespace.innerText = `.nvim_row { border-bottom: ${value}px }`;
