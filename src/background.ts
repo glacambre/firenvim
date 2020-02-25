@@ -252,6 +252,13 @@ Object.assign(window, {
     getWarning,
     messageOwnTab: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id, args),
     messageTab: (sender: any, args: any) => browser.tabs.sendMessage(args[0], args.slice(1)),
+    publishFrameId: (sender: any, args: any) => {
+        browser.tabs.sendMessage(sender.tab.id, {
+            args: [sender.frameId],
+            funcName: ["registerNewFrameId"],
+        }, { frameId: 0 });
+        return sender.frameId;
+    },
     setTabValue: (sender: any, args: any) => setTabValue(sender.tab.id, args[0], args[1]),
     toggleDisabled: (sender: any, args: any) => toggleDisabled(),
     updateSettings: (sender: any, args: any) => updateSettings(),

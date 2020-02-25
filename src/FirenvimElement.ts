@@ -7,8 +7,11 @@ export class FirenvimElement {
     private editor: AbstractEditor;
     private span: HTMLSpanElement;
     private iframe: HTMLIFrameElement;
+    private frameId: number;
 
-    constructor (elem: HTMLElement) {
+    constructor (elem: HTMLElement, frameIdPromise: Promise<number>) {
+        frameIdPromise.then((f: number) => this.frameId = f);
+
         this.editor = getEditor(elem);
         // We use a span because these are the least likely to disturb the page
         this.span = elem
