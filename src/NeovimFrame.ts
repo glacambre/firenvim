@@ -7,6 +7,8 @@ import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, isFirefox, toFileName } from "./utils/utils";
 
 const locationPromise = page.getEditorLocation();
+let frameId: number;
+browser.runtime.sendMessage({ funcName: ["publishFrameId"] }).then((f: number) => frameId = f);
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
 const settingsPromise = browser.storage.local.get("globalSettings");
 

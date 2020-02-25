@@ -8,6 +8,13 @@ if (document.location.href === "https://github.com/glacambre/firenvim/issues/new
     addEventListener("load", autofill);
 }
 
+// Promise used to implement a locking mechanism preventing concurrent creation
+// of neovim frames
+let frameIdLock = Promise.resolve();
+// Promise-resolution function called when a frameId is received from the
+// background script
+let frameIdResolve: (_: number) => void;
+
 const global = {
     // Whether Firenvim is disabled in this tab
     disabled: browser.runtime.sendMessage({
@@ -37,112 +44,137 @@ const global = {
             return;
         }
 
-        const firenvim = new FirenvimElement(evt.target as HTMLElement);
-        const editor = firenvim.getEditor();
-        const elem = firenvim.getElement();
-        const selector = firenvim.getSelector();
-
-        // If this element already has a neovim frame, stop
-        const alreadyRunning = global.selectorToElems.get(selector);
-        if (alreadyRunning !== undefined) {
-            const focusEditor = () => {
-                if ((evt.target as any).blur !== undefined) {
-                    (evt.target as any).blur();
-                }
-                alreadyRunning.iframe.focus();
-            };
-            alreadyRunning.iframe.style.display = "initial";
-            focusEditor();
-            setTimeout(focusEditor, 10);
-            return;
+        // When creating new frames, we need to know their frameId in order to
+        // communicate with them. This can't be retrieved through a
+        // synchronous, in-page call so the new frame has to tell the
+        // background script to send its frame id to the page. Problem is, if
+        // multiple frames are created in a very short amount of time, we
+        // aren't guaranteed to receive these frameIds in the order in which
+        // the frames were created. So we have to implement a locking mechanism
+        // to make sure that we don't create new frames until we received the
+        // frameId of the previously created frame.
+        let lock;
+        while (lock !== frameIdLock) {
+            lock = frameIdLock;
+            await frameIdLock;
         }
+        frameIdLock = new Promise(async (unlock: any) => {
 
-        if (auto && (takeover === "empty" || takeover === "nonempty")) {
-            const content = await editor.getContent();
-            if ((content !== "" && takeover === "empty")
-                || (content === "" && takeover === "nonempty")) {
+            // TODO: make this timeout the same as the one in background.ts
+            const frameIdPromise = new Promise((resolve: (_: number) => void, reject) => {
+                frameIdResolve = resolve;
+                setTimeout(reject, 10000);
+            });
+            const firenvim = new FirenvimElement(evt.target as HTMLElement, frameIdPromise);
+            frameIdPromise.then(unlock).catch(unlock);
+
+            const editor = firenvim.getEditor();
+            const elem = firenvim.getElement();
+            const selector = firenvim.getSelector();
+
+            // If this element already has a neovim frame, stop
+            const alreadyRunning = global.selectorToElems.get(selector);
+            if (alreadyRunning !== undefined) {
+                const focusEditor = () => {
+                    if ((evt.target as any).blur !== undefined) {
+                        (evt.target as any).blur();
+                    }
+                    alreadyRunning.iframe.focus();
+                };
+                alreadyRunning.iframe.style.display = "initial";
+                focusEditor();
+                setTimeout(focusEditor, 10);
                 return;
             }
-        }
 
-        const pageElements = { editor, firenvim, input: elem, selector } as PageElements;
-        global.selectorToElems.set(selector, pageElements);
-
-        global.lastEditorLocation = [document.location.href, selector, await editor.getCursor()];
-        pageElements.span = firenvim.getSpan();
-        pageElements.iframe = firenvim.getIframe();
-
-        firenvim.putEditorAtInputOrigin();
-        // We don't need the iframe to be appended to the page in order to
-        // resize it because we're just using the corresponding
-        // input/textarea's size
-        firenvim.setEditorSizeToInputSize();
-
-        if ((window as any).ResizeObserver !== undefined) {
-            let resizeReqId = 0;
-            (new ((window as any).ResizeObserver)((entries: any[]) => {
-                const entry = entries.find((ent: any) => ent.target === elem);
-                if (entry) {
-                    const { newRect } = pageElements.firenvim.setEditorSizeToInputSize();
-                    resizeReqId += 1;
-                    browser.runtime.sendMessage({
-                        args: {
-                            args: [resizeReqId, newRect.width, newRect.height],
-                            funcName: ["resize"],
-                            selector,
-                        },
-                        funcName: ["messageOwnTab"],
-                    });
-                }
-            })).observe(elem, { box: "border-box" });
-        }
-
-        pageElements.iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
-        pageElements.span.attachShadow({ mode: "closed" }).appendChild(pageElements.iframe);
-        elem.ownerDocument.body.appendChild(pageElements.span);
-
-        // Some inputs try to grab the focus again after we appended the iframe
-        // to the page, so we need to refocus it each time it loses focus. But
-        // the user might want to stop focusing the iframe at some point, so we
-        // actually stop refocusing the iframe a second after it is created.
-        function refocus() {
-            setTimeout(() => {
-                // First, destroy current selection. Some websites use the
-                // selection to force-focus an element.
-                const sel = document.getSelection();
-                sel.removeAllRanges();
-                const range = document.createRange();
-                range.setStart(pageElements.span, 0);
-                range.collapse(true);
-                sel.addRange(range);
-                // Then, attempt to "release" the focus from whatever element
-                // is currently focused.
-                window.focus();
-                document.documentElement.focus();
-                document.body.focus();
-                pageElements.iframe.focus();
-            }, 0);
-        }
-        pageElements.iframe.addEventListener("blur", refocus);
-        elem.addEventListener("focus", refocus);
-        setTimeout(() => {
-            refocus();
-            pageElements.iframe.removeEventListener("blur", refocus);
-            elem.removeEventListener("focus", refocus);
-        }, 100);
-        refocus();
-
-        // We want to remove the frame from the page if the corresponding
-        // element has been removed. It is pretty hard to tell when an element
-        // disappears from the page (either by being removed or by being hidden
-        // by other elements), so we use an intersection observer, which is
-        // triggered every time the element becomes more or less visible.
-        (new IntersectionObserver((entries, observer) => {
-            if (!elem.ownerDocument.contains(elem)
-                || (elem.offsetWidth === 0 && elem.offsetHeight === 0 && elem.getClientRects().length === 0)) {
-                functions.killEditor(selector);
+            if (auto && (takeover === "empty" || takeover === "nonempty")) {
+                const content = await editor.getContent();
+                if ((content !== "" && takeover === "empty")
+                    || (content === "" && takeover === "nonempty")) {
+                        return;
+                    }
             }
-        }, { root: null, threshold: 0.1 })).observe(elem);
+
+            const pageElements = { editor, firenvim, input: elem, selector } as PageElements;
+            global.selectorToElems.set(selector, pageElements);
+
+            global.lastEditorLocation = [document.location.href, selector, await editor.getCursor()];
+            pageElements.span = firenvim.getSpan();
+            pageElements.iframe = firenvim.getIframe();
+
+            firenvim.putEditorAtInputOrigin();
+            // We don't need the iframe to be appended to the page in order to
+            // resize it because we're just using the corresponding
+            // input/textarea's size
+            firenvim.setEditorSizeToInputSize();
+
+            if ((window as any).ResizeObserver !== undefined) {
+                let resizeReqId = 0;
+                (new ((window as any).ResizeObserver)((entries: any[]) => {
+                    const entry = entries.find((ent: any) => ent.target === elem);
+                    if (entry) {
+                        const { newRect } = pageElements.firenvim.setEditorSizeToInputSize();
+                        resizeReqId += 1;
+                        browser.runtime.sendMessage({
+                            args: {
+                                args: [resizeReqId, newRect.width, newRect.height],
+                                funcName: ["resize"],
+                                selector,
+                            },
+                            funcName: ["messageOwnTab"],
+                        });
+                    }
+                })).observe(elem, { box: "border-box" });
+            }
+
+            pageElements.iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
+            pageElements.span.attachShadow({ mode: "closed" }).appendChild(pageElements.iframe);
+            elem.ownerDocument.body.appendChild(pageElements.span);
+
+            // Some inputs try to grab the focus again after we appended the iframe
+            // to the page, so we need to refocus it each time it loses focus. But
+            // the user might want to stop focusing the iframe at some point, so we
+            // actually stop refocusing the iframe a second after it is created.
+            function refocus() {
+                setTimeout(() => {
+                    // First, destroy current selection. Some websites use the
+                    // selection to force-focus an element.
+                    const sel = document.getSelection();
+                    sel.removeAllRanges();
+                    const range = document.createRange();
+                    range.setStart(pageElements.span, 0);
+                    range.collapse(true);
+                    sel.addRange(range);
+                    // Then, attempt to "release" the focus from whatever element
+                    // is currently focused.
+                    window.focus();
+                    document.documentElement.focus();
+                    document.body.focus();
+                    pageElements.iframe.focus();
+                }, 0);
+            }
+            pageElements.iframe.addEventListener("blur", refocus);
+            elem.addEventListener("focus", refocus);
+            setTimeout(() => {
+                refocus();
+                pageElements.iframe.removeEventListener("blur", refocus);
+                elem.removeEventListener("focus", refocus);
+            }, 100);
+            refocus();
+
+            // We want to remove the frame from the page if the corresponding
+            // element has been removed. It is pretty hard to tell when an element
+            // disappears from the page (either by being removed or by being hidden
+            // by other elements), so we use an intersection observer, which is
+            // triggered every time the element becomes more or less visible.
+            (new IntersectionObserver((entries, observer) => {
+                if (!elem.ownerDocument.contains(elem)
+                    || (elem.offsetWidth === 0 && elem.offsetHeight === 0 && elem.getClientRects().length === 0)) {
+                        functions.killEditor(selector);
+                    }
+            }, { root: null, threshold: 0.1 })).observe(elem);
+
+        });
     },
 
     // selectorToElems: a map of selectors->{input, span, iframe} objects

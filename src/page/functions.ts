@@ -7,6 +7,7 @@ interface IGlobalState {
     lastEditorLocation: [string, string, [number, number]];
     nvimify: (evt: FocusEvent) => void;
     selectorToElems: Map<string, PageElements>;
+    registerNewFrameId: (frameId: number) => void;
     disabled: boolean | Promise<boolean>;
 }
 
@@ -124,6 +125,7 @@ export function getFunctions(global: IGlobalState) {
             pageElems.iframe.style.height = `${height}px`;
             pageElems.firenvim.putEditorAtInputOrigin();
         },
+        registerNewFrameId: (frameId: number) => global.registerNewFrameId(frameId),
         setDisabled: (disabled: boolean) => {
             global.disabled = disabled;
         },
