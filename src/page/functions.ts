@@ -30,23 +30,6 @@ function _focusInput(global: IGlobalState, selector: string, addListener: boolea
     }
 }
 
-function _refocus(span: any, iframe: any) {
-    const sel = document.getSelection();
-    sel.removeAllRanges();
-    const range = document.createRange();
-    range.setStart(span, 0);
-    range.collapse(true);
-    sel.addRange(range);
-    (document.activeElement as any).blur();
-    // On chrome, you can't refocus the iframe once the body has been focused…
-    if (isFirefox()) {
-        window.focus();
-        document.documentElement.focus();
-        document.body.focus();
-    }
-    iframe.focus();
-}
-
 export function getFunctions(global: IGlobalState) {
     return {
         focusInput: (selector: string) => {
@@ -115,9 +98,9 @@ export function getFunctions(global: IGlobalState) {
             global.selectorToElems.delete(selector);
         },
         pressKeys: (selector: string, keys: string[]) => {
-            const { input, iframe, span } = global.selectorToElems.get(selector);
+            const { firenvim, input } = global.selectorToElems.get(selector);
             keysToEvents(keys).forEach(ev => input.dispatchEvent(ev));
-            _refocus(span, iframe);
+            firenvim.focus();
         },
         resizeEditor: (selector: string, width: number, height: number) => {
             const pageElems = global.selectorToElems.get(selector);
@@ -130,7 +113,7 @@ export function getFunctions(global: IGlobalState) {
             global.disabled = disabled;
         },
         setElementContent: (selector: string, text: string) => {
-            const { editor, input, iframe, span } = global.selectorToElems.get(selector) as any;
+            const { editor, firenvim, input } = global.selectorToElems.get(selector) as any;
             editor.setContent(text);
             input.dispatchEvent(new Event("keydown",     { bubbles: true }));
             input.dispatchEvent(new Event("keyup",       { bubbles: true }));
@@ -138,7 +121,7 @@ export function getFunctions(global: IGlobalState) {
             input.dispatchEvent(new Event("beforeinput", { bubbles: true }));
             input.dispatchEvent(new Event("input",       { bubbles: true }));
             input.dispatchEvent(new Event("change",      { bubbles: true }));
-            _refocus(span, iframe);
+            firenvim.focus();
         },
         setElementCursor: async (selector: string, line: number, column: number) => {
             const { editor } = global.selectorToElems.get(selector) as any;
