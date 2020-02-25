@@ -44,6 +44,28 @@ const global = {
             return;
         }
 
+        const firenvim = new FirenvimElement(evt.target as HTMLElement);
+
+        const editor = firenvim.getEditor();
+        const elem = firenvim.getElement();
+        const selector = firenvim.getSelector();
+
+        // If this element already has a neovim frame, stop
+        const alreadyRunning = global.selectorToElems.get(selector);
+        if (alreadyRunning !== undefined) {
+            alreadyRunning.firenvim.show();
+            alreadyRunning.firenvim.focus();
+            return;
+        }
+
+        if (auto && (takeover === "empty" || takeover === "nonempty")) {
+            const content = await editor.getContent();
+            if ((content !== "" && takeover === "empty")
+                || (content === "" && takeover === "nonempty")) {
+                    return;
+                }
+        }
+
         // When creating new frames, we need to know their frameId in order to
         // communicate with them. This can't be retrieved through a
         // synchronous, in-page call so the new frame has to tell the
@@ -59,49 +81,19 @@ const global = {
             await frameIdLock;
         }
         frameIdLock = new Promise(async (unlock: any) => {
+            const pageElements = { editor, firenvim, input: elem, selector } as PageElements;
+            global.selectorToElems.set(selector, pageElements);
+
+            global.lastEditorLocation = [document.location.href, selector, await editor.getCursor()];
 
             // TODO: make this timeout the same as the one in background.ts
             const frameIdPromise = new Promise((resolve: (_: number) => void, reject) => {
                 frameIdResolve = resolve;
                 setTimeout(reject, 10000);
             });
-            const firenvim = new FirenvimElement(evt.target as HTMLElement, frameIdPromise);
+            firenvim.attachToPage(frameIdPromise);
             frameIdPromise.then(unlock).catch(unlock);
 
-            const editor = firenvim.getEditor();
-            const elem = firenvim.getElement();
-            const selector = firenvim.getSelector();
-
-            // If this element already has a neovim frame, stop
-            const alreadyRunning = global.selectorToElems.get(selector);
-            if (alreadyRunning !== undefined) {
-                const focusEditor = () => {
-                    if ((evt.target as any).blur !== undefined) {
-                        (evt.target as any).blur();
-                    }
-                    alreadyRunning.iframe.focus();
-                };
-                alreadyRunning.iframe.style.display = "initial";
-                focusEditor();
-                setTimeout(focusEditor, 10);
-                return;
-            }
-
-            if (auto && (takeover === "empty" || takeover === "nonempty")) {
-                const content = await editor.getContent();
-                if ((content !== "" && takeover === "empty")
-                    || (content === "" && takeover === "nonempty")) {
-                        return;
-                    }
-            }
-
-            const pageElements = { editor, firenvim, input: elem, selector } as PageElements;
-            global.selectorToElems.set(selector, pageElements);
-
-            global.lastEditorLocation = [document.location.href, selector, await editor.getCursor()];
-            pageElements.iframe = firenvim.getIframe();
-
-            firenvim.attachToPage();
         });
     },
 
