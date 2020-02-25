@@ -35,7 +35,8 @@ export function getFunctions(global: IGlobalState) {
         focusInput: (selector: string) => {
             if (selector === undefined) {
                 selector = Array.from(global.selectorToElems.keys())
-                    .find((sel: string) => global.selectorToElems.get(sel).span === document.activeElement);
+                    .find((sel: string) => 
+                          global.selectorToElems.get(sel).firenvim.getSpan() === document.activeElement);
             }
             if (selector !== undefined) {
                 _focusInput(global, selector, true);

@@ -99,14 +99,12 @@ const global = {
             global.selectorToElems.set(selector, pageElements);
 
             global.lastEditorLocation = [document.location.href, selector, await editor.getCursor()];
-            pageElements.span = firenvim.getSpan();
             pageElements.iframe = firenvim.getIframe();
 
             firenvim.attachToPage();
         });
     },
 
-    // selectorToElems: a map of selectors->{input, span, iframe} objects
     selectorToElems: new Map<string, PageElements>(),
 
     // resolve the frameId promise for the last-created frame
