@@ -13,7 +13,7 @@ node_js:
 before_install:
   - npm install -g npm
   - if [ $TRAVIS_OS_NAME = linux ]; then npm install -g get-firefox; get-firefox --platform linux --branch devedition --extract --target $HOME; export PATH="$HOME/firefox:$PATH" ; mkdir -p "$HOME/bin" ; echo "Downloading $NEOVIMVERSION"; curl -L https://github.com/neovim/neovim/releases/download/$NEOVIMVERSION/nvim.appimage -o "$HOME/bin/nvim" ; chmod u+x "$HOME/bin/nvim"; export PATH="$HOME/bin:$PATH"; fi
-  - if [ $TRAVIS_OS_NAME = osx ]; then curl -LO https://github.com/neovim/neovim/releases/download/$NEOVIMVERSION/nvim-macos.tar.gz; tar xzf nvim-macos.tar.gz; export PATH="$(pwd)/nvim-osx64/bin/:$PATH"; brew cask --verbose --debug install homebrew/cask-versions/firefox-developer-edition; export PATH="/Applications/Firefox Developer Edition.app/Contents/MacOS/:$PATH"; fi
+  - if [ $TRAVIS_OS_NAME = osx ]; then curl -LO https://github.com/neovim/neovim/releases/download/$NEOVIMVERSION/nvim-macos.tar.gz; tar xzf nvim-macos.tar.gz -C "$HOME"; export PATH="$HOME/nvim-osx64/bin/:$PATH"; brew cask --verbose --debug install homebrew/cask-versions/firefox-developer-edition; export PATH="/Applications/Firefox Developer Edition.app/Contents/MacOS/:$PATH"; fi
   - firefox --version
   - nvim --version
   - mkdir -p "$HOME/.config/nvim/"
@@ -28,8 +28,7 @@ install:
 cache:
   directories:
     - node_modules
-    - /home/travis/.npm
-    - /home/travis/bin
-    - /home/travis/nvim-osx64
+    - $HOME/bin
+    - $HOME/nvim-osx64
 git:
   depth: false
