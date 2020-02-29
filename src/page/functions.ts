@@ -5,14 +5,13 @@ import { keysToEvents } from "../utils/keys";
 interface IGlobalState {
     lastEditorLocation: [string, string, [number, number]];
     nvimify: (evt: FocusEvent) => void;
-    selectorToElems: Map<string, PageElements>;
+    firenvimElems: Map<number, PageElements>;
     registerNewFrameId: (frameId: number) => void;
     disabled: boolean | Promise<boolean>;
 }
 
-// FIXME: Can't focus codemirror/ace/monaco since input != selector?
-function _focusInput(global: IGlobalState, selector: string, addListener: boolean) {
-    const { firenvim } = global.selectorToElems.get(selector);
+function _focusInput(global: IGlobalState, frameId: number, addListener: boolean) {
+    const { firenvim } = global.firenvimElems.get(frameId);
     if (addListener) {
         // Only re-add event listener if input's selector matches the ones
         // that should be autonvimified
@@ -27,14 +26,17 @@ function _focusInput(global: IGlobalState, selector: string, addListener: boolea
 
 export function getFunctions(global: IGlobalState) {
     return {
-        focusInput: (selector: string) => {
-            if (selector === undefined) {
-                selector = Array.from(global.selectorToElems.keys())
-                    .find((sel: string) =>
-                          global.selectorToElems.get(sel).firenvim.getSpan() === document.activeElement);
+        focusInput: (frameId: number) => {
+            if (frameId === undefined) {
+                const pair = Array.from(global.firenvimElems.entries())
+                    .find(([id, instance]: [number, any]) =>
+                          instance.getSpan() === document.activeElement);
+                if (pair !== undefined) {
+                    frameId = pair[0];
+                }
             }
-            if (selector !== undefined) {
-                _focusInput(global, selector, true);
+            if (frameId !== undefined) {
+                _focusInput(global, frameId, true);
             }
         },
         focusPage: () => {
@@ -62,47 +64,31 @@ export function getFunctions(global: IGlobalState) {
             global.nvimify({ target: elem } as any);
         },
         getEditorLocation: () => {
-            // global.lastEditorLocation[1] is a selector. If no selector is
-            // defined, we're not the script that should answer this question
-            // and thus return a Promise that will never be resolved
-            if (global.lastEditorLocation[1] === "") {
-                // This cast is wrong but we need it in order to be able to
-                // typecheck our proxy in page/proxy.ts. Note that it's ok
-                // because the promise will never return anyway.
-                return new Promise(() => undefined) as Promise<typeof global.lastEditorLocation>;
-            }
-            // We need to reset global.lastEditorLocation in order to avoid
-            // accidentally giving an already-given selector if we receive a
-            // message that isn't addressed to us. Note that this is a hack, a
-            // proper fix would be depending on frameIDs, but we can't do that
-            // efficiently
-            const result = global.lastEditorLocation;
-            global.lastEditorLocation = ["", "", [0, 0]];
-            return Promise.resolve(result);
+            return global.lastEditorLocation;
         },
-        getElementContent: (selector: string) => global
-            .selectorToElems
-            .get(selector)
+        getElementContent: (frameId: number) => global
+            .firenvimElems
+            .get(frameId)
             .firenvim
             .getPageElementContent(),
-        hideEditor: (selector: string) => {
-            const { firenvim } = global.selectorToElems.get(selector);
+        hideEditor: (frameId: number) => {
+            const { firenvim } = global.firenvimElems.get(frameId);
             firenvim.hide();
-            _focusInput(global, selector, true);
+            _focusInput(global, frameId, true);
         },
-        killEditor: (selector: string) => {
-            const { firenvim } = global.selectorToElems.get(selector);
+        killEditor: (frameId: number) => {
+            const { firenvim } = global.firenvimElems.get(frameId);
             firenvim.detachFromPage();
             const conf = getConf();
-            _focusInput(global, selector, conf.takeover !== "once");
-            global.selectorToElems.delete(selector);
+            _focusInput(global, frameId, conf.takeover !== "once");
+            global.firenvimElems.delete(frameId);
         },
-        pressKeys: (selector: string, keys: string[]) => {
-            const { firenvim } = global.selectorToElems.get(selector);
+        pressKeys: (frameId: number, keys: string[]) => {
+            const { firenvim } = global.firenvimElems.get(frameId);
             firenvim.pressKeys(keysToEvents(keys));
         },
-        resizeEditor: (selector: string, width: number, height: number) => {
-            const { firenvim } = global.selectorToElems.get(selector);
+        resizeEditor: (frameId: number, width: number, height: number) => {
+            const { firenvim } = global.firenvimElems.get(frameId);
             firenvim.resizeTo(width, height);
             firenvim.putEditorAtInputOrigin();
         },
@@ -110,12 +96,12 @@ export function getFunctions(global: IGlobalState) {
         setDisabled: (disabled: boolean) => {
             global.disabled = disabled;
         },
-        setElementContent: (selector: string, text: string) => {
-            const { firenvim } = global.selectorToElems.get(selector) as any;
+        setElementContent: (frameId: number, text: string) => {
+            const { firenvim } = global.firenvimElems.get(frameId) as any;
             firenvim.setPageElementContent(text);
         },
-        setElementCursor: async (selector: string, line: number, column: number) => {
-            const { firenvim } = global.selectorToElems.get(selector) as any;
+        setElementCursor: (frameId: number, line: number, column: number) => {
+            const { firenvim } = global.firenvimElems.get(frameId) as any;
             return firenvim.setPageElementCursor(line, column);
         },
     };

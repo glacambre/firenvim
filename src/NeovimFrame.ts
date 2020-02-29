@@ -7,8 +7,10 @@ import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, isFirefox, toFileName } from "./utils/utils";
 
 const locationPromise = page.getEditorLocation();
-let frameId: number;
-browser.runtime.sendMessage({ funcName: ["publishFrameId"] }).then((f: number) => frameId = f);
+browser
+    .runtime
+    .sendMessage({ funcName: ["publishFrameId"] })
+    .then((f: number) => (window as any).frameId = f);
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
 const settingsPromise = browser.storage.local.get("globalSettings");
 
@@ -19,9 +21,8 @@ window.addEventListener("load", async () => {
         const extMessages = document.getElementById("ext_messages") as HTMLSpanElement;
         const keyHandler = document.getElementById("keyhandler");
         const [[url, selector, cursor], connectionData] = await Promise.all([locationPromise, connectionPromise]);
-        (window as any).selector = selector;
-        const nvimPromise = neovim(host, extCmdline, extMessages, selector, connectionData);
-        const contentPromise = page.getElementContent(selector);
+        const nvimPromise = neovim(host, extCmdline, extMessages, connectionData);
+        const contentPromise = page.getElementContent();
 
         const [cols, rows] = getGridSize(host);
 
@@ -65,7 +66,7 @@ window.addEventListener("load", async () => {
                 const nCols = Math.floor(width / cellWidth);
                 const nRows = Math.floor(height / cellHeight);
                 nvim.ui_try_resize_grid(getGridId(), nCols, nRows);
-                page.resizeEditor(selector, nCols * cellWidth, nRows * cellHeight);
+                page.resizeEditor(nCols * cellWidth, nRows * cellHeight);
             }
         });
 
@@ -247,7 +248,6 @@ window.addEventListener("load", async () => {
         setTimeout(() => keyHandler.focus(), 10);
     } catch (e) {
         console.error(e);
-        const [_, selector] = await locationPromise;
-        page.killEditor(selector);
+        page.killEditor();
     }
 });
