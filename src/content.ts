@@ -81,7 +81,7 @@ const global = {
             await frameIdLock;
         }
         frameIdLock = new Promise(async (unlock: any) => {
-            const pageElements = { editor, firenvim, input: elem, selector } as PageElements;
+            const pageElements = { firenvim, selector } as PageElements;
             global.selectorToElems.set(selector, pageElements);
 
             global.lastEditorLocation = [document.location.href, selector, await editor.getCursor()];

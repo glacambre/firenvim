@@ -188,6 +188,10 @@ export class FirenvimElement {
         return this.iframe;
     }
 
+    getPageElementContent () {
+        return this.getEditor().getContent();
+    }
+
     getSelector () {
         return computeSelector(this.getElement());
     }
@@ -260,6 +264,10 @@ export class FirenvimElement {
             new Event("change",      { bubbles: true })
         ].forEach(ev => this.originalElement.dispatchEvent(ev));
         this.focus();
+    }
+
+    setPageElementCursor (line: number, column: number) {
+        return this.editor.setCursor(line, column);
     }
 
     show () {
