@@ -63,6 +63,17 @@ export class FirenvimElement {
         this.iframe = elem
             .ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "iframe") as HTMLIFrameElement;
+    }
+
+    attachToPage (fip: Promise<number>) {
+        this.frameIdPromise = fip;
+        this.frameIdPromise.then((f: number) => this.frameId = f);
+
+        this.putEditorAtInputOrigin();
+        // We don't need the iframe to be appended to the page in order to
+        // resize it because we're just using the corresponding
+        // input/textarea's size
+        this.setEditorSizeToInputSize();
 
         // Use a ResizeObserver to detect when the underlying input element's
         // size changes and change the size of the FirenvimElement
@@ -89,17 +100,6 @@ export class FirenvimElement {
             }
         })(this));
         this.resizeObserver.observe(this.getElement(), { box: "border-box" });
-    }
-
-    attachToPage (fip: Promise<number>) {
-        this.frameIdPromise = fip;
-        this.frameIdPromise.then((f: number) => this.frameId = f);
-
-        this.putEditorAtInputOrigin();
-        // We don't need the iframe to be appended to the page in order to
-        // resize it because we're just using the corresponding
-        // input/textarea's size
-        this.setEditorSizeToInputSize();
 
         this.iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
         this.span.attachShadow({ mode: "closed" }).appendChild(this.iframe);
