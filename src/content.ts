@@ -49,10 +49,10 @@ const global = {
 
         // If this element already has a neovim frame, stop
         const alreadyRunning = Array.from(global.firenvimElems.values())
-            .find((instance) => instance.firenvim.getElement() === editor.getElement());
+            .find((instance) => instance.getElement() === editor.getElement());
         if (alreadyRunning !== undefined) {
-            alreadyRunning.firenvim.show();
-            alreadyRunning.firenvim.focus();
+            alreadyRunning.show();
+            alreadyRunning.focus();
             return;
         }
 
@@ -81,8 +81,6 @@ const global = {
             await frameIdLock;
         }
         frameIdLock = new Promise(async (unlock: any) => {
-            const pageElements = { firenvim } as PageElements;
-
             global.lastEditorLocation = [
                 document.location.href,
                 firenvim.getSelector(),
@@ -96,13 +94,13 @@ const global = {
             });
             firenvim.attachToPage(frameIdPromise);
             frameIdPromise
-                .then((frameId: number) => global.firenvimElems.set(frameId, pageElements))
+                .then((frameId: number) => global.firenvimElems.set(frameId, firenvim))
                 .then(unlock)
                 .catch(unlock);
         });
     },
 
-    firenvimElems: new Map<number, PageElements>(),
+    firenvimElems: new Map<number, FirenvimElement>(),
 
     // resolve the frameId promise for the last-created frame
     registerNewFrameId: (frameId: number) => frameIdResolve(frameId),
@@ -128,7 +126,7 @@ function setupListeners(selector: string) {
     function onScroll(cont: boolean) {
         window.requestAnimationFrame(() => {
             const posChanged = Array.from(global.firenvimElems.entries())
-                .map(([_, elems]) => elems.firenvim.putEditorAtInputOrigin())
+                .map(([_, elem]) => elem.putEditorAtInputOrigin())
                 .find(changed => changed.posChanged);
             if (posChanged) {
                 // As long as one editor changes position, try to resize

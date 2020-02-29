@@ -1,17 +1,18 @@
 import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 import { getConf } from "../utils/configuration";
 import { keysToEvents } from "../utils/keys";
+import { FirenvimElement } from "../FirenvimElement";
 
 interface IGlobalState {
     lastEditorLocation: [string, string, [number, number]];
     nvimify: (evt: FocusEvent) => void;
-    firenvimElems: Map<number, PageElements>;
+    firenvimElems: Map<number, FirenvimElement>;
     registerNewFrameId: (frameId: number) => void;
     disabled: boolean | Promise<boolean>;
 }
 
 function _focusInput(global: IGlobalState, frameId: number, addListener: boolean) {
-    const { firenvim } = global.firenvimElems.get(frameId);
+    const firenvim = global.firenvimElems.get(frameId);
     if (addListener) {
         // Only re-add event listener if input's selector matches the ones
         // that should be autonvimified
@@ -29,7 +30,7 @@ export function getFunctions(global: IGlobalState) {
         focusInput: (frameId: number) => {
             if (frameId === undefined) {
                 const pair = Array.from(global.firenvimElems.entries())
-                    .find(([id, instance]: [number, any]) =>
+                    .find(([id, instance]) =>
                           instance.getSpan() === document.activeElement);
                 if (pair !== undefined) {
                     frameId = pair[0];
@@ -69,40 +70,34 @@ export function getFunctions(global: IGlobalState) {
         getElementContent: (frameId: number) => global
             .firenvimElems
             .get(frameId)
-            .firenvim
             .getPageElementContent(),
         hideEditor: (frameId: number) => {
-            const { firenvim } = global.firenvimElems.get(frameId);
-            firenvim.hide();
+            global.firenvimElems.get(frameId).hide();
             _focusInput(global, frameId, true);
         },
         killEditor: (frameId: number) => {
-            const { firenvim } = global.firenvimElems.get(frameId);
-            firenvim.detachFromPage();
+            global.firenvimElems.get(frameId).detachFromPage();
             const conf = getConf();
             _focusInput(global, frameId, conf.takeover !== "once");
             global.firenvimElems.delete(frameId);
         },
         pressKeys: (frameId: number, keys: string[]) => {
-            const { firenvim } = global.firenvimElems.get(frameId);
-            firenvim.pressKeys(keysToEvents(keys));
+            global.firenvimElems.get(frameId).pressKeys(keysToEvents(keys));
         },
         resizeEditor: (frameId: number, width: number, height: number) => {
-            const { firenvim } = global.firenvimElems.get(frameId);
-            firenvim.resizeTo(width, height);
-            firenvim.putEditorAtInputOrigin();
+            const elem = global.firenvimElems.get(frameId);
+            elem.resizeTo(width, height);
+            elem.putEditorAtInputOrigin();
         },
         registerNewFrameId: (frameId: number) => global.registerNewFrameId(frameId),
         setDisabled: (disabled: boolean) => {
             global.disabled = disabled;
         },
         setElementContent: (frameId: number, text: string) => {
-            const { firenvim } = global.firenvimElems.get(frameId) as any;
-            firenvim.setPageElementContent(text);
+            return global.firenvimElems.get(frameId).setPageElementContent(text);
         },
         setElementCursor: (frameId: number, line: number, column: number) => {
-            const { firenvim } = global.firenvimElems.get(frameId) as any;
-            return firenvim.setPageElementCursor(line, column);
+            return global.firenvimElems.get(frameId).setPageElementCursor(line, column);
         },
     };
 }

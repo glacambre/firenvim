@@ -61,5 +61,3 @@ type HighlightElement = {
       underline?: boolean,
 }
 type HighlightArray = Array<HighlightElement>;
-
-type PageElements = { firenvim: any };
