@@ -80,7 +80,11 @@ export function getFunctions(global: IGlobalState) {
             global.lastEditorLocation = ["", "", [0, 0]];
             return Promise.resolve(result);
         },
-        getElementContent: (selector: string) => global.selectorToElems.get(selector).editor.getContent(),
+        getElementContent: (selector: string) => global
+            .selectorToElems
+            .get(selector)
+            .firenvim
+            .getPageElementContent(),
         hideEditor: (selector: string) => {
             const { firenvim } = global.selectorToElems.get(selector);
             firenvim.hide();
@@ -111,8 +115,8 @@ export function getFunctions(global: IGlobalState) {
             firenvim.setPageElementContent(text);
         },
         setElementCursor: async (selector: string, line: number, column: number) => {
-            const { editor } = global.selectorToElems.get(selector) as any;
-            return editor.setCursor(line, column);
+            const { firenvim } = global.selectorToElems.get(selector) as any;
+            return firenvim.setPageElementCursor(line, column);
         },
     };
 }
