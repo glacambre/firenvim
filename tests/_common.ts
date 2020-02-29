@@ -454,6 +454,7 @@ ${backup}
         console.log("Typing :q!<CR>…");
         await sendKeys(driver, ":q!".split("")
                 .concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span));
         console.log("Focusing body…");
         const body = await driver.wait(Until.elementLocated(By.id("body")));
         await driver.actions().click(body).perform();
