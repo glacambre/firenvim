@@ -76,14 +76,12 @@ const redrawFuncs = {
       mouseCursor.innerText = `html { cursor: default; }`;
    },
    cmdline_hide: (_: any,
-                  __: any,
                   ___: any,
                   ____: any,
                   extCmdline: HTMLPreElement) => {
          extCmdline.style.display = "none";
    },
    cmdline_pos: (_: any,
-                 __: any,
                  [pos, level]: [number, number],
                  ____: any,
                  extCmdline: HTMLPreElement) => {
@@ -94,7 +92,6 @@ const redrawFuncs = {
          extCmdline.children[cmdlineCursorPos].className = "nvim_cursor";
    },
    cmdline_show: (_: any,
-                  __: any,
                   [content, pos, firstc, prompt, indent, level]: any,
                   ___: any,
                   extCmdline: HTMLPreElement) => {
@@ -122,7 +119,6 @@ const redrawFuncs = {
          extCmdline.style.left = ((window.innerWidth - rect.width) / 2) + "px";
    },
    default_colors_set: (elem: HTMLElement,
-                        selector: string,
                         [fg, bg, sp, _, __]: [number, number, number, number, number]) => {
          if (fg !== undefined && fg !== -1) {
             defaultColors.foreground = fg;
@@ -135,13 +131,13 @@ const redrawFuncs = {
          nvimHighlightStyle.innerText = toCss(highlights);
    },
    flush: (elem: HTMLElement) => nvimHighlightStyle.innerText = toCss(highlights),
-   grid_clear: (elem: HTMLElement, selector: string, [id]: [number]) => {
+   grid_clear: (elem: HTMLElement, [id]: [number]) => {
       if (!matchesSelectedGrid(id)) {
          return;
       }
       getGrid(id, elem).clear();
    },
-   grid_cursor_goto: (elem: HTMLElement, selector: string, [id, y, x]: GotoUpdate) => {
+   grid_cursor_goto: (elem: HTMLElement, [id, y, x]: GotoUpdate) => {
       if (!matchesSelectedGrid(id)) {
          return;
       }
@@ -153,7 +149,7 @@ const redrawFuncs = {
          keyHandler.style.top = `${cellHeight * y}px`;
       });
    },
-   grid_line: (elem: HTMLElement, selector: string, [id, row, col, contents]: LineUpdate) => {
+   grid_line: (elem: HTMLElement, [id, row, col, contents]: LineUpdate) => {
       if (!matchesSelectedGrid(id)) {
          return;
       }
@@ -167,24 +163,23 @@ const redrawFuncs = {
          return { prevCol: limit, highlight: high };
       }, { prevCol: col, highlight: 0 });
    },
-   grid_resize: (elem: HTMLElement, selector: string, resize: ResizeUpdate) => {
+   grid_resize: (elem: HTMLElement, resize: ResizeUpdate) => {
       const [id, width, height] = resize;
       if (!matchesSelectedGrid(id)) {
          return;
       }
       getGrid(id, elem).resize(width, height);
       const [cellWidth, cellHeight] = getCharSize(elem);
-      page.resizeEditor(selector, width * cellWidth, height * cellHeight);
+      page.resizeEditor(width * cellWidth, height * cellHeight);
    },
    grid_scroll: (elem: HTMLElement,
-                 selector: string,
                  [id, ...rest]: [number, number, number, number, number, number, number]) => {
       if (!matchesSelectedGrid(id)) {
          return;
       }
       getGrid(id, elem).scroll(...rest);
    },
-   hl_attr_define: (elem: HTMLElement, selector: string, [id, {
+   hl_attr_define: (elem: HTMLElement, [id, {
       background,
       bold,
       foreground,
@@ -214,7 +209,7 @@ const redrawFuncs = {
       highlights[id].undercurl = undercurl;
       highlights[id].underline = underline;
    },
-   mode_change: (elem: HTMLElement, selector: string, [modename, modeid]: [string, number]) => {
+   mode_change: (elem: HTMLElement, [modename, modeid]: [string, number]) => {
       const modePrefix = "nvim_mode_";
       Array.from(elem.classList)
          .filter((cname: string) => cname.startsWith(modePrefix))
@@ -222,7 +217,7 @@ const redrawFuncs = {
       elem.classList.add(modePrefix + modename);
       nvimCursorStyle.innerText = cursorStyles[modeid];
    },
-   mode_info_set: (elem: HTMLElement, selector: string, [cursorStyleEnabled, modeInfo]: [boolean, any]) => {
+   mode_info_set: (elem: HTMLElement, [cursorStyleEnabled, modeInfo]: [boolean, any]) => {
       modeInfo.forEach((info: any, idx: number) => {
          const { cursor_shape: shape } = info;
          let cssStr = `html body span.nvim_cursor { `;
@@ -245,7 +240,6 @@ const redrawFuncs = {
          });
    },
    msg_clear: (_: any,
-               __: any,
                ___: any,
                ____: any,
                _____: any,
@@ -254,7 +248,6 @@ const redrawFuncs = {
          extMessages.innerText = "";
    },
    msg_history_show: (_: any,
-                      __: any,
                       entries: any,
                       ____: any,
                       _____: any,
@@ -270,7 +263,6 @@ const redrawFuncs = {
          historyShown = true;
    },
    msg_show: (_: any,
-              __: any,
               [kind, content, replaceLast]: [string, [number, string][], boolean],
               ___: any,
               ____: any,
@@ -289,7 +281,6 @@ const redrawFuncs = {
          extMessages.style.display = "block";
    },
    option_set: (elem: HTMLElement,
-                selector: string,
                 [name, value]: [string, any],
                 nvimFunctions: any) => {
          switch (name) {
@@ -320,7 +311,7 @@ const redrawFuncs = {
                break;
          }
    },
-   win_external_pos: (_: any, __: any, [grid, win]: number[]) => {
+   win_external_pos: (_: any, [grid, win]: number[]) => {
       if (windowId !== undefined && matchesSelectedWindow(win)) {
          selectGrid(grid);
       }
@@ -331,13 +322,12 @@ export function onRedraw(nvimFunctions: any,
                          events: any[],
                          elem: HTMLPreElement,
                          extCmdline: HTMLSpanElement,
-                         extMessages: HTMLSpanElement,
-                         selector: string) {
+                         extMessages: HTMLSpanElement) {
    externalMessages = extMessages;
    events.forEach(evt => {
       const [name, ...evts]: [keyof typeof redrawFuncs, any] = evt;
       if (redrawFuncs[name] !== undefined) {
-         evts.forEach((args) => redrawFuncs[name](elem, selector, args, nvimFunctions, extCmdline, extMessages));
+         evts.forEach((args) => redrawFuncs[name](elem, args, nvimFunctions, extCmdline, extMessages));
       }
    });
 }

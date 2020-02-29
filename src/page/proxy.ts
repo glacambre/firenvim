@@ -6,7 +6,8 @@ import { getFunctions } from "./functions";
 const functions = getFunctions({} as any);
 
 type ft = typeof functions;
-type ArgumentsType<T> = T extends  (...args: infer U) => any ? U: never;
+// The proxy automatically appends the frameId to the request, so we hide that from users
+type ArgumentsType<T> = T extends (x: any, ...args: infer U) => any ? U: never;
 type Promisify<T> = T extends Promise<infer U> ? T : Promise<T>;
 
 export const page = {} as {
@@ -24,9 +25,8 @@ for (funcName in functions) {
     page[func] = ((...arr: any[]) => {
         return browser.runtime.sendMessage({
             args: {
-                args: arr,
+                args: [(window as any).frameId].concat(arr),
                 funcName: [func],
-                selector: (window as any).selector,
             },
             funcName: ["messagePage"],
         });

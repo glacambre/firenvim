@@ -8,7 +8,6 @@ export async function neovim(
         element: HTMLPreElement,
         extCmdline: HTMLSpanElement,
         extMessages: HTMLSpanElement,
-        selector: string,
         { port, password }: { port: number, password: number },
     ) {
     let stdin: Stdin;
@@ -19,7 +18,7 @@ export async function neovim(
     const socket = new WebSocket(`ws://127.0.0.1:${port}/${password}`);
     socket.binaryType = "arraybuffer";
     socket.addEventListener("close", ((_: any) => {
-        page.killEditor(selector);
+        page.killEditor();
     }));
     await (new Promise(resolve => socket.addEventListener("open", () => {
         resolve();
@@ -56,29 +55,29 @@ export async function neovim(
         switch (name) {
             case "redraw":
                 if (args) {
-                    onRedraw(functions, args, element, extCmdline, extMessages, selector);
+                    onRedraw(functions, args, element, extCmdline, extMessages);
                 }
                 break;
             case "firenvim_bufwrite":
                 const data = args[0] as { text: string[], cursor: [number, number] };
-                page.setElementContent(selector, data.text.join("\n"))
-                    .then(() => page.setElementCursor(selector, ...(data.cursor)))
+                page.setElementContent(data.text.join("\n"))
+                    .then(() => page.setElementCursor(...(data.cursor)))
                     .then(() => window.focus());
                 break;
             case "firenvim_focus_page":
                 page.focusPage();
                 break;
             case "firenvim_focus_input":
-                page.focusInput(selector);
+                page.focusInput();
                 break;
             case "firenvim_hide_frame":
-                page.hideEditor(selector);
+                page.hideEditor();
                 break;
             case "firenvim_press_keys":
-                page.pressKeys(selector, args[0]);
+                page.pressKeys(args[0]);
                 break;
             case "firenvim_vimleave":
-                page.killEditor(selector);
+                page.killEditor();
                 break;
         }
     });

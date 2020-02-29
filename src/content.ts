@@ -26,7 +26,7 @@ const global = {
         .then((disabled: boolean) => (window as any).setDisabled(!!disabled)),
     // lastEditorLocation: a [url, selector, cursor] tuple indicating the page
     // the last iframe was created on, the selector of the corresponding
-    // textarea and the number of characters before the cursor.
+    // textarea and the column/line number of the cursor.
     lastEditorLocation: ["", "", [1, 1]] as [string, string, [number, number]],
     // nvimify: triggered when an element is focused, takes care of creating
     // the editor iframe, appending it to the page and focusing it.
@@ -45,13 +45,11 @@ const global = {
         }
 
         const firenvim = new FirenvimElement(evt.target as HTMLElement, global.nvimify);
-
         const editor = firenvim.getEditor();
-        const elem = firenvim.getElement();
-        const selector = firenvim.getSelector();
 
         // If this element already has a neovim frame, stop
-        const alreadyRunning = global.selectorToElems.get(selector);
+        const alreadyRunning = Array.from(global.firenvimElems.values())
+            .find((instance) => instance.firenvim.getElement() === editor.getElement());
         if (alreadyRunning !== undefined) {
             alreadyRunning.firenvim.show();
             alreadyRunning.firenvim.focus();
@@ -65,6 +63,8 @@ const global = {
                     return;
                 }
         }
+
+        const cursorPromise = editor.getCursor();
 
         // When creating new frames, we need to know their frameId in order to
         // communicate with them. This can't be retrieved through a
@@ -81,10 +81,13 @@ const global = {
             await frameIdLock;
         }
         frameIdLock = new Promise(async (unlock: any) => {
-            const pageElements = { firenvim, selector } as PageElements;
-            global.selectorToElems.set(selector, pageElements);
+            const pageElements = { firenvim } as PageElements;
 
-            global.lastEditorLocation = [document.location.href, selector, await editor.getCursor()];
+            global.lastEditorLocation = [
+                document.location.href,
+                firenvim.getSelector(),
+                await cursorPromise
+            ];
 
             // TODO: make this timeout the same as the one in background.ts
             const frameIdPromise = new Promise((resolve: (_: number) => void, reject) => {
@@ -92,12 +95,14 @@ const global = {
                 setTimeout(reject, 10000);
             });
             firenvim.attachToPage(frameIdPromise);
-            frameIdPromise.then(unlock).catch(unlock);
-
+            frameIdPromise
+                .then((frameId: number) => global.firenvimElems.set(frameId, pageElements))
+                .then(unlock)
+                .catch(unlock);
         });
     },
 
-    selectorToElems: new Map<string, PageElements>(),
+    firenvimElems: new Map<number, PageElements>(),
 
     // resolve the frameId promise for the last-created frame
     registerNewFrameId: (frameId: number) => frameIdResolve(frameId),
@@ -108,7 +113,7 @@ const global = {
 const functions = getFunctions(global);
 Object.assign(window, functions);
 browser.runtime.onMessage.addListener(async (
-    request: { funcName: string[], selector?: string, args: [string, string & number, string & number] },
+    request: { funcName: string[], args: any[] },
     sender: any,
     sendResponse: any,
 ) => {
@@ -116,20 +121,13 @@ browser.runtime.onMessage.addListener(async (
     if (!fn) {
         throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
     }
-    // If this is a selector-specific request and we don't know about this
-    // selector, the message is not for us, so we mustn't reply. It'd be better
-    // to be able to address messages to specific contexts directly but this is
-    // not possible yet: https://bugzilla.mozilla.org/show_bug.cgi?id=1580764
-    if (request.selector && !global.selectorToElems.get(request.selector)) {
-        return new Promise(() => undefined);
-    }
     return fn(...request.args);
 });
 
 function setupListeners(selector: string) {
     function onScroll(cont: boolean) {
         window.requestAnimationFrame(() => {
-            const posChanged = Array.from(global.selectorToElems.entries())
+            const posChanged = Array.from(global.firenvimElems.entries())
                 .map(([_, elems]) => elems.firenvim.putEditorAtInputOrigin())
                 .find(changed => changed.posChanged);
             if (posChanged) {
@@ -149,13 +147,9 @@ function setupListeners(selector: string) {
     }
     window.addEventListener("scroll", doScroll);
     window.addEventListener("wheel", doScroll);
-    if ((window as any).ResizeObserver !== undefined) {
-        (new ((window as any).ResizeObserver)((entries: any[]) => {
-            onScroll(true);
-        })).observe(document.documentElement);
-    } else {
-        window.addEventListener("resize", doScroll);
-    }
+    (new ((window as any).ResizeObserver)((entries: any[]) => {
+        onScroll(true);
+    })).observe(document.documentElement);
 
     function addNvimListener(elem: Element) {
         elem.removeEventListener("focus", global.nvimify);
@@ -218,8 +212,8 @@ function setupListeners(selector: string) {
 }
 
 confReady.then(() => {
-    const conf: { selector: string, priority: number } = getConf();
-    if (conf.selector) {
+    const conf: { selector: string } = getConf();
+    if (conf.selector !== undefined && conf.selector !== "") {
         setupListeners(conf.selector);
     }
 });
