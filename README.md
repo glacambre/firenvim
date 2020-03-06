@@ -38,11 +38,6 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
 
         ```vim
         call minpac#add('glacambre/firenvim', { 'type': 'opt', 'do': 'packadd firenvim | call firenvim#install(0)'})
-        ```
-
-        To load Firenvim when needed:
-
-        ```vim
         if exists('g:started_by_firenvim')
           packadd firenvim
         endif
