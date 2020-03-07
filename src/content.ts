@@ -24,10 +24,10 @@ const global = {
         // Note: this relies on setDisabled existing in the object returned by
         // getFunctions and attached to the window object
         .then((disabled: boolean) => (window as any).setDisabled(!!disabled)),
-    // lastEditorLocation: a [url, selector, cursor] tuple indicating the page
+    // lastBufferInfo: a [url, selector, cursor] tuple indicating the page
     // the last iframe was created on, the selector of the corresponding
     // textarea and the column/line number of the cursor.
-    lastEditorLocation: ["", "", [1, 1]] as [string, string, [number, number]],
+    lastBufferInfo: ["", "", [1, 1], undefined] as [string, string, [number, number], string],
     // nvimify: triggered when an element is focused, takes care of creating
     // the editor iframe, appending it to the page and focusing it.
     nvimify: async (evt: { target: EventTarget }) => {
@@ -65,6 +65,7 @@ const global = {
         }
 
         const cursorPromise = editor.getCursor();
+        const languagePromise = editor.getLanguage();
 
         // When creating new frames, we need to know their frameId in order to
         // communicate with them. This can't be retrieved through a
@@ -81,10 +82,11 @@ const global = {
             await frameIdLock;
         }
         frameIdLock = new Promise(async (unlock: any) => {
-            global.lastEditorLocation = [
+            global.lastBufferInfo = [
                 document.location.href,
                 firenvim.getSelector(),
-                await cursorPromise
+                await (cursorPromise.catch(() => [1, 1])),
+                await (languagePromise.catch(() => undefined))
             ];
 
             // TODO: make this timeout the same as the one in background.ts

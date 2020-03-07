@@ -39,13 +39,29 @@ export class AceEditor extends AbstractEditor {
     getCursor () {
         return executeInPage(`(${(selec: string) => {
             const elem = document.querySelector(selec) as any;
-            const position = (window as any).ace.edit(elem).getCursorPosition();
+            let position;
+            if ((window as any).ace.edit !== undefined) {
+                position = (window as any).ace.edit(elem).getCursorPosition();
+            } else {
+                position = (window as any).ace.selection.cursor;
+            }
             return [position.row + 1, position.column];
         }})(${JSON.stringify(computeSelector(this.elem))})`);
     }
 
     getElement () {
         return this.elem;
+    }
+
+    getLanguage () {
+        return executeInPage(`(${(selec: string) => {
+            const elem = document.querySelector(selec) as any;
+            let ace = (window as any).ace;
+            if (ace.edit !== undefined) {
+                ace = ace.edit(elem);
+            }
+            return ace.session.$modeId.split("/").slice(-1)[0];
+        }})(${JSON.stringify(computeSelector(this.elem))})`);
     }
 
     setContent (text: string) {

@@ -6,10 +6,11 @@
     <title>Ace test page</title>
   </head>
   <body>
-    <div id="editor" style="width: 800pt; height: 200pt;">some text</div>
+    <div id="editor" style="width: 800pt; height: 200pt;">alert();</div>
     <script src="../../node_modules/ace-builds/src-min/ace.js" type="text/javascript" charset="utf-8"></script>
     <script>
       var editor = ace.edit("editor");
+      editor.getSession().setMode("ace/mode/javascript");
     </script>
   </body>
 </html>

@@ -4,7 +4,7 @@ import { keysToEvents } from "../utils/keys";
 import { FirenvimElement } from "../FirenvimElement";
 
 interface IGlobalState {
-    lastEditorLocation: [string, string, [number, number]];
+    lastBufferInfo: [string, string, [number, number], string];
     nvimify: (evt: FocusEvent) => void;
     firenvimElems: Map<number, FirenvimElement>;
     registerNewFrameId: (frameId: number) => void;
@@ -64,8 +64,8 @@ export function getFunctions(global: IGlobalState) {
             }
             global.nvimify({ target: elem } as any);
         },
-        getEditorLocation: () => {
-            return global.lastEditorLocation;
+        getEditorInfo: () => {
+            return global.lastBufferInfo;
         },
         getElementContent: (frameId: number) => global
             .firenvimElems

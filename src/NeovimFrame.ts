@@ -6,7 +6,7 @@ import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, isFirefox, toFileName } from "./utils/utils";
 
-const locationPromise = page.getEditorLocation();
+const infoPromise = page.getEditorInfo();
 browser
     .runtime
     .sendMessage({ funcName: ["publishFrameId"] })
@@ -20,7 +20,7 @@ window.addEventListener("load", async () => {
         const extCmdline = document.getElementById("ext_cmdline") as HTMLSpanElement;
         const extMessages = document.getElementById("ext_messages") as HTMLSpanElement;
         const keyHandler = document.getElementById("keyhandler");
-        const [[url, selector, cursor], connectionData] = await Promise.all([locationPromise, connectionPromise]);
+        const [[url, selector, cursor, language], connectionData] = await Promise.all([infoPromise, connectionPromise]);
         const nvimPromise = neovim(host, extCmdline, extMessages, connectionData);
         const contentPromise = page.getElementContent();
 
@@ -76,7 +76,7 @@ window.addEventListener("load", async () => {
                 .then(selectWindow);
         }
         // Create file, set its content to the textarea's, write it
-        const filename = toFileName(url, selector);
+        const filename = toFileName(url, selector, language);
         const content = await contentPromise;
         const [line, col] = cursor;
         nvim.call_function("writefile", [content.split("\n"), filename])

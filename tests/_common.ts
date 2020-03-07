@@ -161,7 +161,15 @@ export async function testCodemirror(driver: any) {
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")));
         await firenvimReady(driver);
         console.log("Typing stuff…");
-        await sendKeys(driver, "ggITest".split("")
+        await sendKeys(driver, "ggITest".split(""));
+        await driver.actions()
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("r")
+                .keyUp("r")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await sendKeys(driver, "=&ft".split("")
+                .concat(webdriver.Key.ENTER)
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
@@ -169,7 +177,7 @@ export async function testCodemirror(driver: any) {
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.wait(async () => /Test<!--/.test(await input.getAttribute("innerText")));
+        await driver.wait(async () => /Testhtml<!--/.test(await input.getAttribute("innerText")));
 }
 
 export async function testAce(driver: any) {
@@ -183,7 +191,15 @@ export async function testAce(driver: any) {
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
         await firenvimReady(driver);
         console.log("Typing stuff…");
-        await sendKeys(driver, "ATest".split("")
+        await sendKeys(driver, "ggITest".split(""));
+        await driver.actions()
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("r")
+                .keyUp("r")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await sendKeys(driver, "=&ft".split("")
+                .concat(webdriver.Key.ENTER)
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
@@ -191,7 +207,7 @@ export async function testAce(driver: any) {
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.wait(async () => /some textTest/.test(await input.getAttribute("innerText")));
+        await driver.wait(async () => /Testjavascriptalert()/.test(await input.getAttribute("innerText")));
 }
 
 export async function testMonaco(driver: any) {
@@ -205,7 +221,15 @@ export async function testMonaco(driver: any) {
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(9)")));
         await firenvimReady(driver);
         console.log("Typing stuff…");
-        await sendKeys(driver, "iTest".split("")
+        await sendKeys(driver, "ggITest".split(""));
+        await driver.actions()
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("r")
+                .keyUp("r")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await sendKeys(driver, "=&ft".split("")
+                .concat(webdriver.Key.ENTER)
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
@@ -213,7 +237,7 @@ export async function testMonaco(driver: any) {
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         console.log("Waiting for value update…");
-        await driver.wait(async () => /^1\n2\n3\nTestfunction/.test(await input.getAttribute("innerText")));
+        await driver.wait(async () => /^1\n2\n3\nTesttypescriptfunction/.test(await input.getAttribute("innerText")));
 }
 
 export async function testDynamicTextareas(driver: any) {
