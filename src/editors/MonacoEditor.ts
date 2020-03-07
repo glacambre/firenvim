@@ -49,6 +49,15 @@ export class MonacoEditor extends AbstractEditor {
         return this.elem;
     }
 
+    getLanguage () {
+        return executeInPage(`(${(selec: string, str: string) => {
+            const elem = document.querySelector(selec) as any;
+            const uri = elem.getAttribute("data-uri");
+            const model = (window as any).monaco.editor.getModel(uri);
+            return model.getModeId();
+        }})(${JSON.stringify(computeSelector(this.elem))})`);
+    }
+
     setContent (text: string) {
         return executeInPage(`(${(selec: string, str: string) => {
             const elem = document.querySelector(selec) as any;

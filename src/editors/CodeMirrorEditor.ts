@@ -48,6 +48,13 @@ export class CodeMirrorEditor extends AbstractEditor {
         return this.elem;
     }
 
+    getLanguage () {
+        return executeInPage(`(${(selec: string) => {
+            const elem = document.querySelector(selec) as any;
+            return elem.CodeMirror.getMode().name;
+        }})(${JSON.stringify(computeSelector(this.elem))})`);
+    }
+
     setContent (text: string) {
         return executeInPage(`(${(selec: string, str: string) => {
             const elem = document.querySelector(selec) as any;

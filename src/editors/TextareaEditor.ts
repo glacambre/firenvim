@@ -44,6 +44,10 @@ export class TextareaEditor extends AbstractEditor {
         return this.elem;
     }
 
+    getLanguage () {
+        return Promise.resolve(undefined);
+    }
+
     setContent (text: string) {
         if ((this.elem as any).value !== undefined) {
             (this.elem as any).value = text;
