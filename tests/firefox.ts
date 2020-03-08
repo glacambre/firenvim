@@ -29,6 +29,7 @@ import {
  testNoLingeringNeovims,
  testPageFocus,
  testPressKeys,
+ testResize,
  testTakeoverEmpty,
  testTakeoverNonEmpty,
  testTakeoverOnce,
@@ -94,6 +95,7 @@ describe("Firefox", () => {
         test("InputFocus works", () => testInputFocus(driver));
         test("PageFocus works", () => testPageFocus(driver));
         test("PressKeys works", () => testPressKeys(driver));
+        test("Resize works", () => testResize(driver));
         test("Takeover: empty works", () => testTakeoverEmpty(driver));
         test("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
         test("Takeover: once works", () => testTakeoverOnce(driver));
