@@ -128,7 +128,7 @@ function setupListeners(selector: string) {
     function onScroll(cont: boolean) {
         window.requestAnimationFrame(() => {
             const posChanged = Array.from(global.firenvimElems.entries())
-                .map(([_, elem]) => elem.putEditorAtInputOrigin())
+                .map(([_, elem]) => elem.putEditorCloseToInputOrigin())
                 .find(changed => changed.posChanged);
             if (posChanged) {
                 // As long as one editor changes position, try to resize
