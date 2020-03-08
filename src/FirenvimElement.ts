@@ -47,6 +47,12 @@ export class FirenvimElement {
     // (the page won't be able to check what's in it). In firefox, pages will
     // still be able to detect the neovim frame by using window.frames though.
     private span: HTMLSpanElement;
+    // resizeReqId keeps track of the number of resizing requests that are sent
+    // to the iframe. We send and increment it for every resize requests, this
+    // lets the iframe know what the most recently sent resize request is and
+    // thus avoids reacting to an older resize request if a more recent has
+    // already been processed.
+    private resizeReqId = 0;
 
     // elem is the element that received the focusEvent.
     // Nvimify is the function that listens for focus events. We need to know
@@ -69,7 +75,7 @@ export class FirenvimElement {
         this.frameIdPromise = fip;
         this.frameIdPromise.then((f: number) => this.frameId = f);
 
-        this.putEditorAtInputOrigin();
+        this.putEditorCloseToInputOrigin();
         // We don't need the iframe to be appended to the page in order to
         // resize it because we're just using the corresponding
         // input/textarea's size
@@ -78,7 +84,6 @@ export class FirenvimElement {
         // Use a ResizeObserver to detect when the underlying input element's
         // size changes and change the size of the FirenvimElement
         // accordingly
-        let resizeReqId = 0;
         this.resizeObserver = new ((window as any).ResizeObserver)(((self) => async (entries: any[]) => {
             const entry = entries.find((ent: any) => ent.target === self.getElement());
             if (self.frameId === undefined) {
@@ -86,12 +91,12 @@ export class FirenvimElement {
             }
             if (entry) {
                 const { newRect } = self.setEditorSizeToInputSize();
-                resizeReqId += 1;
+                self.resizeReqId += 1;
                 browser.runtime.sendMessage({
                     args: {
                         frameId: self.frameId,
                         message: {
-                            args: [resizeReqId, newRect.width, newRect.height],
+                            args: [self.resizeReqId, newRect.width, newRect.height],
                             funcName: ["resize"],
                         }
                     },
@@ -209,16 +214,25 @@ export class FirenvimElement {
         this.focus();
     }
 
-    putEditorAtInputOrigin () {
+    putEditorCloseToInputOrigin () {
         const rect = this.editor.getElement().getBoundingClientRect();
+        const iframeRect = this.iframe.getBoundingClientRect();
+
         // Save attributes
         const posAttrs = ["left", "position", "top", "zIndex"];
         const oldPosAttrs = posAttrs.map((attr: any) => this.iframe.style[attr]);
 
+        // Compute the point closest to the input's origin that doesn't make
+        // the frame overflow
+        const rightOverflow = (rect.left + iframeRect.width) - document.documentElement.clientWidth;
+        const left = rect.left + window.scrollX - (rightOverflow < 0 ? 0 : rightOverflow);
+        const bottomOverflow = (rect.top + iframeRect.height) - document.documentElement.clientHeight;
+        const top = rect.top + window.scrollY - (bottomOverflow < 0 ? 0 : bottomOverflow);
+
         // Assign new values
-        this.iframe.style.left = `${rect.left + window.scrollX}px`;
+        this.iframe.style.left = `${left}px`;
         this.iframe.style.position = "absolute";
-        this.iframe.style.top = `${rect.top + window.scrollY}px`;
+        this.iframe.style.top = `${top}px`;
         this.iframe.style.zIndex = "2147483645";
 
         // Compare, to know whether the element moved or not
@@ -227,9 +241,41 @@ export class FirenvimElement {
         return { posChanged, newRect: rect };
     }
 
+    // Resize the iframe, making sure it doesn't get larger than the window
     resizeTo (width: number, height: number) {
+        let cantFullyResize = false;
+        let availableWidth = window.innerWidth;
+        if (availableWidth > document.documentElement.clientWidth) {
+            availableWidth = document.documentElement.clientWidth;
+        }
+        if (width >= availableWidth) {
+            width = availableWidth - 1;
+            cantFullyResize = true;
+        }
+        let availableHeight = window.innerHeight;
+        if (availableHeight > document.documentElement.clientHeight) {
+            availableHeight = document.documentElement.clientHeight;
+        }
+        if (height >= availableHeight) {
+            height = availableHeight - 1;
+            cantFullyResize = true;
+        }
         this.iframe.style.width = `${width}px`;
         this.iframe.style.height = `${height}px`;
+        this.putEditorCloseToInputOrigin();
+        if (cantFullyResize) {
+            this.resizeReqId += 1;
+            browser.runtime.sendMessage({
+                args: {
+                    frameId: this.frameId,
+                    message: {
+                        args: [this.resizeReqId, width, height],
+                        funcName: ["resize"],
+                    }
+                },
+                funcName: ["messageFrame"],
+            });
+        }
     }
 
     setEditorSizeToInputSize () {

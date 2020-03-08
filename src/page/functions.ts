@@ -87,7 +87,7 @@ export function getFunctions(global: IGlobalState) {
         resizeEditor: (frameId: number, width: number, height: number) => {
             const elem = global.firenvimElems.get(frameId);
             elem.resizeTo(width, height);
-            elem.putEditorAtInputOrigin();
+            elem.putEditorCloseToInputOrigin();
         },
         registerNewFrameId: (frameId: number) => global.registerNewFrameId(frameId),
         setDisabled: (disabled: boolean) => {
