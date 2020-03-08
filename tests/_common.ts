@@ -352,8 +352,8 @@ ${backup}
         console.log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await firenvimReady(driver);
-        console.log("Typing 30aa<Esc>^gjib<Esc>:wq!<Enter>…");
-        await sendKeys(driver, "30aa".split("")
+        console.log("Typing 100aa<Esc>^gjib<Esc>:wq!<Enter>…");
+        await sendKeys(driver, "100aa".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat("^gjib".split(""))
                 .concat(webdriver.Key.ESCAPE)
@@ -667,6 +667,56 @@ export async function testInputResizes(driver: any) {
         await driver.wait(async () => (await input.getAttribute("value") !== ""));
         expect(await input.getAttribute("value")).toMatch(/a*ba+ba*/);
 };
+
+export async function testResize(driver: any) {
+        await loadLocalPage(driver, "simple.html", "Resizing test");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await firenvimReady(driver);
+        console.log("Trying to get the largest possible frame"),
+        await sendKeys(driver, ":set lines=100".split("")
+                       .concat(webdriver.Key.ENTER)
+                       .concat(":set columns=300".split(""))
+                       .concat(webdriver.Key.ENTER)
+                       .concat("a"));
+        // Give the frame time to resize itself
+        await driver.sleep(1000);
+        await driver.actions()
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("r")
+                .keyUp("r")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await sendKeys(driver, "=&lines".split("")
+                       .concat(webdriver.Key.ENTER)
+                       .concat(webdriver.Key.ENTER));
+        await driver.actions()
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("r")
+                .keyUp("r")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await sendKeys(driver, "=&columns".split("")
+                       .concat(webdriver.Key.ENTER)
+                       .concat(webdriver.Key.ESCAPE)
+                       .concat(":wq".split(""))
+                       .concat(webdriver.Key.ENTER));
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+        console.log("Waiting for value update…");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        const [lines, columns] = (await input.getAttribute("value"))
+                .split("\n")
+                .map((v: string) => parseInt(v));
+        expect(lines).toBeLessThan(100);
+        expect(columns).toBeLessThan(300);
+}
+
 
 export async function killDriver(driver: any) {
         try {
