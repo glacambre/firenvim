@@ -16,7 +16,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
 
 ### Pre-built
 
-1. Make sure you are using [Neovim][nvim] 0.4.0 or later. This plugin will not work with vanilla [VIM][vim] or [Vimr][vimr].
+1. Make sure you are using [Neovim][nvim] 0.4.0 or later. This plugin will not work with vanilla [VIM][vim] or [Vimr][vimr]. Also make sure that your browser hasn't been installed with Snap or Flatpak - these are sandboxed and won't work.
 
 2. Check if the luabitop package is available by running `:lua bit.band(1,1)` in Neovim. If this throws an error, you will need to install it.
 
