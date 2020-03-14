@@ -76,10 +76,11 @@ module.exports = [
               .replace("FIRENVIM_VERSION", package_json.version)
               .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
               // Chrome doesn't support svgs in its manifest
-              .replace(/"128": *"firenvim\.svg"/g, '"16": "firenvim16.png",\n'
-                + '    "48": "firenvim48.png",\n'
-                + '    "128": "firenvim128.png"'
+              .replace(/"128": *"firenvim\.svg"/g, '"128": "firenvim128.png",\n'
+                + '      "16": "firenvim16.png",\n'
+                + '      "48": "firenvim48.png"'
               )
+              .replace(/"default_icon": "firenvim.svg"/, '"default_icon": "firenvim128.png"')
             ;
         }
         return content;
