@@ -53,6 +53,16 @@ export class FirenvimElement {
     // thus avoids reacting to an older resize request if a more recent has
     // already been processed.
     private resizeReqId = 0;
+    // relativeX/Y is the position the iframe should have relative to the input
+    // element in order to be both as close as possible to the input element
+    // and fit in the window without overflowing out of the viewport.
+    private relativeX = 0;
+    private relativeY = 0;
+    // firstPutEditorCloseToInputOrigin keeps track of whether this is the
+    // first time the putEditorCloseToInputOrigin function is called from the
+    // iframe. See putEditorCloseToInputOriginAfterResizeFromFrame() for more
+    // information.
+    private firstPutEditorCloseToInputOrigin = true;
 
     // elem is the element that received the focusEvent.
     // Nvimify is the function that listens for focus events. We need to know
@@ -69,17 +79,25 @@ export class FirenvimElement {
         this.iframe = elem
             .ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "iframe") as HTMLIFrameElement;
+        // Make sure there isn't any extra width/height
+        this.iframe.style.padding = "0px";
+        this.iframe.style.margin = "0px";
+        this.iframe.style.border = "0px";
+        // We still need a border, use a shadow for that
+        this.iframe.style.boxShadow = "0px 0px 1px 1px black";
     }
 
     attachToPage (fip: Promise<number>) {
-        this.frameIdPromise = fip;
-        this.frameIdPromise.then((f: number) => this.frameId = f);
+        this.frameIdPromise = fip.then((f: number) => this.frameId = f);
 
-        this.putEditorCloseToInputOrigin();
         // We don't need the iframe to be appended to the page in order to
         // resize it because we're just using the corresponding
         // input/textarea's size
-        this.setEditorSizeToInputSize();
+        let rect = this.getElement().getBoundingClientRect();
+        this.resizeTo(rect.width, rect.height, false);
+        this.relativeX = 0;
+        this.relativeY = 0;
+        this.putEditorCloseToInputOrigin();
 
         // Use a ResizeObserver to detect when the underlying input element's
         // size changes and change the size of the FirenvimElement
@@ -90,13 +108,19 @@ export class FirenvimElement {
                 await this.frameIdPromise;
             }
             if (entry) {
-                const { newRect } = self.setEditorSizeToInputSize();
+                const newRect = this.getElement().getBoundingClientRect();
+                if (rect.width === newRect.width && rect.height === newRect.height) {
+                    return;
+                }
+                rect = newRect;
+                self.resizeTo(rect.width, rect.height, false);
+                self.putEditorCloseToInputOrigin();
                 self.resizeReqId += 1;
                 browser.runtime.sendMessage({
                     args: {
                         frameId: self.frameId,
                         message: {
-                            args: [self.resizeReqId, newRect.width, newRect.height],
+                            args: [self.resizeReqId, rect.width, rect.height],
                             funcName: ["resize"],
                         }
                     },
@@ -216,23 +240,15 @@ export class FirenvimElement {
 
     putEditorCloseToInputOrigin () {
         const rect = this.editor.getElement().getBoundingClientRect();
-        const iframeRect = this.iframe.getBoundingClientRect();
 
         // Save attributes
         const posAttrs = ["left", "position", "top", "zIndex"];
         const oldPosAttrs = posAttrs.map((attr: any) => this.iframe.style[attr]);
 
-        // Compute the point closest to the input's origin that doesn't make
-        // the frame overflow
-        const rightOverflow = (rect.left + iframeRect.width) - document.documentElement.clientWidth;
-        const left = rect.left + window.scrollX - (rightOverflow < 0 ? 0 : rightOverflow);
-        const bottomOverflow = (rect.top + iframeRect.height) - document.documentElement.clientHeight;
-        const top = rect.top + window.scrollY - (bottomOverflow < 0 ? 0 : bottomOverflow);
-
         // Assign new values
-        this.iframe.style.left = `${left}px`;
+        this.iframe.style.left = `${rect.left + window.scrollX + this.relativeX}px`;
         this.iframe.style.position = "absolute";
-        this.iframe.style.top = `${top}px`;
+        this.iframe.style.top = `${rect.top + window.scrollY + this.relativeY}px`;
         this.iframe.style.zIndex = "2147483645";
 
         // Compare, to know whether the element moved or not
@@ -241,8 +257,33 @@ export class FirenvimElement {
         return { posChanged, newRect: rect };
     }
 
+    putEditorCloseToInputOriginAfterResizeFromFrame () {
+        // This is a very weird, complicated and bad piece of code. All calls
+        // to `resizeEditor()` have to result in a call to `resizeTo()` and
+        // then `putEditorCloseToInputOrigin()` in order to make sure the
+        // iframe doesn't overflow from the viewport.
+        // However, when we create the iframe, we don't want it to fit in the
+        // viewport at all cost. Instead, we want it to cover the underlying
+        // input as much as possible. The problem is that when it is created,
+        // the iframe will ask for a resize (because Neovim asks for one) and
+        // will thus also accidentally call putEditorCloseToInputOrigin, which
+        // we don't want to call.
+        // So we have to track the calls to putEditorCloseToInputOrigin that
+        // are made from the iframe (i.e. from `resizeEditor()`) and ignore the
+        // first one.
+        if (this.firstPutEditorCloseToInputOrigin) {
+            this.relativeX = 0;
+            this.relativeY = 0;
+            this.firstPutEditorCloseToInputOrigin = false;
+            return;
+        }
+        return this.putEditorCloseToInputOrigin();
+    }
+
     // Resize the iframe, making sure it doesn't get larger than the window
-    resizeTo (width: number, height: number) {
+    resizeTo (width: number, height: number, warnIframe: boolean) {
+        // If the dimensions that are asked for are too big, make them as big
+        // as the window
         let cantFullyResize = false;
         let availableWidth = window.innerWidth;
         if (availableWidth > document.documentElement.clientWidth) {
@@ -260,10 +301,23 @@ export class FirenvimElement {
             height = availableHeight - 1;
             cantFullyResize = true;
         }
+
+        // The dimensions that were asked for might make the iframe overflow.
+        // In this case, we need to compute how much we need to move the iframe
+        // to the left/top in order to have it bottom-right corner sit right in
+        // the window's bottom-right corner.
+        const rect = this.editor.getElement().getBoundingClientRect();
+        const rightOverflow = availableWidth - (rect.left + width);
+        this.relativeX = rightOverflow < 0 ? rightOverflow : 0;
+        const bottomOverflow = availableHeight - (rect.top + height);
+        this.relativeY = bottomOverflow < 0 ? bottomOverflow : 0;
+
+        // Now actually set the width/height, move the editor where it is
+        // supposed to be and if the new iframe can't be as big as requested,
+        // warn the iframe script.
         this.iframe.style.width = `${width}px`;
         this.iframe.style.height = `${height}px`;
-        this.putEditorCloseToInputOrigin();
-        if (cantFullyResize) {
+        if (cantFullyResize && warnIframe) {
             this.resizeReqId += 1;
             browser.runtime.sendMessage({
                 args: {
@@ -276,27 +330,6 @@ export class FirenvimElement {
                 funcName: ["messageFrame"],
             });
         }
-    }
-
-    setEditorSizeToInputSize () {
-        const rect = this.getElement().getBoundingClientRect();
-        // Make sure there isn't any extra width/height
-        this.iframe.style.padding = "0px";
-        this.iframe.style.margin = "0px";
-        this.iframe.style.border = "0px";
-        // We still need a border, use a shadow for that
-        this.iframe.style.boxShadow = "0px 0px 1px 1px black";
-
-        const dimAttrs = ["height", "width"];
-        const oldDimAttrs = dimAttrs.map((attr: any) => this.iframe.style[attr]);
-
-        // Assign new values
-        this.iframe.style.height = `${rect.height}px`;
-        this.iframe.style.width = `${rect.width}px`;
-
-        const dimChanged = !!dimAttrs.find((attr: any, index) => this.iframe.style[attr] !== oldDimAttrs[index]);
-
-        return { dimChanged, newRect: rect };
     }
 
     setPageElementContent (text: string) {
