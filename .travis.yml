@@ -23,8 +23,6 @@ before_install:
   - echo "set rtp+=$(pwd)" >> "$HOME/.config/nvim/init.vim"
 install:
   - npm ci
-  - npm audit fix
-  - git diff --exit-code
   - npm run build
   - npm run install_manifests
   - cat "$HOME/.local/share/firenvim/firenvim"
