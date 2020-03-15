@@ -10,6 +10,27 @@ if [ "$1" = "" ] ; then
         exit 1
 fi
 
+if [ "$(git rev-parse --abbrev-ref HEAD)" != "master" ] ; then
+        echo "Not on master. Aborting."
+        exit 1
+fi
+
+if ! git diff --quiet --exit-code ; then
+        echo "Git working directory unclean. Aborting."
+        exit 1
+fi
+
+if ! git diff --cached --quiet --exit-code ; then
+        echo "Git staged area unclean. Aborting."
+        exit 1
+fi
+
+git fetch origin master
+if ! git diff --quiet --exit-code origin/master ; then
+        echo "Local master is different from origin master. Aborting"
+        exit 1
+fi
+
 newMajor="$(echo "$1" | cut -d. -f1)"
 newMinor="$(echo "$1" | cut -d. -f2)"
 newPatch="$(echo "$1" | cut -d. -f3)"
