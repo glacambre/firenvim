@@ -7,7 +7,7 @@
     "ace-builds": "^1.4.8",
     "awesome-typescript-loader": "5.2.1",
     "chromedriver": "80.0.1",
-    "codemirror": "^5.52.0",
+    "codemirror": "^5.52.2",
     "copy-webpack-plugin": "5.1.1",
     "geckodriver": "1.19.1",
     "jest": "25.1.0",
