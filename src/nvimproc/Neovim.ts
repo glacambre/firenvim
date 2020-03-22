@@ -1,9 +1,10 @@
 import { page } from "../page/proxy";
-import { onRedraw } from "../render/Redraw";
+import * as CanvasRenderer from "../render/RedrawCanvas";
 import { Stdin } from "./Stdin";
 import { Stdout } from "./Stdout";
 
 export async function neovim(
+        canvas: HTMLCanvasElement,
         element: HTMLPreElement,
         extCmdline: HTMLSpanElement,
         extMessages: HTMLSpanElement,
@@ -13,6 +14,9 @@ export async function neovim(
     let stdout: Stdout;
     const functions: any = {};
     const requests = new Map<number, { resolve: any, reject: any }>();
+
+    CanvasRenderer.setFunctions(functions);
+    CanvasRenderer.setCanvas(canvas);
 
     const socket = new WebSocket(`ws://127.0.0.1:${port}/${password}`);
     socket.binaryType = "arraybuffer";
@@ -71,7 +75,7 @@ export async function neovim(
         switch (name) {
             case "redraw":
                 if (args) {
-                    onRedraw(functions, args, element, extCmdline, extMessages);
+                    CanvasRenderer.onRedraw(args);
                 }
                 break;
             case "firenvim_bufwrite":
