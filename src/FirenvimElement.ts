@@ -332,6 +332,19 @@ export class FirenvimElement {
         }
     }
 
+    sendKey (key: string) {
+        return browser.runtime.sendMessage({
+            args: {
+                frameId: this.frameId,
+                message: {
+                    args: [key],
+                    funcName: ["sendKey"],
+                }
+            },
+            funcName: ["messageFrame"],
+        });
+    }
+
     setPageElementContent (text: string) {
         this.editor.setContent(text);
         [

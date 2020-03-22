@@ -146,6 +146,24 @@ function applySettings(settings: any) {
     }
 
     makeDefaults(settings, "globalSettings", {});
+    // "<KEY>": "default" | "noop"
+    // #103: When using the browser's command API to allow sending `<C-w>` to
+    // firenvim, whether the default action should be performed if no neovim
+    // frame is focused.
+    makeDefaults(settings.globalSettings, "<C-n>", "default");
+    makeDefaults(settings.globalSettings, "<C-t>", "default");
+    makeDefaults(settings.globalSettings, "<C-w>", "default");
+    // Note: <CS-*> are currently disabled because of
+    // https://github.com/neovim/neovim/issues/12037
+    // Note: <CS-n> doesn't match the default behavior on firefox because this
+    // would require the sessions API. Instead, Firefox's behavior matches
+    // Chrome's.
+    makeDefaults(settings.globalSettings, "<CS-n>", "default");
+    // Note: <CS-t> is there for completeness sake's but can't be emulated in
+    // Chrome and Firefox because this would require the sessions API.
+    makeDefaults(settings.globalSettings, "<CS-t>", "default");
+    makeDefaults(settings.globalSettings, "<CS-w>", "default");
+
     // "server": "persistent" | "ephemeral"
     // #197: Allow multiple firenvim instances to connect to a single server
     makeDefaults(settings.globalSettings, "server", "ephemeral");
@@ -236,6 +254,7 @@ Object.assign(window, {
     // We need to stick the browser polyfill in `window` if we want the `exec`
     // call to be able to find it on Chrome
     browser,
+    closeOwnTab: (sender: any) => browser.tabs.remove(sender.tab.id),
     exec: (sender: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
     getError,
     getNeovimInstance: (sender: any, args: any) => {
@@ -289,27 +308,90 @@ browser.windows.onFocusChanged.addListener(async (windowId: number) => {
 updateIcon();
 
 browser.commands.onCommand.addListener(async (command: string) => {
+    const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
+    let p;
     switch (command) {
         case "focus_input":
             browser.tabs.sendMessage(
-                (await browser.tabs.query({ active: true, currentWindow: true }))[0].id,
+                tab.id,
                 { args: [], funcName: ["focusInput"] },
+                { frameId: 0 },
             );
             break;
         case "focus_page":
             browser.tabs.sendMessage(
-                (await browser.tabs.query({ active: true, currentWindow: true }))[0].id,
+                tab.id,
                 { args: [], funcName: ["focusPage"] },
+                { frameId: 0 },
             );
             break;
         case "nvimify":
             browser.tabs.sendMessage(
-                (await browser.tabs.query({ active: true, currentWindow: true }))[0].id,
+                tab.id,
                 { args: [], funcName: ["forceNvimify"] },
+                { frameId: 0 }
             );
             break;
+        case "send_C-n":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<C-n>"], funcName: ["sendKey"] },
+                { frameId: 0 }
+            );
+            if (getGlobalConf()["<C-n>"] === "default") {
+                p.catch(() => browser.windows.create());
+            }
+            break;
+        case "send_C-t":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<C-t>"], funcName: ["sendKey"] },
+                { frameId: 0 }
+            );
+            if (getGlobalConf()["<C-t>"] === "default") {
+                p.catch(() => browser.tabs.create({ "windowId": tab.windowId }));
+            }
+            break;
+        case "send_C-w":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<C-w>"], funcName: ["sendKey"] },
+                { frameId: 0 }
+            );
+            if (getGlobalConf()["<C-w>"] === "default") {
+                p.catch(() => browser.tabs.remove(tab.id));
+            }
+            break;
+        case "send_CS-n":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<CS-n>"], funcName: ["sendKey"] },
+                { frameId: 0 }
+            );
+            if (getGlobalConf()["<CS-n>"] === "default") {
+                p.catch(() => browser.windows.create({ "incognito": true }));
+            }
+            break;
+        case "send_CS-t":
+            // <CS-t> can't be emulated without the sessions API.
+            browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<CS-t>"], funcName: ["sendKey"] },
+                { frameId: 0 }
+            );
+            break;
+        case "send_CS-w":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<CS-w>"], funcName: ["sendKey"] },
+                { frameId: 0 }
+            );
+            if (getGlobalConf()["<CS-w>"] === "default") {
+                p.catch(() => browser.windows.remove(tab.windowId));
+            }
+            break;
         case "toggle_firenvim":
-            await toggleDisabled();
+            toggleDisabled();
             break;
     }
 });

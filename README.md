@@ -287,7 +287,22 @@ au TextChangedI * ++nested call Delay_My_Write()
 
 ## Drawbacks
 
-The main issue with Firenvim is that some keybindings (e.g. `<C-w>`) are not overridable. I circumvent this issue by running a [patched](https://github.com/glacambre/firefox-patches) version of Firefox.
+Some keybindings, such as `<C-n>`, `<C-t>` and `<C-w>` are not overridable through usual means. This means that you have to tell your browser to let Firenvim override them by using [the shortcuts menu in `about://addons`](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) on Firefox and `chrome://extensions/shortcuts` in Chrome.
+
+When it is possible to do so, if you press one of these keyboard shortcuts while not in a Firenvim frame, Firenvim will attempt to emulate the expected behavior of the shortcut. For example, pressing `<C-w>` in a Firenvim frame will tell neovim you pressed `<C-w>`, but outside of it it will tell the browser to close the current tab.
+
+Controlling whether Firenvim should attempt to emulate the browser's default behavior can be done with global settings. The following snippet will tell Firenvim to simulate `<C-n>`'s default behavior while never simulating `<C-w>`'s:
+
+```vim
+let g:firenvim_config = {
+	'globalSettings': {
+		'<C-w>': 'noop',
+		'<C-n>': 'default',
+	}
+}
+```
+
+Note that on Firefox on Linux some keyboard shortcuts might not be overridable. I circumvent this issue by running a [patched](https://github.com/glacambre/firefox-patches) version of Firefox (note: once Firefox is patched, you won't need to setup webextension keyboard shortcuts).
 
 ## You might also like
 

@@ -11,8 +11,7 @@ interface IGlobalState {
     disabled: boolean | Promise<boolean>;
 }
 
-function _focusInput(global: IGlobalState, frameId: number, addListener: boolean) {
-    const firenvim = global.firenvimElems.get(frameId);
+function _focusInput(global: IGlobalState, firenvim: FirenvimElement, addListener: boolean) {
     if (addListener) {
         // Only re-add event listener if input's selector matches the ones
         // that should be autonvimified
@@ -25,20 +24,22 @@ function _focusInput(global: IGlobalState, frameId: number, addListener: boolean
     firenvim.focusOriginalElement(addListener);
 }
 
+function getFocusedElement (firenvimElems: Map<number, FirenvimElement>) {
+    return Array
+        .from(firenvimElems.values())
+        .find(instance => instance.getSpan() === document.activeElement);
+}
+
 export function getFunctions(global: IGlobalState) {
     return {
         focusInput: (frameId: number) => {
+            let firenvimElement;
             if (frameId === undefined) {
-                const pair = Array.from(global.firenvimElems.entries())
-                    .find(([id, instance]) =>
-                          instance.getSpan() === document.activeElement);
-                if (pair !== undefined) {
-                    frameId = pair[0];
-                }
+                firenvimElement = getFocusedElement(global.firenvimElems);
+            } else {
+                firenvimElement = global.firenvimElems.get(frameId);
             }
-            if (frameId !== undefined) {
-                _focusInput(global, frameId, true);
-            }
+            _focusInput(global, firenvimElement, true);
         },
         focusPage: () => {
             (document.activeElement as any).blur();
@@ -72,13 +73,15 @@ export function getFunctions(global: IGlobalState) {
             .get(frameId)
             .getPageElementContent(),
         hideEditor: (frameId: number) => {
-            global.firenvimElems.get(frameId).hide();
-            _focusInput(global, frameId, true);
+            const firenvim = global.firenvimElems.get(frameId);
+            firenvim.hide();
+            _focusInput(global, firenvim, true);
         },
         killEditor: (frameId: number) => {
-            global.firenvimElems.get(frameId).detachFromPage();
+            const firenvim = global.firenvimElems.get(frameId);
+            firenvim.detachFromPage();
             const conf = getConf();
-            _focusInput(global, frameId, conf.takeover !== "once");
+            _focusInput(global, firenvim, conf.takeover !== "once");
             global.firenvimElems.delete(frameId);
         },
         pressKeys: (frameId: number, keys: string[]) => {
@@ -90,6 +93,16 @@ export function getFunctions(global: IGlobalState) {
             elem.putEditorCloseToInputOriginAfterResizeFromFrame();
         },
         registerNewFrameId: (frameId: number) => global.registerNewFrameId(frameId),
+        sendKey: (key: string) => {
+            const firenvim = getFocusedElement(global.firenvimElems);
+            if (firenvim !== undefined) {
+                firenvim.sendKey(key);
+            } else {
+                // It's important to throw this error as the background script
+                // will execute a fallback
+                throw new Error("No firenvim frame selected");
+            }
+        },
         setDisabled: (disabled: boolean) => {
             global.disabled = disabled;
         },
