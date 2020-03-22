@@ -12,6 +12,12 @@ export interface IConfig {
         alt: "alphanum" | "all",
         server: "persistent" | "ephemeral",
         server_url: string,
+        "<C-n>": "default" | "noop",
+        "<C-t>": "default" | "noop",
+        "<C-w>": "default" | "noop",
+        "<CS-n>": "default" | "noop",
+        "<CS-t>": "default" | "noop",
+        "<CS-w>": "default" | "noop",
     };
     localSettings: { [key: string]: ISiteConfig };
 }

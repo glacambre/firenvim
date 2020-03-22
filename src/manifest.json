@@ -21,6 +21,15 @@
             "default": "Ctrl+E"
          }
       },
+      "send_C-n": {
+         "description": "Send <C-n> to firenvim."
+      },
+      "send_C-t": {
+         "description": "Send <C-t> to firenvim."
+      },
+      "send_C-w": {
+         "description": "Send <C-w> to firenvim."
+      },
       "toggle_firenvim": {
          "description": "Toggle Firenvim in the current tab."
       }
