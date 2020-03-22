@@ -295,11 +295,11 @@ Controlling whether Firenvim should attempt to emulate the browser's default beh
 
 ```vim
 let g:firenvim_config = {
-	'globalSettings': {
-		'<C-w>': 'noop',
-		'<C-n>': 'default',
-	}
-}
+    \ 'globalSettings': {
+        \ '<C-w>': 'noop',
+        \ '<C-n>': 'default',
+    \ }
+\ }
 ```
 
 Note that on Firefox on Linux some keyboard shortcuts might not be overridable. I circumvent this issue by running a [patched](https://github.com/glacambre/firefox-patches) version of Firefox (note: once Firefox is patched, you won't need to setup webextension keyboard shortcuts).
