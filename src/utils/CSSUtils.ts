@@ -39,7 +39,7 @@ export function parseGuifont(guifont: string, defaults: any) {
 // a bunch of CSS declarations.
 export function guifontToMultiDecl(guifont: string) {
     const defaults: any = {};
-    defaults[fontFamily] = "monospace";
+    defaults[fontFamily] = "Monospace";
     defaults["font-size"] = "9pt";
     return Object.entries(parseGuifont(guifont, defaults))
         .map(([key, value]) => `${key}: ${value};\n`)
@@ -50,7 +50,7 @@ export function guifontToMultiDecl(guifont: string) {
 // declaration, using font-family for font fallback.
 export function guifontsToFontFamily(guifonts: string[]) {
     const defaults: any = {};
-    defaults[fontFamily] = "monospace";
+    defaults[fontFamily] = "Monospace";
     defaults["font-size"] = "9pt";
     const reducedGuifonts = guifonts
         .slice()
@@ -100,6 +100,8 @@ export function computeSelector(element: HTMLElement) {
 
 // Turns a number into its hash+6 number hexadecimal representation.
 export function toHexCss(n: number) {
+    if (n === undefined)
+        return undefined;
     const str = n.toString(16);
     // Pad with leading zeros
     return "#" + (new Array(6 - str.length)).fill("0").join("") + str;
