@@ -511,3 +511,15 @@ function! firenvim#uninstall() abort
                 echo 'Removed native manifest for ' . l:name . '.'
         endfor
 endfunction
+
+function! firenvim#onUIEnter(event) abort
+        let l:ui = nvim_get_chan_info(a:event.chan)
+        if has_key(l:ui, 'client') && has_key(l:ui.client, 'name') &&
+                                \ l:ui.client.name =~? 'Firenvim'
+                call map(nvim_list_bufs(), {key, val -> firenvimft#detect(val)})
+                augroup FirenvimFtdetectAugroup
+                        autocmd!
+                        autocmd BufRead,BufNewFile *.txt call firenvimft#detect(str2nr(expand('<abuf>')))
+                augroup END
+        endif
+endfunction
