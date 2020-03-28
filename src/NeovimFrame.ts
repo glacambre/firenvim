@@ -237,15 +237,15 @@ window.addEventListener("load", async () => {
             }
         });
         // Let users know when they focus/unfocus the frame
-        function setFocusedStyle() {
+        window.addEventListener("focus", () => {
             document.documentElement.style.opacity = "1";
-        }
-        function setBluredStyle() {
+            keyHandler.focus();
+            nvim.command("doautocmd FocusGained");
+        });
+        window.addEventListener("blur", () => {
             document.documentElement.style.opacity = "0.5";
-        }
-        window.addEventListener("focus", setFocusedStyle);
-        window.addEventListener("blur", setBluredStyle);
-        window.addEventListener("focus", () => keyHandler.focus());
+            nvim.command("doautocmd FocusLost");
+        });
         keyHandler.focus();
         setTimeout(() => keyHandler.focus(), 10);
     } catch (e) {
