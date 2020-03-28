@@ -9,7 +9,7 @@ const By = webdriver.By;
 
 import { readVimrc, writeVimrc } from "./_vimrc";
 
-jest.setTimeout(15000);
+jest.setTimeout(150000);
 const FIRENVIM_INIT_DELAY = 600;
 
 export const pagesDir = path.resolve(path.join("tests", "pages"));
@@ -454,6 +454,44 @@ export async function testInputFocusedAfterLeave(driver: any) {
         console.log("Checking that the input is focused…");
         await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")));
 };
+
+export async function testFocusGainedLost(driver: any) {
+        await loadLocalPage(driver, "simple.html", "FocusGainedLost test");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await firenvimReady(driver);
+        console.log("Typing :autocmd FocusLost * normal aa<CR>…");
+        await sendKeys(driver, ":autocmd FocusLost ".split(""));
+        await driver.actions()
+                .keyDown(webdriver.Key.MULTIPLY)
+                .keyUp(webdriver.Key.MULTIPLY)
+                .perform();
+        await sendKeys(driver, " normal aa".split("")
+                       .concat(webdriver.Key.ENTER)
+                       .concat(":autocmd FocusGained ".split("")));
+        await driver.actions()
+                .keyDown(webdriver.Key.MULTIPLY)
+                .keyUp(webdriver.Key.MULTIPLY)
+                .perform();
+        await sendKeys(driver, " normal ab".split("")
+                       .concat(webdriver.Key.ENTER));
+        await driver.sleep(100);
+        console.log("Focusing body…");
+        await driver.executeScript(`arguments[0].blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`, span);
+        await driver.sleep(100);
+        await driver.actions().click(input).perform();
+        await sendKeys(driver, ":wq!".split("")
+                .concat(webdriver.Key.ENTER));
+        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        expect(await input.getAttribute("value")).toBe("ab");
+}
 
 export async function testTakeoverOnce(driver: any) {
         await loadLocalPage(driver, "simple.html", "takeover: once test");
