@@ -2,11 +2,10 @@ local websocket = require("websocket")
 
 local function close_server(server)
         vim.loop.close(server)
+        -- Work around https://github.com/glacambre/firenvim/issues/49 Note:
+        -- important to do this before nvim_command("qall") because it breaks
+        vim.loop.new_timer():start(1000, 100, (function() os.exit() end))
         vim.schedule(function()
-                -- Work around https://github.com/glacambre/firenvim/issues/49
-                -- Note: important to do this before nvim_command("qall")
-                -- because it breaks
-                vim.loop.new_timer():start(1000, 100, (function() os.exit() end))
                 vim.api.nvim_command("qall!")
         end)
 end

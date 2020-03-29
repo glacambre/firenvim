@@ -83,6 +83,10 @@ function! firenvim#run() abort
         endfunction
         let s:accumulated_data = ''
         function! OnStdin(id, data, event) abort
+                " `:h channel-stdio`: empty a:data means FD closed?
+                if a:data == ['']
+                        qall!
+                end
                 if s:firenvim_done
                         return
                 endif
@@ -111,7 +115,6 @@ function! firenvim#run() abort
                 endif
 
                 call WriteStdout(a:id, json_encode(result))
-                call chanclose(a:id)
         endfunction
         let l:chanid = stdioopen({ 'on_stdin': 'OnStdin' })
 endfunction
