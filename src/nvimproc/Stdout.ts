@@ -29,46 +29,34 @@ export class Stdout {
                      this
                         .msgpackConfig
                         .codec
-                        .addExtUnpacker(id, (data: any) => msgpack.decode(data, this.msgpackConfig)));
+                        .addExtUnpacker(id, (data: any) => data));
     }
 
     private onMessage(msg: any) {
-        const data = new Uint8Array(msg.data);
-        const uint8arr = new Uint8Array(this.prev.length + data.length);
-        uint8arr.set(this.prev);
-        uint8arr.set(data, this.prev.length);
-        let decoded;
-        try {
-            decoded = msgpack.decode(uint8arr, this.msgpackConfig);
-        } catch (e) {
-            // Buffer shortage means rpc messages are split
-            if (e.message !== "BUFFER_SHORTAGE") {
-                this.prev = new Uint8Array(0);
-                throw e;
+        const msgData = new Uint8Array(msg.data);
+        let data = new Uint8Array(msgData.byteLength + this.prev.byteLength);
+        data.set(this.prev);
+        data.set(msgData, this.prev.length);
+        while (true) {
+            let decoded;
+            try {
+                decoded = msgpack.decode(data, this.msgpackConfig);
+            } catch (e) {
+                this.prev = data;
+                return;
             }
-            this.prev = uint8arr;
-            return;
-        }
-        if (typeof decoded[Symbol.iterator] !== "function") {
-            // TODO: find out why we sometimes get a non-iterable but msgpack-decodable byte
-            // This started happening when custom messagepack codecs were added
-            return;
-        }
-        this.prev = new Uint8Array(0);
-        const [kind, reqId, data1, data2] = decoded;
-        const name = this.messageNames.get(kind);
-        if (!name) {
-            throw new Error(`Unhandled message kind! ${decoded}`);
-        }
-        const arr = this.listeners.get(name);
-        if (arr) {
-            arr.forEach(l => l(reqId, data1, data2));
-        }
-
-        // FIXME: This is a hack to deal with coallesced messages, there has to be a better way
-        const rec = msgpack.encode(decoded);
-        if (msg.data.byteLength > rec.length) {
-            this.onMessage({ data: uint8arr.slice(rec.length) });
+            const encoded = msgpack.encode(decoded);
+            data = data.slice(encoded.byteLength);
+            const [kind, reqId, data1, data2] = decoded;
+            const name = this.messageNames.get(kind);
+            if (name) {
+                const arr = this.listeners.get(name);
+                if (arr) {
+                    arr.forEach(l => l(reqId, data1, data2));
+                }
+            } else {
+                console.log(`Unhandled message kind ${name}`);
+            }
         }
     }
 }
