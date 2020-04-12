@@ -9,7 +9,7 @@ const By = webdriver.By;
 
 import { readVimrc, writeVimrc } from "./_vimrc";
 
-jest.setTimeout(150000);
+jest.setTimeout(15000);
 const FIRENVIM_INIT_DELAY = 600;
 
 export const pagesDir = path.resolve(path.join("tests", "pages"));
