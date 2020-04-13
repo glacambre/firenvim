@@ -92,5 +92,5 @@ You can't use `echo` or `echom` in your init.vim before Firenvim has been loaded
 
 ```diff
 -exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'
-+exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()' 2>/tmp/firenvim_errors
++exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()' 2>>/tmp/firenvim_errors
 ```
