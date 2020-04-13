@@ -206,9 +206,14 @@ function setupListeners(selector: string) {
         }
     })).observe(window.document, { subtree: true, childList: true });
 
-    Array.from(document.querySelectorAll(selector))
-        .forEach(elem => addNvimListener(elem));
-
+    let elements: HTMLElement[];
+    try {
+        elements = Array.from(document.querySelectorAll(selector));
+    } catch {
+        alert(`Firenvim error: invalid CSS selector (${selector}) in your g:firenvim_config.`);
+        elements = [];
+    }
+    elements.forEach(elem => addNvimListener(elem));
 }
 
 confReady.then(() => {
