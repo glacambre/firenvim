@@ -174,7 +174,7 @@ let fc = g:firenvim_config['localSettings']
 let fc['https?://[^/]+\.co\.uk/'] = { 'takeover': 'never', 'priority': 1 }
 ```
 
-From now on, localSettings examples will use the `let fc[...] = ...` shorthand, assuming that you have a line like `let fc = g:firenvim_config['localSettings']` in your config.
+From now on, localSettings examples will use the `let fc[...] = ...` shorthand, assuming that you have defined a `g:firenvim_config` object and that you have a line like `let fc = g:firenvim_config['localSettings']` in your config.
 
 ### Configuring what elements Firenvim should appear on
 
