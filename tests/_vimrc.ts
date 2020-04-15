@@ -4,6 +4,10 @@ const path = require("path");
 const process = require("process");
 const spawn = require("child_process").spawn;
 
+export function getPluginPath () {
+        return process.cwd();
+};
+
 export function setupVimrc() {
         process.env.XDG_CONFIG_HOME = os.tmpdir();
         const nvimdir = path.join(process.env.XDG_CONFIG_HOME, "nvim");
@@ -11,7 +15,7 @@ export function setupVimrc() {
                 fs.mkdirSync(nvimdir);
         } catch (e) {}
         process.env.MYVIMRC = path.join(nvimdir, "init.vim");
-        writeVimrc(`set rtp+=${process.cwd()}\n`);
+        writeVimrc(`set rtp+=${getPluginPath()}\n`);
 };
 
 export function readVimrc() {

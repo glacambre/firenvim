@@ -23,6 +23,7 @@ import {
  testInputFocus,
  testInputFocusedAfterLeave,
  testInputResizes,
+ testInvalidSelector,
  testLargeBuffers,
  testModifiers,
  testMonaco,
@@ -69,6 +70,7 @@ describe("Firefox", () => {
                 }
 
                 driver = new webdriver.Builder()
+                        .setAlertBehavior("accept")
                         .forBrowser("firefox")
                         .setFirefoxOptions(options)
                         .build();
@@ -104,4 +106,7 @@ describe("Firefox", () => {
         if (process.platform === "linux") {
                 test("No lingering neovim process", () => testNoLingeringNeovims(driver));
         }
+        // Note: this test HAS to be the last selenium test because it breaks
+        // init.vim in an unrecoverable way
+        test("Invalid selector produces error message", () => testInvalidSelector(driver));
 })
