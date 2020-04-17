@@ -7,7 +7,7 @@ const webdriver = require("selenium-webdriver");
 const Until = webdriver.until;
 const By = webdriver.By;
 
-import { readVimrc, writeVimrc, getPluginPath } from "./_vimrc";
+import { readVimrc, writeVimrc } from "./_vimrc";
 
 jest.setTimeout(150000);
 const FIRENVIM_INIT_DELAY = 600;
@@ -306,7 +306,6 @@ export async function killPreloadedInstance(driver: any) {
                 const elem = document.getElementById("${id}");
                 elem.parentElement.removeChild(elem);
         `);
-        await driver.sleep(50);
 }
 
 export async function testVimrcFailure(driver: any) {
@@ -331,27 +330,6 @@ export async function testVimrcFailure(driver: any) {
         // The firenvim frame should disappear after a second
         console.log("Waiting for span to disappear…");
         await driver.wait(Until.stalenessOf(span));
-}
-
-export async function testInvalidSelector(driver: any) {
-        // First, write buggy vimrc
-        console.log("Backing up vimrc…");
-        const backup = await readVimrc();
-        console.log("Overwriting it…");
-        await writeVimrc(`
-let g:firenvim_config = { 'localSettings': { '.*': { 'selector': '''' } } }
-set rtp+=${getPluginPath()}
-`);
-        await loadLocalPage(driver, "simple.html", "Selector failure");
-        await killPreloadedInstance(driver);
-        // Reload, to get the buggy instance
-        await loadLocalPage(driver, "simple.html", "Selector failure");
-        console.log("Checking for alert");
-        await driver.wait(Until.alertIsPresent());
-        expect((await driver.switchTo().alert().getText()))
-                .toMatch(/firenvim.*error.*selector/i);
-        await driver.switchTo().alert().accept();
-        await writeVimrc(backup);
 }
 
 export async function testGuifont(driver: any) {

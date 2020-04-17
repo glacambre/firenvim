@@ -21,7 +21,6 @@ import {
  testInputFocus,
  testInputFocusedAfterLeave,
  testInputResizes,
- testInvalidSelector,
  testLargeBuffers,
  testModifiers,
  testMonaco,
@@ -102,6 +101,4 @@ describe("Chrome", () => {
         if (process.platform === "linux") {
                 nonHeadlessTest()("No lingering neovim process", () => testNoLingeringNeovims(driver));
         }
-        // Can't be tested in chrome because can't override the way alerts are dealt with
-        // nonHeadlessTest()("Invalid selector produces error message", () => testInvalidSelector(driver));
 })
