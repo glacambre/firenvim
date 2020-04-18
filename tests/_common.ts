@@ -465,13 +465,15 @@ export async function testFocusGainedLost(driver: any) {
         console.log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await firenvimReady(driver);
-        console.log("Typing :autocmd FocusLost * normal aa<CR>…");
-        await sendKeys(driver, ":autocmd FocusLost ".split(""));
+        console.log("Typing aa<Esc>:autocmd FocusLost * ++nested write<CR>…");
+        await sendKeys(driver, "aa".split("")
+                .concat(webdriver.Key.ESCAPE)
+                .concat(":autocmd FocusLost ".split("")));
         await driver.actions()
                 .keyDown(webdriver.Key.MULTIPLY)
                 .keyUp(webdriver.Key.MULTIPLY)
                 .perform();
-        await sendKeys(driver, " normal aa".split("")
+        await sendKeys(driver, " ++nested write".split("")
                        .concat(webdriver.Key.ENTER)
                        .concat(":autocmd FocusGained ".split("")));
         await driver.actions()
@@ -482,14 +484,16 @@ export async function testFocusGainedLost(driver: any) {
                        .concat(webdriver.Key.ENTER));
         await driver.sleep(100);
         console.log("Focusing body…");
-        await driver.executeScript(`arguments[0].blur();
-                                    document.documentElement.focus();
-                                    document.body.focus();`, span);
+        await driver.actions().click(await driver.wait(Until.elementLocated(By.css("html")))).perform();
         await driver.sleep(100);
+        expect(["html", "body"].includes(await driver.switchTo().activeElement().getAttribute("id")))
+                .toBe(true);
+        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        expect(await input.getAttribute("value")).toBe("a");
         await driver.actions().click(input).perform();
         await sendKeys(driver, ":wq!".split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        await driver.wait(async () => (await input.getAttribute("value") !== "a"));
         expect(await input.getAttribute("value")).toBe("ab");
 }
 
@@ -614,7 +618,6 @@ ${backup}
         console.log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
 }
-
 
 export async function testLargeBuffers(driver: any) {
         await loadLocalPage(driver, "simple.html", "Large buffers test");
