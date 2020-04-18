@@ -120,7 +120,7 @@ async function checkVersion(nvimVersion: string) {
     const manifest = browser.runtime.getManifest();
     warning = "";
     if (manifest.version !== nvimVersion) {
-        warning = `Neovim plugin version (${nvimVersion}) and firefox addon `
+        warning = `Neovim plugin version (${nvimVersion}) and browser addon `
             + `version (${manifest.version}) do not match.`;
     }
     updateIcon();
