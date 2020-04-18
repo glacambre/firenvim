@@ -233,6 +233,11 @@ export class FirenvimElement {
         this.iframe.style.display = "none";
     }
 
+    isFocused () {
+        return document.activeElement === this.span
+            || document.activeElement === this.iframe;
+    }
+
     pressKeys (keys: KeyboardEvent[]) {
         keys.forEach(ev => this.originalElement.dispatchEvent(ev));
         this.focus();
@@ -346,6 +351,7 @@ export class FirenvimElement {
     }
 
     setPageElementContent (text: string) {
+        const focused = this.isFocused();
         this.editor.setContent(text);
         [
             new Event("keydown",     { bubbles: true }),
@@ -355,11 +361,17 @@ export class FirenvimElement {
             new Event("input",       { bubbles: true }),
             new Event("change",      { bubbles: true })
         ].forEach(ev => this.originalElement.dispatchEvent(ev));
-        this.focus();
+        if (focused) {
+            this.focus();
+        }
     }
 
     setPageElementCursor (line: number, column: number) {
-        return this.editor.setCursor(line, column);
+        let result = Promise.resolve([line, column]);
+        if (this.isFocused()) {
+            result = this.editor.setCursor(line, column);
+        }
+        return result;
     }
 
     show () {

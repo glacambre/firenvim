@@ -27,7 +27,7 @@ function _focusInput(global: IGlobalState, firenvim: FirenvimElement, addListene
 function getFocusedElement (firenvimElems: Map<number, FirenvimElement>) {
     return Array
         .from(firenvimElems.values())
-        .find(instance => instance.getSpan() === document.activeElement);
+        .find(instance => instance.isFocused());
 }
 
 export function getFunctions(global: IGlobalState) {
