@@ -367,11 +367,7 @@ export class FirenvimElement {
     }
 
     setPageElementCursor (line: number, column: number) {
-        let result = Promise.resolve([line, column]);
-        if (this.isFocused()) {
-            result = this.editor.setCursor(line, column);
-        }
-        return result;
+        return this.editor.setCursor(line, column);
     }
 
     show () {
