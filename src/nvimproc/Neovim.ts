@@ -59,10 +59,11 @@ export async function neovim(
                 }
                 break;
             case "firenvim_bufwrite":
+                const hasFocus = document.hasFocus();
                 const data = args[0] as { text: string[], cursor: [number, number] };
                 page.setElementContent(data.text.join("\n"))
                     .then(() => page.setElementCursor(...(data.cursor)))
-                    .then(() => window.focus());
+                    .then(() => { if (hasFocus && !document.hasFocus()) { window.focus(); } });
                 break;
             case "firenvim_focus_page":
                 page.focusPage();
