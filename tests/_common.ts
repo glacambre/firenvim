@@ -359,12 +359,13 @@ ${backup}
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
+        await driver.sleep(100);
         await driver.wait(async () => (await input.getAttribute("value") !== ""));
         const initVal = await input.getAttribute("value");
         expect(initVal).toMatch(/a+ba+/);
-        await driver.executeScript(`arguments[0].blur();
+        await driver.executeScript(`document.activeElement.blur();
                                     document.documentElement.focus();
-                                    document.body.focus();`, input);
+                                    document.body.focus();`);
         await driver.actions().click(input).perform();
         console.log("Waiting for span to be created…");
         span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
@@ -484,8 +485,9 @@ export async function testFocusGainedLost(driver: any) {
                        .concat(webdriver.Key.ENTER));
         await driver.sleep(100);
         console.log("Focusing body…");
-        await driver.actions().click(await driver.wait(Until.elementLocated(By.css("html")))).perform();
-        await driver.sleep(100);
+        await driver.executeScript(`document.activeElement.blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`);
         expect(["html", "body"].includes(await driver.switchTo().activeElement().getAttribute("id")))
                 .toBe(true);
         await driver.wait(async () => (await input.getAttribute("value") !== ""));
