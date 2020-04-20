@@ -28,7 +28,7 @@ local function connection_handler(server, sock, config, token)
         return function(err, chunk)
                 assert(not err, err)
                 if not chunk then
-                        return
+                        return close_server()
                 end
                 if not headers then
                         _, request, headers, rest = coroutine.resume(header_parser, chunk)
