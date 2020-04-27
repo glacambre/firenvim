@@ -104,7 +104,7 @@ tar -cvzf target/firenvim-sources.tar.gz $source_files
 COMMIT_TEMPLATE="/tmp/firenvim_release_message"
 echo "package.json: bump version $oldVersion -> $newVersion" > "$COMMIT_TEMPLATE"
 echo "" >> "$COMMIT_TEMPLATE"
-git log --pretty=oneline --abbrev-commit --invert-grep --grep='dependabot' "v$oldVersion..v$newVersion" >> "$COMMIT_TEMPLATE"
+git log --pretty=oneline --abbrev-commit --invert-grep --grep='dependabot' "v$oldVersion..HEAD" >> "$COMMIT_TEMPLATE"
 
 # Everything went fine, we can commit our changes, tag them, push them
 git add package.json package-lock.json
