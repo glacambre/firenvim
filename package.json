@@ -16,7 +16,7 @@
     "selenium-webdriver": "4.0.0-alpha.7",
     "sharp": "0.25.2",
     "ts-jest": "25.4.0",
-    "tslint": "6.1.1",
+    "tslint": "6.1.2",
     "typescript": "3.8.3",
     "web-ext": "4.2.0",
     "web-ext-types": "3.2.1",
