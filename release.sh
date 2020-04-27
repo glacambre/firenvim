@@ -100,15 +100,20 @@ source_files="$(echo ./* | sed s@./node_modules@@ | sed s@./target@@)"
 rm -f target/firenvim-sources.tar.gz
 tar -cvzf target/firenvim-sources.tar.gz $source_files
 
+# Prepare commit message
+COMMIT_TEMPLATE="/tmp/firenvim_release_message"
+echo "package.json: bump version $oldVersion -> $newVersion" > "$COMMIT_TEMPLATE"
+echo "" >> "$COMMIT_TEMPLATE"
+git log --pretty=oneline --abbrev-commit --invert-grep --grep='dependabot' "v$oldVersion..v$newVersion" >> "$COMMIT_TEMPLATE"
+
 # Everything went fine, we can commit our changes, tag them, push them
 git add package.json package-lock.json
-git commit -m "package.json: bump version $oldVersion -> $newVersion"
+git commit -t "$COMMIT_TEMPLATE"
 git tag --delete "v$newVersion" 2>/dev/null || true
 git tag "v$newVersion" 
 
 git push
 git push --tags
 
-git log --pretty=oneline --abbrev-commit --invert-grep --grep='dependabot' "v$oldVersion..v$newVersion" > /tmp/firenvim_changelog
 firefox --private-window 'https://chrome.google.com/webstore/devconsole/g06704558984641971849/egpjdkipkomnmjhjmdamaniclmdlobbo/edit?hl=en'
 firefox --private-window 'https://addons.mozilla.org/en-US/developers/addon/firenvim/versions/submit/'
