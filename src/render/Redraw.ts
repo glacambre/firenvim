@@ -220,19 +220,26 @@ const redrawFuncs = {
    mode_info_set: (elem: HTMLElement, [cursorStyleEnabled, modeInfo]: [boolean, any]) => {
       modeInfo.forEach((info: any, idx: number) => {
          const { cursor_shape: shape, attr_id } = info;
+         let foreground = highlights[attr_id].foreground;
+         let background = highlights[attr_id].background;
+         if (attr_id === 0) {
+            const tmp = foreground;
+            foreground = background;
+            background = tmp;
+         }
          let cssStr = `html body span.nvim_cursor { `;
          switch (shape) {
                case "vertical":
                   cssStr += `box-sizing: border-box;`;
-                  cssStr += `border-left: solid 1px ${highlights[attr_id].background};`;
+                  cssStr += `border-left: solid 1px ${background};`;
                   break;
                case "horizontal":
                   cssStr += `box-sizing: border-box;`;
-                  cssStr += `border-bottom: solid 1px ${highlights[attr_id].background};`;
+                  cssStr += `border-bottom: solid 1px ${background};`;
                   break;
                case "block":
-                  cssStr += `color: ${highlights[attr_id].foreground};`;
-                  cssStr += `background: ${highlights[attr_id].background};`;
+                  cssStr += `color: ${foreground};`;
+                  cssStr += `background: ${background};`;
                   break;
             }
          cssStr += "}";
