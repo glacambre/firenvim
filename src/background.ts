@@ -395,3 +395,24 @@ browser.commands.onCommand.addListener(async (command: string) => {
             break;
     }
 });
+
+async function updateIfPossible() {
+    const tabs = await browser.tabs.query({});
+    const messages = tabs.map((tab: { id: number }) => browser
+                                        .tabs
+                                        .sendMessage(tab.id,
+                                                     {
+                                                         args: [],
+                                                         funcName: ["getActiveInstanceCount"],
+                                                     },
+                                                     { frameId: 0 })
+                                        .catch(() => 0));
+    const instances = await (Promise.all(messages));
+    if (instances.find(n => n > 0) === undefined) {
+        browser.runtime.reload();
+    } else {
+        setTimeout(updateIfPossible, 1000 * 60 * 10);
+    }
+}
+(window as any).updateIfPossible = updateIfPossible;
+browser.runtime.onUpdateAvailable.addListener(updateIfPossible);

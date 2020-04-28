@@ -65,6 +65,7 @@ export function getFunctions(global: IGlobalState) {
             }
             global.nvimify({ target: elem } as any);
         },
+        getActiveInstanceCount : () => global.firenvimElems.size,
         getEditorInfo: () => {
             return global.lastBufferInfo;
         },
