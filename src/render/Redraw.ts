@@ -219,7 +219,11 @@ const redrawFuncs = {
    },
    mode_info_set: (elem: HTMLElement, [cursorStyleEnabled, modeInfo]: [boolean, any]) => {
       modeInfo.forEach((info: any, idx: number) => {
-         const { cursor_shape: shape, attr_id } = info;
+         const shape = info.cursor_shape;
+         let attr_id = info.attr_id;
+         if (attr_id === undefined) {
+            attr_id = 0;
+         }
          let foreground = highlights[attr_id].foreground;
          let background = highlights[attr_id].background;
          if (attr_id === 0) {
