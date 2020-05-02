@@ -10,7 +10,7 @@
     "codemirror": "^5.53.2",
     "copy-webpack-plugin": "5.1.1",
     "geckodriver": "1.19.1",
-    "jest": "25.5.3",
+    "jest": "25.5.4",
     "monaco-editor": "^0.20.0",
     "msgpack-lite": "0.1.26",
     "selenium-webdriver": "4.0.0-alpha.7",
