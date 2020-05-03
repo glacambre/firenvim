@@ -17,6 +17,7 @@ import {
  testAce,
  testCodemirror,
  testDynamicTextareas,
+ testEvalJs,
  testFocusGainedLost,
  testGStartedByFirenvim,
  testGuifont,
@@ -96,6 +97,7 @@ describe("Firefox", () => {
         test("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
         test("InputFocus works", () => testInputFocus(driver));
         test("PageFocus works", () => testPageFocus(driver));
+        test("EvalJS works", () => testEvalJs(driver));
         test("PressKeys works", () => testPressKeys(driver));
         test("Resize works", () => testResize(driver));
         test("Takeover: empty works", () => testTakeoverEmpty(driver));

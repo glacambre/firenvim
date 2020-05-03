@@ -65,6 +65,9 @@ export async function neovim(
                     .then(() => page.setElementCursor(...(data.cursor)))
                     .then(() => { if (hasFocus && !document.hasFocus()) { window.focus(); } });
                 break;
+            case "firenvim_eval_js":
+                page.evalInPage(args[0]);
+                break;
             case "firenvim_focus_page":
                 page.focusPage();
                 break;

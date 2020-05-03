@@ -2,6 +2,7 @@ import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variab
 import { getConf } from "../utils/configuration";
 import { keysToEvents } from "../utils/keys";
 import { FirenvimElement } from "../FirenvimElement";
+import { executeInPage } from "../utils/utils";
 
 interface IGlobalState {
     lastBufferInfo: [string, string, [number, number], string];
@@ -32,6 +33,7 @@ function getFocusedElement (firenvimElems: Map<number, FirenvimElement>) {
 
 export function getFunctions(global: IGlobalState) {
     return {
+        evalInPage: (_: number, js: string) => executeInPage(js),
         focusInput: (frameId: number) => {
             let firenvimElement;
             if (frameId === undefined) {

@@ -16,6 +16,10 @@ function! firenvim#get_chan() abort
         return uis[0].chan
 endfunction
 
+function! firenvim#eval_js(js) abort
+        call rpcnotify(firenvim#get_chan(), 'firenvim_eval_js', a:js)
+endfunction
+
 " Asks the browser extension to release focus from the frame and focus the
 " page instead
 function! firenvim#focus_input() abort
