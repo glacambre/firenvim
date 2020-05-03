@@ -575,7 +575,26 @@ ${backup}
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await firenvimReady(driver);
         console.log("Typing ii<Esc>:wq!<CR>…");
-        await sendKeys(driver, "ii".split("")
+        await sendKeys(driver, "i".split("")
+            .concat(webdriver.Key.ENTER)
+            .concat(webdriver.Key.ENTER)
+            .concat(webdriver.Key.ENTER)
+            .concat(webdriver.Key.ESCAPE)
+            .concat(":wq!".split(""))
+            .concat(webdriver.Key.ENTER));
+        console.log("Waiting for span to be removed from page…");
+        await driver.wait(Until.stalenessOf(span));
+        await driver.wait(async () => (await input.getAttribute("value")) !== "");
+        expect(await input.getAttribute("value")).toBe("\n\n\n");
+        await driver.executeScript(`arguments[0].blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`, input);
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await firenvimReady(driver);
+        console.log("Typing ii<Esc>:wq!<CR>…");
+        await sendKeys(driver, "gg^dGii".split("")
             .concat(webdriver.Key.ESCAPE)
             .concat(":wq!".split(""))
             .concat(webdriver.Key.ENTER));
@@ -583,8 +602,12 @@ ${backup}
         await driver.wait(Until.stalenessOf(span));
         await writeVimrc(backup);
         console.log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("value")) === "i");
+        await driver.wait(async () => (await input.getAttribute("value")) !== "\n\n\n");
+        expect(await input.getAttribute("value")).toBe("i");
         console.log("Focusing input again…");
+        await driver.executeScript(`arguments[0].blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`, input);
         await driver.actions().click(input).perform();
         await driver.sleep(FIRENVIM_INIT_DELAY);
         console.log("Making sure span didn't pop up.");
