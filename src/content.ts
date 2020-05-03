@@ -57,7 +57,7 @@ const global = {
         }
 
         if (auto && (takeover === "empty" || takeover === "nonempty")) {
-            const content = await editor.getContent();
+            const content = (await editor.getContent()).trim();
             if ((content !== "" && takeover === "empty")
                 || (content === "" && takeover === "nonempty")) {
                     return;
