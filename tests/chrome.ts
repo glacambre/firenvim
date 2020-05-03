@@ -13,6 +13,7 @@ import {
  getNewestFileMatching,
  killDriver,
  testAce,
+ testEvalJs,
  testCodemirror,
  testDynamicTextareas,
  testFocusGainedLost,
@@ -94,6 +95,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("InputFocus works", () => testInputFocus(driver));
         nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
         nonHeadlessTest()("PressKeys works", () => testPressKeys(driver));
+        nonHeadlessTest()("EvalJs works", () => testEvalJs(driver));
         nonHeadlessTest()("Resize works", () => testResize(driver));
         nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(driver));
         nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));

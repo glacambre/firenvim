@@ -415,6 +415,23 @@ export async function testInputFocus(driver: any) {
         await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")));
 }
 
+export async function testEvalJs(driver: any) {
+        await loadLocalPage(driver, "simple.html", "EvalJs test");
+        console.log("Locating textarea…");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        console.log("Clicking on input…");
+        await driver.actions().click(input).perform();
+        console.log("Waiting for span to be created…");
+        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await firenvimReady(driver);
+        console.log("Typing iHello<Esc>:w<CR>:call firenvim#press_keys('<CR>')<CR>:q!<CR>…");
+        await sendKeys(driver, `:call firenvim#eval_js('document.getElementById("content-input").value = "Eval Works!"')`.split("")
+                .concat(webdriver.Key.ENTER));
+        await driver.wait(async () => (await input.getAttribute("value")) !== "");
+        expect(await input.getAttribute("value")).toBe("Eval Works!");
+}
+
 export async function testPressKeys(driver: any) {
         await loadLocalPage(driver, "chat.html", "PressKeys test");
         console.log("Locating textarea…");
