@@ -235,6 +235,12 @@ Non-OSX users can get the default OSX behavior by setting the `alt` setting to `
 
 ### Interacting with the page
 
+You can execute javascript in the page by using `firenvim#eval_js`. Here's an example that creates a `:GithubComment` command that will click on the `Comment` button of Github issues:
+
+```vim
+command GithubComment call firenvim#eval_js('document.getElementById("partial-new-comment-form-actions").getElementsByClassName("btn btn-primary")[0].click()')
+```
+
 You can move focus from the editor back to the page or the input field by calling `firenvim#focus_page` or `firenvim#focus_input`. Here's an example that does exactly this if you press `<Esc>` twice while in normal mode:
 
 ```vim
