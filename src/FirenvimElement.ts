@@ -63,14 +63,21 @@ export class FirenvimElement {
     // iframe. See putEditorCloseToInputOriginAfterResizeFromFrame() for more
     // information.
     private firstPutEditorCloseToInputOrigin = true;
+    // onDetach is a callback provided by the content script when it creates
+    // the FirenvimElement. It is called when the detach() function is called,
+    // after all Firenvim elements have been removed from the page.
+    private onDetach: (id: number) => any;
 
     // elem is the element that received the focusEvent.
     // Nvimify is the function that listens for focus events. We need to know
     // about it in order to remove it before focusing elem (otherwise we'll
     // just grab focus again).
-    constructor (elem: HTMLElement, listener: (evt: { target: EventTarget }) => Promise<void>) {
+    constructor (elem: HTMLElement,
+                 listener: (evt: { target: EventTarget }) => Promise<void>,
+                 onDetach: (id: number) => any) {
         this.originalElement = elem;
         this.nvimify = listener;
+        this.onDetach = onDetach;
         this.editor = getEditor(elem);
 
         this.span = elem
@@ -143,13 +150,13 @@ export class FirenvimElement {
         // triggered every time the element becomes more or less visible.
         this.intersectionObserver = new IntersectionObserver((self => () => {
             const elem = self.getElement();
-            if (!elem.ownerDocument.contains(elem)
-                || (elem.offsetWidth === 0
-                    && elem.offsetHeight === 0
-                    && elem.getClientRects().length === 0)
-               ) {
-                   self.detachFromPage();
-               }
+            if (!elem.ownerDocument.contains(elem)) {
+                self.detachFromPage();
+            } else if (elem.offsetWidth === 0
+                       && elem.offsetHeight === 0
+                   && elem.getClientRects().length === 0) {
+                self.hide();
+            }
         })(this), { root: null, threshold: 0.1 });
         this.intersectionObserver.observe(this.getElement());
     }
@@ -158,6 +165,7 @@ export class FirenvimElement {
         this.resizeObserver.unobserve(this.getElement());
         this.intersectionObserver.unobserve(this.getElement());
         this.span.parentNode.removeChild(this.span);
+        this.onDetach(this.frameId);
     }
 
     focus () {

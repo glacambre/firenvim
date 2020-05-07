@@ -44,7 +44,11 @@ const global = {
             return;
         }
 
-        const firenvim = new FirenvimElement(evt.target as HTMLElement, global.nvimify);
+        const firenvim = new FirenvimElement(
+            evt.target as HTMLElement,
+            global.nvimify,
+            (id: number) => global.firenvimElems.delete(id)
+        );
         const editor = firenvim.getEditor();
 
         // If this element already has a neovim frame, stop
