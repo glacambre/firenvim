@@ -7,6 +7,7 @@ let s:patterns_to_ft = {
         \ '/slack.com_.*\.txt$': 'markdown',
         \ '/gitter.com_.*\.txt$': 'markdown',
         \ '/riot.im_.*\.txt$': 'markdown',
+        \ '/lobste.rs_.*\.txt$': 'markdown',
         \ '/cocalc.com_.*\.txt$': 'python',
         \ '/kaggleusercontent.com_.*\.txt$': 'python',
   \ }
