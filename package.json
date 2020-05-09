@@ -15,7 +15,7 @@
     "msgpack-lite": "0.1.26",
     "selenium-webdriver": "4.0.0-alpha.7",
     "sharp": "0.25.2",
-    "ts-jest": "25.5.0",
+    "ts-jest": "25.5.1",
     "tslint": "6.1.2",
     "typescript": "3.8.3",
     "web-ext": "4.2.0",
