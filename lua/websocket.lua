@@ -3,7 +3,6 @@ if bit == nil then
 end
 
 local utils = require("utils")
-local io = require("io")
 
 local opcodes = {
         text = 1,
@@ -106,9 +105,9 @@ local function decode_frame()
                 result.payload = ""
                 local payload_end = current_byte + result.payload_length - 1
                 local j = 1
-                for current_byte = current_byte, payload_end do
+                for i = current_byte, payload_end do
                         result.payload = result.payload .. string.char(bit.bxor(
-                                        string.byte(frame, current_byte),
+                                        string.byte(frame, i),
                                         string.byte(result.masking_key, j)
                                 ))
                         j = (j % 4) + 1
@@ -127,7 +126,7 @@ local function encode_frame(data)
         -- RSV{1,2,3}: 0
         -- Opcode: 2 (binary frame)
         local header = string.char(130)
-        local len = ""
+        local len
         if string.len(data) < 126 then
                 len = string.char(string.len(data))
         elseif string.len(data) < 65536 then
