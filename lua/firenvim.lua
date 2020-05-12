@@ -18,10 +18,10 @@ local function connection_handler(server, sock, config, token)
 
         local header_parser = coroutine.create(websocket.parse_headers)
         coroutine.resume(header_parser, "")
-        local request, headers, rest = nil, nil, nil
+        local request, headers = nil, nil
 
         local frame_decoder = coroutine.create(websocket.decode_frame)
-        coroutine.resume(frame_decoder, chunk)
+        coroutine.resume(frame_decoder, nil)
         local decoded_frame = nil
         local current_payload = ""
 
@@ -30,8 +30,9 @@ local function connection_handler(server, sock, config, token)
                 if not chunk then
                         return close_server()
                 end
+                local _
                 if not headers then
-                        _, request, headers, rest = coroutine.resume(header_parser, chunk)
+                        _ , request, headers = coroutine.resume(header_parser, chunk)
                         if not request then
                                 -- Coroutine hasn't parsed the request
                                 -- because it isn't complete yet
@@ -50,10 +51,10 @@ local function connection_handler(server, sock, config, token)
                                 return
                         end
                         sock:write(websocket.accept_connection(headers))
-                        pipe:read_start(function(err, chunk)
-                                assert(not err, err)
-                                if chunk then
-                                        sock:write(websocket.encode_frame(chunk))
+                        pipe:read_start(function(error, v)
+                                assert(not error, error)
+                                if v then
+                                        sock:write(websocket.encode_frame(v))
                                 end
                         end)
                         return

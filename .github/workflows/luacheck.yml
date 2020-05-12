@@ -1,0 +1,24 @@
+name: Luacheck
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - '*'
+
+jobs:
+  luacheck:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Install luacheck
+      run: sudo apt-get install lua-check
+    - name: Run luacheck
+      run: luacheck .
