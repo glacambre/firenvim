@@ -462,7 +462,7 @@ function! firenvim#install(...) abort
 
                 " Appveyor hangs when running more than 5 ps1 scripts, so make
                 " sure we only run firefox on it
-                if has('win32') && ($APPVEYOR != 1 || l:name ==# 'firefox')
+                if has('win32') && ($TESTING != 1 || l:name ==# 'firefox')
                         " On windows, also create a registry key. We
                         " do this by writing a powershell script to a
                         " file and executing it.
