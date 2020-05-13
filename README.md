@@ -190,6 +190,12 @@ If you don't want to use Firenvim with rich text editors (e.g. Gmail, Outlook, S
 let fc['.*'] = { 'selector': 'textarea' }
 ```
 
+Since `selector` is just a CSS selector, you have access to all of CSS's pseudo selectors, including [`:not()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:not), which allows you to exclude elements that have certain attributes, like this:
+
+```vim
+let fc['.*'] = { 'selector': 'textarea:not([class=xxx])' }
+```
+
 ### Configuring Firenvim to not always take over elements
 
 Firenvim has a setting named `takeover` that can be set to `always`, `empty`, `never`, `nonempty` or `once`. When set to `always`, Firenvim will always take over elements for you. When set to `empty`, Firenvim will only take over empty elements. When set to `never`, Firenvim will never automatically appear, thus forcing you to use a keyboard shortcut in order to make the Firenvim frame appear. When set to `nonempty`, Firenvim will only take over elements that aren't empty. When set to `once`, Firenvim will take over elements the first time you select them, which means that after `:q`'ing Firenvim, you'll have to use the keyboard shortcut to make it appear again. Here's how to use the `takeover` setting:
