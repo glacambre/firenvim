@@ -65,7 +65,7 @@ const chromeConfig = Object.assign(deepCopy(config), {
   output: {
     path: chrome_target_dir,
   },
-  plugins: [new CopyWebPackPlugin(CopyWebPackFiles.map(file => ({
+  plugins: [new CopyWebPackPlugin({ patterns: CopyWebPackFiles.map(file => ({
     from: file,
     to: chrome_target_dir,
     transform: (content, src) => {
@@ -91,14 +91,14 @@ const chromeConfig = Object.assign(deepCopy(config), {
     transform: (content, src) => sharp(content).resize(n, n).toBuffer(),
   })
   ))
-  )]
+  })]
 });
 
 const firefoxConfig = Object.assign(deepCopy(config), {
   output: {
     path: firefox_target_dir,
   },
-  plugins: [new CopyWebPackPlugin(CopyWebPackFiles.map(file => ({
+  plugins: [new CopyWebPackPlugin({ patterns: CopyWebPackFiles.map(file => ({
     from: file,
     to: firefox_target_dir,
     transform: (content, src) => {
@@ -118,7 +118,7 @@ const firefoxConfig = Object.assign(deepCopy(config), {
       }
       return content;
     }
-  })))]
+  }))})]
 });
 
 module.exports = env => {
