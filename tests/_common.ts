@@ -12,7 +12,7 @@ export type logFunc = (...args: any[]) => void;
 import { readVimrc, writeVimrc } from "./_vimrc";
 
 jest.setTimeout(15000);
-const FIRENVIM_INIT_DELAY = 700;
+const FIRENVIM_INIT_DELAY = 1000;
 
 export const pagesDir = path.resolve(path.join("tests", "pages"));
 export const extensionDir = path.resolve("target");
