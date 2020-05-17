@@ -186,7 +186,7 @@ function applySettings(settings: any) {
         // #168: Use an external commandline to preserve space
         cmdline: "neovim",
         priority: 0,
-        selector: 'textarea, div[role="textbox"]',
+        selector: 'textarea:not([readonly]), div[role="textbox"]',
         // "takeover": "always" | "once" | "empty" | "nonempty" | "never"
         // #265: On "once", don't automatically bring back after :q'ing it
         takeover: "always",

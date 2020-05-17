@@ -181,7 +181,7 @@ From now on, localSettings examples will use the `let fc[...] = ...` shorthand, 
 The `selector` attribute of a localSetting controls what elements Firenvim automatically takes over. Here's the default value:
 
 ```vim
-let fc['.*'] = { 'selector': 'textarea, div[role="textbox"]' }
+let fc['.*'] = { 'selector': 'textarea:not([readonly]), div[role="textbox"]' }
 ```
 
 If you don't want to use Firenvim with rich text editors (e.g. Gmail, Outlook, Slack…) as a general rule, you might want to restrict Firenvim to simple textareas:
