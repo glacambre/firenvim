@@ -9,7 +9,6 @@ on:
     - '*'
 
 env:
-  HEADLESS: 1
   TESTING: 1
 
 jobs:
@@ -17,6 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        browser: [firefox, chrome]
         neovim: [stable, nightly]
         os: [ubuntu-latest, macos-latest, windows-latest]
 
@@ -26,18 +26,18 @@ jobs:
     - name: Checkout
       uses: actions/checkout@master
     - name: Install Firefox Dev Edition (Linux)
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.browser == 'firefox' && matrix.os == 'ubuntu-latest'
       run: |
         sudo npm install -g get-firefox
         get-firefox --platform linux --branch devedition --extract --target $HOME
         echo "::add-path::$HOME/firefox"
     - name: Install Firefox Dev Edition (MacOS)
-      if: matrix.os == 'macos-latest'
+      if: matrix.browser == 'firefox' && matrix.os == 'macos-latest'
       run: |
         brew cask --verbose --debug install homebrew/cask-versions/firefox-developer-edition
         echo "::add-path::/Applications/Firefox Developer Edition.app/Contents/MacOS/"
     - name: Install Firefox Dev Edition (Windows)
-      if: matrix.os == 'windows-latest'
+      if: matrix.browser == 'firefox' && matrix.os == 'windows-latest'
       run: |
         choco install firefox-dev --pre
         echo "::add-path::C:\Program Files\Firefox Dev Edition"
@@ -49,8 +49,19 @@ jobs:
     - name: Install NPM dependencies
       run: npm ci
     - name: Build Firenvim
-      run: npm run build --env=firefox
+      run: npm run build --env=${{ matrix.browser }}
     - name: Install Manifest
       run: npm run install_manifests
     - name: Test
-      run: npm run test firefox
+      if: matrix.browser != 'chrome'
+      env:
+        HEADLESS: 1
+      run: npm run test ${{ matrix.browser }}
+    - name: Test
+      if: matrix.browser == 'chrome' && matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get install xvfb
+        xvfb-run --auto-servernum npm run test ${{ matrix.browser }}
+    - name: Test
+      if: matrix.browser == 'chrome' && matrix.os != 'ubuntu-latest'
+      run: npm run test ${{ matrix.browser }}
