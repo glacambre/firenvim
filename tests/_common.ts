@@ -12,7 +12,7 @@ export type logFunc = (...args: any[]) => void;
 import { readVimrc, writeVimrc } from "./_vimrc";
 
 jest.setTimeout(15000);
-const FIRENVIM_INIT_DELAY = 600;
+const FIRENVIM_INIT_DELAY = 700;
 
 export const pagesDir = path.resolve(path.join("tests", "pages"));
 export const extensionDir = path.resolve("target");
@@ -428,7 +428,23 @@ export async function testEvalJs(driver: webdriver.WebDriver, log: logFunc) {
         await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await firenvimReady(driver);
         log("Typing iHello<Esc>:w<CR>:call firenvim#press_keys('<CR>')<CR>:q!<CR>…");
-        await sendKeys(driver, `:call firenvim#eval_js('document.getElementById("content-input").value = "Eval Works!"')`.split("")
+        await sendKeys(driver, `:call firenvim#eval_js('document`.split(""));
+        // Using the <C-v> trick here because Chrome somehow replaces `.` with
+        // `<`. This might have to do with locale stuff?
+        await driver.actions()
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await sendKeys(driver, `046getElementById("content-input")`.split(""));
+        await driver.actions()
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await sendKeys(driver, `046value = "Eval Works!"')`.split("")
                 .concat(webdriver.Key.ENTER));
         await driver.wait(async () => (await input.getAttribute("value")) !== "");
         expect(await input.getAttribute("value")).toBe("Eval Works!");

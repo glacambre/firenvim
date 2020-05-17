@@ -355,7 +355,7 @@ endfunction
 
 function! s:get_browser_configuration() abort
         " Brave, Opera and Vivaldi all rely on Chrome's native messenger
-        return {
+        let l:browsers = {
                 \'brave': {
                         \ 'has_config': s:brave_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
@@ -393,6 +393,12 @@ function! s:get_browser_configuration() abort
                         \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \}
         \}
+        if $TESTING == 1
+                call remove(l:browsers, 'brave')
+                call remove(l:browsers, 'vivaldi')
+                call remove(l:browsers, 'opera')
+        endif
+        return l:browsers
 endfunction
 
 " Installing firenvim requires several steps:
@@ -462,7 +468,7 @@ function! firenvim#install(...) abort
 
                 " Appveyor hangs when running more than 5 ps1 scripts, so make
                 " sure we only run firefox on it
-                if has('win32') && ($TESTING != 1 || l:name ==# 'firefox')
+                if has('win32')
                         " On windows, also create a registry key. We
                         " do this by writing a powershell script to a
                         " file and executing it.
