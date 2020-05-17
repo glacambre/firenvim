@@ -13,7 +13,23 @@ env:
   TESTING: 1
 
 jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Install dependencies
+      run: npm ci
+    - name: Build Firenvim
+      run: npm run build
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: firenvim
+        path: .
+
   test:
+    needs: build
     strategy:
       fail-fast: false
       matrix:
@@ -23,8 +39,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@master
+    - name: Download build artifact
+      uses: actions/download-artifact@v1
+      with:
+        name: firenvim
     - name: Install Firefox Dev Edition (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -46,10 +64,6 @@ jobs:
       with:
         neovim: true
         version: ${{ matrix.neovim }}
-    - name: Install NPM dependencies
-      run: npm ci
-    - name: Build Firenvim
-      run: npm run build --env=firefox
     - name: Install Manifest
       run: npm run install_manifests
     - name: Test
