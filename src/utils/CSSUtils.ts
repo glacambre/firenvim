@@ -82,7 +82,12 @@ export function guifontsToCSS(guifont: string) {
 export function computeSelector(element: HTMLElement) {
     function uniqueSelector(e: HTMLElement): string {
         // Only matching alphanumeric selectors because others chars might have special meaning in CSS
-        if (e.id && e.id.match("^[a-zA-Z0-9_-]+$")) { return "#" + e.id; }
+        if (e.id && e.id.match("^[a-zA-Z0-9_-]+$")) {
+            const id = "#" + e.id;
+            if (document.querySelectorAll(id).length === 1) {
+                return id;
+            }
+        }
         // If we reached the top of the document
         if (!e.parentElement) { return "HTML"; }
         // Compute the position of the element
