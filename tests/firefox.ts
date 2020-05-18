@@ -13,6 +13,7 @@ import {
  extensionDir,
  getNewestFileMatching,
  killDriver,
+ killPreloadedInstance,
  optimizeFirenvimReady,
  testAce,
  testCodemirror,
@@ -45,47 +46,60 @@ describe("Firefox", () => {
         let driver: any = undefined
 
         beforeAll(async () => {
-                setupVimrc();
-                const extensionPath = await getNewestFileMatching(path.join(extensionDir, "xpi"), ".*.zip");
+                try {
+                        setupVimrc();
+                        const extensionPath = await getNewestFileMatching(path.join(extensionDir, "xpi"), ".*.zip");
 
-                // Temporary workaround until
-                // https://github.com/SeleniumHQ/selenium/pull/7464 is merged
-                let xpiPath: string
-                if (extensionPath !== undefined) {
-                        xpiPath = extensionPath.replace(/\.zip$/, ".xpi");
-                        fs.renameSync(extensionPath, xpiPath);
-                } else {
-                        xpiPath = await getNewestFileMatching(path.join(extensionDir, "xpi"), ".*.xpi");
+                        // Temporary workaround until
+                        // https://github.com/SeleniumHQ/selenium/pull/7464 is merged
+                        let xpiPath: string
+                        if (extensionPath !== undefined) {
+                                xpiPath = extensionPath.replace(/\.zip$/, ".xpi");
+                                fs.renameSync(extensionPath, xpiPath);
+                        } else {
+                                xpiPath = await getNewestFileMatching(path.join(extensionDir, "xpi"), ".*.xpi");
+                        }
+
+                        const options = (new Options())
+                                .setPreference("xpinstall.signatures.required", false)
+                                .addExtensions(xpiPath);
+
+                        if (env["HEADLESS"]) {
+                                options.headless();
+                        }
+
+                        if (env["APPVEYOR"]) {
+                                options.setBinary("C:\\Program Files\\Firefox Developer Edition\\firefox.exe");
+                        }
+
+                        if (env["LOG"]) {
+                                log = console.log;
+                        }
+
+                        driver = new webdriver.Builder()
+                                .forBrowser("firefox")
+                                .setFirefoxOptions(options)
+                                .build();
+
+                        optimizeFirenvimReady();
+                        await new Promise(r => setTimeout(r, 5000));
+                        return await loadLocalPage(driver, "simple.html", "");
+                } catch (e) {
+                        console.log(e);
                 }
-
-                const options = (new Options())
-                        .setPreference("xpinstall.signatures.required", false)
-                        .addExtensions(xpiPath);
-
-                if (env["HEADLESS"]) {
-                        options.headless();
-                }
-
-                if (env["APPVEYOR"]) {
-                        options.setBinary("C:\\Program Files\\Firefox Developer Edition\\firefox.exe");
-                }
-
-                if (env["LOG"]) {
-                        log = console.log;
-                }
-
-                driver = new webdriver.Builder()
-                        .forBrowser("firefox")
-                        .setFirefoxOptions(options)
-                        .build();
-
-                optimizeFirenvimReady();
-                return loadLocalPage(driver, "simple.html", "");
         });
 
-        beforeEach(() => {
-                resetVimrc();
-                return loadLocalPage(driver, "simple.html", "");
+        beforeEach(async () => {
+                try {
+                        resetVimrc();
+                        await driver.switchTo().defaultContent();
+                        await loadLocalPage(driver, "simple.html", "");
+                        await driver.switchTo().defaultContent();
+                        await killPreloadedInstance(driver, log);
+                        return driver.switchTo().defaultContent();
+                } catch (e) {
+                        console.log(e)
+                }
         });
 
         afterAll(() => killDriver(driver));

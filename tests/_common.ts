@@ -14,7 +14,7 @@ import { readVimrc, writeVimrc } from "./_vimrc";
 jest.setTimeout(15000);
 const FIRENVIM_INIT_DELAY = 1000;
 
-export const pagesDir = path.resolve(path.join("tests", "pages"));
+export const pagesDir = path.resolve(path.join("tests", "pages")).replace(/\\/g, "/");
 export const extensionDir = path.resolve("target");
 
 let firenvimReady = (driver: webdriver.WebDriver) => driver.sleep(FIRENVIM_INIT_DELAY);
@@ -24,7 +24,18 @@ let firenvimReady = (driver: webdriver.WebDriver) => driver.sleep(FIRENVIM_INIT_
 // driver.switchTo().frame(…) for shadow dom elements?
 export function optimizeFirenvimReady() {
         firenvimReady = async (driver: webdriver.WebDriver) => {
-                await driver.switchTo().frame(0);
+                try {
+                        await driver.switchTo().frame(0);
+                } catch (e) {
+                        for (let i = 0; i < 5; ++i) {
+                                await driver.sleep(1000);
+                                try {
+                                        await driver.switchTo().frame(0);
+                                        break;
+                                } catch (e) {
+                                }
+                        }
+                }
                 await driver.wait(Until.elementLocated(By.css("span.nvim_cursor")));
                 return driver.switchTo().defaultContent();
         }
@@ -63,7 +74,7 @@ function sendKeys(driver: webdriver.WebDriver, keys: any[]) {
 }
 
 export async function loadLocalPage(driver: webdriver.WebDriver, page: string, title = "") {
-        await driver.get("file://" + path.join(pagesDir, page));
+        await driver.get("file:///" + pagesDir + "/" + page);
         return driver.executeScript(`document.documentElement.focus();document.title=${JSON.stringify(title)}`);
 }
 
@@ -162,6 +173,8 @@ export async function testCodemirror(driver: webdriver.WebDriver, log: logFunc) 
         log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")));
         await firenvimReady(driver);
+        const valueBefore = await input.getAttribute("innerText");
+        await driver.executeScript("arguments[0].focus();", span);
         log("Typing stuff…");
         await sendKeys(driver, "ggITest".split(""));
         await driver.actions()
@@ -179,7 +192,8 @@ export async function testCodemirror(driver: webdriver.WebDriver, log: logFunc) 
         log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         log("Waiting for value update…");
-        await driver.wait(async () => /Testhtml<!--/.test(await input.getAttribute("innerText")));
+        await driver.wait(async () => valueBefore !== (await input.getAttribute("innerText")));
+        expect(await input.getAttribute("innerText")).toMatch(/Testhtml<!--/);
 }
 
 export async function testAce(driver: webdriver.WebDriver, log: logFunc) {

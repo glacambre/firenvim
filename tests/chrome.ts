@@ -10,6 +10,7 @@ import {
  logFunc,
  extensionDir,
  killDriver,
+ killPreloadedInstance,
  testAce,
  testEvalJs,
  testCodemirror,
@@ -40,49 +41,61 @@ describe("Chrome", () => {
         let log : logFunc = () => {};
         let nonHeadlessTest = () => env["HEADLESS"] ? test.skip : test;
         let driver: any = undefined;
-        beforeAll(() => {
-                setupVimrc();
-                // Disabling the GPU is required on windows
-                const options = (new (require("selenium-webdriver/chrome").Options)())
-                        .addArguments("--disable-gpu")
-                        .addArguments(`--load-extension=${path.join(extensionDir, "chrome")}`);
+        beforeAll(async () => {
+                try {
+                        setupVimrc();
+                        // Disabling the GPU is required on windows
+                        const options = (new (require("selenium-webdriver/chrome").Options)())
+                                .addArguments("--disable-gpu")
+                                .addArguments(`--load-extension=${path.join(extensionDir, "chrome")}`);
 
-                // Won't work until this wontfix is fixed:
-                // https://bugs.chromium.org/p/chromium/issues/detail?id=706008#c5
-                if (env["HEADLESS"]) {
-                        return;
-                        // options.headless();
+                        // Won't work until this wontfix is fixed:
+                        // https://bugs.chromium.org/p/chromium/issues/detail?id=706008#c5
+                        if (env["HEADLESS"]) {
+                                return;
+                                // options.headless();
+                        }
+
+                        if (env["LOG"]) {
+                                log = console.log;
+                        }
+
+                        // Set user data path so that the native messenger manifest can
+                        // be found. This is not required on windows because they use a
+                        // registry key to find it
+                        const home = env["HOME"]
+                        switch (require("os").platform()) {
+                                case "darwin":
+                                        options.addArguments(`--user-data-dir=${path.join(home, "Library", "Application Support", "Google", "Chrome")}`)
+                                        break;
+                                case "win32":
+                                        break;
+                                default:
+                                        options.addArguments(`--user-data-dir=${path.join(home, ".config", "google-chrome")}`)
+                                        break;
+                        }
+
+                        driver = new webdriver.Builder()
+                                .forBrowser("chrome")
+                                .setChromeOptions(options)
+                                .build();
+                        await new Promise(r => setTimeout(r, 5000));
+                        return await loadLocalPage(driver, "simple.html", "");
+                } catch (e) {
+                        console.log(e);
                 }
-
-                if (env["LOG"]) {
-                        log = console.log;
-                }
-
-                // Set user data path so that the native messenger manifest can
-                // be found. This is not required on windows because they use a
-                // registry key to find it
-                const home = env["HOME"]
-                switch (require("os").platform()) {
-                        case "darwin":
-                                options.addArguments(`--user-data-dir=${path.join(home, "Library", "Application Support", "Google", "Chrome")}`)
-                                break;
-                        case "win32":
-                                break;
-                        default:
-                                options.addArguments(`--user-data-dir=${path.join(home, ".config", "google-chrome")}`)
-                                break;
-                }
-
-                driver = new webdriver.Builder()
-                        .forBrowser("chrome")
-                        .setChromeOptions(options)
-                        .build();
-                return loadLocalPage(driver, "simple.html", "");
         });
 
-        beforeEach(() => {
-                resetVimrc();
-                return loadLocalPage(driver, "simple.html", "");
+        beforeEach(async () => {
+                try {
+                        resetVimrc();
+                        await new Promise(r => setTimeout(r, 5000));
+                        await loadLocalPage(driver, "simple.html", "");
+                        await new Promise(r => setTimeout(r, 5000));
+                        return killPreloadedInstance(driver, log);
+                } catch (e) {
+                        console.log(e)
+                }
         });
 
         afterAll(() => killDriver(driver));
