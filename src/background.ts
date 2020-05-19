@@ -212,7 +212,21 @@ function fetchSettings() {
 }
 
 function updateSettings() {
-    return fetchSettings().then(applySettings);
+    // In ephemeral mode, we kill the preloaded instance, otherwise people
+    // would need to click "reload" twice to get an instance with the right
+    // settings. We don't do this in persistent mode as this could kill running
+    // frames.
+    if (getGlobalConf().server === "ephemeral") {
+        const tmp = preloadedInstance;
+        preloadedInstance = createNewInstance();
+        tmp.then(nvim => nvim.kill());
+        // It's ok to return the preloadedInstance as a promise because
+        // settings are only applied when the preloadedInstance has returned a
+        // port+settings object anyway.
+        return preloadedInstance;
+    } else {
+        return fetchSettings().then(applySettings);
+    }
 }
 
 function createNewInstance() {
@@ -227,7 +241,11 @@ function createNewInstance() {
             clearTimeout(errorTimeout);
             checkVersion(resp.version);
             applySettings(resp.settings);
-            resolve({ password: password[0], port: resp.port });
+            resolve({
+                kill: () => nvim.disconnect(),
+                password: password[0],
+                port: resp.port,
+            });
         });
         nvim.postMessage({
             newInstance: true,
@@ -255,19 +273,20 @@ Object.assign(window, {
     // call to be able to find it on Chrome
     browser,
     closeOwnTab: (sender: any) => browser.tabs.remove(sender.tab.id),
-    exec: (sender: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
+    exec: (_: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
     getError,
-    getNeovimInstance: (sender: any, args: any) => {
+    getNeovimInstance: () => {
         const result = preloadedInstance;
         if (getGlobalConf().server === "ephemeral") {
             preloadedInstance = createNewInstance();
         }
-        return result;
+        // Destructuring result to remove kill() from it
+        return result.then(({ password, port }) => ({ password, port }));
     },
     getNvimPluginVersion: () => nvimPluginVersion,
-    getTab: (sender: any, args: any) => sender.tab,
+    getTab: (sender: any) => sender.tab,
     getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
-    getTabValueFor: (sender: any, args: any) => getTabValue(args[0], args[1]),
+    getTabValueFor: (_: any, args: any) => getTabValue(args[0], args[1]),
     getWarning,
     messageFrame: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id,
                                                                        args.message,
@@ -275,7 +294,7 @@ Object.assign(window, {
     messagePage: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id,
                                                                       args,
                                                                       { frameId: 0 }),
-    publishFrameId: (sender: any, args: any) => {
+    publishFrameId: (sender: any) => {
         browser.tabs.sendMessage(sender.tab.id, {
             args: [sender.frameId],
             funcName: ["registerNewFrameId"],
@@ -283,8 +302,8 @@ Object.assign(window, {
         return sender.frameId;
     },
     setTabValue: (sender: any, args: any) => setTabValue(sender.tab.id, args[0], args[1]),
-    toggleDisabled: (sender: any, args: any) => toggleDisabled(),
-    updateSettings: (sender: any, args: any) => updateSettings(),
+    toggleDisabled: () => toggleDisabled(),
+    updateSettings: () => updateSettings(),
 } as any);
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResponse: any) => {
