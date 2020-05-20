@@ -10,6 +10,7 @@ import {
  logFunc,
  extensionDir,
  killDriver,
+ reloadNeovim,
  testAce,
  testEvalJs,
  testCodemirror,
@@ -80,16 +81,18 @@ describe("Chrome", () => {
                 return loadLocalPage(driver, "simple.html", "");
         });
 
-        beforeEach(() => {
+        beforeEach(async () => {
                 resetVimrc();
-                return loadLocalPage(driver, "simple.html", "");
+                await loadLocalPage(driver, "simple.html", "")
+                await reloadNeovim(driver, log);
+                return loadLocalPage(driver, "simple.html", "")
         });
 
         afterAll(() => killDriver(driver));
 
         test("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
         nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver, log));
-        nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver, log), 15000);
+        nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver, log));
         nonHeadlessTest()("Firenvim frame is resized on input resize", () => testInputResizes(driver, log));
         nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver, log));
         nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver, log));
