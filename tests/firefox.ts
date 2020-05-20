@@ -13,6 +13,7 @@ import {
  extensionDir,
  getNewestFileMatching,
  killDriver,
+ reloadNeovim,
  optimizeFirenvimReady,
  testAce,
  testCodemirror,
@@ -83,16 +84,18 @@ describe("Firefox", () => {
                 return loadLocalPage(driver, "simple.html", "");
         });
 
-        beforeEach(() => {
+        beforeEach(async () => {
                 resetVimrc();
-                return loadLocalPage(driver, "simple.html", "");
+                await loadLocalPage(driver, "simple.html", "");
+                await reloadNeovim(driver, log);
+                await loadLocalPage(driver, "simple.html", "")
         });
 
         afterAll(() => killDriver(driver));
 
         test("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
         test("Firenvim modifiers work", () => testModifiers(driver, log));
-        test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver, log), 15000);
+        test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver, log));
         test("Firenvim frame is resized on input resize", () => testInputResizes(driver, log));
         test("Firenvim works on Ace", () => testAce(driver, log));
         test("Firenvim works on CodeMirror", () => testCodemirror(driver, log));

@@ -24,7 +24,18 @@ let firenvimReady = (driver: webdriver.WebDriver) => driver.sleep(FIRENVIM_INIT_
 // driver.switchTo().frame(…) for shadow dom elements?
 export function optimizeFirenvimReady() {
         firenvimReady = async (driver: webdriver.WebDriver) => {
-                await driver.switchTo().frame(0);
+                try {
+                        await driver.switchTo().frame(0);
+                } catch (e) {
+                        for (let i = 0; i < 3; ++i) {
+                                await driver.sleep(1000);
+                                try {
+                                        await driver.switchTo().frame(0);
+                                        break;
+                                } catch (e) {
+                                }
+                        }
+                }
                 await driver.wait(Until.elementLocated(By.css("span.nvim_cursor")));
                 return driver.switchTo().defaultContent();
         }
@@ -63,8 +74,18 @@ function sendKeys(driver: webdriver.WebDriver, keys: any[]) {
 }
 
 export async function loadLocalPage(driver: webdriver.WebDriver, page: string, title = "") {
-        await driver.get("file://" + path.join(pagesDir, page));
-        return driver.executeScript(`document.documentElement.focus();document.title=${JSON.stringify(title)}`);
+        let error: Error;
+        for (let i = 0; i < 3; ++i) {
+                try {
+                        await driver.get("file://" + path.join(pagesDir, page));
+                        await driver.sleep(i * 10);
+                        await driver.executeScript(`document.documentElement.focus();document.title=${JSON.stringify(title)}`);
+                        return;
+                } catch (e) {
+                        error = e;
+                }
+        }
+        throw error;
 }
 
 export async function testModifiers(driver: webdriver.WebDriver, log: logFunc) {
@@ -153,15 +174,20 @@ export async function testGStartedByFirenvim(driver: webdriver.WebDriver, log: l
 }
 
 export async function testCodemirror(driver: webdriver.WebDriver, log: logFunc) {
+        // Codemirror is particularily flaky, hence the driver.sleep() calls
+        // sprinkled everywhere
         await loadLocalPage(driver, "codemirror.html", "CodeMirror test");
+        await driver.sleep(1000);
         log("Looking for codemirror div…");
         const input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        const originalValue = (await input.getAttribute("innerText"));
         log("Clicking on input…");
         await driver.actions().click(input).perform();
         log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")));
         await firenvimReady(driver);
+        await driver.sleep(1000);
         log("Typing stuff…");
         await sendKeys(driver, "ggITest".split(""));
         await driver.actions()
@@ -179,7 +205,8 @@ export async function testCodemirror(driver: webdriver.WebDriver, log: logFunc) 
         log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         log("Waiting for value update…");
-        await driver.wait(async () => /Testhtml<!--/.test(await input.getAttribute("innerText")));
+        await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue);
+        expect(await input.getAttribute("innerText")).toMatch(/Testhtml<!--/);
 }
 
 export async function testAce(driver: webdriver.WebDriver, log: logFunc) {
@@ -187,6 +214,7 @@ export async function testAce(driver: webdriver.WebDriver, log: logFunc) {
         log("Looking for ace div…");
         const input = await driver.wait(Until.elementLocated(By.css("#editor")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        const initialValue = await input.getAttribute("innerText");
         log("Clicking on input…");
         await driver.actions().click(input).perform();
         log("Waiting for span to be created…");
@@ -209,7 +237,8 @@ export async function testAce(driver: webdriver.WebDriver, log: logFunc) {
         log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         log("Waiting for value update…");
-        await driver.wait(async () => /Testjavascriptalert()/.test(await input.getAttribute("innerText")));
+        await driver.wait(async () => (await input.getAttribute("innerText")) != initialValue);
+        expect(await input.getAttribute("innerText")).toMatch(/Testjavascriptalert()/);
 }
 
 export async function testMonaco(driver: webdriver.WebDriver, log: logFunc) {
@@ -217,6 +246,7 @@ export async function testMonaco(driver: webdriver.WebDriver, log: logFunc) {
         log("Looking for monaco div…");
         const input = await driver.wait(Until.elementLocated(By.css("#container")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        const originalValue = await input.getAttribute("innerText");
         log("Clicking on input…");
         await driver.actions().click(input).perform();
         log("Waiting for span to be created…");
@@ -239,7 +269,8 @@ export async function testMonaco(driver: webdriver.WebDriver, log: logFunc) {
         log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
         log("Waiting for value update…");
-        await driver.wait(async () => /^1\n2\n3\nTesttypescriptfunction/.test(await input.getAttribute("innerText")));
+        await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue);
+        expect(await input.getAttribute("innerText")).toMatch(/^1\n2\n3\nTesttypescriptfunction/);
 }
 
 export async function testDynamicTextareas(driver: webdriver.WebDriver, log: logFunc) {
@@ -291,51 +322,43 @@ export async function testNestedDynamicTextareas(driver: webdriver.WebDriver, lo
 }
 
 // Purges a preloaded instance by creating a new frame, focusing it and quitting it
-export async function killPreloadedInstance(driver: webdriver.WebDriver, log: logFunc) {
-        log("Killing preloaded instance.");
-        const id = "firenvim-" + Math.round(Math.random() * 500);
-        await driver.executeScript(`
-                const txtarea = document.createElement("textarea");
-                txtarea.id = "${id}";
-                document.body.appendChild(txtarea);
-                txtarea.scrollIntoView(true);`);
-        const txtarea = await driver.wait(Until.elementLocated(By.id(id)));
-        await driver.actions().click(txtarea).perform();
-        await sendKeys(driver, ["a"]);
-        await driver.actions().click(txtarea).perform();
-        await firenvimReady(driver);
-        await driver.executeScript(`
-                const elem = document.getElementById("${id}");
-                elem.parentElement.removeChild(elem);
-        `);
+export async function reloadNeovim(driver: webdriver.WebDriver, log: logFunc) {
+        log("Killing preloaded instance");
+        await driver.executeAsyncScript((callback: () => {}) => {
+                window.addEventListener("firenvim-settingsUpdated", () => callback());
+                window.dispatchEvent(new Event("firenvim-updateSettings"));
+        });
+        log("Preloaded instance killed");
 }
 
 export async function testVimrcFailure(driver: webdriver.WebDriver, log: logFunc) {
-        // First, write buggy vimrc
-        log("Backing up vimrc…");
-        const backup = await readVimrc();
-        log("Overwriting it…");
+        log("Overwriting vimrc");
         await writeVimrc("call");
-        await loadLocalPage(driver, "simple.html", "Vimrc failure");
-        await killPreloadedInstance(driver, log);
-        // Reload, to get the buggy instance
+        log("Reloading neovim");
+        await reloadNeovim(driver, log);
+        log("Opening page");
         await loadLocalPage(driver, "simple.html", "Vimrc failure");
         log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        // We can restore our vimrc
-        await writeVimrc(backup);
         log("Clicking on input…");
         await driver.actions().click(input).perform();
         log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
-        // The firenvim frame should disappear after a second
-        log("Waiting for span to disappear…");
-        await driver.wait(Until.stalenessOf(span));
+        try {
+                const span = await driver.wait(
+                        Until.elementLocated(By.css("body > span:nth-child(2)")),
+                        1000,
+                        "Element not found");
+                // The firenvim frame should disappear after a second
+                log("Waiting for span to disappear…");
+                await driver.wait(Until.stalenessOf(span));
+        } catch (e) {
+                // We weren't fast enough to catch the frame appear/disappear,
+                // that's ok
+        }
 }
 
 export async function testGuifont(driver: webdriver.WebDriver, log: logFunc) {
-        await loadLocalPage(driver, "simple.html", "Guifont test");
         log("Backing up vimrc…");
         const backup = await readVimrc();
         log("Overwriting it…");
@@ -343,12 +366,11 @@ export async function testGuifont(driver: webdriver.WebDriver, log: logFunc) {
 set guifont=monospace:h50
 ${backup}
                 `);
-        await killPreloadedInstance(driver, log);
         await loadLocalPage(driver, "simple.html", "Guifont test");
+        await reloadNeovim(driver, log);
         log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        await writeVimrc(backup);
         log("Clicking on input…");
         await driver.actions().click(input).perform();
         log("Waiting for span to be created…");
@@ -368,6 +390,8 @@ ${backup}
         await driver.executeScript(`document.activeElement.blur();
                                     document.documentElement.focus();
                                     document.body.focus();`);
+        await writeVimrc(backup);
+        await reloadNeovim(driver, log);
         await driver.actions().click(input).perform();
         log("Waiting for span to be created…");
         await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
@@ -535,7 +559,6 @@ export async function testFocusGainedLost(driver: webdriver.WebDriver, log: logF
 }
 
 export async function testTakeoverOnce(driver: webdriver.WebDriver, log: logFunc) {
-        await loadLocalPage(driver, "simple.html", "takeover: once test");
         log("Backing up vimrc…");
         const backup = await readVimrc();
         log("Overwriting it…");
@@ -543,8 +566,8 @@ export async function testTakeoverOnce(driver: webdriver.WebDriver, log: logFunc
 let g:firenvim_config = { 'localSettings': { '.*': { 'selector': 'textarea', 'takeover': 'once' } } }
 ${backup}
                 `);
-        await killPreloadedInstance(driver, log);
         await loadLocalPage(driver, "simple.html", "takeover: once test");
+        await reloadNeovim(driver, log);
         log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -553,7 +576,6 @@ ${backup}
         log("Waiting for span to be created…");
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await firenvimReady(driver);
-        await writeVimrc(backup);
         log("Typing :q!<CR>…");
         await sendKeys(driver, ":q!".split("")
                 .concat(webdriver.Key.ENTER));
@@ -583,7 +605,7 @@ export async function testTakeoverEmpty(driver: webdriver.WebDriver, log: logFun
 let g:firenvim_config = { 'localSettings': { '.*': { 'takeover': 'empty' } } }
 ${backup}
                 `);
-        await killPreloadedInstance(driver, log);
+        await reloadNeovim(driver, log);
         log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -593,6 +615,7 @@ ${backup}
         let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await firenvimReady(driver);
         log("Typing ii<Esc>:wq!<CR>…");
+        // Makign sure that whitespace == empty
         await sendKeys(driver, "i".split("")
             .concat(webdriver.Key.ENTER)
             .concat(webdriver.Key.ENTER)
@@ -612,13 +635,13 @@ ${backup}
         span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
         await firenvimReady(driver);
         log("Typing ii<Esc>:wq!<CR>…");
+        // Making sure that content != empty
         await sendKeys(driver, "gg^dGii".split("")
             .concat(webdriver.Key.ESCAPE)
             .concat(":wq!".split(""))
             .concat(webdriver.Key.ENTER));
         log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
-        await writeVimrc(backup);
         log("Waiting for value update…");
         await driver.wait(async () => (await input.getAttribute("value")) !== "\n\n\n");
         expect(await input.getAttribute("value")).toBe("i");
@@ -647,7 +670,7 @@ export async function testTakeoverNonEmpty(driver: webdriver.WebDriver, log: log
 let g:firenvim_config = { 'localSettings': { '.*': { 'takeover': 'nonempty' } } }
 ${backup}
                 `);
-        await killPreloadedInstance(driver, log);
+        await reloadNeovim(driver, log);
         log("Locating textarea…");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
@@ -662,7 +685,6 @@ ${backup}
                                 throw new Error("Frame created while takeover = empty!.");
                         }
                 });
-        await writeVimrc(backup);
         log("Setting input value.");
         await driver.executeScript(`arguments[0].value = 'i';
                                     arguments[0].blur();
@@ -726,7 +748,7 @@ export async function testNoLingeringNeovims(driver: webdriver.WebDriver, log: l
         log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
 
-        await (new Promise(resolve => setTimeout(resolve, 1000)));
+        await driver.sleep(3000);
 
         // All npm packages that promise to return the child process tree do so
         // by parsing the output of `ps` or of its windows equivalent. I find

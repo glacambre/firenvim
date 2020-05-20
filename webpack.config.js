@@ -29,6 +29,7 @@ const config = {
     background: "./src/background.ts",
     browserAction: "./src/browserAction.ts",
     content: "./src/content.ts",
+    testing: "./src/testing.ts",
     nvimui: "./src/NeovimFrame.ts",
   },
   output: {
@@ -61,7 +62,7 @@ const package_json = JSON.parse(require("fs").readFileSync(path.join(__dirname, 
 const chrome_target_dir = path.join(__dirname, "target", "chrome")
 const firefox_target_dir = path.join(__dirname, "target", "firefox")
 
-const chromeConfig = Object.assign(deepCopy(config), {
+const chromeConfig = env => Object.assign(deepCopy(config), {
   output: {
     path: chrome_target_dir,
   },
@@ -81,6 +82,9 @@ const chromeConfig = Object.assign(deepCopy(config), {
           )
           .replace(/"default_icon": "firenvim.svg"/, '"default_icon": "firenvim128.png"')
         ;
+        if (env.endsWith("testing")) {
+          content = content.replace(`content.js`, `content.js", "testing.js`);
+        }
       }
       return content;
     },
@@ -94,7 +98,7 @@ const chromeConfig = Object.assign(deepCopy(config), {
   })]
 });
 
-const firefoxConfig = Object.assign(deepCopy(config), {
+const firefoxConfig = env => Object.assign(deepCopy(config), {
   output: {
     path: firefox_target_dir,
   },
@@ -104,7 +108,7 @@ const firefoxConfig = Object.assign(deepCopy(config), {
     transform: (content, src) => {
       switch(path.basename(src)) {
         case "manifest.json":
-          return content.toString().replace("BROWSER_SPECIFIC_SETTINGS",
+          content = content.toString().replace("BROWSER_SPECIFIC_SETTINGS",
 `  "browser_specific_settings": {
     "gecko": {
       "id": "firenvim@lacamb.re",
@@ -114,7 +118,9 @@ const firefoxConfig = Object.assign(deepCopy(config), {
             .replace("FIRENVIM_VERSION", package_json.version)
             .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
           ;
-          break;
+          if (env.endsWith("testing")) {
+            content = content.replace(`content.js`, `content.js", "testing.js`);
+          }
       }
       return content;
     }
@@ -122,10 +128,15 @@ const firefoxConfig = Object.assign(deepCopy(config), {
 });
 
 module.exports = env => {
-  switch (env) {
-    case "chrome": return [chromeConfig];
-    case "firefox": return [firefoxConfig];
+  if (env === undefined){
+    env = "";
   }
-  return [chromeConfig, firefoxConfig];
+
+  if (env.startsWith("chrome")) {
+    return [chromeConfig(env)];
+  } else if (env.startsWith("firefox")) {
+    return [firefoxConfig(env)];
+  }
+  return [chromeConfig(env), firefoxConfig(env)];
 }
 
