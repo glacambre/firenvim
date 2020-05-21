@@ -7,7 +7,7 @@
     "@types/selenium-webdriver": "4.0.9",
     "ace-builds": "^1.4.11",
     "awesome-typescript-loader": "5.2.1",
-    "chromedriver": "81.0.0",
+    "chromedriver": "83.0.0",
     "codemirror": "^5.54.0",
     "copy-webpack-plugin": "6.0.1",
     "geckodriver": "1.19.1",
