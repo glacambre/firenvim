@@ -88,6 +88,13 @@ describe("Chrome", () => {
                 return loadLocalPage(driver, "simple.html", "")
         });
 
+        afterEach(async () => {
+                // This should kill existing webdriver promises (e.g. wait
+                // until element found) and prevent one test's errors from
+                // contaminating another's.
+                await loadLocalPage(driver, "simple.html", "");
+        });
+
         afterAll(() => killDriver(driver));
 
         test("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
