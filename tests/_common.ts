@@ -177,9 +177,8 @@ export async function testCodemirror(driver: webdriver.WebDriver, log: logFunc) 
         // Codemirror is particularily flaky, hence the driver.sleep() calls
         // sprinkled everywhere
         await loadLocalPage(driver, "codemirror.html", "CodeMirror test");
-        await driver.sleep(1000);
         log("Looking for codemirror div…");
-        const input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")));
+        let input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")));
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         const originalValue = (await input.getAttribute("innerText"));
         log("Clicking on input…");
@@ -187,7 +186,6 @@ export async function testCodemirror(driver: webdriver.WebDriver, log: logFunc) 
         log("Waiting for span to be created…");
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")));
         await firenvimReady(driver);
-        await driver.sleep(1000);
         log("Typing stuff…");
         await sendKeys(driver, "ggITest".split(""));
         await driver.actions()
@@ -204,6 +202,9 @@ export async function testCodemirror(driver: webdriver.WebDriver, log: logFunc) 
         );
         log("Waiting for span to be removed from page…");
         await driver.wait(Until.stalenessOf(span));
+        // We need to search for input again because the reference somehow goes stale there
+        log("Finding input again…");
+        input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")));
         log("Waiting for value update…");
         await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue);
         expect(await input.getAttribute("innerText")).toMatch(/Testhtml<!--/);
