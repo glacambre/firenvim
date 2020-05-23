@@ -51,4 +51,4 @@ Malicious software on your computer could try to connect to the neovim process b
 
 ## Sandboxing Firenvim
 
-There is an ongoing discussion about sandboxing in [this github issue](https://github.com/glacambre/firenvim/issues/238). Feel free to participate!
+If you want to sandbox Firenvim, you can do so with apparmor. [This github issue](https://github.com/glacambre/firenvim/issues/238) has a bit more information about that.
