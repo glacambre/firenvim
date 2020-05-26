@@ -231,8 +231,9 @@ function updateSettings() {
 
 function createNewInstance() {
     return new Promise((resolve, reject) => {
-        const password = new Uint32Array(1);
-        window.crypto.getRandomValues(password);
+        const random = new Uint32Array(8);
+        window.crypto.getRandomValues(random);
+        const password = Array.from(random).join("");
 
         const nvim = browser.runtime.connectNative("firenvim");
         const errorTimeout = registerErrors(nvim, reject);
@@ -243,13 +244,13 @@ function createNewInstance() {
             applySettings(resp.settings);
             resolve({
                 kill: () => nvim.disconnect(),
-                password: password[0],
+                password,
                 port: resp.port,
             });
         });
         nvim.postMessage({
             newInstance: true,
-            password: password[0],
+            password,
         });
     });
 }
