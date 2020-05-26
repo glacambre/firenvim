@@ -9,7 +9,7 @@ Webextensions are made of [several kinds of processes](https://developer.mozilla
 
 These scripts have different permissions. For example, the background script can start new processes on your computer but cannot access the content of your tabs. The content script has the opposite permissions. The frame script is just a kind of content script that executes in a frame.
 
-When you launch your browser (or install Firenvim), the background script starts a new NeoVim process and writes a randomly-generated 32-bit password to its stdin. The NeoVim process binds itself to a random TCP port and sends the port number to the background script by writing to stdout.
+When you launch your browser (or install Firenvim), the background script starts a new NeoVim process and writes a randomly-generated 256-bit password to its stdin. The NeoVim process binds itself to a random TCP port and sends the port number to the background script by writing to stdout.
 
 When you open a new tab, the content script adds event listeners to text areas. When you focus one of the text areas the content script is listening to, it creates a new frame and places it on top of the text area.
 
