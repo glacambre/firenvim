@@ -41,7 +41,9 @@ export function optimizeFirenvimReady() {
         }
 };
 
-export async function getNewestFileMatching(directory: string, pattern: string | RegExp) {
+// Returns the path of the newest file in directory
+export async function getNewestFileIn(directory: string) {
+        // Get list of files
         const names = ((await new Promise((resolve, reject) => {
                 fs.readdir(directory, (err: Error, filenames: string[]) => {
                         if (err) {
@@ -50,7 +52,7 @@ export async function getNewestFileMatching(directory: string, pattern: string |
                         return resolve(filenames);
                 })
                 // Keep only files matching pattern
-        })) as string[]).filter(name => name.match(pattern));
+        })) as string[]);
         // Get their stat struct
         const stats = await Promise.all(names.map(name => new Promise((resolve, reject) => {
                 const fpath = path.join(directory, name)
