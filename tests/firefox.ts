@@ -2,7 +2,6 @@ require("geckodriver");
 
 import * as process from "process";
 const env = process.env;
-import * as fs from "fs";
 import * as path from "path";
 import * as webdriver from "selenium-webdriver";
 import { Options } from "selenium-webdriver/firefox";
@@ -11,7 +10,7 @@ import {
  loadLocalPage,
  logFunc,
  extensionDir,
- getNewestFileMatching,
+ getNewestFileIn,
  killDriver,
  reloadNeovim,
  optimizeFirenvimReady,
@@ -47,21 +46,11 @@ describe("Firefox", () => {
 
         beforeAll(async () => {
                 setupVimrc();
-                const extensionPath = await getNewestFileMatching(path.join(extensionDir, "xpi"), ".*.zip");
-
-                // Temporary workaround until
-                // https://github.com/SeleniumHQ/selenium/pull/7464 is merged
-                let xpiPath: string
-                if (extensionPath !== undefined) {
-                        xpiPath = extensionPath.replace(/\.zip$/, ".xpi");
-                        fs.renameSync(extensionPath, xpiPath);
-                } else {
-                        xpiPath = await getNewestFileMatching(path.join(extensionDir, "xpi"), ".*.xpi");
-                }
+                const extensionPath = await getNewestFileIn(path.join(extensionDir, "xpi"));
 
                 const options = (new Options())
                         .setPreference("xpinstall.signatures.required", false)
-                        .addExtensions(xpiPath);
+                        .addExtensions(extensionPath);
 
                 if (env["HEADLESS"]) {
                         options.headless();
