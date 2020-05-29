@@ -1,5 +1,3 @@
-require("chromedriver");
-
 import * as process from "process";
 const env = process.env;
 import * as path from "path";
