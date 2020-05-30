@@ -1,4 +1,3 @@
-import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 import { getConf } from "../utils/configuration";
 import { keysToEvents } from "../utils/keys";
 import { FirenvimElement } from "../FirenvimElement";

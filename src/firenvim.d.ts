@@ -1,4 +1,3 @@
-declare module 'webextension-polyfill';
 
 type NvimParameters = Array<[string, string]>;
 

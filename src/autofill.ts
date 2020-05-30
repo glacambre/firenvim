@@ -1,4 +1,3 @@
-import * as browser from "webextension-polyfill";
 
 export async function autofill() {
     const platInfoPromise = browser.runtime.sendMessage({

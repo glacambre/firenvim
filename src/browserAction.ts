@@ -1,4 +1,3 @@
-import * as browser from "webextension-polyfill";
 
 function displayMessages(func: "getError" | "getWarning", id: "errors" | "warnings") {
     function insertMessage(msg: any) {

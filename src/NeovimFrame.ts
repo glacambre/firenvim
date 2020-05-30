@@ -1,4 +1,3 @@
-import * as browser from "webextension-polyfill";
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
 import { getGridId, getWindowId, onKeyPressed as rendererOnKeyPressed, selectWindow } from "./render/Redraw";
@@ -12,7 +11,6 @@ browser
     .sendMessage({ funcName: ["publishFrameId"] })
     .then((f: number) => (window as any).frameId = f);
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
-const settingsPromise = browser.storage.local.get("globalSettings");
 
 window.addEventListener("load", async () => {
     try {
@@ -40,7 +38,8 @@ window.addEventListener("load", async () => {
         );
 
         await confReady;
-        const persistent = getGlobalConf().server === "persistent";
+        const settings = getGlobalConf();
+        const persistent = settings.server === "persistent";
         nvim.ui_attach(cols, rows, {
             ext_linegrid: true,
             ext_messages: getConfForUrl(url).cmdline === "firenvim" || persistent,
@@ -131,7 +130,6 @@ window.addEventListener("load", async () => {
                         au VimLeave * ${cleanup}
                     augroup END`).split("\n").map(command => ["nvim_command", [command]]));
 
-        const settings = (await settingsPromise).globalSettings;
         keyHandler.addEventListener("keydown", (evt) => {
             if (evt.altKey && settings.alt === "alphanum" && !/[a-zA-Z0-9]/.test(evt.key)) {
                 return;

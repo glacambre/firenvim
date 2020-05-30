@@ -1,5 +1,3 @@
-import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
-
 // Make tslint happy
 const fontFamily = "font-family";
 

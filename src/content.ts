@@ -1,4 +1,3 @@
-import * as browser from "webextension-polyfill";
 import { autofill } from "./autofill";
 import { getFunctions } from "./page/functions";
 import { confReady, getConf } from "./utils/configuration";

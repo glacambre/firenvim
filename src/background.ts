@@ -14,7 +14,6 @@
  * The background process mostly acts as a slave for the browserAction and
  * content scripts. It rarely acts on its own.
  */
-import * as browser from "webextension-polyfill";
 import { getGlobalConf, ISiteConfig } from "./utils/configuration";
 import { getIconImageData, IconKind } from "./utils/utils";
 
@@ -199,7 +198,7 @@ function fetchSettings() {
         const nvim = browser.runtime.connectNative("firenvim");
         const errorTimeout = registerErrors(nvim, reject);
         nvim.onMessage.addListener((resp: any) => {
-            nvim.replied = true;
+            (nvim as any).replied = true;
             clearTimeout(errorTimeout);
             checkVersion(resp.version);
             resolve(resp.settings);
@@ -238,7 +237,7 @@ function createNewInstance() {
         const nvim = browser.runtime.connectNative("firenvim");
         const errorTimeout = registerErrors(nvim, reject);
         nvim.onMessage.addListener((resp: any) => {
-            nvim.replied = true;
+            (nvim as any).replied = true;
             clearTimeout(errorTimeout);
             checkVersion(resp.version);
             applySettings(resp.settings);
@@ -418,7 +417,7 @@ browser.commands.onCommand.addListener(async (command: string) => {
 
 async function updateIfPossible() {
     const tabs = await browser.tabs.query({});
-    const messages = tabs.map((tab: { id: number }) => browser
+    const messages = tabs.map(tab => browser
                                         .tabs
                                         .sendMessage(tab.id,
                                                      {
