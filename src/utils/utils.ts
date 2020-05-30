@@ -1,5 +1,3 @@
-import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
-
 // Chrome doesn't have a "browser" object, instead it uses "chrome".
 let curBrowser = "firefox";
 if (window.browser === undefined) {

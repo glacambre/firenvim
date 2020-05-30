@@ -1,5 +1,4 @@
 import * as msgpack from "msgpack-lite";
-import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 
 export class Stdout {
     private listeners = new Map<string, ((...args: any[]) => any)[]>();

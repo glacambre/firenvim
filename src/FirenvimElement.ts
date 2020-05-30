@@ -1,4 +1,3 @@
-import * as browser from "webextension-polyfill";
 import { isFirefox } from "./utils/utils";
 import { AbstractEditor } from "./editors/AbstractEditor";
 import { getEditor } from "./editors/editors";

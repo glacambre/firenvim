@@ -1,4 +1,5 @@
 const path = require("path");
+const ProvidePlugin = require("webpack").ProvidePlugin;
 const CopyWebPackPlugin = require("copy-webpack-plugin");
 const sharp = require("sharp");
 
@@ -48,8 +49,18 @@ const config = {
 
   module: {
     rules: [
-      // All files with a '.ts' or '.tsx' extension will be handled by 'awesome-typescript-loader'.
-      { test: /\.tsx?$/, loader: "awesome-typescript-loader" },
+      // Load ts files with ts-loader
+      { test: /\.tsx?$/, loader: "ts-loader" },
+      // For non-firefox browsers, we need to load a polyfill for the "browser"
+      // object. This polyfill is loaded through webpack's Provide plugin.
+      // Unfortunately, this plugin is pretty dumb and tries to provide an
+      // empty object named "browser" to the webextension-polyfill library.
+      // This results in the library not creating a browser object. The
+      // following line makes sure `browser` is undefined when
+      // webextension-polyfill is ran so that it can create a `browser` object.
+      // This is why we shouldn't load webextension-polyfill for firefox -
+      // otherwise we'd get a proxy instead of the real thing.
+      { test: require.resolve("webextension-polyfill"), use: "imports-loader?browser=>undefined" }
     ],
   },
 
@@ -95,6 +106,9 @@ const chromeConfig = env => Object.assign(deepCopy(config), {
     transform: (content, src) => sharp(content).resize(n, n).toBuffer(),
   })
   ))
+  }),
+  new ProvidePlugin({
+    "browser": "webextension-polyfill"
   })]
 });
 

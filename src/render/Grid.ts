@@ -1,4 +1,3 @@
-import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 import { Cursor } from "./Cursor";
 import { Row } from "./Row";
 

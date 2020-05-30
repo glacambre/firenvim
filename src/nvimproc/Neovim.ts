@@ -1,4 +1,3 @@
-import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 import { page } from "../page/proxy";
 import { onRedraw } from "../render/Redraw";
 import { Stdin } from "./Stdin";

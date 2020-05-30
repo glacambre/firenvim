@@ -1,4 +1,3 @@
-import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
 import { toHighlightClassName } from "../utils/CSSUtils";
 
 export class Cell {

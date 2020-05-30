@@ -4,7 +4,6 @@
 // instance. This is necessary for testing reasons (we sometimes might create
 // states that "poison" firenvim and need to reset it).
 
-import * as browser from "webextension-polyfill";
 import { executeInPage } from "./utils/utils";
 
 window.addEventListener("firenvim-updateSettings", (event) => {

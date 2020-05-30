@@ -1,5 +1,3 @@
-import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
-
 export interface ISiteConfig {
     selector: string;
     priority: number;
@@ -22,7 +20,7 @@ export interface IConfig {
     localSettings: { [key: string]: ISiteConfig };
 }
 
-let conf: IConfig = {} as IConfig;
+let conf: IConfig = undefined as IConfig;
 
 export const confReady = new Promise(resolve => {
     browser.storage.local.get().then((obj: any) => {
@@ -38,6 +36,9 @@ browser.storage.onChanged.addListener((changes: any) => {
 });
 
 export function getGlobalConf() {
+    if (conf === undefined) {
+        throw new Error("getGlobalConf called before config was ready");
+    }
     return conf.globalSettings;
 }
 

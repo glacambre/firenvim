@@ -1,5 +1,3 @@
-import * as browser from "webextension-polyfill"; //lgtm [js/unused-local-variable]
-
 export const nonLiteralKeys: {[key: string]: string} = {
     " ": "<Space>",
     "<": "<lt>",
