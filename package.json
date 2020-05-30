@@ -3,7 +3,7 @@
   "dependencies": {
     "@types/jest": "25.2.3",
     "@types/msgpack-lite": "0.1.7",
-    "@types/node": "14.0.5",
+    "@types/node": "14.0.6",
     "@types/selenium-webdriver": "4.0.9",
     "ace-builds": "^1.4.11",
     "awesome-typescript-loader": "5.2.1",
