@@ -30,7 +30,6 @@ const config = {
     background: "./src/background.ts",
     browserAction: "./src/browserAction.ts",
     content: "./src/content.ts",
-    testing: "./src/testing.ts",
     nvimui: "./src/NeovimFrame.ts",
   },
   output: {
@@ -73,7 +72,7 @@ const package_json = JSON.parse(require("fs").readFileSync(path.join(__dirname, 
 const chrome_target_dir = path.join(__dirname, "target", "chrome")
 const firefox_target_dir = path.join(__dirname, "target", "firefox")
 
-const chromeConfig = env => Object.assign(deepCopy(config), {
+const chromeConfig = (config, env) => Object.assign(deepCopy(config), {
   output: {
     path: chrome_target_dir,
   },
@@ -112,7 +111,7 @@ const chromeConfig = env => Object.assign(deepCopy(config), {
   })]
 });
 
-const firefoxConfig = env => Object.assign(deepCopy(config), {
+const firefoxConfig = (config, env) => Object.assign(deepCopy(config), {
   output: {
     path: firefox_target_dir,
   },
@@ -146,11 +145,16 @@ module.exports = env => {
     env = "";
   }
 
-  if (env.startsWith("chrome")) {
-    return [chromeConfig(env)];
-  } else if (env.startsWith("firefox")) {
-    return [firefoxConfig(env)];
+  if (env.endsWith("testing")) {
+    config.entry.testing = "./src/testing/content.ts";
+    config.entry.nvimui = "./src/testing/frame.ts";
   }
-  return [chromeConfig(env), firefoxConfig(env)];
+
+  if (env.startsWith("chrome")) {
+    return [chromeConfig(config, env)];
+  } else if (env.startsWith("firefox")) {
+    return [firefoxConfig(config, env)];
+  }
+  return [chromeConfig(config, env), firefoxConfig(config, env)];
 }
 
