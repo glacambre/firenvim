@@ -13,7 +13,6 @@ import {
  getNewestFileIn,
  killDriver,
  reloadNeovim,
- optimizeFirenvimReady,
  testAce,
  testCodemirror,
  testDynamicTextareas,
@@ -69,7 +68,6 @@ describe("Firefox", () => {
                         .setFirefoxOptions(options)
                         .build();
 
-                optimizeFirenvimReady();
                 return loadLocalPage(driver, "simple.html", "");
         });
 
