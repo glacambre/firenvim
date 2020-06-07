@@ -7,7 +7,7 @@
     "@types/selenium-webdriver": "4.0.9",
     "ace-builds": "^1.4.11",
     "codemirror": "^5.54.0",
-    "copy-webpack-plugin": "6.0.1",
+    "copy-webpack-plugin": "6.0.2",
     "geckodriver": "1.19.1",
     "imports-loader": "^0.8.0",
     "jest": "25.5.4",
