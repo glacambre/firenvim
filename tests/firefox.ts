@@ -8,7 +8,6 @@ import { Options } from "selenium-webdriver/firefox";
 
 import {
  loadLocalPage,
- logFunc,
  extensionDir,
  getNewestFileIn,
  killDriver,
@@ -40,7 +39,6 @@ import { setupVimrc, resetVimrc } from "./_vimrc";
 
 describe("Firefox", () => {
 
-        let log : logFunc = () => {};
         let driver: any = undefined
 
         beforeAll(async () => {
@@ -59,10 +57,6 @@ describe("Firefox", () => {
                         options.setBinary("C:\\Program Files\\Firefox Developer Edition\\firefox.exe");
                 }
 
-                if (env["LOG"]) {
-                        log = console.log;
-                }
-
                 driver = new webdriver.Builder()
                         .forBrowser("firefox")
                         .setFirefoxOptions(options)
@@ -74,7 +68,7 @@ describe("Firefox", () => {
         beforeEach(async () => {
                 resetVimrc();
                 await loadLocalPage(driver, "simple.html", "");
-                await reloadNeovim(driver, log);
+                await reloadNeovim(driver);
                 await loadLocalPage(driver, "simple.html", "")
         });
 
@@ -88,28 +82,28 @@ describe("Firefox", () => {
         afterAll(() => killDriver(driver));
 
         test("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
-        test("Firenvim modifiers work", () => testModifiers(driver, log));
-        test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver, log));
-        test("Firenvim frame is resized on input resize", () => testInputResizes(driver, log));
-        test("Firenvim works on Ace", () => testAce(driver, log));
-        test("Firenvim works on CodeMirror", () => testCodemirror(driver, log));
-        test("Firenvim works on Monaco", () => testMonaco(driver, log));
-        test("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver, log));
-        test("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver, log));
-        test("Firenvim works with large buffers", () => testLargeBuffers(driver, log));
-        test("FocusGained/lost autocmds are triggered", () => testFocusGainedLost(driver, log));
-        test("g:started_by_firenvim exists", () => testGStartedByFirenvim(driver, log));
-        test("Guifont works", () => testGuifont(driver, log));
-        test("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver, log));
-        test("InputFocus works", () => testInputFocus(driver, log));
-        test("PageFocus works", () => testPageFocus(driver, log));
-        test("EvalJS works", () => testEvalJs(driver, log));
-        test("PressKeys works", () => testPressKeys(driver, log));
-        test("Resize works", () => testResize(driver, log));
-        test("Takeover: empty works", () => testTakeoverEmpty(driver, log));
-        test("Takeover: nonempty works", () => testTakeoverNonEmpty(driver, log));
-        test("Takeover: once works", () => testTakeoverOnce(driver, log));
+        test("Firenvim modifiers work", () => testModifiers(driver));
+        test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
+        test("Firenvim frame is resized on input resize", () => testInputResizes(driver));
+        test("Firenvim works on Ace", () => testAce(driver));
+        test("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        test("Firenvim works on Monaco", () => testMonaco(driver));
+        test("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
+        test("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
+        test("Firenvim works with large buffers", () => testLargeBuffers(driver));
+        test("FocusGained/lost autocmds are triggered", () => testFocusGainedLost(driver));
+        test("g:started_by_firenvim exists", () => testGStartedByFirenvim(driver));
+        test("Guifont works", () => testGuifont(driver));
+        test("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
+        test("InputFocus works", () => testInputFocus(driver));
+        test("PageFocus works", () => testPageFocus(driver));
+        test("EvalJS works", () => testEvalJs(driver));
+        test("PressKeys works", () => testPressKeys(driver));
+        test("Resize works", () => testResize(driver));
+        test("Takeover: empty works", () => testTakeoverEmpty(driver));
+        test("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
+        test("Takeover: once works", () => testTakeoverOnce(driver));
         if (process.platform === "linux") {
-                test("No lingering neovim process", () => testNoLingeringNeovims(driver, log));
+                test("No lingering neovim process", () => testNoLingeringNeovims(driver));
         }
 })

@@ -6,6 +6,7 @@ import * as path from "path";
 import * as webdriver from "selenium-webdriver";
 const Until = webdriver.until;
 const By = webdriver.By;
+const WebElement = webdriver.WebElement;
 
 export type logFunc = (...args: any[]) => void;
 
@@ -81,17 +82,14 @@ export async function loadLocalPage(driver: webdriver.WebDriver, page: string, t
         throw error;
 }
 
-export async function testModifiers(driver: webdriver.WebDriver, log: logFunc) {
+export async function testModifiers(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "Modifier test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found");
         await ready;
-        log("Typing <C-v><C-a><C-v><A-v><C-v><D-a><S-Left>…");
         await driver.actions()
                 .keyDown("a")
                 .keyUp("a")
@@ -124,29 +122,23 @@ export async function testModifiers(driver: webdriver.WebDriver, log: logFunc) {
                 .keyDown(webdriver.Key.ARROW_LEFT)
                 .keyUp(webdriver.Key.SHIFT)
                 .perform();
-        log("Writing keycodes.");
         await sendKeys(driver, [webdriver.Key.ESCAPE]
                        .concat(":wq!".split(""))
                        .concat(webdriver.Key.ENTER))
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
-        log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
         expect(["\u0011<M-q><D-q><S-Left>", "\u0001<M-a><D-a><S-Left>"])
                .toContain(await input.getAttribute("value"));
 }
 
-export async function testGStartedByFirenvim(driver: webdriver.WebDriver, log: logFunc) {
+export async function testGStartedByFirenvim(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "g:started_by_firenvim test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "Input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found");
         await ready;
-        log("Typing a<C-r>=g:started_by_firenvim<CR><Esc>:wq<CR>…");
         await sendKeys(driver, ["a"])
         await driver.actions()
                 .keyDown(webdriver.Key.CONTROL)
@@ -159,28 +151,29 @@ export async function testGStartedByFirenvim(driver: webdriver.WebDriver, log: l
                        .concat([webdriver.Key.ESCAPE])
                        .concat(":wq!".split(""))
                        .concat(webdriver.Key.ENTER));
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
-        log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
         expect(await input.getAttribute("value")).toMatch("true");
 }
 
-export async function testCodemirror(driver: webdriver.WebDriver, log: logFunc) {
-        // Codemirror is particularily flaky, hence the driver.sleep() calls
-        // sprinkled everywhere
+export async function testCodemirror(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "codemirror.html", "CodeMirror test");
-        log("Looking for codemirror div…");
-        let input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")));
+        let input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")), 5000, "Input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         const originalValue = (await input.getAttribute("innerText"));
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
-        const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")));
-        await ready;
-        log("Typing stuff…");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")), 5000, "Firenvim span not found");
+        await firenvimReady(driver);
+        // Somehow there's a focus issue with this test. We actively attempt to
+        // refocus the span if it isn't focused.
+        for (let i = 0; i < 3; ++i) {
+                if (WebElement.equals(span, await driver.executeScript("return document.activeElement"))) {
+                        break;
+                } else {
+                        await driver.executeScript("arguments[0].focus()", input);
+                        await driver.sleep(100);
+                }
+        }
         await sendKeys(driver, "ggITest".split(""));
         await driver.actions()
                 .keyDown(webdriver.Key.CONTROL)
@@ -194,29 +187,22 @@ export async function testCodemirror(driver: webdriver.WebDriver, log: logFunc) 
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
         );
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
+        await driver.wait(Until.stalenessOf(span), 5000, "Span handle did not go stale.");
         // We need to search for input again because the reference somehow goes stale there
-        log("Finding input again…");
-        input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")));
-        log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue);
+        input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")), 5000, "CodeMirror div can't be found again");
+        await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue, 5000, "CodeMirror element's content did not change.");
         expect(await input.getAttribute("innerText")).toMatch(/Testhtml<!--/);
 }
 
-export async function testAce(driver: webdriver.WebDriver, log: logFunc) {
+export async function testAce(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "ace.html", "Ace test");
-        log("Looking for ace div…");
-        const input = await driver.wait(Until.elementLocated(By.css("#editor")));
+        const input = await driver.wait(Until.elementLocated(By.css("#editor")), 5000, "Input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         const initialValue = await input.getAttribute("innerText");
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")), 5000, "Firenvim span not found");
         await ready;
-        log("Typing stuff…");
         await sendKeys(driver, "ggITest".split(""));
         await driver.actions()
                 .keyDown(webdriver.Key.CONTROL)
@@ -230,26 +216,20 @@ export async function testAce(driver: webdriver.WebDriver, log: logFunc) {
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
         );
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
-        log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("innerText")) != initialValue);
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span handle did not go stale");
+        await driver.wait(async () => (await input.getAttribute("innerText")) != initialValue, 5000, "input value did not change");
         expect(await input.getAttribute("innerText")).toMatch(/Testjavascriptalert()/);
 }
 
-export async function testMonaco(driver: webdriver.WebDriver, log: logFunc) {
+export async function testMonaco(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "monaco.html", "Monaco test");
-        log("Looking for monaco div…");
-        const input = await driver.wait(Until.elementLocated(By.css("#container")));
+        const input = await driver.wait(Until.elementLocated(By.css("#container")), 5000, "Input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         const originalValue = await input.getAttribute("innerText");
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(9)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(9)")), 5000, "Firenvim span not found");
         await ready;
-        log("Typing stuff…");
         await sendKeys(driver, "ggITest".split(""));
         await driver.actions()
                 .keyDown(webdriver.Key.CONTROL)
@@ -263,120 +243,91 @@ export async function testMonaco(driver: webdriver.WebDriver, log: logFunc) {
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
         );
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
-        log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue);
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue, 5000, "Value did not change");
         expect(await input.getAttribute("innerText")).toMatch(/^1\n2\n3\nTesttypescriptfunction/);
 }
 
-export async function testDynamicTextareas(driver: webdriver.WebDriver, log: logFunc) {
+export async function testDynamicTextareas(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "dynamic.html", "Dynamic textareas test");
-        log("Locating button…");
-        const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")));
+        const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")), 5000, "insert-textarea not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", btn);
-        log("Clicking on btn…");
         await driver.actions().click(btn).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")), 5000, "Firenvim span not found");
         await ready;
-        log("Typing things…");
         await sendKeys(driver, "aTest".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
         );
-        log("Waiting for span to be removed…");
-        await driver.wait(Until.stalenessOf(span));
-        log("Waiting for value update…");
-        const txtarea = await driver.wait(Until.elementLocated(By.css("body > textarea")));
-        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""));
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        const txtarea = await driver.wait(Until.elementLocated(By.css("body > textarea")), 5000, "body > textarea not found");
+        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""), 5000, "Input alue did not change");
         expect(await txtarea.getAttribute("value")).toMatch("Test");
 }
 
-export async function testNestedDynamicTextareas(driver: webdriver.WebDriver, log: logFunc) {
+export async function testNestedDynamicTextareas(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "dynamic_nested.html", "Nested dynamic textareas");
-        log("Locating button…");
-        const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")));
+        const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")), 5000, "insert-textarea not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", btn);
-        log("Clicking on btn…");
         await driver.actions().click(btn).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")), 5000, "Firenvim span not found");
         await ready;
-        log("Typing things…");
         await sendKeys(driver, "aTest".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
         );
-        log("Waiting for span to be removed…");
-        await driver.wait(Until.stalenessOf(span));
-        log("Waiting for value update…");
-        const txtarea = await driver.wait(Until.elementLocated(By.css("body > div:nth-child(3) > textarea:nth-child(1)")));
-        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""));
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        const txtarea = await driver.wait(Until.elementLocated(By.css("body > div:nth-child(3) > textarea:nth-child(1)")), 5000, "body > div:nth-child(3) > textarea:nth-child(1) not found");
+        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""), 5000, "Input value did not change");
         expect(await txtarea.getAttribute("value")).toMatch("Test");
 }
 
 // Purges a preloaded instance by creating a new frame, focusing it and quitting it
-export async function reloadNeovim(driver: webdriver.WebDriver, log: logFunc) {
-        log("Killing preloaded instance");
+export async function reloadNeovim(driver: webdriver.WebDriver) {
         await driver.executeAsyncScript((callback: () => {}) => {
                 window.addEventListener("firenvim-settingsUpdated", () => callback());
                 window.dispatchEvent(new Event("firenvim-updateSettings"));
         });
-        log("Preloaded instance killed");
 }
 
-export async function testVimrcFailure(driver: webdriver.WebDriver, log: logFunc) {
-        log("Overwriting vimrc");
+export async function testVimrcFailure(driver: webdriver.WebDriver) {
         await writeVimrc("call");
-        log("Reloading neovim");
-        await reloadNeovim(driver, log);
-        log("Opening page");
+        await reloadNeovim(driver);
         await loadLocalPage(driver, "simple.html", "Vimrc failure");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
-        log("Waiting for span to be created…");
         try {
                 const span = await driver.wait(
                         Until.elementLocated(By.css("body > span:nth-child(2)")),
                         1000,
                         "Element not found");
                 // The firenvim frame should disappear after a second
-                log("Waiting for span to disappear…");
-                await driver.wait(Until.stalenessOf(span));
+                await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
         } catch (e) {
                 // We weren't fast enough to catch the frame appear/disappear,
                 // that's ok
         }
 }
 
-export async function testGuifont(driver: webdriver.WebDriver, log: logFunc) {
-        log("Backing up vimrc…");
+export async function testGuifont(driver: webdriver.WebDriver) {
         const backup = await readVimrc();
-        log("Overwriting it…");
         await writeVimrc(`
 set guifont=monospace:h50
 ${backup}
                 `);
         await loadLocalPage(driver, "simple.html", "Guifont test");
-        await reloadNeovim(driver, log);
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await reloadNeovim(driver);
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         let ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing 100aa<Esc>^gjib<Esc>:wq!<Enter>…");
         await sendKeys(driver, "100aa".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat("^gjib".split(""))
@@ -384,78 +335,61 @@ ${backup}
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
         await driver.sleep(100);
-        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
         const initVal = await input.getAttribute("value");
         expect(initVal).toMatch(/a+ba+/);
         await driver.executeScript(`document.activeElement.blur();
                                     document.documentElement.focus();
                                     document.body.focus();`);
         await writeVimrc(backup);
-        await reloadNeovim(driver, log);
+        await reloadNeovim(driver);
         ready = firenvimReady(driver);
         await driver.actions().click(input).perform();
-        log("Waiting for span to be created…");
-        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing ^gjib<Esc>:wq!<Enter>…");
         await sendKeys(driver, "^gjib".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
         // We don't test for a specific value because size is dependant on browser config
-        await driver.wait(async () => (await input.getAttribute("value") !== initVal));
+        await driver.wait(async () => (await input.getAttribute("value") !== initVal), 5000, "Input value did not change");
         expect(await input.getAttribute("value")).toMatch(/a*ba+ba*/);
 }
 
-export async function testPageFocus(driver: webdriver.WebDriver, log: logFunc) {
+export async function testPageFocus(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "PageFocus test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing :call firenvim#focus_page()<CR>…");
         await sendKeys(driver, ":call firenvim#focus_page()".split("")
                 .concat(webdriver.Key.ENTER));
-        log("Checking that the page is focused…");
-        await driver.wait(async () => ["html", "body"].includes(await driver.switchTo().activeElement().getAttribute("id")));
+        await driver.wait(async () => ["html", "body"].includes(await driver.switchTo().activeElement().getAttribute("id")), 5000, "Page focus did not change");
 }
 
-export async function testInputFocus(driver: webdriver.WebDriver, log: logFunc) {
+export async function testInputFocus(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "InputFocus test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing :call firenvim#focus_input()<CR>…");
         await sendKeys(driver, ":call firenvim#focus_input()".split("")
                 .concat(webdriver.Key.ENTER));
-        log(await driver.switchTo().activeElement().getAttribute("id"));
-        log("Checking that the input is focused…");
-        await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")));
+        await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")), 5000, "Page focus did not change");
 }
 
-export async function testEvalJs(driver: webdriver.WebDriver, log: logFunc) {
+export async function testEvalJs(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "EvalJs test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing iHello<Esc>:w<CR>:call firenvim#press_keys('<CR>')<CR>:q!<CR>…");
         await sendKeys(driver, `:call firenvim#eval_js('document`.split(""));
         // Using the <C-v> trick here because Chrome somehow replaces `.` with
         // `<`. This might have to do with locale stuff?
@@ -474,22 +408,18 @@ export async function testEvalJs(driver: webdriver.WebDriver, log: logFunc) {
                 .perform();
         await sendKeys(driver, `046value = "Eval Works!"')`.split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(async () => (await input.getAttribute("value")) !== "");
+        await driver.wait(async () => (await input.getAttribute("value")) !== "", 5000, "Input value did not change");
         expect(await input.getAttribute("value")).toBe("Eval Works!");
 }
 
-export async function testPressKeys(driver: webdriver.WebDriver, log: logFunc) {
+export async function testPressKeys(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "chat.html", "PressKeys test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing iHello<Esc>:w<CR>:call firenvim#press_keys('<CR>')<CR>:q!<CR>…");
         await sendKeys(driver, "iHello".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":w".split(""))
@@ -498,41 +428,31 @@ export async function testPressKeys(driver: webdriver.WebDriver, log: logFunc) {
                 .concat(webdriver.Key.ENTER)
                 .concat(":q!".split(""))
                 .concat(webdriver.Key.ENTER));
-        log("Checking that the input contains 'Message sent!'…");
-        await driver.wait(async () => (await input.getAttribute("value")) === "Message sent!");
+        await driver.wait(async () => (await input.getAttribute("value")) === "Message sent!", 5000, "Input value did not change");
 }
 
-export async function testInputFocusedAfterLeave(driver: webdriver.WebDriver, log: logFunc) {
+export async function testInputFocusedAfterLeave(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "Input focus after leave test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found");
         await ready;
-        log("Typing :q!<CR>…");
         await sendKeys(driver, ":q!".split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span));
-        log("Checking that the input is focused…");
-        await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")));
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")), 5000, "Input element not focused after leaving frame");
 };
 
-export async function testFocusGainedLost(driver: webdriver.WebDriver, log: logFunc) {
+export async function testFocusGainedLost(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "FocusGainedLost test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing aa<Esc>:autocmd FocusLost * ++nested write<CR>…");
         await sendKeys(driver, "aa".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":autocmd FocusLost ".split("")));
@@ -550,51 +470,41 @@ export async function testFocusGainedLost(driver: webdriver.WebDriver, log: logF
         await sendKeys(driver, " normal ab".split("")
                        .concat(webdriver.Key.ENTER));
         await driver.sleep(100);
-        log("Focusing body…");
         await driver.executeScript(`document.activeElement.blur();
                                     document.documentElement.focus();
                                     document.body.focus();`);
         expect(["html", "body"].includes(await driver.switchTo().activeElement().getAttribute("id")))
                 .toBe(true);
-        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
         expect(await input.getAttribute("value")).toBe("a");
         await driver.actions().click(input).perform();
         await sendKeys(driver, ":wq!".split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(async () => (await input.getAttribute("value") !== "a"));
+        await driver.wait(async () => (await input.getAttribute("value") !== "a"), 5000, "Input value did not change the second time");
         expect(await input.getAttribute("value")).toBe("ab");
 }
 
-export async function testTakeoverOnce(driver: webdriver.WebDriver, log: logFunc) {
-        log("Backing up vimrc…");
+export async function testTakeoverOnce(driver: webdriver.WebDriver) {
         const backup = await readVimrc();
-        log("Overwriting it…");
         await writeVimrc(`
 let g:firenvim_config = { 'localSettings': { '.*': { 'selector': 'textarea', 'takeover': 'once' } } }
 ${backup}
                 `);
         await loadLocalPage(driver, "simple.html", "takeover: once test");
-        await reloadNeovim(driver, log);
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await reloadNeovim(driver);
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing :q!<CR>…");
         await sendKeys(driver, ":q!".split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span));
-        log("Focusing body…");
-        const body = await driver.wait(Until.elementLocated(By.id("body")));
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        const body = await driver.wait(Until.elementLocated(By.id("body")), 5000, "body not found");
         await driver.actions().click(body).perform();
-        log("Focusing input again…");
         await driver.actions().click(input).perform();
         await driver.sleep(FIRENVIM_INIT_DELAY);
-        log("Making sure span didn't pop up.");
         await driver.findElement(By.css("body > span:nth-child(2)"))
                 .catch((): void => undefined)
                 .then((e: any) => {
@@ -604,26 +514,20 @@ ${backup}
                 });
 }
 
-export async function testTakeoverEmpty(driver: webdriver.WebDriver, log: logFunc) {
+export async function testTakeoverEmpty(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "takeover: once empty");
-        log("Backing up vimrc…");
         const backup = await readVimrc();
-        log("Overwriting it…");
         await writeVimrc(`
 let g:firenvim_config = { 'localSettings': { '.*': { 'takeover': 'empty' } } }
 ${backup}
                 `);
-        await reloadNeovim(driver, log);
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await reloadNeovim(driver);
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         let ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing ii<Esc>:wq!<CR>…");
         // Makign sure that whitespace == empty
         await sendKeys(driver, "i".split("")
             .concat(webdriver.Key.ENTER)
@@ -632,36 +536,29 @@ ${backup}
             .concat(webdriver.Key.ESCAPE)
             .concat(":wq!".split(""))
             .concat(webdriver.Key.ENTER));
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
-        await driver.wait(async () => (await input.getAttribute("value")) !== "");
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value")) !== "", 5000, "Input value did not change");
         expect(await input.getAttribute("value")).toBe("\n\n\n");
         await driver.executeScript(`arguments[0].blur();
                                     document.documentElement.focus();
                                     document.body.focus();`, input);
         ready = firenvimReady(driver);
         await driver.actions().click(input).perform();
-        log("Waiting for span to be created…");
-        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing ii<Esc>:wq!<CR>…");
         // Making sure that content != empty
         await sendKeys(driver, "gg^dGii".split("")
             .concat(webdriver.Key.ESCAPE)
             .concat(":wq!".split(""))
             .concat(webdriver.Key.ENTER));
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
-        log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("value")) !== "\n\n\n");
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value")) !== "\n\n\n", 5000, "Input value did not change the second time");
         expect(await input.getAttribute("value")).toBe("i");
-        log("Focusing input again…");
         await driver.executeScript(`arguments[0].blur();
                                     document.documentElement.focus();
                                     document.body.focus();`, input);
         await driver.actions().click(input).perform();
         await driver.sleep(FIRENVIM_INIT_DELAY);
-        log("Making sure span didn't pop up.");
         await driver.findElement(By.css("body > span:nth-child(2)"))
                 .catch((): void => undefined)
                 .then((e: any) => {
@@ -671,23 +568,18 @@ ${backup}
                 });
 }
 
-export async function testTakeoverNonEmpty(driver: webdriver.WebDriver, log: logFunc) {
+export async function testTakeoverNonEmpty(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "takeover: nonempty test");
-        log("Backing up vimrc…");
         const backup = await readVimrc();
-        log("Overwriting it…");
         await writeVimrc(`
 let g:firenvim_config = { 'localSettings': { '.*': { 'takeover': 'nonempty' } } }
 ${backup}
                 `);
-        await reloadNeovim(driver, log);
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await reloadNeovim(driver);
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         await driver.sleep(FIRENVIM_INIT_DELAY);
-        log("Making sure span didn't pop up.");
         await driver.findElement(By.css("body > span:nth-child(2)"))
                 .catch((): void => undefined)
                 .then((e: any) => {
@@ -695,72 +587,54 @@ ${backup}
                                 throw new Error("Frame created while takeover = empty!.");
                         }
                 });
-        log("Setting input value.");
         await driver.executeScript(`arguments[0].value = 'i';
                                     arguments[0].blur();
                                     document.documentElement.focus();
                                     document.body.focus();`, input);
-        log("Focusing input again…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Typing :q!<CR>…");
         await sendKeys(driver, ":q!".split("").concat(webdriver.Key.ENTER));
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
 }
 
-export async function testLargeBuffers(driver: webdriver.WebDriver, log: logFunc) {
+export async function testLargeBuffers(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "Large buffers test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript(`arguments[0].scrollIntoView(true);
                                    arguments[0].value = (new Array(5000)).fill("a").join("");`, input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found");
         await ready;
         await sendKeys(driver, "Aa".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
-        log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("value")) == (new Array(5001)).fill("a").join(""));
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value")) == (new Array(5001)).fill("a").join(""), 5000, "Input value did not change");
 }
 
-export async function testNoLingeringNeovims(driver: webdriver.WebDriver, log: logFunc) {
+export async function testNoLingeringNeovims(driver: webdriver.WebDriver) {
         // Load neovim once and kill the tab, then load neovim again and kill
         // the frame.
         await loadLocalPage(driver, "simple.html", "No lingering neovims test");
-        log("Locating textarea…");
-        let input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        let input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript(`arguments[0].scrollIntoView(true)`, input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         let ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        log("Reloading page…");
         await loadLocalPage(driver, "simple.html", "No lingering neovims test");
-        log("Locating textarea…");
-        input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript(`arguments[0].scrollIntoView(true)`, input);
-        log("Clicking on input…");
         ready = firenvimReady(driver);
         await driver.actions().click(input).perform();
-        log("Waiting for span to be created…");
-        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
         await sendKeys(driver, ":q!".split("").concat(webdriver.Key.ENTER))
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
 
         await driver.sleep(3000);
 
@@ -778,23 +652,19 @@ export async function testNoLingeringNeovims(driver: webdriver.WebDriver, log: l
         expect(match[1]).toBe(undefined);
 }
 
-export async function testInputResizes(driver: webdriver.WebDriver, log: logFunc) {
+export async function testInputResizes(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "resize.html", "Input resize test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")));
+        await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")), 5000, "body > span:nth-child(4) not found");
         await ready;
-        log("Typing 100aa<Esc>^gjib…");
         await sendKeys(driver, "100aa".split("")
                        .concat(webdriver.Key.ESCAPE)
                        .concat("^gjib".split(""))
                        .concat(webdriver.Key.ESCAPE));
-        const button = await driver.wait(Until.elementLocated(By.id("button")));
+        const button = await driver.wait(Until.elementLocated(By.id("button")), 5000, "button not found");
         await driver.actions().click(button).perform();
         await driver.actions().click(input).perform();
         await sendKeys(driver, "^gjib".split("")
@@ -802,22 +672,18 @@ export async function testInputResizes(driver: webdriver.WebDriver, log: logFunc
                        .concat(":wq!".split(""))
                        .concat(webdriver.Key.ENTER));
         // We don't test for a specific value because size is dependant on browser config
-        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
         expect(await input.getAttribute("value")).toMatch(/a*ba+ba*/);
 };
 
-export async function testResize(driver: webdriver.WebDriver, log: logFunc) {
+export async function testResize(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "Resizing test");
-        log("Locating textarea…");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        log("Clicking on input…");
         await driver.actions().click(input).perform();
         const ready = firenvimReady(driver);
-        log("Waiting for span to be created…");
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")));
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found");
         await ready;
-        log("Trying to get the largest possible frame"),
         await sendKeys(driver, ":set lines=100".split("")
                        .concat(webdriver.Key.ENTER)
                        .concat(":set columns=300".split(""))
@@ -845,10 +711,8 @@ export async function testResize(driver: webdriver.WebDriver, log: logFunc) {
                        .concat(webdriver.Key.ESCAPE)
                        .concat(":wq".split(""))
                        .concat(webdriver.Key.ENTER));
-        log("Waiting for span to be removed from page…");
-        await driver.wait(Until.stalenessOf(span));
-        log("Waiting for value update…");
-        await driver.wait(async () => (await input.getAttribute("value") !== ""));
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
         const [lines, columns] = (await input.getAttribute("value"))
                 .split("\n")
                 .map((v: string) => parseInt(v));

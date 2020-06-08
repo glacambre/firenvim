@@ -5,7 +5,6 @@ import * as webdriver from "selenium-webdriver";
 
 import {
  loadLocalPage,
- logFunc,
  extensionDir,
  killDriver,
  reloadNeovim,
@@ -36,7 +35,6 @@ import { setupVimrc, resetVimrc } from "./_vimrc";
 
 describe("Chrome", () => {
 
-        let log : logFunc = () => {};
         let nonHeadlessTest = () => env["HEADLESS"] ? test.skip : test;
         let driver: any = undefined;
         beforeAll(() => {
@@ -51,10 +49,6 @@ describe("Chrome", () => {
                 if (env["HEADLESS"]) {
                         return;
                         // options.headless();
-                }
-
-                if (env["LOG"]) {
-                        log = console.log;
                 }
 
                 // Set user data path so that the native messenger manifest can
@@ -82,7 +76,7 @@ describe("Chrome", () => {
         beforeEach(async () => {
                 resetVimrc();
                 await loadLocalPage(driver, "simple.html", "")
-                await reloadNeovim(driver, log);
+                await reloadNeovim(driver);
                 return loadLocalPage(driver, "simple.html", "")
         });
 
@@ -96,28 +90,28 @@ describe("Chrome", () => {
         afterAll(() => killDriver(driver));
 
         test("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
-        nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver, log));
-        nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver, log));
-        nonHeadlessTest()("Firenvim frame is resized on input resize", () => testInputResizes(driver, log));
-        nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver, log));
-        nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver, log));
-        nonHeadlessTest()("Firenvim works on Monaco", () => testMonaco(driver, log));
-        nonHeadlessTest()("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver, log));
-        nonHeadlessTest()("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver, log));
-        nonHeadlessTest()("Firenvim works with large buffers", () => testLargeBuffers(driver, log));
-        nonHeadlessTest()("FocusGained/lost autocmds are triggered", () => testFocusGainedLost(driver, log));
-        nonHeadlessTest()("g:started_by_firenvim exists", () => testGStartedByFirenvim(driver, log));
-        nonHeadlessTest()("Guifont works", () => testGuifont(driver, log));
-        nonHeadlessTest()("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver, log));
-        nonHeadlessTest()("InputFocus works", () => testInputFocus(driver, log));
-        nonHeadlessTest()("PageFocus works", () => testPageFocus(driver, log));
-        nonHeadlessTest()("PressKeys works", () => testPressKeys(driver, log));
-        nonHeadlessTest()("EvalJs works", () => testEvalJs(driver, log));
-        nonHeadlessTest()("Resize works", () => testResize(driver, log));
-        nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(driver, log));
-        nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(driver, log));
-        nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(driver, log));
+        nonHeadlessTest()("Firenvim modifiers work", () => testModifiers(driver));
+        nonHeadlessTest()("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(driver));
+        nonHeadlessTest()("Firenvim frame is resized on input resize", () => testInputResizes(driver));
+        nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
+        nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        nonHeadlessTest()("Firenvim works on Monaco", () => testMonaco(driver));
+        nonHeadlessTest()("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
+        nonHeadlessTest()("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
+        nonHeadlessTest()("Firenvim works with large buffers", () => testLargeBuffers(driver));
+        nonHeadlessTest()("FocusGained/lost autocmds are triggered", () => testFocusGainedLost(driver));
+        nonHeadlessTest()("g:started_by_firenvim exists", () => testGStartedByFirenvim(driver));
+        nonHeadlessTest()("Guifont works", () => testGuifont(driver));
+        nonHeadlessTest()("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
+        nonHeadlessTest()("InputFocus works", () => testInputFocus(driver));
+        nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
+        nonHeadlessTest()("PressKeys works", () => testPressKeys(driver));
+        nonHeadlessTest()("EvalJs works", () => testEvalJs(driver));
+        nonHeadlessTest()("Resize works", () => testResize(driver));
+        nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(driver));
+        nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
+        nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(driver));
         if (process.platform === "linux") {
-                nonHeadlessTest()("No lingering neovim process", () => testNoLingeringNeovims(driver, log));
+                nonHeadlessTest()("No lingering neovim process", () => testNoLingeringNeovims(driver));
         }
 })
