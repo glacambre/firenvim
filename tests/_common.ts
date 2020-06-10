@@ -164,6 +164,7 @@ export async function testCodemirror(driver: webdriver.WebDriver) {
         await driver.actions().click(input).perform();
         const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(3)")), 5000, "Firenvim span not found");
         await firenvimReady(driver);
+        await driver.sleep(100);
         // Somehow there's a focus issue with this test. We actively attempt to
         // refocus the span if it isn't focused.
         for (let i = 0; i < 3; ++i) {
@@ -175,21 +176,24 @@ export async function testCodemirror(driver: webdriver.WebDriver) {
                 }
         }
         await sendKeys(driver, "ggITest".split(""));
+        await driver.sleep(100);
         await driver.actions()
                 .keyDown(webdriver.Key.CONTROL)
                 .keyDown("r")
                 .keyUp("r")
                 .keyUp(webdriver.Key.CONTROL)
                 .perform();
-        await sendKeys(driver, "=&ft".split("")
-                .concat(webdriver.Key.ENTER)
-                .concat(webdriver.Key.ESCAPE)
-                .concat(":wq!".split(""))
-                .concat(webdriver.Key.ENTER)
-        );
+        await driver.sleep(100);
+        await sendKeys(driver, "=&ft".split(""));
+        await driver.sleep(100);
+        await sendKeys(driver, [webdriver.Key.ENTER]);
+        await driver.sleep(100);
+        await sendKeys(driver, [webdriver.Key.ESCAPE]);
+        await driver.sleep(100);
+        await sendKeys(driver, ":wq!".split(""));
+        await driver.sleep(100);
+        await sendKeys(driver, [webdriver.Key.ENTER]);
         await driver.wait(Until.stalenessOf(span), 5000, "Span handle did not go stale.");
-        // We need to search for input again because the reference somehow goes stale there
-        input = await driver.wait(Until.elementLocated(By.css("div.CodeMirror")), 5000, "CodeMirror div can't be found again");
         await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue, 5000, "CodeMirror element's content did not change.");
         expect(await input.getAttribute("innerText")).toMatch(/Testhtml<!--/);
 }
@@ -629,8 +633,8 @@ export async function testNoLingeringNeovims(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "No lingering neovims test");
         input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
         await driver.executeScript(`arguments[0].scrollIntoView(true)`, input);
-        ready = firenvimReady(driver);
         await driver.actions().click(input).perform();
+        ready = firenvimReady(driver);
         span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
         await sendKeys(driver, ":q!".split("").concat(webdriver.Key.ENTER))
