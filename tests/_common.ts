@@ -193,7 +193,11 @@ export async function testCodemirror(driver: webdriver.WebDriver) {
         await sendKeys(driver, ":wq!".split(""));
         await driver.sleep(100);
         await sendKeys(driver, [webdriver.Key.ENTER]);
-        await driver.wait(Until.stalenessOf(span), 5000, "Span handle did not go stale.");
+        try {
+                await driver.wait(Until.stalenessOf(span), 5000, "Span handle did not go stale.");
+        } catch (e) {
+                throw new Error(e.toString() + (await driver.executeScript("return document.documentElement.innerHTML;")))
+        }
         await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue, 5000, "CodeMirror element's content did not change.");
         expect(await input.getAttribute("innerText")).toMatch(/Testhtml<!--/);
 }

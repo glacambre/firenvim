@@ -65,18 +65,20 @@ describe("Firefox", () => {
                 return loadLocalPage(driver, "simple.html", "");
         });
 
-        beforeEach(async () => {
+        beforeEach(async (done) => {
                 resetVimrc();
                 await loadLocalPage(driver, "simple.html", "");
                 await reloadNeovim(driver);
                 await loadLocalPage(driver, "simple.html", "")
+                return done();
         });
 
-        afterEach(async () => {
+        afterEach(async (done) => {
                 // This should kill existing webdriver promises (e.g. wait
                 // until element found) and prevent one test's errors from
                 // contaminating another's.
                 await loadLocalPage(driver, "simple.html", "");
+                return done();
         });
 
         afterAll(() => killDriver(driver));
