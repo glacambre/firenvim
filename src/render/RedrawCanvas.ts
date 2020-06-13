@@ -1,14 +1,23 @@
 import { page } from "../page/proxy";
-import { guifontsToCSS, toCss, toHexCss } from "../utils/CSSUtils";
+import { parseGuifont, toCss, toHexCss } from "../utils/CSSUtils";
 
 let functions;
 export function setFunctions(fns: any) {
     functions = fns;
 }
 
+let metricsInvalidated: boolean = false;
+let glyphCache : any = {};
+
 let canvas : HTMLCanvasElement;
 let context : CanvasRenderingContext2D;
 let fontString : string;
+function setFontString (s : string) {
+    fontString = s;
+    context.font = fontString;
+    metricsInvalidated = true;
+    glyphCache = {};
+}
 export function setCanvas (cvs: HTMLCanvasElement) {
     canvas = cvs;
     const width = window.innerWidth;
@@ -18,7 +27,7 @@ export function setCanvas (cvs: HTMLCanvasElement) {
     const { fontFamily, fontSize } = window.getComputedStyle(canvas);
     fontString = `${fontSize} ${fontFamily}`;
     context = canvas.getContext("2d", { "alpha": false });
-    context.font = fontString;
+    setFontString(fontString);
 }
 
 
@@ -156,9 +165,11 @@ function recomputeCharSize (context: CanvasRenderingContext2D) {
     maxCellWidth = Math.ceil(width);
     maxCellHeight = Math.ceil(height);
     maxBaselineDistance = baseline;
+    metricsInvalidated = false;
 }
 function getGlyphInfo () {
-    if (maxCellWidth === undefined
+    if (metricsInvalidated
+        || maxCellWidth === undefined
         || maxCellHeight === undefined
         || maxBaselineDistance === undefined) {
         recomputeCharSize(context);
@@ -409,7 +420,18 @@ const handlers = {
     msg_clear: (): undefined => undefined,
     msg_history_show: (): undefined => undefined,
     msg_show: (): undefined => undefined,
-    option_set: (): undefined => undefined,
+    option_set: (_: State, option: string, value: any) => {
+        console.log(option, value);
+        switch (option) {
+            case "guifont":
+                const guifont = parseGuifont(value || "monospace:h9", {});
+                setFontString((guifont["font-size"] || "") + " " + (guifont["font-family"] || "monospace"));
+                const [charWidth, charHeight] = getGlyphInfo();
+                functions.ui_try_resize_grid(getGridId(),
+                                             Math.floor(canvas.width / charWidth),
+                                             Math.floor(canvas.height / charHeight));
+        }
+    },
     win_external_pos: (_: State, [grid, win]: number[]) => {
         if (windowId !== undefined && matchesSelectedWindow(win)) {
             selectGrid(grid);
@@ -460,17 +482,29 @@ function paint (_: DOMHighResTimeStamp) {
                 for (let y = damage.y; y < damage.y + damage.h; ++y) {
                     const row = charactersGrid[y];
                     const highs = highlightsGrid[y];
+                    const pixelY = y * charHeight;
+
                     for (let x = damage.x; x < damage.x + damage.w; ++x) {
-                        context.fillStyle = highlights[highs[x]].background || state.defaultBackground;
-                        context.fillRect(x * charWidth,
-                                         y * charHeight,
-                                         charWidth,
-                                         charHeight);
-                        if (row[x] === " ") {
-                            continue;
+                        const pixelX = x * charWidth;
+                        let glyphId = row[x] + "-" + highs[x];
+
+                        if (glyphCache[glyphId] === undefined) {
+                            context.fillStyle = highlights[highs[x]].background || state.defaultBackground;
+                            context.fillRect(pixelX,
+                                             pixelY,
+                                             charWidth,
+                                             charHeight);
+                            context.fillStyle = highlights[highs[x]].foreground || state.defaultForeground;
+                            context.fillText(row[x], pixelX, pixelY + baseline);
+                            glyphCache[glyphId] = context.getImageData(
+                                pixelX,
+                                pixelY,
+                                charWidth,
+                                charHeight,
+                            );
+                        } else {
+                            context.putImageData(glyphCache[glyphId], pixelX, pixelY);
                         }
-                        context.fillStyle = highlights[highs[x]].foreground || state.defaultForeground;
-                        context.fillText(row[x], x * charWidth, y * charHeight + baseline);
                     }
                 }
                 break;
