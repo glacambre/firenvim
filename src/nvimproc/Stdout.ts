@@ -49,9 +49,11 @@ export class Stdout {
             const [kind, reqId, data1, data2] = decoded;
             const name = this.messageNames.get(kind);
             if (name) {
-                const arr = this.listeners.get(name);
-                if (arr) {
-                    arr.forEach(l => l(reqId, data1, data2));
+                const handlers = this.listeners.get(name);
+                if (handlers !== undefined) {
+                    for (let handler of handlers) {
+                        handler(reqId, data1, data2);
+                    }
                 }
             } else {
                 console.log(`Unhandled message kind ${name}`);
