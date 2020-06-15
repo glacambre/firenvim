@@ -257,10 +257,14 @@ const handlers = {
         const charGrid = state.gridCharacters[id];
         const damages = state.gridDamages[id];
         const highlights = state.gridHighlights[id];
-        changes.reduce(({ prevCol, highlight }: { prevCol: number, highlight: number },
-                        content: [string, number, number]) => {
-            const [chara, high = highlight, repeat = 1] = content;
-            const limit = prevCol + repeat;
+        let prevCol = col, high = 0;
+        for (let change of changes) {
+            const chara = change[0];
+            if (change[1] !== undefined) {
+                high = change[1]
+            }
+            const repeat = change[2] === undefined ? 1 : change[2];
+
             damages.push({
                 kind: DamageKind.Cell,
                 y: row,
@@ -268,12 +272,14 @@ const handlers = {
                 x: prevCol,
                 w: repeat
             });
+
+            const limit = prevCol + repeat;
             for (let i = prevCol; i < limit; i += 1) {
                 charGrid[row][i] = chara;
                 highlights[row][i] = high;
             }
-            return { prevCol: limit, highlight: high };
-        }, { prevCol: col, highlight: 0 });
+            prevCol = limit;
+        }
     },
     grid_resize: (state: State, id: number, width: number, height: number) => {
         if (!matchesSelectedGrid(id)) {
@@ -515,14 +521,14 @@ function paint (_: DOMHighResTimeStamp) {
 }
 
 export function onRedraw(events: any[]) {
-    events.forEach(event => {
+    for (let event of events) {
         const handler = (handlers as any)[(event[0] as any)];
         if (handler !== undefined) {
             for (let i = 1; i < event.length; ++i) {
                 handler(globalState, ...event[i]);
             }
         }
-    });
+    }
     if (!frameScheduled) {
         frameScheduled = true;
         window.requestAnimationFrame(paint);
