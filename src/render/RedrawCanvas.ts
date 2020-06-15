@@ -1,7 +1,7 @@
 import { page } from "../page/proxy";
 import { parseGuifont, toCss, toHexCss } from "../utils/CSSUtils";
 
-let functions;
+let functions: any;
 export function setFunctions(fns: any) {
     functions = fns;
 }
@@ -115,6 +115,7 @@ type State = {
     defaultSpecial: number,
     gridCharacters: string[][][],
     gridDamages: GridDamage[][],
+    gridDamagesCount: number[],
     gridHighlights: number[][][],
     gridSizes: GridDimensions[],
     highlights: HighlightInfo[],
@@ -129,10 +130,26 @@ const globalState: State = {
     gridCharacters: [],
     gridHighlights: [],
     gridDamages: [],
+    gridDamagesCount: [],
     gridSizes: [],
     highlights: [newHighlight(defaultBackground, defaultForeground)],
     isBusy : false,
 };
+
+function pushDamage(grid: number, kind: DamageKind, h: number, w: number, x: number, y: number) {
+    const damages = globalState.gridDamages[grid]
+    const count = globalState.gridDamagesCount[grid];
+    if (damages.length == count) {
+        damages.push({ kind, h, w, x, y });
+    } else {
+        damages[count].kind = kind;
+        damages[count].h = h;
+        damages[count].w = w;
+        damages[count].x = x;
+        damages[count].y = y;
+    }
+    globalState.gridDamagesCount[grid] = count + 1;
+}
 
 let maxCellWidth: number;
 let maxCellHeight: number;
@@ -223,55 +240,49 @@ function matchesSelectedGrid(gid: number) {
 }
 
 const handlers = {
-    busy_start: (state: State) => { state.isBusy = true; },
-    busy_stop: (state: State) => { state.isBusy = false; },
-    cmdline_hide: (state: State) => { state.commandLine = "hidden"; },
-    cmdline_pos: (_: State) => { },
-    cmdline_show: (state: State) => { state.commandLine = "shown"; },
-    default_colors_set: (state: State, fg: number, bg: number, sp: number) => {
+    busy_start: () => { globalState.isBusy = true; },
+    busy_stop: () => { globalState.isBusy = false; },
+    cmdline_hide: () => { globalState.commandLine = "hidden"; },
+    cmdline_pos: () => { },
+    cmdline_show: () => { globalState.commandLine = "shown"; },
+    default_colors_set: (fg: number, bg: number, sp: number) => {
         if (fg !== undefined && fg !== -1) {
-            state.defaultForeground = toHexCss(fg);
+            globalState.defaultForeground = toHexCss(fg);
         }
         if (bg !== undefined && bg !== -1) {
-            state.defaultBackground = toHexCss(bg);
+            globalState.defaultBackground = toHexCss(bg);
         }
         if (sp !== undefined && sp !== -1) {
-            state.defaultSpecial = sp;
+            globalState.defaultSpecial = sp;
         }
     },
-    flush: (_: State) => { },
-    grid_clear: (_: State, id: number) => {
+    flush: () => { },
+    grid_clear: (id: number) => {
         if (!matchesSelectedGrid(id)) {
             return;
         }
     },
-    grid_cursor_goto: (_: State, id: number) => {
+    grid_cursor_goto: (id: number) => {
         if (!matchesSelectedGrid(id)) {
             return;
         }
     },
-    grid_line: (state: State, id: number, row: number, col: number, changes:  any[]) => {
+    grid_line: (id: number, row: number, col: number, changes:  any[]) => {
         if (!matchesSelectedGrid(id)) {
             return;
         }
-        const charGrid = state.gridCharacters[id];
-        const damages = state.gridDamages[id];
-        const highlights = state.gridHighlights[id];
+        const charGrid = globalState.gridCharacters[id];
+        const highlights = globalState.gridHighlights[id];
         let prevCol = col, high = 0;
-        for (let change of changes) {
+        for (let i = 0; i < changes.length; ++i) {
+            const change = changes[i];
             const chara = change[0];
             if (change[1] !== undefined) {
                 high = change[1]
             }
             const repeat = change[2] === undefined ? 1 : change[2];
 
-            damages.push({
-                kind: DamageKind.Cell,
-                y: row,
-                h: 1,
-                x: prevCol,
-                w: repeat
-            });
+            pushDamage(id, DamageKind.Cell, 1, repeat, prevCol, row);
 
             const limit = prevCol + repeat;
             for (let i = prevCol; i < limit; i += 1) {
@@ -281,37 +292,31 @@ const handlers = {
             prevCol = limit;
         }
     },
-    grid_resize: (state: State, id: number, width: number, height: number) => {
+    grid_resize: (id: number, width: number, height: number) => {
         if (!matchesSelectedGrid(id)) {
             return;
         }
-        const createGrid = state.gridCharacters[id] === undefined
+        const createGrid = globalState.gridCharacters[id] === undefined
         if (createGrid) {
-            state.gridCharacters[id] = new Array();
-            state.gridCharacters[id].push((new Array(1)).fill(" "));
-            state.gridSizes[id] = { width: 0, height: 0 };
-            state.gridDamages[id] = new Array();
-            state.gridHighlights[id] = new Array();
-            state.gridHighlights[id].push((new Array(1)).fill(0));
+            globalState.gridCharacters[id] = new Array();
+            globalState.gridCharacters[id].push((new Array(1)).fill(" "));
+            globalState.gridSizes[id] = { width: 0, height: 0 };
+            globalState.gridDamages[id] = new Array();
+            globalState.gridDamagesCount[id] = 0;
+            globalState.gridHighlights[id] = new Array();
+            globalState.gridHighlights[id].push((new Array(1)).fill(0));
         }
 
-        const curGridSize = state.gridSizes[id];
-        const damages = state.gridDamages[id];
+        const curGridSize = globalState.gridSizes[id];
 
         // When not creating a new grid, we need to save the drawing context we
         // have on canvas resize.
         if (!createGrid) {
-            damages.push({
-                kind: DamageKind.Resize,
-                h: height,
-                w: width,
-                x: curGridSize.width,
-                y: curGridSize.height,
-            });
+            pushDamage(id, DamageKind.Resize, height, width, curGridSize.width, curGridSize.height);
         }
 
-        const highlights = state.gridHighlights[id];
-        const charGrid = state.gridCharacters[id];
+        const highlights = globalState.gridHighlights[id];
+        const charGrid = globalState.gridCharacters[id];
         if (width > charGrid[0].length) {
             for (let i = 0; i < charGrid.length; ++i) {
                 let row = charGrid[i];
@@ -323,13 +328,7 @@ const handlers = {
             }
         }
         if (width > curGridSize.width) {
-            damages.push({
-                kind: DamageKind.Cell,
-                h: curGridSize.height,
-                w: width - curGridSize.width,
-                x: curGridSize.width,
-                y: 0,
-            });
+            pushDamage(id, DamageKind.Cell, curGridSize.height, width - curGridSize.width, curGridSize.width, 0);
         }
         if (height > charGrid.length) {
             while (charGrid.length < height) {
@@ -338,19 +337,12 @@ const handlers = {
             }
         }
         if (height > curGridSize.height) {
-            damages.push({
-                kind: DamageKind.Cell,
-                h: height - curGridSize.height,
-                w: width,
-                x: 0,
-                y: curGridSize.height,
-            });
+            pushDamage(id, DamageKind.Cell, height - curGridSize.height, width, 0, curGridSize.height);
         }
         curGridSize.width = width;
         curGridSize.height = height;
     },
-    grid_scroll: (state: State,
-                  id: number,
+    grid_scroll: (id: number,
                   top: number,
                   bot: number,
                   left: number,
@@ -360,10 +352,9 @@ const handlers = {
         if (!matchesSelectedGrid(id)) {
             return;
         }
-        const dimensions = state.gridSizes[id];
-        const charGrid = state.gridCharacters[id];
-        const highGrid = state.gridHighlights[id];
-        const damages = state.gridDamages[id];
+        const dimensions = globalState.gridSizes[id];
+        const charGrid = globalState.gridCharacters[id];
+        const highGrid = globalState.gridHighlights[id];
         if (rows > 0) {
             let bottom = (bot + rows) >= dimensions.height
                 ? dimensions.height - rows
@@ -378,13 +369,7 @@ const handlers = {
                     dst_highs[x] = src_highs[x];
                 }
             }
-            damages.push({
-                kind: DamageKind.Cell,
-                x : 0,
-                y: 0,
-                w: dimensions.width,
-                h: dimensions.height,
-            });
+            pushDamage(id, DamageKind.Cell, dimensions.height, dimensions.width, 0, 0);
         } else if (rows < 0) {
             for (let y = bot - 1; y >= top; --y) {
                 const src_chars = charGrid[y + rows];
@@ -396,17 +381,11 @@ const handlers = {
                     dst_highs[x] = src_highs[x];
                 }
             }
-            damages.push({
-                kind: DamageKind.Cell,
-                x : 0,
-                y: 0,
-                w: dimensions.width,
-                h: dimensions.height
-            });
+            pushDamage(id, DamageKind.Cell, dimensions.height, dimensions.width, 0, 0);
         }
     },
-    hl_attr_define: (state: State, id: number, rgb_attr: any) => {
-        const highlights = state.highlights;
+    hl_attr_define: (id: number, rgb_attr: any) => {
+        const highlights = globalState.highlights;
         if (highlights[id] === undefined) {
             highlights[id] = newHighlight(undefined, undefined);
         }
@@ -426,7 +405,7 @@ const handlers = {
     msg_clear: (): undefined => undefined,
     msg_history_show: (): undefined => undefined,
     msg_show: (): undefined => undefined,
-    option_set: (_: State, option: string, value: any) => {
+    option_set: (option: string, value: any) => {
         console.log(option, value);
         switch (option) {
             case "guifont":
@@ -438,7 +417,7 @@ const handlers = {
                                              Math.floor(canvas.height / charHeight));
         }
     },
-    win_external_pos: (_: State, [grid, win]: number[]) => {
+    win_external_pos: ([grid, win]: number[]) => {
         if (windowId !== undefined && matchesSelectedWindow(win)) {
             selectGrid(grid);
         }
@@ -456,10 +435,11 @@ function paint (_: DOMHighResTimeStamp) {
     const charactersGrid = state.gridCharacters[gid];
     const highlightsGrid = state.gridHighlights[gid];
     const damages = state.gridDamages[gid];
+    const damageCount = state.gridDamagesCount[gid];
     const highlights = state.highlights;
     const [charWidth, charHeight, baseline] = getGlyphInfo();
 
-    for (let i = 0; i < damages.length; ++i) {
+    for (let i = 0; i < damageCount; ++i) {
         const damage = damages[i];
         switch (damage.kind) {
             case DamageKind.Resize: {
@@ -517,15 +497,16 @@ function paint (_: DOMHighResTimeStamp) {
         }
     }
 
-    damages.length = 0;
+    state.gridDamagesCount[gid] = 0;
 }
 
 export function onRedraw(events: any[]) {
-    for (let event of events) {
+    for (let i = 0; i < events.length; ++i) {
+        let event = events[i];
         const handler = (handlers as any)[(event[0] as any)];
         if (handler !== undefined) {
             for (let i = 1; i < event.length; ++i) {
-                handler(globalState, ...event[i]);
+                handler.apply(globalState, event[i]);
             }
         }
     }
