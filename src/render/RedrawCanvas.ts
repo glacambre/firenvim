@@ -30,7 +30,6 @@ export function setCanvas (cvs: HTMLCanvasElement) {
     setFontString(fontString);
 }
 
-
 // We first define highlight information.
 const defaultBackground = "#FFFFFF";
 const defaultForeground = "#000000";
@@ -194,6 +193,11 @@ function getGlyphInfo () {
     return [maxCellWidth, maxCellHeight, maxBaselineDistance];
 }
 
+export function getLogicalSize() {
+    const [cellWidth, cellHeight] = getGlyphInfo();
+    return [Math.floor(canvas.width / cellWidth), Math.floor(canvas.height / cellHeight)];
+}
+
 function newHighlight (bg: string, fg: string): HighlightInfo {
     return {
         background: bg,
@@ -255,8 +259,14 @@ const handlers = {
         if (sp !== undefined && sp !== -1) {
             globalState.defaultSpecial = sp;
         }
+        glyphCache = {};
     },
-    flush: () => { },
+    flush: () => {
+        if (!frameScheduled) {
+            frameScheduled = true;
+            window.requestAnimationFrame(paint);
+        }
+    },
     grid_clear: (id: number) => {
         if (!matchesSelectedGrid(id)) {
             return;
@@ -299,12 +309,12 @@ const handlers = {
         const createGrid = globalState.gridCharacters[id] === undefined
         if (createGrid) {
             globalState.gridCharacters[id] = new Array();
-            globalState.gridCharacters[id].push((new Array(1)).fill(" "));
+            globalState.gridCharacters[id].push(new Array());
             globalState.gridSizes[id] = { width: 0, height: 0 };
             globalState.gridDamages[id] = new Array();
             globalState.gridDamagesCount[id] = 0;
             globalState.gridHighlights[id] = new Array();
-            globalState.gridHighlights[id].push((new Array(1)).fill(0));
+            globalState.gridHighlights[id].push(new Array());
         }
 
         const curGridSize = globalState.gridSizes[id];
@@ -406,7 +416,6 @@ const handlers = {
     msg_history_show: (): undefined => undefined,
     msg_show: (): undefined => undefined,
     option_set: (option: string, value: any) => {
-        console.log(option, value);
         switch (option) {
             case "guifont":
                 const guifont = parseGuifont(value || "monospace:h9", {});
@@ -509,9 +518,5 @@ export function onRedraw(events: any[]) {
                 handler.apply(globalState, event[i]);
             }
         }
-    }
-    if (!frameScheduled) {
-        frameScheduled = true;
-        window.requestAnimationFrame(paint);
     }
 }
