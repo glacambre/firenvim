@@ -1,6 +1,7 @@
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
 import { getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
+import { getLogicalSize } from "./render/RedrawCanvas";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, isChrome, toFileName } from "./utils/utils";
@@ -24,7 +25,7 @@ export const isReady = new Promise((resolve, reject) => {
             const nvimPromise = neovim(canvas, host, extCmdline, extMessages, connectionData);
             const contentPromise = page.getElementContent();
 
-            const [cols, rows] = getGridSize(host);
+            const [cols, rows] = getLogicalSize();
 
             const nvim = await nvimPromise;
 
