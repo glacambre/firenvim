@@ -107,8 +107,15 @@ type GridDamage = CellDamage & ResizeDamage & ScrollDamage;
 // commandline.
 type CommandLineState = "hidden" | "shown";
 
+type Cursor = {
+    currentGrid: number,
+    x: number,
+    y: number,
+};
+
 type State = {
     commandLine : CommandLineState,
+    cursor: Cursor,
     defaultBackground: string,
     defaultForeground: string,
     defaultSpecial: number,
@@ -123,6 +130,11 @@ type State = {
 
 const globalState: State = {
     commandLine: "hidden",
+    cursor: {
+        currentGrid: 1,
+        x: 0,
+        y: 0,
+    },
     defaultBackground,
     defaultForeground,
     defaultSpecial: 0,
@@ -272,10 +284,12 @@ const handlers = {
             return;
         }
     },
-    grid_cursor_goto: (id: number) => {
-        if (!matchesSelectedGrid(id)) {
-            return;
-        }
+    grid_cursor_goto: (id: number, row: number, column: number) => {
+        const cursor = globalState.cursor;
+        pushDamage(getGridId(), DamageKind.Cell, 1, 1, cursor.x, cursor.y);
+        cursor.currentGrid = id;
+        cursor.x = column;
+        cursor.y = row;
     },
     grid_line: (id: number, row: number, col: number, changes:  any[]) => {
         if (!matchesSelectedGrid(id)) {
@@ -504,6 +518,21 @@ function paint (_: DOMHighResTimeStamp) {
                 }
                 break;
         }
+    }
+
+    const cursor = state.cursor;
+    if (cursor.currentGrid === gid) {
+        const high = highlightsGrid[cursor.y][cursor.x];
+        context.fillStyle = highlights[high].foreground || state.defaultForeground;
+        const pixelX = cursor.x * charWidth;
+        const pixelY = cursor.y * charHeight;
+        context.fillRect(pixelX,
+                         pixelY,
+                         charWidth,
+                         charHeight);
+        context.fillStyle = highlights[high].background || state.defaultBackground;
+        const char = charactersGrid[cursor.y][cursor.x];
+        context.fillText(char, pixelX, pixelY + baseline);
     }
 
     state.gridDamagesCount[gid] = 0;
