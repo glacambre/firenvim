@@ -59,9 +59,16 @@ const config = {
       // webextension-polyfill is ran so that it can create a `browser` object.
       // This is why we shouldn't load webextension-polyfill for firefox -
       // otherwise we'd get a proxy instead of the real thing.
-      { test: require.resolve("webextension-polyfill"), use: "imports-loader?browser=>undefined" }
-    ],
-  },
+      {
+        test: require.resolve("webextension-polyfill"),
+        use: [{
+          loader: "imports-loader",
+          options: {
+            additionalCode: 'browser = undefined;',
+          },
+        }]
+      }
+    ]},
 
   // Overwritten by browser-specific config
   plugins: [],
