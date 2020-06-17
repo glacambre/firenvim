@@ -149,7 +149,7 @@ au BufEnter github.com_*.txt set filetype=markdown
 
 ### Understanding Firenvim's configuration object
 
-You can configure the rest of Firenvim by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionary containing the keys "globalSettings" and "localSettings". `g:firenvim_config["localSettings"]` is a dictionary the keys of which have to be a Javascript pattern matching a URL and the values of which are dictionaries containing settings that apply for all URLs matched by the Javascript pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used. Here is an example (the settings and their possible values will be explained in the next subsections):
+You can configure the rest of Firenvim by creating a variable named `g:firenvim_config` in your init.vim. This variable is a dictionary containing the keys "globalSettings" and "localSettings". `g:firenvim_config["localSettings"]` is a dictionary, mapping Javascript patterns that match against the full URL to settings that are used for all URLs matched by that pattern. When multiple patterns match a same URL, the pattern with the highest "priority" value is used. Here is an example (the settings and their possible values will be explained in the next subsections):
 
 ```vim
 let g:firenvim_config = { 
