@@ -5,11 +5,11 @@ import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, isFirefox, toFileName } from "./utils/utils";
 
-const infoPromise = page.getEditorInfo();
-browser
+const frameIdPromise = browser
     .runtime
     .sendMessage({ funcName: ["publishFrameId"] })
     .then((f: number) => (window as any).frameId = f);
+const infoPromise = frameIdPromise.then(_ => page.getEditorInfo());
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
 
 export const isReady = new Promise((resolve, reject) => {

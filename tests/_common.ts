@@ -717,6 +717,25 @@ export async function testResize(driver: webdriver.WebDriver) {
         expect(columns).toBeLessThan(300);
 }
 
+export async function testWorksInFrame(driver: webdriver.WebDriver) {
+        await loadLocalPage(driver, "parentframe.html", "Iframe test");
+        const frame = await driver.wait(Until.elementLocated(By.id("frame")));
+        driver.switchTo().frame(frame);
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "input not found");
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        await driver.actions().click(input).perform();
+        const ready = firenvimReady(driver);
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found");
+        await ready;
+        await sendKeys(driver, "aa".split("")
+                .concat([webdriver.Key.ESCAPE])
+                .concat(":wq".split(""))
+                .concat([webdriver.Key.ENTER])
+        );
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        expect(await input.getAttribute("value")).toBe("a");
+}
 
 export async function killDriver(driver: webdriver.WebDriver) {
         try {

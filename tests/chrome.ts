@@ -30,6 +30,7 @@ import {
  testTakeoverNonEmpty,
  testTakeoverOnce,
  testVimrcFailure,
+ testWorksInFrame,
 } from "./_common"
 import { setupVimrc, resetVimrc } from "./_vimrc";
 
@@ -111,6 +112,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(driver));
         nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
         nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(driver));
+        nonHeadlessTest()("Works in frame", () => testWorksInFrame(driver));
         if (process.platform === "linux") {
                 nonHeadlessTest()("No lingering neovim process", () => testNoLingeringNeovims(driver));
         }
