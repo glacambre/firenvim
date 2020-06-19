@@ -292,13 +292,12 @@ Object.assign(window, {
                                                                        args.message,
                                                                        { frameId: args.frameId }),
     messagePage: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id,
-                                                                      args,
-                                                                      { frameId: 0 }),
+                                                                      args),
     publishFrameId: (sender: any) => {
         browser.tabs.sendMessage(sender.tab.id, {
             args: [sender.frameId],
             funcName: ["registerNewFrameId"],
-        }, { frameId: 0 });
+        });
         return sender.frameId;
     },
     setTabValue: (sender: any, args: any) => setTabValue(sender.tab.id, args[0], args[1]),

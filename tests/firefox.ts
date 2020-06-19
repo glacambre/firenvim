@@ -34,6 +34,7 @@ import {
  testTakeoverNonEmpty,
  testTakeoverOnce,
  testVimrcFailure,
+ testWorksInFrame,
 } from "./_common"
 import { setupVimrc, resetVimrc } from "./_vimrc";
 
@@ -103,6 +104,7 @@ describe("Firefox", () => {
         test("Takeover: empty works", () => testTakeoverEmpty(driver));
         test("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
         test("Takeover: once works", () => testTakeoverOnce(driver));
+        test("Works in frames", () => testWorksInFrame(driver));
         if (process.platform === "linux") {
                 test("No lingering neovim process", () => testNoLingeringNeovims(driver));
         }

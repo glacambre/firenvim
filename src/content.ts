@@ -12,7 +12,7 @@ if (document.location.href === "https://github.com/glacambre/firenvim/issues/new
 let frameIdLock = Promise.resolve();
 // Promise-resolution function called when a frameId is received from the
 // background script
-let frameIdResolve: (_: number) => void;
+let frameIdResolve = (_: number): void => undefined;
 
 const global = {
     // Whether Firenvim is disabled in this tab
@@ -94,21 +94,20 @@ const global = {
 
             // TODO: make this timeout the same as the one in background.ts
             const frameIdPromise = new Promise((resolve: (_: number) => void, reject) => {
-                frameIdResolve = resolve;
+                frameIdResolve = (frameId: number) => {
+                    global.firenvimElems.set(frameId, firenvim);
+                    resolve(frameId);
+                };
                 setTimeout(reject, 10000);
             });
             firenvim.attachToPage(frameIdPromise);
             frameIdPromise
-                .then((frameId: number) => global.firenvimElems.set(frameId, firenvim))
                 .then(unlock)
                 .catch(unlock);
         });
     },
 
     firenvimElems: new Map<number, FirenvimElement>(),
-
-    // resolve the frameId promise for the last-created frame
-    registerNewFrameId: (frameId: number) => frameIdResolve(frameId),
 };
 
 // This works as an rpc mechanism, allowing the frame script to perform calls
@@ -120,11 +119,24 @@ browser.runtime.onMessage.addListener(async (
     sender: any,
     sendResponse: any,
 ) => {
+    // We need to treat registerNewFrameId differently from other RPC messages
+    // because other RPC messages rely on frameId existing in firenvimElems!
+    if (request.funcName[0] === "registerNewFrameId") {
+        frameIdResolve(request.args[0]);
+        frameIdResolve = () => undefined;
+        return;
+    }
+
     const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
     if (!fn) {
         throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
     }
-    return fn(...request.args);
+
+    if (global.firenvimElems.get(request.args[0]) !== undefined) {
+        return fn(...request.args);
+    }
+    // If the message wasn't for us, return undefined to let other frames answer
+    return new Promise(():void => undefined);
 });
 
 function setupListeners(selector: string) {

@@ -7,7 +7,6 @@ interface IGlobalState {
     lastBufferInfo: [string, string, [number, number], string];
     nvimify: (evt: FocusEvent) => void;
     firenvimElems: Map<number, FirenvimElement>;
-    registerNewFrameId: (frameId: number) => void;
     disabled: boolean | Promise<boolean>;
 }
 
@@ -94,7 +93,6 @@ export function getFunctions(global: IGlobalState) {
             elem.resizeTo(width, height, true);
             elem.putEditorCloseToInputOriginAfterResizeFromFrame();
         },
-        registerNewFrameId: (frameId: number) => global.registerNewFrameId(frameId),
         sendKey: (key: string) => {
             const firenvim = getFocusedElement(global.firenvimElems);
             if (firenvim !== undefined) {
