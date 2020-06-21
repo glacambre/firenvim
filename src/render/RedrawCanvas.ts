@@ -113,6 +113,20 @@ type Cursor = {
     y: number,
 };
 
+type Mode = {
+    current: number,
+    styleEnabled: boolean,
+    modeInfo: {
+        attr_id: number,
+        attr_id_lm: number,
+        blinkoff: number,
+        blinkon: number,
+        blinkwait: number,
+        cell_percentage: number,
+        cursor_shape: string,
+    }[],
+};
+
 type State = {
     commandLine : CommandLineState,
     cursor: Cursor,
@@ -126,6 +140,7 @@ type State = {
     gridSizes: GridDimensions[],
     highlights: HighlightInfo[],
     isBusy: boolean,
+    mode: Mode,
 };
 
 const globalState: State = {
@@ -139,12 +154,25 @@ const globalState: State = {
     defaultForeground,
     defaultSpecial: 0,
     gridCharacters: [],
-    gridHighlights: [],
     gridDamages: [],
     gridDamagesCount: [],
+    gridHighlights: [],
     gridSizes: [],
     highlights: [newHighlight(defaultBackground, defaultForeground)],
     isBusy : false,
+    mode: {
+        current: 0,
+        styleEnabled : false,
+        modeInfo: [{
+            attr_id: 0,
+            attr_id_lm: 0,
+            blinkoff: 0,
+            blinkon: 0,
+            blinkwait: 0,
+            cell_percentage: 0,
+            cursor_shape: "block",
+        }]
+    }
 };
 
 function pushDamage(grid: number, kind: DamageKind, h: number, w: number, x: number, y: number) {
@@ -274,10 +302,7 @@ const handlers = {
         glyphCache = {};
     },
     flush: () => {
-        if (!frameScheduled) {
-            frameScheduled = true;
-            window.requestAnimationFrame(paint);
-        }
+        scheduleFrame();
     },
     grid_clear: (id: number) => {
         if (!matchesSelectedGrid(id)) {
@@ -424,8 +449,19 @@ const handlers = {
         highlights[id].underline = rgb_attr.underline;
         highlights[id].reverse = rgb_attr.reverse;
     },
-    mode_change: (): undefined => undefined,
-    mode_info_set: (): undefined => undefined,
+    mode_change: (_: string, modeIdx: number) => {
+        globalState.mode.current = modeIdx;
+        if (globalState.mode.styleEnabled) {
+            const cursor = globalState.cursor;
+            pushDamage(getGridId(), DamageKind.Cell, 1, 1, cursor.x, cursor.y);
+            scheduleFrame();
+        }
+    },
+    mode_info_set: (cursorStyleEnabled: boolean, modeInfo: []) => {
+        const mode = globalState.mode;
+        mode.styleEnabled = cursorStyleEnabled;
+        mode.modeInfo = modeInfo;
+    },
     msg_clear: (): undefined => undefined,
     msg_history_show: (): undefined => undefined,
     msg_show: (): undefined => undefined,
@@ -450,6 +486,12 @@ const handlers = {
 // keep track of wheter a frame is already being scheduled or not. This avoids
 // asking for multiple frames where we'd paint the same thing anyway.
 let frameScheduled = false;
+function scheduleFrame() {
+    if (!frameScheduled) {
+        frameScheduled = true;
+        window.requestAnimationFrame(paint);
+    }
+}
 function paint (_: DOMHighResTimeStamp) {
     frameScheduled = false;
 
@@ -522,17 +564,33 @@ function paint (_: DOMHighResTimeStamp) {
 
     const cursor = state.cursor;
     if (cursor.currentGrid === gid) {
-        const high = highlightsGrid[cursor.y][cursor.x];
-        context.fillStyle = highlights[high].foreground || state.defaultForeground;
-        const pixelX = cursor.x * charWidth;
-        const pixelY = cursor.y * charHeight;
-        context.fillRect(pixelX,
-                         pixelY,
-                         charWidth,
-                         charHeight);
-        context.fillStyle = highlights[high].background || state.defaultBackground;
-        const char = charactersGrid[cursor.y][cursor.x];
-        context.fillText(char, pixelX, pixelY + baseline);
+        const mode = state.mode;
+        const info = mode.styleEnabled
+            ? mode.modeInfo[mode.current]
+            : mode.modeInfo[0];
+        context.fillStyle = highlights[info.attr_id].foreground || state.defaultForeground;
+
+        // Draw cursor background
+        let cursorWidth = cursor.x * charWidth;
+        let cursorHeight = cursor.y * charHeight;
+        let width = charWidth;
+        let height = charHeight;
+        if (info.cursor_shape === "vertical") {
+            width = 1;
+        } else if (info.cursor_shape === "horizontal") {
+            cursorHeight += charHeight - 2;
+            height = 1;
+        }
+        context.fillRect(cursorWidth,
+                         cursorHeight,
+                         width,
+                         height);
+
+        if (info.cursor_shape === "block") {
+            context.fillStyle = highlights[info.attr_id].background || state.defaultBackground;
+            const char = charactersGrid[cursor.y][cursor.x];
+            context.fillText(char, cursor.x * charWidth, cursor.y * charHeight + baseline);
+        }
     }
 
     state.gridDamagesCount[gid] = 0;
