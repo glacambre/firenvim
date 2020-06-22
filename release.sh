@@ -79,7 +79,6 @@ sed -i "s/\"version\": \"$oldVersion\"/\"version\": \"$newVersion\"/" package.js
 # Then, do manual update/editing
 npm install
 npm audit fix
-npm run build
 
 # Make sure none of the files have changed, except for package-lock.json
 if [ "$(git diff --name-only | grep -v "package\(-lock\)\?.json")" != "" ] ; then
@@ -87,8 +86,12 @@ if [ "$(git diff --name-only | grep -v "package\(-lock\)\?.json")" != "" ] ; the
         exit 1
 fi
 
+# npm run test takes care of building the extension in test mode
 npm run test firefox
 npm run test chrome
+
+# now we need a release build
+npm run build
 
 # Add finishing touches to chrome manifest
 sed 's/"key":\s*"[^"]*",//' -i target/chrome/manifest.json
