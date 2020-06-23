@@ -1,5 +1,5 @@
 import { autofill } from "./autofill";
-import { getFunctions } from "./page/functions";
+import { getNeovimFrameFunctions, getActiveContentFunctions, getTabFunctions } from "./page/functions";
 import { confReady, getConf } from "./utils/configuration";
 import { FirenvimElement } from "./FirenvimElement";
 
@@ -10,9 +10,6 @@ if (document.location.href === "https://github.com/glacambre/firenvim/issues/new
 // Promise used to implement a locking mechanism preventing concurrent creation
 // of neovim frames
 let frameIdLock = Promise.resolve();
-// Promise-resolution function called when a frameId is received from the
-// background script
-let frameIdResolve = (_: number): void => undefined;
 
 const global = {
     // Whether Firenvim is disabled in this tab
@@ -23,10 +20,17 @@ const global = {
         // Note: this relies on setDisabled existing in the object returned by
         // getFunctions and attached to the window object
         .then((disabled: boolean) => (window as any).setDisabled(!!disabled)),
-    // lastBufferInfo: a [url, selector, cursor] tuple indicating the page
-    // the last iframe was created on, the selector of the corresponding
-    // textarea and the column/line number of the cursor.
-    lastBufferInfo: ["", "", [1, 1], undefined] as [string, string, [number, number], string],
+    // Promise-resolution function called when a frameId is received from the
+    // background script
+    frameIdResolve: (_: number): void => undefined,
+    // lastFocusedContentScript keeps track of the last content frame that has
+    // been focused. This is necessary in pages that contain multiple frames
+    // (and thus multiple content scripts): for example, if users press the
+    // global keyboard shortcut <C-n>, the background script sends a "global"
+    // message to all of the active tab's content scripts. For a content script
+    // to know if it should react to a global message, it just needs to check
+    // if it is the last active content script.
+    lastFocusedContentScript: 0,
     // nvimify: triggered when an element is focused, takes care of creating
     // the editor iframe, appending it to the page and focusing it.
     nvimify: async (evt: { target: EventTarget }) => {
@@ -67,8 +71,7 @@ const global = {
                 }
         }
 
-        const cursorPromise = editor.getCursor();
-        const languagePromise = editor.getLanguage();
+        firenvim.prepareBufferInfo();
 
         // When creating new frames, we need to know their frameId in order to
         // communicate with them. This can't be retrieved through a
@@ -85,17 +88,11 @@ const global = {
             await frameIdLock;
         }
         frameIdLock = new Promise(async (unlock: any) => {
-            global.lastBufferInfo = [
-                document.location.href,
-                firenvim.getSelector(),
-                await (cursorPromise.catch(() => [1, 1])),
-                await (languagePromise.catch(() => undefined))
-            ];
-
             // TODO: make this timeout the same as the one in background.ts
             const frameIdPromise = new Promise((resolve: (_: number) => void, reject) => {
-                frameIdResolve = (frameId: number) => {
+                global.frameIdResolve = (frameId: number) => {
                     global.firenvimElems.set(frameId, firenvim);
+                    global.frameIdResolve = () => undefined;
                     resolve(frameId);
                 };
                 setTimeout(reject, 10000);
@@ -110,33 +107,52 @@ const global = {
     firenvimElems: new Map<number, FirenvimElement>(),
 };
 
-// This works as an rpc mechanism, allowing the frame script to perform calls
-// in the content script.
-const functions = getFunctions(global);
-Object.assign(window, functions);
-browser.runtime.onMessage.addListener(async (
-    request: { funcName: string[], args: any[] },
-    sender: any,
-    sendResponse: any,
-) => {
-    // We need to treat registerNewFrameId differently from other RPC messages
-    // because other RPC messages rely on frameId existing in firenvimElems!
-    if (request.funcName[0] === "registerNewFrameId") {
-        frameIdResolve(request.args[0]);
-        frameIdResolve = () => undefined;
-        return;
-    }
+let ownFrameId: number;
+browser.runtime.sendMessage({ args: [], funcName: ["getOwnFrameId"] })
+    .then((frameId: number) => { ownFrameId = frameId });
+window.addEventListener("focus", async () => {
+    const frameId = ownFrameId;
+    global.lastFocusedContentScript = frameId;
+    browser.runtime.sendMessage({
+        args: {
+            args: [ frameId ],
+            funcName: ["setLastFocusedContentScript"]
+        },
+        funcName: ["messagePage"]
+    });
+});
 
-    const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
-    if (!fn) {
-        throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
-    }
-
-    if (global.firenvimElems.get(request.args[0]) !== undefined) {
+const frameFunctions = getNeovimFrameFunctions(global);
+const activeFunctions = getActiveContentFunctions(global);
+const tabFunctions = getTabFunctions(global);
+Object.assign(window, frameFunctions, activeFunctions, tabFunctions);
+browser.runtime.onMessage.addListener(async (request: { funcName: string[], args: any[] }) => {
+    // All content scripts must react to tab functions
+    let fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], tabFunctions);
+    if (fn !== undefined) {
         return fn(...request.args);
     }
-    // If the message wasn't for us, return undefined to let other frames answer
-    return new Promise(():void => undefined);
+
+    // The only content script that should react to activeFunctions is the active one
+    fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], activeFunctions);
+    if (fn !== undefined) {
+        if (global.lastFocusedContentScript === ownFrameId) {
+            return fn(...request.args);
+        }
+        return new Promise(() => undefined);
+    }
+
+    // The only content script that should react to frameFunctions is the one
+    // that owns the frame that sent the request
+    fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], frameFunctions);
+    if (fn !== undefined) {
+        if (global.firenvimElems.get(request.args[0]) !== undefined) {
+            return fn(...request.args);
+        }
+        return new Promise(() => undefined);
+    }
+
+    throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
 });
 
 function setupListeners(selector: string) {
@@ -207,13 +223,13 @@ function setupListeners(selector: string) {
         for (const mr of changes) {
             for (const node of mr.addedNodes) {
                 if (shouldNvimify(node)) {
-                    functions.forceNvimify();
+                    activeFunctions.forceNvimify();
                     return;
                 }
                 const walker = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT);
                 while (walker.nextNode()) {
                     if (shouldNvimify(walker.currentNode)) {
-                        functions.forceNvimify();
+                        activeFunctions.forceNvimify();
                         return;
                     }
                 }

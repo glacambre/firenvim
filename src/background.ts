@@ -284,6 +284,7 @@ Object.assign(window, {
         return result.then(({ password, port }) => ({ password, port }));
     },
     getNvimPluginVersion: () => nvimPluginVersion,
+    getOwnFrameId: (sender: any) => sender.frameId,
     getTab: (sender: any) => sender.tab,
     getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
     getTabValueFor: (_: any, args: any) => getTabValue(args[0], args[1]),
