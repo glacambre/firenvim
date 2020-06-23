@@ -1,8 +1,8 @@
-import { getFunctions } from "./functions";
+import { getNeovimFrameFunctions } from "./functions";
 
 // We don't need to give real values to getFunctions since we're only trying to
 // get the name of functions that exist in the page.
-const functions = getFunctions({} as any);
+const functions = getNeovimFrameFunctions({} as any);
 
 type ft = typeof functions;
 // The proxy automatically appends the frameId to the request, so we hide that from users

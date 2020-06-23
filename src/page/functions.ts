@@ -4,10 +4,11 @@ import { FirenvimElement } from "../FirenvimElement";
 import { executeInPage } from "../utils/utils";
 
 interface IGlobalState {
-    lastBufferInfo: [string, string, [number, number], string];
-    nvimify: (evt: FocusEvent) => void;
-    firenvimElems: Map<number, FirenvimElement>;
     disabled: boolean | Promise<boolean>;
+    lastFocusedContentScript: number;
+    firenvimElems: Map<number, FirenvimElement>;
+    frameIdResolve: (_: number) => void;
+    nvimify: (evt: FocusEvent) => void;
 }
 
 function _focusInput(global: IGlobalState, firenvim: FirenvimElement, addListener: boolean) {
@@ -29,22 +30,25 @@ function getFocusedElement (firenvimElems: Map<number, FirenvimElement>) {
         .find(instance => instance.isFocused());
 }
 
-export function getFunctions(global: IGlobalState) {
+// Tab functions are functions all content scripts should react to
+export function getTabFunctions(global: IGlobalState) {
     return {
-        evalInPage: (_: number, js: string) => executeInPage(js),
-        focusInput: (frameId: number) => {
-            let firenvimElement;
-            if (frameId === undefined) {
-                firenvimElement = getFocusedElement(global.firenvimElems);
-            } else {
-                firenvimElement = global.firenvimElems.get(frameId);
-            }
-            _focusInput(global, firenvimElement, true);
+        getActiveInstanceCount : () => global.firenvimElems.size,
+        registerNewFrameId: (frameId: number) => {
+            global.frameIdResolve(frameId);
         },
-        focusPage: () => {
-            (document.activeElement as any).blur();
-            document.documentElement.focus();
+        setDisabled: (disabled: boolean) => {
+            global.disabled = disabled;
         },
+        setLastFocusedContentScript: (frameId: number) => {
+            global.lastFocusedContentScript = frameId;
+        }
+    };
+}
+
+// ActiveContent functions are functions only the active content script should react to
+export function getActiveContentFunctions(global: IGlobalState) {
+    return {
         forceNvimify: () => {
             let elem = document.activeElement;
             if (!elem || elem === document.documentElement || elem === document.body) {
@@ -65,10 +69,39 @@ export function getFunctions(global: IGlobalState) {
             }
             global.nvimify({ target: elem } as any);
         },
-        getActiveInstanceCount : () => global.firenvimElems.size,
-        getEditorInfo: () => {
-            return global.lastBufferInfo;
+        sendKey: (key: string) => {
+            const firenvim = getFocusedElement(global.firenvimElems);
+            if (firenvim !== undefined) {
+                firenvim.sendKey(key);
+            } else {
+                // It's important to throw this error as the background script
+                // will execute a fallback
+                throw new Error("No firenvim frame selected");
+            }
         },
+    };
+}
+
+export function getNeovimFrameFunctions(global: IGlobalState) {
+    return {
+        evalInPage: (_: number, js: string) => executeInPage(js),
+        focusInput: (frameId: number) => {
+            let firenvimElement;
+            if (frameId === undefined) {
+                firenvimElement = getFocusedElement(global.firenvimElems);
+            } else {
+                firenvimElement = global.firenvimElems.get(frameId);
+            }
+            _focusInput(global, firenvimElement, true);
+        },
+        focusPage: () => {
+            (document.activeElement as any).blur();
+            document.documentElement.focus();
+        },
+        getEditorInfo: (frameId: number) => global
+            .firenvimElems
+            .get(frameId)
+            .getBufferInfo(),
         getElementContent: (frameId: number) => global
             .firenvimElems
             .get(frameId)
@@ -92,19 +125,6 @@ export function getFunctions(global: IGlobalState) {
             const elem = global.firenvimElems.get(frameId);
             elem.resizeTo(width, height, true);
             elem.putEditorCloseToInputOriginAfterResizeFromFrame();
-        },
-        sendKey: (key: string) => {
-            const firenvim = getFocusedElement(global.firenvimElems);
-            if (firenvim !== undefined) {
-                firenvim.sendKey(key);
-            } else {
-                // It's important to throw this error as the background script
-                // will execute a fallback
-                throw new Error("No firenvim frame selected");
-            }
-        },
-        setDisabled: (disabled: boolean) => {
-            global.disabled = disabled;
         },
         setElementContent: (frameId: number, text: string) => {
             return global.firenvimElems.get(frameId).setPageElementContent(text);

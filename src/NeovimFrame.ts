@@ -9,7 +9,7 @@ const frameIdPromise = browser
     .runtime
     .sendMessage({ funcName: ["publishFrameId"] })
     .then((f: number) => (window as any).frameId = f);
-const infoPromise = frameIdPromise.then(_ => page.getEditorInfo());
+const infoPromise = frameIdPromise.then(() => page.getEditorInfo());
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
 
 export const isReady = new Promise((resolve, reject) => {

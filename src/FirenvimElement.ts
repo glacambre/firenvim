@@ -66,6 +66,16 @@ export class FirenvimElement {
     // the FirenvimElement. It is called when the detach() function is called,
     // after all Firenvim elements have been removed from the page.
     private onDetach: (id: number) => any;
+    // bufferInfo: a [url, selector, cursor, lang] tuple indicating the page
+    // the last iframe was created on, the selector of the corresponding
+    // textarea and the column/line number of the cursor.
+    // Note that these are __default__ values. Real values must be created with
+    // prepareBufferInfo(). The reason we're not doing this from the
+    // constructor is that it's expensive and disruptive - getting this
+    // information requires evaluating code in the page's context.
+    private bufferInfo = (Promise.resolve(["", "", [1, 1], undefined]) as
+                          Promise<[string, string, [number, number], string]>);
+
 
     // elem is the element that received the focusEvent.
     // Nvimify is the function that listens for focus events. We need to know
@@ -212,6 +222,10 @@ export class FirenvimElement {
         }
     }
 
+    getBufferInfo () {
+        return this.bufferInfo;
+    }
+
     getEditor () {
         return this.editor;
     }
@@ -243,6 +257,15 @@ export class FirenvimElement {
     isFocused () {
         return document.activeElement === this.span
             || document.activeElement === this.iframe;
+    }
+
+    prepareBufferInfo () {
+        this.bufferInfo = new Promise(async r => r([
+            document.location.href,
+            this.getSelector(),
+            await (this.editor.getCursor().catch(() => [1, 1])),
+            await (this.editor.getLanguage().catch(() => undefined))
+        ]));
     }
 
     pressKeys (keys: KeyboardEvent[]) {
