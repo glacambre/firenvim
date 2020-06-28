@@ -536,23 +536,31 @@ function paint (_: DOMHighResTimeStamp) {
                     const pixelY = y * charHeight;
 
                     for (let x = damage.x; x < damage.x + damage.w; ++x) {
+                        if (row[x] === "") {
+                            continue;
+                        }
                         const pixelX = x * charWidth;
                         let glyphId = row[x] + "-" + highs[x];
 
                         if (glyphCache[glyphId] === undefined) {
+                            let width = Math.ceil(context.measureText(row[x]).width);
+                            if (width > charWidth) {
+                                width = charWidth * 2;
+                            } else {
+                                width = charWidth;
+                            }
                             context.fillStyle = highlights[highs[x]].background || state.defaultBackground;
                             context.fillRect(pixelX,
                                              pixelY,
-                                             charWidth,
+                                             width,
                                              charHeight);
                             context.fillStyle = highlights[highs[x]].foreground || state.defaultForeground;
                             context.fillText(row[x], pixelX, pixelY + baseline);
                             glyphCache[glyphId] = context.getImageData(
                                 pixelX,
                                 pixelY,
-                                charWidth,
-                                charHeight,
-                            );
+                                width,
+                                charHeight);
                         } else {
                             context.putImageData(glyphCache[glyphId], pixelX, pixelY);
                         }
