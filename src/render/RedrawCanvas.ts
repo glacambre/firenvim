@@ -105,7 +105,15 @@ type GridDamage = CellDamage & ResizeDamage & ScrollDamage;
 
 // The state of the commandline. It is only used when using neovim's external
 // commandline.
-type CommandLineState = "hidden" | "shown";
+type CommandLineState = {
+    status: "hidden" | "shown",
+    content: [any, string][],
+    pos: number,
+    firstc: string,
+    prompt: string,
+    indent: number,
+    level: number
+}
 
 type Cursor = {
     currentGrid: number,
@@ -144,7 +152,15 @@ type State = {
 };
 
 const globalState: State = {
-    commandLine: "hidden",
+    commandLine: {
+        status: "hidden",
+        content: [],
+        pos: 0,
+        firstc: "",
+        prompt: "",
+        indent: 0,
+        level: 0,
+    },
     cursor: {
         currentGrid: 1,
         x: 0,
@@ -223,7 +239,7 @@ function recomputeCharSize (context: CanvasRenderingContext2D) {
     maxBaselineDistance = baseline;
     metricsInvalidated = false;
 }
-function getGlyphInfo () {
+export function getGlyphInfo () {
     if (metricsInvalidated
         || maxCellWidth === undefined
         || maxCellHeight === undefined
@@ -283,12 +299,46 @@ function matchesSelectedGrid(gid: number) {
     return gridId === undefined || gridId === gid;
 }
 
+function getCommandLineRect () {
+    const [width, height] = getGlyphInfo();
+    return {
+        x: width - 1,
+        y: ((canvas.height - height - 1) / 2),
+        width: (canvas.width - (width * 2)) + 2,
+        height: height + 2,
+    };
+}
+
+function damageCommandLineSpace () {
+    const [width, height] = getGlyphInfo();
+    const rect = getCommandLineRect();
+    pushDamage(getGridId(), DamageKind.Cell, Math.ceil(rect.height / height) + 1, Math.ceil(rect.width / width) + 1, Math.floor(rect.x / width), Math.floor(rect.y / height));
+}
+
 const handlers = {
     busy_start: () => { globalState.isBusy = true; },
     busy_stop: () => { globalState.isBusy = false; },
-    cmdline_hide: () => { globalState.commandLine = "hidden"; },
+    cmdline_hide: () => {
+        globalState.commandLine.status = "hidden";
+        damageCommandLineSpace();
+    },
     cmdline_pos: () => { },
-    cmdline_show: () => { globalState.commandLine = "shown"; },
+    cmdline_show:
+        (content: [any, string][],
+         pos: number,
+         firstc: string,
+         prompt: string,
+         indent: number,
+         level: number) => {
+             globalState.commandLine.status = "shown";
+             globalState.commandLine.content = content;
+             globalState.commandLine.pos = pos;
+             globalState.commandLine.firstc = firstc;
+             globalState.commandLine.prompt = prompt;
+             globalState.commandLine.indent = indent;
+             globalState.commandLine.level = level;
+             console.log(content, pos, firstc, prompt, indent, level);
+         },
     default_colors_set: (fg: number, bg: number, sp: number) => {
         if (fg !== undefined && fg !== -1) {
             globalState.defaultForeground = toHexCss(fg);
@@ -570,34 +620,82 @@ function paint (_: DOMHighResTimeStamp) {
         }
     }
 
-    const cursor = state.cursor;
-    if (cursor.currentGrid === gid) {
-        const mode = state.mode;
-        const info = mode.styleEnabled
-            ? mode.modeInfo[mode.current]
-            : mode.modeInfo[0];
-        context.fillStyle = highlights[info.attr_id].foreground || state.defaultForeground;
+    if (state.commandLine.status === "shown") {
+        const commandLine = state.commandLine;
+        const high = highlights[0];
+        const rect = getCommandLineRect();
+        // outer rectangle
+        context.fillStyle = high.foreground;
+        context.fillRect(rect.x,
+                         rect.y,
+                         rect.width,
+                         rect.height);
 
-        // Draw cursor background
-        let cursorWidth = cursor.x * charWidth;
-        let cursorHeight = cursor.y * charHeight;
-        let width = charWidth;
-        let height = charHeight;
-        if (info.cursor_shape === "vertical") {
-            width = 1;
-        } else if (info.cursor_shape === "horizontal") {
-            cursorHeight += charHeight - 2;
-            height = 1;
+        // inner rectangle
+        rect.x += 1;
+        rect.y += 1;
+        rect.width -= 2;
+        rect.height -= 2;
+        context.fillStyle = high.background;
+        context.fillRect(rect.x,
+                         rect.y,
+                         rect.width,
+                         rect.height);
+
+        // padding of inner rectangle
+        rect.x += 1;
+        rect.y += 1;
+        rect.width -= 2;
+        rect.height -= 2;
+
+        // Position where text should be drawn
+        let x = rect.x;
+        let y = rect.y;
+
+        // first character
+        context.fillStyle = high.foreground;
+        context.fillText(commandLine.firstc, x, y + baseline);
+        x += charWidth;
+        rect.width -= charWidth;
+
+        let str = commandLine.content.reduce((r: string, segment: [any, string]) => r + segment[1], "");
+        let size = context.measureText(str).width;
+        while (size >= rect.width) {
+            str = str.slice(1);
+            size = context.measureText(str).width;
         }
-        context.fillRect(cursorWidth,
-                         cursorHeight,
-                         width,
-                         height);
+        // rest
+        context.fillText(str, x, y + baseline);
+    } else {
+        const cursor = state.cursor;
+        if (cursor.currentGrid === gid) {
+            const mode = state.mode;
+            const info = mode.styleEnabled
+                ? mode.modeInfo[mode.current]
+                : mode.modeInfo[0];
+            context.fillStyle = highlights[info.attr_id].foreground || state.defaultForeground;
 
-        if (info.cursor_shape === "block") {
-            context.fillStyle = highlights[info.attr_id].background || state.defaultBackground;
-            const char = charactersGrid[cursor.y][cursor.x];
-            context.fillText(char, cursor.x * charWidth, cursor.y * charHeight + baseline);
+            // Draw cursor background
+            let cursorWidth = cursor.x * charWidth;
+            let cursorHeight = cursor.y * charHeight;
+            let width = charWidth;
+            let height = charHeight;
+            if (info.cursor_shape === "vertical") {
+                width = 1;
+            } else if (info.cursor_shape === "horizontal") {
+                cursorHeight += charHeight - 2;
+                height = 1;
+            }
+            context.fillRect(cursorWidth,
+                             cursorHeight,
+                             width,
+                             height);
+
+            if (info.cursor_shape === "block") {
+                context.fillStyle = highlights[info.attr_id].background || state.defaultBackground;
+                const char = charactersGrid[cursor.y][cursor.x];
+                context.fillText(char, cursor.x * charWidth, cursor.y * charHeight + baseline);
+            }
         }
     }
 
