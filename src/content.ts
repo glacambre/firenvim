@@ -109,7 +109,7 @@ const global = {
 
 let ownFrameId: number;
 browser.runtime.sendMessage({ args: [], funcName: ["getOwnFrameId"] })
-    .then((frameId: number) => { ownFrameId = frameId });
+    .then((frameId: number) => { ownFrameId = frameId; });
 window.addEventListener("focus", async () => {
     const frameId = ownFrameId;
     global.lastFocusedContentScript = frameId;
