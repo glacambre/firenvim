@@ -146,6 +146,8 @@ If you want to use different settings depending on the textarea you're currently
 au BufEnter github.com_*.txt set filetype=markdown
 ```
 
+More filetypes for websites and other site specific settings [are in the user-maintained wiki](https://github.com/glacambre/firenvim/wiki/Filetypes-for-websites-&-more) - add yours as well if it is reasonably general!
+
 ### Understanding Firenvim's configuration object
 
 You can configure everything else about Firenvim by creating a dictionnary named `g:firenvim_config` in your init.vim and setting the keys "globalSettings" and "localSettings". In the dictionary `g:firenvim_config["localSettings"]` you can map Javascript patterns that match against the full URL to settings that are used for all URLs matched by that pattern. When multiple patterns match a URL, the pattern with the highest "priority" value is used. Here is an example (the settings and their possible values will be explained in the next subsections):
@@ -173,9 +175,11 @@ let fc = g:firenvim_config['localSettings']
 let fc['https?://[^/]+\.co\.uk/'] = { 'takeover': 'never', 'priority': 1 }
 ```
 
-From now on, localSettings examples will use the `let fc[...] = ...` shorthand, assuming that you have defined a `g:firenvim_config` object and that you have a line like `let fc = g:firenvim_config['localSettings']` in your config.
+Note that firenvim will always be broken on some sites, e.g. [Google Docs](https://github.com/glacambre/firenvim/issues/630). If you find a site where firenvim isn't working correctly, first search through the [open issues](https://github.com/glacambre/firenvim/issues) and if there is none [report it](https://github.com/glacambre/firenvim/issues/new) to check whether it [might be fixable](https://github.com/glacambre/firenvim/issues/607). There is a community-maintained [site in the wiki](https://github.com/glacambre/firenvim/wiki/Broken-Websites) with configuration recommendations to minimize breakage - feel free to contribute!
 
-### Configuring what elements Firenvim should appear on
+The localSettings examples below use the `let fc[...] = ...` shorthand, assuming that you have defined a `g:firenvim_config` object and `let fc = g:firenvim_config['localSettings']` in your config.
+
+#### Configuring what elements Firenvim should appear on
 
 The `selector` attribute of a localSetting controls what elements Firenvim automatically takes over. Here's the default value:
 
@@ -195,7 +199,7 @@ Since `selector` is just a CSS selector, you have access to all of CSS's pseudo 
 let fc['.*'] = { 'selector': 'textarea:not([class=xxx])' }
 ```
 
-### Configuring Firenvim to not always take over elements
+#### Configuring Firenvim to not always take over elements
 
 Firenvim has a setting named `takeover` that can be set to `always`, `empty`, `never`, `nonempty` or `once`. When set to `always`, Firenvim will always take over elements for you. When set to `empty`, Firenvim will only take over empty elements. When set to `never`, Firenvim will never automatically appear, thus forcing you to use a keyboard shortcut in order to make the Firenvim frame appear. When set to `nonempty`, Firenvim will only take over elements that aren't empty. When set to `once`, Firenvim will take over elements the first time you select them, which means that after `:q`'ing Firenvim, you'll have to use the keyboard shortcut to make it appear again. Here's how to use the `takeover` setting:
 
@@ -203,7 +207,7 @@ Firenvim has a setting named `takeover` that can be set to `always`, `empty`, `n
 let fc['.*'] = { 'takeover': 'always' }
 ```
 
-### Using the external command line
+#### Using the external command line
 
 You can chose to use an external command line (and thus save a line of space) by setting the localSetting named `cmdline` to `firenvim`. Its default value is `neovim`:
 
@@ -213,7 +217,7 @@ let fc['.*'] = { 'cmdline' : 'firenvim' }
 
 When you then enter command mode, the command will appear in a sort of "pop-up" instead of the bottom of the frame.
 
-### Using a single neovim instance
+#### Using a single neovim instance
 
 Firenvim can be made to use a single neovim instance. To do so, set the `server` setting to `'persistent'`. Firenvim will automatically start an instance on Firefox's startup and then launch a new one every time the previous one is `:quit`'ed. In this mode, every new Firenvim window is actually a Neovim floating window. This means that having the cursor move to another window/opening new floating windows can be pretty confusing and should be avoided.
 
@@ -227,7 +231,7 @@ let g:firenvim_config = {
 \}
 ```
 
-### Special characters on OSX
+#### Special characters on OSX
 
 On OSX, on certain layouts (e.g. the swedish layout), pressing special characters (e.g. `@`) requires combining `Alt` and another key. Because of browser/OS limitations, it is impossible to tell the difference between a user trying to press `<A-@>` and just `@`. Because of that, on OSX, Firenvim decides to ignore the Alt key when you press any non-alphanumerical key. This behavior can be changed by setting the `alt` setting of the `globalSettings` configuration to `all`, like this:
 
@@ -268,7 +272,7 @@ au BufEnter riot.im_* inoremap <CR> <Esc>:w<CR>:call firenvim#press_keys("<LT>CR
 
 Known Issues: some chat apps do not react to firenvim#press_keys (e.g. Slack).
 
-### Automatically syncing changes to the page
+#### Automatically syncing changes to the page
 
 Since Firenvim simply uses the BufWrite event in order to detect when it needs to write neovim's buffers to the page, Firenvim can be made to automatically synchronize all changes like this:
 
