@@ -62,7 +62,13 @@ function modKeyToEvents(key: string) {
         char = arr[1];
         ctrlKey = /c/i.test(mods);
         altKey = /a/i.test(mods);
-        shiftKey = char !== char.toLocaleLowerCase();
+        const specialChar = "<" + char + ">";
+        if (nonLiteralVimKeys[specialChar] !== undefined) {
+            char = nonLiteralVimKeys[specialChar];
+            shiftKey = false;
+        } else {
+            shiftKey = char !== char.toLocaleLowerCase();
+        }
     }
     return [
         new KeyboardEvent("keydown",  { key: char, ctrlKey, altKey, shiftKey, bubbles: true }),
