@@ -232,6 +232,28 @@ function! s:get_chrome_manifest_dir_path() abort
         return s:build_path([$HOME, '.config', 'google-chrome', 'NativeMessagingHosts'])
 endfunction
 
+function! s:canary_config_exists() abort
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'Google', 'Chrome Canary']
+        elseif has('win32')
+                let l:p = [$HOME, 'AppData', 'Local', 'Google', 'Chrome SxS']
+        else
+                " Chrome canary doesn't exist on linux
+                return v:false
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
+function! s:get_canary_manifest_dir_path() abort
+        if has('mac')
+                return s:build_path([$HOME, 'Library', 'Application Support', 'Google', 'Chrome Canary', 'NativeMessagingHosts'])
+        elseif has('win32')
+                return s:get_data_dir_path()
+        end
+        throw "Chrome Canary doesn't exist on Linux"
+endfunction
+
+
 function! s:chromium_config_exists() abort
         let l:p = [$HOME, '.config', 'chromium']
         if has('mac')
@@ -368,6 +390,12 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_dir_path': function('s:get_chrome_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \},
+                \'chrome-canary': {
+                        \ 'has_config': s:canary_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_canary_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \},
                 \'chromium': {
                         \ 'has_config': s:chromium_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
@@ -452,9 +480,14 @@ function! firenvim#install(...) abort
                         continue
                 endif
 
-                let l:manifest_content = l:cur_browser['manifest_content'](l:execute_nvim_path)
-                let l:manifest_dir_path = l:cur_browser['manifest_dir_path']()
-                let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim.json'])
+                try
+                        let l:manifest_content = l:cur_browser['manifest_content'](l:execute_nvim_path)
+                        let l:manifest_dir_path = l:cur_browser['manifest_dir_path']()
+                        let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim.json'])
+                catch /.*/
+                        echo 'Aborting installation for ' . l:name . '. ' . v:exception
+                        continue
+                endtry
                 
                 if has('win32')
                         let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim-' . l:name . '.json'])
@@ -466,12 +499,10 @@ function! firenvim#install(...) abort
 
                 echo 'Installed native manifest for ' . l:name . '.'
 
-                " Appveyor hangs when running more than 5 ps1 scripts, so make
-                " sure we only run firefox on it
                 if has('win32')
-                        " On windows, also create a registry key. We
-                        " do this by writing a powershell script to a
-                        " file and executing it.
+                        " On windows, also create a registry key. We do this
+                        " by writing a powershell script to a file and
+                        " executing it.
                         let l:ps1_content = s:key_to_ps1_str(l:cur_browser['registry_key'],
                                                 \ l:manifest_path)
                         let l:ps1_path = s:build_path([l:manifest_dir_path, l:name . '.ps1'])
