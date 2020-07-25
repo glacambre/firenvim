@@ -421,7 +421,7 @@ export async function testPressKeys(driver: webdriver.WebDriver) {
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":w".split(""))
                 .concat(webdriver.Key.ENTER)
-                .concat(":call firenvim#press_keys('<CR>')".split(""))
+                .concat(":call firenvim#press_keys('<C-CR>')".split(""))
                 .concat(webdriver.Key.ENTER)
                 .concat(":q!".split(""))
                 .concat(webdriver.Key.ENTER));
