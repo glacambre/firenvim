@@ -1,4 +1,4 @@
-local websocket = require("websocket")
+local websocket = require("firenvim-websocket")
 
 local function close_server(server)
         vim.loop.close(server)

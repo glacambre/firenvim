@@ -2,7 +2,7 @@ if bit == nil then
         bit = require("bit")
 end
 
-local utils = require("utils")
+local utils = require("firenvim-utils")
 
 local opcodes = {
         text = 1,
