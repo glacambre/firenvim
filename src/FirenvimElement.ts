@@ -21,9 +21,13 @@ export class FirenvimElement {
     // and displays the editor.
     private iframe: HTMLIFrameElement;
     // We use an intersectionObserver to detect when the element the
-    // FirenvimElement is tied to disappears from the page. When this happens,
-    // we also remove the FirenvimElement from the page.
+    // FirenvimElement is tied becomes invisible. When this happens,
+    // we hide the FirenvimElement from the page.
     private intersectionObserver: IntersectionObserver;
+    // We use a mutation observer to detect whether the element is removed from
+    // the page. When this happens, the FirenvimElement is removed from the
+    // page.
+    private mutationObserver: MutationObserver;
     // nvimify is the function that listens for focus events and creates
     // firenvim elements. We need it in order to be able to remove it as an
     // event listener from the element the user selected when the user wants to
@@ -152,27 +156,46 @@ export class FirenvimElement {
 
         this.focus();
 
-        // We want to remove the frame from the page if the corresponding
-        // element has been removed. It is pretty hard to tell when an element
-        // disappears from the page (either by being removed or by being hidden
-        // by other elements), so we use an intersection observer, which is
-        // triggered every time the element becomes more or less visible.
+        // It is pretty hard to tell when an element disappears from the page
+        // (either by being removed or by being hidden by other elements), so
+        // we use an intersection observer, which is triggered every time the
+        // element becomes more or less visible.
         this.intersectionObserver = new IntersectionObserver((self => () => {
             const elem = self.getElement();
-            if (!elem.ownerDocument.contains(elem)) {
-                self.detachFromPage();
-            } else if (elem.offsetWidth === 0
-                       && elem.offsetHeight === 0
-                   && elem.getClientRects().length === 0) {
+            // If elem doesn't have a rect anymore, it's hidden
+            if (elem.getClientRects().length === 0) {
                 self.hide();
+            } else {
+                self.show();
             }
         })(this), { root: null, threshold: 0.1 });
         this.intersectionObserver.observe(this.getElement());
+
+        // We want to remove the FirenvimElement from the page when the
+        // corresponding element is removed. We do this by adding a
+        // mutationObserver to its parent.
+        this.mutationObserver = new MutationObserver((self => (mutations: MutationRecord[]) => {
+            const elem = self.getElement();
+            mutations.forEach(mutation => mutation.removedNodes.forEach(node => {
+                const walker = document.createTreeWalker(node, NodeFilter.SHOW_ALL);
+                while (walker.nextNode()) {
+                    if (walker.currentNode === elem) {
+                        setTimeout(() => self.detachFromPage());
+                    }
+                }
+            }));
+        })(this));
+        this.mutationObserver.observe(document.documentElement, {
+            subtree: true,
+            childList: true
+        });
     }
 
     detachFromPage () {
-        this.resizeObserver.unobserve(this.getElement());
-        this.intersectionObserver.unobserve(this.getElement());
+        const elem = this.getElement();
+        this.resizeObserver.unobserve(elem);
+        this.intersectionObserver.unobserve(elem);
+        this.mutationObserver.disconnect();
         this.span.parentNode.removeChild(this.span);
         this.onDetach(this.frameId);
     }
