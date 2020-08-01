@@ -17,7 +17,7 @@
     "sharp": "0.25.4",
     "ts-jest": "25.5.1",
     "ts-loader": "^8.0.1",
-    "tslint": "6.1.2",
+    "tslint": "6.1.3",
     "typescript": "3.9.7",
     "web-ext": "5.0.0",
     "web-ext-types": "3.2.1",
