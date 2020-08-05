@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Draft-js</title>
+    <meta charset="utf-8"/>
+<style>
+div.public-DraftEditor-content {
+  min-height: 100px;
+}
+</style>
+    <script src="../../node_modules/immutable/dist/immutable.min.js"></script>
+    <script src="../../node_modules/react/umd/react.production.min.js"></script>
+    <script src="../../node_modules/react-dom/umd/react-dom.production.min.js"></script>
+    <script src="../../node_modules/draft-js/dist/Draft.js"></script>
+    <script>
+      addEventListener("load", () => {
+
+let count = 0;
+class MyEditor extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {editorState: Draft.EditorState.createEmpty()};
+    this.onChange = (editorState) => {
+      this.setState({editorState});
+    }
+    this.setEditor = (editor) => {
+      this.editor = editor;
+    };
+    this.focusEditor = () => {
+      if (this.editor) {
+        this.editor.focus();
+      }
+    };
+  }
+
+  componentDidMount() {
+    this.focusEditor();
+  }
+
+  render() {
+    return React.createElement('div', { style: styles.editor, onClick: this.focusEditor }, [
+        React.createElement(Draft.Editor, { ref: this.setEditor, editorState: this.state.editorState, onChange: this.onChange })
+      ]);
+  }
+}
+
+const styles = {
+  editor: {
+    border: '1px solid gray',
+    minHeight: '6em'
+  }
+};
+
+ReactDOM.render(
+  React.createElement(MyEditor, null),
+  document.getElementById('container')
+);
+      });
+    </script>
+  </head>
+  <body>
+    <div id="container"></div>
+  </body>
+</html>
