@@ -1,7 +1,7 @@
 
 let s:patterns_to_ft = {
         \ '/github.com_.*\.txt$': 'markdown',
-        \ '/reddit.com_.*\.txt$': 'markdown',
+        \ '/www.reddit.com_.*\.txt$': 'markdown',
         \ '/stackoverflow.com_.*\.txt$': 'markdown',
         \ '/stackexchange.com_.*\.txt$': 'markdown',
         \ '/slack.com_.*\.txt$': 'markdown',
