@@ -64,7 +64,7 @@ export const isReady = new Promise((resolve, reject) => {
                     // different from rows but we can't because redraw notifications
                     // might happen without us actually calling ui_try_resize and then
                     // the sizes wouldn't be in sync anymore
-                    const [cellWidth, cellHeight] = getCharSize(host);
+                    const [cellWidth, cellHeight] = getGlyphInfo();
                     const nCols = Math.floor(width / cellWidth);
                     const nRows = Math.floor(height / cellHeight);
                     nvim.ui_try_resize_grid(getGridId(), nCols, nRows);
