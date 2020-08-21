@@ -6,7 +6,7 @@
     "@types/node": "14.6.0",
     "@types/selenium-webdriver": "4.0.9",
     "ace-builds": "^1.4.12",
-    "codemirror": "^5.56.0",
+    "codemirror": "^5.57.0",
     "copy-webpack-plugin": "6.0.3",
     "geckodriver": "1.20.0",
     "imports-loader": "^1.1.0",
