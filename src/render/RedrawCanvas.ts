@@ -322,7 +322,11 @@ const handlers = {
         globalState.commandLine.status = "hidden";
         damageCommandLineSpace();
     },
-    cmdline_pos: () => { },
+    cmdline_pos: (pos: number, level: number) => {
+        globalState.commandLine.pos = pos;
+        globalState.commandLine.level = level;
+        console.log(pos, level);
+    },
     cmdline_show:
         (content: [any, string][],
          pos: number,
@@ -620,6 +624,7 @@ function paint (_: DOMHighResTimeStamp) {
         }
     }
 
+    // If the command line is shown, the cursor's in it
     if (state.commandLine.status === "shown") {
         const commandLine = state.commandLine;
         const high = highlights[0];
