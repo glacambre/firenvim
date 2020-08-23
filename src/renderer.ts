@@ -1,15 +1,15 @@
 import { PageType } from "./page";
 import { parseGuifont, toHexCss } from "./utils/utils";
 import { NvimMode, confReady, getGlobalConf } from "./utils/configuration";
+import { EventEmitter } from "./EventEmitter";
+
+type ResizeEvent = {grid: number, width: number, height: number};
+type ResizeEventHandler = (e: ResizeEvent) => void;
+export const events = new EventEmitter<"resize", ResizeEventHandler>();
 
 let page: any;
 export function setPage(p: PageType) {
     page = p;
-}
-
-let functions: any;
-export function setFunctions(fns: any) {
-    functions = fns;
 }
 
 let glyphCache : any = {};
@@ -644,9 +644,11 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
                 }
                 setFontString(state, newFontString);
                 const [charWidth, charHeight] = getGlyphInfo(state);
-                functions.ui_try_resize_grid(getGridId(),
-                                             Math.floor(state.canvas.width / charWidth),
-                                             Math.floor(state.canvas.height / charHeight));
+                events.emit("resize", {
+                    grid: getGridId(),
+                    width: Math.floor(state.canvas.width / charWidth),
+                    height: Math.floor(state.canvas.height / charHeight),
+                });
             }
             break;
             case "linespace": {
@@ -661,9 +663,11 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
                 if (curGridSize !== undefined) {
                     pushDamage(getGridId(), DamageKind.Cell, curGridSize.height, curGridSize.width, 0, 0);
                 }
-                functions.ui_try_resize_grid(gid,
-                                             Math.floor(state.canvas.width / charWidth),
-                                             Math.floor(state.canvas.height / charHeight));
+                events.emit("resize", {
+                    grid: gid,
+                    width: Math.floor(state.canvas.width / charWidth),
+                    height: Math.floor(state.canvas.height / charHeight),
+                });
             }
             break;
         }

@@ -12,8 +12,10 @@ export async function neovim(
     const requests = new Map<number, { resolve: any, reject: any }>();
 
     CanvasRenderer.setPage(page);
-    CanvasRenderer.setFunctions(functions);
     CanvasRenderer.setCanvas(canvas);
+    CanvasRenderer.events.on("resize", ({grid, width, height}) => {
+        (functions as any).ui_try_resize_grid(grid, width, height);
+    });
 
     let prevNotificationPromise = Promise.resolve();
     const socket = new WebSocket(`ws://127.0.0.1:${port}/${password}`);
