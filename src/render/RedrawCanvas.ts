@@ -325,7 +325,6 @@ const handlers = {
     cmdline_pos: (pos: number, level: number) => {
         globalState.commandLine.pos = pos;
         globalState.commandLine.level = level;
-        console.log(pos, level);
     },
     cmdline_show:
         (content: [any, string][],
@@ -341,7 +340,6 @@ const handlers = {
              globalState.commandLine.prompt = prompt;
              globalState.commandLine.indent = indent;
              globalState.commandLine.level = level;
-             console.log(content, pos, firstc, prompt, indent, level);
          },
     default_colors_set: (fg: number, bg: number, sp: number) => {
         if (fg !== undefined && fg !== -1) {
@@ -663,14 +661,84 @@ function paint (_: DOMHighResTimeStamp) {
         x += charWidth;
         rect.width -= charWidth;
 
+        let encoder = new TextEncoder();
+        // reduce the commandline's content to a string for iteration
         let str = commandLine.content.reduce((r: string, segment: [any, string]) => r + segment[1], "");
-        let size = context.measureText(str).width;
-        while (size >= rect.width) {
-            str = str.slice(1);
-            size = context.measureText(str).width;
+        // Array.from(str) will return an array whose cells are grapheme
+        // clusters. It is important to iterate over graphemes instead of the
+        // string because iterating over the string would sometimes yield only
+        // half of the UTF-16 character/surrogate pair.
+        const characters = Array.from(str);
+        // renderedI is the horizontal pixel position where the next character
+        // should be drawn
+        let renderedI = 0;
+        // encodedI is the number of bytes that have been iterated over thus
+        // far. It is used to find out where to draw the cursor. Indeed, neovim
+        // sends the cursor's position as a byte position within the UTF-8
+        // encoded commandline string.
+        let encodedI = 0;
+        // cursorX is the horizontal pixel position where the cursor should be
+        // drawn.
+        let cursorX = 0;
+        // The index of the first character of `characters` that can be drawn.
+        // It is higher than 0 when the command line string is too long to be
+        // entirely displayed.
+        let sliceStart = 0;
+        // The index of the last character of `characters` that can be drawn.
+        // It is different from characters.length when the command line string
+        // is too long to be entirely displayed.
+        let sliceEnd = 0;
+        // The horizontal width in pixels taken by the displayed slice. It
+        // is used to keep track of whether the commandline string is longer
+        // than the commandline window.
+        let sliceWidth = 0;
+        // cursorDisplayed keeps track of whether the cursor can be displayed
+        // in the slice.
+        let cursorDisplayed = commandLine.pos === 0;
+        // description of the algorithm:
+        // For each character, find out its width. If it cannot fit in the
+        // command line window along with the rest of the slice and the cursor
+        // hasn't been found yet, remove characters from the beginning of the
+        // slice until the character fits. 
+        // Stop either when all characters are in the slice or when the cursor
+        // can be displayed and the slice takes all available width.
+        for (let i = 0; i < characters.length; ++i) {
+            sliceEnd = i;
+            const char = characters[i];
+
+            const cWidth = Math.ceil(context.measureText(char).width / charWidth) * charWidth;
+            renderedI += cWidth;
+
+            sliceWidth += cWidth;
+            if (sliceWidth > rect.width) {
+                if (cursorDisplayed) {
+                    break;
+                }
+                do {
+                    const removedChar = characters[sliceStart];
+                    const removedWidth = Math.ceil(context.measureText(removedChar).width / charWidth) * charWidth;
+                    renderedI -= removedWidth;
+                    sliceWidth -= removedWidth;
+                    sliceStart += 1;
+                } while (sliceWidth > rect.width);
+            }
+
+            encodedI += encoder.encode(char).length;
+            if (encodedI == commandLine.pos) {
+                cursorX = renderedI;
+                cursorDisplayed = true;
+            }
+            
         }
-        // rest
-        context.fillText(str, x, y + baseline);
+        if (characters.length > 0) {
+            renderedI = 0;
+            for (let i = sliceStart; i <= sliceEnd; ++i) {
+                const char = characters[i];
+                context.fillText(char, x + renderedI, y + baseline);
+                renderedI += Math.ceil(context.measureText(char).width / charWidth) * charWidth;
+            }
+        }
+        context.fillRect(x + cursorX, y, 1, charHeight);
     } else {
         const cursor = state.cursor;
         if (cursor.currentGrid === gid) {
