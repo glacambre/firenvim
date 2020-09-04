@@ -138,9 +138,6 @@ type Mode = {
 type State = {
     commandLine : CommandLineState,
     cursor: Cursor,
-    defaultBackground: string,
-    defaultForeground: string,
-    defaultSpecial: number,
     gridCharacters: string[][][],
     gridDamages: GridDamage[][],
     gridDamagesCount: number[],
@@ -166,9 +163,6 @@ const globalState: State = {
         x: 0,
         y: 0,
     },
-    defaultBackground,
-    defaultForeground,
-    defaultSpecial: 0,
     gridCharacters: [],
     gridDamages: [],
     gridDamagesCount: [],
@@ -343,13 +337,17 @@ const handlers = {
          },
     default_colors_set: (fg: number, bg: number, sp: number) => {
         if (fg !== undefined && fg !== -1) {
-            globalState.defaultForeground = toHexCss(fg);
+            globalState.highlights[0].foreground = toHexCss(fg);
         }
         if (bg !== undefined && bg !== -1) {
-            globalState.defaultBackground = toHexCss(bg);
+            globalState.highlights[0].background = toHexCss(bg);
         }
         if (sp !== undefined && sp !== -1) {
-            globalState.defaultSpecial = sp;
+            globalState.highlights[0].special = toHexCss(sp);
+        }
+        const curGridSize = globalState.gridSizes[getGridId()];
+        if (curGridSize !== undefined) {
+            pushDamage(getGridId(), DamageKind.Cell, curGridSize.height, curGridSize.width, 0, 0);
         }
         glyphCache = {};
     },
@@ -601,12 +599,12 @@ function paint (_: DOMHighResTimeStamp) {
                             } else {
                                 width = charWidth;
                             }
-                            context.fillStyle = highlights[highs[x]].background || state.defaultBackground;
+                            context.fillStyle = highlights[highs[x]].background || highlights[0].background;
                             context.fillRect(pixelX,
                                              pixelY,
                                              width,
                                              charHeight);
-                            context.fillStyle = highlights[highs[x]].foreground || state.defaultForeground;
+                            context.fillStyle = highlights[highs[x]].foreground || highlights[0].foreground;
                             context.fillText(row[x], pixelX, pixelY + baseline);
                             glyphCache[glyphId] = context.getImageData(
                                 pixelX,
@@ -625,10 +623,9 @@ function paint (_: DOMHighResTimeStamp) {
     // If the command line is shown, the cursor's in it
     if (state.commandLine.status === "shown") {
         const commandLine = state.commandLine;
-        const high = highlights[0];
         const rect = getCommandLineRect();
         // outer rectangle
-        context.fillStyle = high.foreground;
+        context.fillStyle = globalState.highlights[0].foreground;
         context.fillRect(rect.x,
                          rect.y,
                          rect.width,
@@ -639,7 +636,7 @@ function paint (_: DOMHighResTimeStamp) {
         rect.y += 1;
         rect.width -= 2;
         rect.height -= 2;
-        context.fillStyle = high.background;
+        context.fillStyle = globalState.highlights[0].background;
         context.fillRect(rect.x,
                          rect.y,
                          rect.width,
@@ -656,7 +653,7 @@ function paint (_: DOMHighResTimeStamp) {
         let y = rect.y;
 
         // first character
-        context.fillStyle = high.foreground;
+        context.fillStyle = globalState.highlights[0].foreground;
         context.fillText(commandLine.firstc, x, y + baseline);
         x += charWidth;
         rect.width -= charWidth;
@@ -746,7 +743,7 @@ function paint (_: DOMHighResTimeStamp) {
             const info = mode.styleEnabled
                 ? mode.modeInfo[mode.current]
                 : mode.modeInfo[0];
-            context.fillStyle = highlights[info.attr_id].foreground || state.defaultForeground;
+            context.fillStyle = highlights[info.attr_id].foreground || highlights[0].foreground;
 
             // Draw cursor background
             let cursorWidth = cursor.x * charWidth;
@@ -765,7 +762,7 @@ function paint (_: DOMHighResTimeStamp) {
                              height);
 
             if (info.cursor_shape === "block") {
-                context.fillStyle = highlights[info.attr_id].background || state.defaultBackground;
+                context.fillStyle = highlights[info.attr_id].background || highlights[0].background;
                 const char = charactersGrid[cursor.y][cursor.x];
                 context.fillText(char, cursor.x * charWidth, cursor.y * charHeight + baseline);
             }
