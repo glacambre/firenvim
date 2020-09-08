@@ -18,6 +18,9 @@ function setFontString (s : string) {
     metricsInvalidated = true;
     glyphCache = {};
 }
+function glyphId(char: string, high: number) {
+    return char + "-" + high;
+}
 export function setCanvas (cvs: HTMLCanvasElement) {
     canvas = cvs;
     const width = window.innerWidth;
@@ -135,6 +138,9 @@ type Mode = {
     }[],
 };
 
+type Message = [number, string][];
+type MessagesPosition = { x: number, y: number };
+
 type State = {
     commandLine : CommandLineState,
     cursor: Cursor,
@@ -145,7 +151,12 @@ type State = {
     gridSizes: GridDimensions[],
     highlights: HighlightInfo[],
     isBusy: boolean,
+    messages: Message[],
+    messagesPositions: MessagesPosition[],
     mode: Mode,
+    ruler: Message,
+    showcmd: Message,
+    showmode: Message,
 };
 
 const globalState: State = {
@@ -170,6 +181,8 @@ const globalState: State = {
     gridSizes: [],
     highlights: [newHighlight(defaultBackground, defaultForeground)],
     isBusy : false,
+    messages: [],
+    messagesPositions: [],
     mode: {
         current: 0,
         styleEnabled : false,
@@ -182,7 +195,10 @@ const globalState: State = {
             cell_percentage: 0,
             cursor_shape: "block",
         }]
-    }
+    },
+    ruler: undefined,
+    showcmd: undefined,
+    showmode: undefined,
 };
 
 function pushDamage(grid: number, kind: DamageKind, h: number, w: number, x: number, y: number) {
@@ -241,6 +257,10 @@ export function getGlyphInfo () {
         recomputeCharSize(context);
     }
     return [maxCellWidth, maxCellHeight, maxBaselineDistance];
+}
+function measureWidth(context: CanvasRenderingContext2D, char: string) {
+    let charWidth = getGlyphInfo()[0];
+    return Math.ceil(context.measureText(char).width / charWidth) * charWidth;
 }
 
 export function getLogicalSize() {
@@ -404,6 +424,7 @@ const handlers = {
             globalState.gridDamagesCount[id] = 0;
             globalState.gridHighlights[id] = new Array();
             globalState.gridHighlights[id].push(new Array());
+            globalState.messagesPositions[id] = { x: canvas.width, y: canvas.height };
         }
 
         const curGridSize = globalState.gridSizes[id];
@@ -512,9 +533,39 @@ const handlers = {
         mode.styleEnabled = cursorStyleEnabled;
         mode.modeInfo = modeInfo;
     },
-    msg_clear: (): undefined => undefined,
-    msg_history_show: (): undefined => undefined,
-    msg_show: (): undefined => undefined,
+    msg_clear: () => {
+        globalState.messages.length = 0;
+        const gId = getGridId();
+        const msgPos = globalState.messagesPositions[gId];
+        const [charWidth, charHeight] = getGlyphInfo();
+        pushDamage(gId,
+                   DamageKind.Cell,
+                   Math.ceil((canvas.height - msgPos.y) / charHeight) + 2,
+                   Math.ceil((canvas.width - msgPos.x) / charWidth) + 2,
+                   Math.floor(msgPos.x / charWidth) - 1,
+                   Math.floor(msgPos.y / charHeight) - 1);
+        msgPos.x = canvas.width;
+        msgPos.y = canvas.height;
+    },
+    msg_history_show: (entries: any[]) => {
+        console.log("show", entries);
+        globalState.messages = entries.map(([a, b]) => b);
+    },
+    msg_ruler: (content: Message) => {
+        globalState.ruler = content;
+    },
+    msg_show: (_: string, content: Message, replace_last: boolean) => {
+        if (replace_last) {
+            globalState.messages.length = 0;
+        }
+        globalState.messages.push(content);
+    },
+    msg_showcmd: (content: Message) => {
+        globalState.showcmd = content;
+    },
+    msg_showmode: (content: Message) => {
+        globalState.showmode = content;
+    },
     option_set: (option: string, value: any) => {
         switch (option) {
             case "guifont":
@@ -526,7 +577,7 @@ const handlers = {
                                              Math.floor(canvas.height / charHeight));
         }
     },
-    win_external_pos: ([grid, win]: number[]) => {
+    win_external_pos: (grid: number, win: number) => {
         if (windowId !== undefined && matchesSelectedWindow(win)) {
             selectGrid(grid);
         }
@@ -542,6 +593,185 @@ function scheduleFrame() {
         window.requestAnimationFrame(paint);
     }
 }
+
+function paintMessages(state: State, context: CanvasRenderingContext2D) {
+    const gId = getGridId();
+    let messagesPosition = state.messagesPositions[gId];
+    const [, charHeight, baseline] = getGlyphInfo();
+    const messages = state.messages;
+    // we need to know the size of the message box in order to draw its border
+    // and background. The algorithm to compute this is equivalent to drawing
+    // all messages. So we put the drawing algorithm in a function with a
+    // boolean argument that will control whether text should actually be
+    // drawn. This lets us run the algorithm once to get the dimensions and
+    // then again to actually draw text.
+    function renderMessages (draw: boolean) {
+        let renderedX = canvas.width;
+        let renderedY = canvas.height - charHeight + baseline;
+        for (let i = messages.length - 1; i >= 0; --i) {
+            let message = messages[i];
+            for (let j = message.length - 1; j >= 0; --j) {
+                let chars = Array.from(message[j][1]);
+                for (let k = chars.length - 1; k >= 0; --k) {
+                    let char = chars[k];
+                    let measuredWidth = measureWidth(context, char);
+                    if (renderedX - measuredWidth < 0) {
+                        if (renderedY - charHeight < 0) {
+                            return;
+                        }
+                        renderedX = canvas.width;
+                        renderedY = renderedY - charHeight;
+                    }
+                    renderedX = renderedX - measuredWidth;
+                    if (draw) {
+                        context.fillText(char, renderedX, renderedY);
+                    }
+                    if (renderedX < messagesPosition.x) {
+                        messagesPosition.x = renderedX;
+                    }
+                    if (renderedY < messagesPosition.y) {
+                        messagesPosition.y = renderedY - baseline;
+                    }
+                }
+            }
+            renderedX = canvas.width;
+            renderedY = renderedY - charHeight;
+        }
+    }
+    renderMessages(false);
+    context.fillStyle = state.highlights[0].foreground;
+    context.fillRect(messagesPosition.x - 2,
+                     messagesPosition.y - 2,
+                     canvas.width - messagesPosition.x + 2,
+                     canvas.height - messagesPosition.y + 2);
+
+    context.fillStyle = state.highlights[0].background;
+    context.fillRect(messagesPosition.x - 1,
+                     messagesPosition.y - 1,
+                     canvas.width - messagesPosition.x + 1,
+                     canvas.height - messagesPosition.y + 1);
+    context.fillStyle = state.highlights[0].foreground;
+    renderMessages(true);
+}
+
+function paintCommandlineWindow(state: State, context: CanvasRenderingContext2D) {
+    const [charWidth, charHeight, baseline] = getGlyphInfo();
+    const commandLine = state.commandLine;
+    const rect = getCommandLineRect();
+    // outer rectangle
+    context.fillStyle = state.highlights[0].foreground;
+    context.fillRect(rect.x,
+                     rect.y,
+                     rect.width,
+                     rect.height);
+
+    // inner rectangle
+    rect.x += 1;
+    rect.y += 1;
+    rect.width -= 2;
+    rect.height -= 2;
+    context.fillStyle = state.highlights[0].background;
+    context.fillRect(rect.x,
+                     rect.y,
+                     rect.width,
+                     rect.height);
+
+    // padding of inner rectangle
+    rect.x += 1;
+    rect.y += 1;
+    rect.width -= 2;
+    rect.height -= 2;
+
+    // Position where text should be drawn
+    let x = rect.x;
+    let y = rect.y;
+
+    // first character
+    context.fillStyle = state.highlights[0].foreground;
+    context.fillText(commandLine.firstc, x, y + baseline);
+    x += charWidth;
+    rect.width -= charWidth;
+
+    let encoder = new TextEncoder();
+    // reduce the commandline's content to a string for iteration
+    let str = commandLine.content.reduce((r: string, segment: [any, string]) => r + segment[1], "");
+    // Array.from(str) will return an array whose cells are grapheme
+    // clusters. It is important to iterate over graphemes instead of the
+    // string because iterating over the string would sometimes yield only
+    // half of the UTF-16 character/surrogate pair.
+    const characters = Array.from(str);
+    // renderedI is the horizontal pixel position where the next character
+    // should be drawn
+    let renderedI = 0;
+    // encodedI is the number of bytes that have been iterated over thus
+    // far. It is used to find out where to draw the cursor. Indeed, neovim
+    // sends the cursor's position as a byte position within the UTF-8
+    // encoded commandline string.
+    let encodedI = 0;
+    // cursorX is the horizontal pixel position where the cursor should be
+    // drawn.
+    let cursorX = 0;
+    // The index of the first character of `characters` that can be drawn.
+    // It is higher than 0 when the command line string is too long to be
+    // entirely displayed.
+    let sliceStart = 0;
+    // The index of the last character of `characters` that can be drawn.
+    // It is different from characters.length when the command line string
+    // is too long to be entirely displayed.
+    let sliceEnd = 0;
+    // The horizontal width in pixels taken by the displayed slice. It
+    // is used to keep track of whether the commandline string is longer
+    // than the commandline window.
+    let sliceWidth = 0;
+    // cursorDisplayed keeps track of whether the cursor can be displayed
+    // in the slice.
+    let cursorDisplayed = commandLine.pos === 0;
+    // description of the algorithm:
+    // For each character, find out its width. If it cannot fit in the
+    // command line window along with the rest of the slice and the cursor
+    // hasn't been found yet, remove characters from the beginning of the
+    // slice until the character fits. 
+    // Stop either when all characters are in the slice or when the cursor
+    // can be displayed and the slice takes all available width.
+    for (let i = 0; i < characters.length; ++i) {
+        sliceEnd = i;
+        const char = characters[i];
+
+        const cWidth = measureWidth(context, char);
+        renderedI += cWidth;
+
+        sliceWidth += cWidth;
+        if (sliceWidth > rect.width) {
+            if (cursorDisplayed) {
+                break;
+            }
+            do {
+                const removedChar = characters[sliceStart];
+                const removedWidth = measureWidth(context, removedChar);
+                renderedI -= removedWidth;
+                sliceWidth -= removedWidth;
+                sliceStart += 1;
+            } while (sliceWidth > rect.width);
+        }
+
+        encodedI += encoder.encode(char).length;
+        if (encodedI == commandLine.pos) {
+            cursorX = renderedI;
+            cursorDisplayed = true;
+        }
+
+    }
+    if (characters.length > 0) {
+        renderedI = 0;
+        for (let i = sliceStart; i <= sliceEnd; ++i) {
+            const char = characters[i];
+            context.fillText(char, x + renderedI, y + baseline);
+            renderedI += measureWidth(context, char);
+        }
+    }
+    context.fillRect(x + cursorX, y, 1, charHeight);
+}
+
 function paint (_: DOMHighResTimeStamp) {
     frameScheduled = false;
 
@@ -580,20 +810,20 @@ function paint (_: DOMHighResTimeStamp) {
             break;
             case DamageKind.Scroll:
             case DamageKind.Cell:
-                for (let y = damage.y; y < damage.y + damage.h; ++y) {
+                for (let y = damage.y; y < damage.y + damage.h && y < charactersGrid.length; ++y) {
                     const row = charactersGrid[y];
                     const highs = highlightsGrid[y];
                     const pixelY = y * charHeight;
 
-                    for (let x = damage.x; x < damage.x + damage.w; ++x) {
+                    for (let x = damage.x; x < damage.x + damage.w && x < row.length; ++x) {
                         if (row[x] === "") {
                             continue;
                         }
                         const pixelX = x * charWidth;
-                        let glyphId = row[x] + "-" + highs[x];
+                        let id = glyphId(row[x], highs[x]);
 
-                        if (glyphCache[glyphId] === undefined) {
-                            let width = Math.ceil(context.measureText(row[x]).width);
+                        if (glyphCache[id] === undefined) {
+                            let width = measureWidth(context, row[x]);
                             if (width > charWidth) {
                                 width = charWidth * 2;
                             } else {
@@ -606,13 +836,13 @@ function paint (_: DOMHighResTimeStamp) {
                                              charHeight);
                             context.fillStyle = highlights[highs[x]].foreground || highlights[0].foreground;
                             context.fillText(row[x], pixelX, pixelY + baseline);
-                            glyphCache[glyphId] = context.getImageData(
+                            glyphCache[id] = context.getImageData(
                                 pixelX,
                                 pixelY,
                                 width,
                                 charHeight);
                         } else {
-                            context.putImageData(glyphCache[glyphId], pixelX, pixelY);
+                            context.putImageData(glyphCache[id], pixelX, pixelY);
                         }
                     }
                 }
@@ -620,122 +850,13 @@ function paint (_: DOMHighResTimeStamp) {
         }
     }
 
+    if (state.messages.length > 0) {
+        paintMessages(state, context);
+    }
+
     // If the command line is shown, the cursor's in it
     if (state.commandLine.status === "shown") {
-        const commandLine = state.commandLine;
-        const rect = getCommandLineRect();
-        // outer rectangle
-        context.fillStyle = globalState.highlights[0].foreground;
-        context.fillRect(rect.x,
-                         rect.y,
-                         rect.width,
-                         rect.height);
-
-        // inner rectangle
-        rect.x += 1;
-        rect.y += 1;
-        rect.width -= 2;
-        rect.height -= 2;
-        context.fillStyle = globalState.highlights[0].background;
-        context.fillRect(rect.x,
-                         rect.y,
-                         rect.width,
-                         rect.height);
-
-        // padding of inner rectangle
-        rect.x += 1;
-        rect.y += 1;
-        rect.width -= 2;
-        rect.height -= 2;
-
-        // Position where text should be drawn
-        let x = rect.x;
-        let y = rect.y;
-
-        // first character
-        context.fillStyle = globalState.highlights[0].foreground;
-        context.fillText(commandLine.firstc, x, y + baseline);
-        x += charWidth;
-        rect.width -= charWidth;
-
-        let encoder = new TextEncoder();
-        // reduce the commandline's content to a string for iteration
-        let str = commandLine.content.reduce((r: string, segment: [any, string]) => r + segment[1], "");
-        // Array.from(str) will return an array whose cells are grapheme
-        // clusters. It is important to iterate over graphemes instead of the
-        // string because iterating over the string would sometimes yield only
-        // half of the UTF-16 character/surrogate pair.
-        const characters = Array.from(str);
-        // renderedI is the horizontal pixel position where the next character
-        // should be drawn
-        let renderedI = 0;
-        // encodedI is the number of bytes that have been iterated over thus
-        // far. It is used to find out where to draw the cursor. Indeed, neovim
-        // sends the cursor's position as a byte position within the UTF-8
-        // encoded commandline string.
-        let encodedI = 0;
-        // cursorX is the horizontal pixel position where the cursor should be
-        // drawn.
-        let cursorX = 0;
-        // The index of the first character of `characters` that can be drawn.
-        // It is higher than 0 when the command line string is too long to be
-        // entirely displayed.
-        let sliceStart = 0;
-        // The index of the last character of `characters` that can be drawn.
-        // It is different from characters.length when the command line string
-        // is too long to be entirely displayed.
-        let sliceEnd = 0;
-        // The horizontal width in pixels taken by the displayed slice. It
-        // is used to keep track of whether the commandline string is longer
-        // than the commandline window.
-        let sliceWidth = 0;
-        // cursorDisplayed keeps track of whether the cursor can be displayed
-        // in the slice.
-        let cursorDisplayed = commandLine.pos === 0;
-        // description of the algorithm:
-        // For each character, find out its width. If it cannot fit in the
-        // command line window along with the rest of the slice and the cursor
-        // hasn't been found yet, remove characters from the beginning of the
-        // slice until the character fits. 
-        // Stop either when all characters are in the slice or when the cursor
-        // can be displayed and the slice takes all available width.
-        for (let i = 0; i < characters.length; ++i) {
-            sliceEnd = i;
-            const char = characters[i];
-
-            const cWidth = Math.ceil(context.measureText(char).width / charWidth) * charWidth;
-            renderedI += cWidth;
-
-            sliceWidth += cWidth;
-            if (sliceWidth > rect.width) {
-                if (cursorDisplayed) {
-                    break;
-                }
-                do {
-                    const removedChar = characters[sliceStart];
-                    const removedWidth = Math.ceil(context.measureText(removedChar).width / charWidth) * charWidth;
-                    renderedI -= removedWidth;
-                    sliceWidth -= removedWidth;
-                    sliceStart += 1;
-                } while (sliceWidth > rect.width);
-            }
-
-            encodedI += encoder.encode(char).length;
-            if (encodedI == commandLine.pos) {
-                cursorX = renderedI;
-                cursorDisplayed = true;
-            }
-            
-        }
-        if (characters.length > 0) {
-            renderedI = 0;
-            for (let i = sliceStart; i <= sliceEnd; ++i) {
-                const char = characters[i];
-                context.fillText(char, x + renderedI, y + baseline);
-                renderedI += Math.ceil(context.measureText(char).width / charWidth) * charWidth;
-            }
-        }
-        context.fillRect(x + cursorX, y, 1, charHeight);
+        paintCommandlineWindow(state, context);
     } else {
         const cursor = state.cursor;
         if (cursor.currentGrid === gid) {
