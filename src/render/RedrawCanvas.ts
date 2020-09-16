@@ -1,5 +1,5 @@
 import { page } from "../page/proxy";
-import { parseGuifont, toCss, toHexCss } from "../utils/CSSUtils";
+import { parseGuifont, toHexCss } from "../utils/CSSUtils";
 
 let functions: any;
 export function setFunctions(fns: any) {
@@ -326,7 +326,14 @@ function getCommandLineRect () {
 function damageCommandLineSpace () {
     const [width, height] = getGlyphInfo();
     const rect = getCommandLineRect();
-    pushDamage(getGridId(), DamageKind.Cell, Math.ceil(rect.height / height) + 1, Math.ceil(rect.width / width) + 1, Math.floor(rect.x / width), Math.floor(rect.y / height));
+    const gid = getGridId();
+    const dimensions = globalState.gridSizes[gid];
+    pushDamage(gid,
+               DamageKind.Cell,
+               Math.min(Math.ceil(rect.height / height) + 1, dimensions.height),
+               Math.min(Math.ceil(rect.width / width) + 1, dimensions.width),
+               Math.max(Math.floor(rect.x / width), 0),
+               Math.max(Math.floor(rect.y / height), 0));
 }
 
 const handlers = {
@@ -537,18 +544,18 @@ const handlers = {
         globalState.messages.length = 0;
         const gId = getGridId();
         const msgPos = globalState.messagesPositions[gId];
+        const dimensions = globalState.gridSizes[gId];
         const [charWidth, charHeight] = getGlyphInfo();
         pushDamage(gId,
                    DamageKind.Cell,
-                   Math.ceil((canvas.height - msgPos.y) / charHeight) + 2,
-                   Math.ceil((canvas.width - msgPos.x) / charWidth) + 2,
-                   Math.floor(msgPos.x / charWidth) - 1,
-                   Math.floor(msgPos.y / charHeight) - 1);
+                   Math.min(Math.ceil((canvas.height - msgPos.y) / charHeight) + 2, dimensions.height),
+                   Math.min(Math.ceil((canvas.width - msgPos.x) / charWidth) + 2, dimensions.width),
+                   Math.max(Math.floor(msgPos.x / charWidth) - 1, 0),
+                   Math.max(Math.floor(msgPos.y / charHeight) - 1, 0));
         msgPos.x = canvas.width;
         msgPos.y = canvas.height;
     },
     msg_history_show: (entries: any[]) => {
-        console.log("show", entries);
         globalState.messages = entries.map(([a, b]) => b);
     },
     msg_ruler: (content: Message) => {
