@@ -491,7 +491,7 @@ const handlers = {
             }
             pushDamage(id, DamageKind.Cell, dimensions.height, dimensions.width, 0, 0);
         } else if (rows < 0) {
-            for (let y = bot - 1; y >= top; --y) {
+            for (let y = bot - 1; y >= top && (y + rows) >= 0; --y) {
                 const src_chars = charGrid[y + rows];
                 const dst_chars = charGrid[y];
                 const src_highs = highGrid[y + rows];
