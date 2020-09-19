@@ -81,7 +81,7 @@ export function computeSelector(element: HTMLElement) {
     function uniqueSelector(e: HTMLElement): string {
         // Only matching alphanumeric selectors because others chars might have special meaning in CSS
         if (e.id && e.id.match("^[a-zA-Z0-9_-]+$")) {
-            const id = "#" + e.id;
+            const id = e.tagName + `[id="${e.id}"]`;
             if (document.querySelectorAll(id).length === 1) {
                 return id;
             }
