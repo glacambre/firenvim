@@ -336,6 +336,21 @@ function damageCommandLineSpace () {
                Math.max(Math.floor(rect.y / height), 0));
 }
 
+function damageMessagesSpace () {
+    const gId = getGridId();
+    const msgPos = globalState.messagesPositions[gId];
+    const dimensions = globalState.gridSizes[gId];
+    const [charWidth, charHeight] = getGlyphInfo();
+    pushDamage(gId,
+               DamageKind.Cell,
+               Math.min(Math.ceil((canvas.height - msgPos.y) / charHeight) + 2, dimensions.height),
+               Math.min(Math.ceil((canvas.width - msgPos.x) / charWidth) + 2, dimensions.width),
+               Math.max(Math.floor(msgPos.x / charWidth) - 1, 0),
+               Math.max(Math.floor(msgPos.y / charHeight) - 1, 0));
+    msgPos.x = canvas.width;
+    msgPos.y = canvas.height;
+}
+
 const handlers = {
     busy_start: () => { globalState.isBusy = true; },
     busy_stop: () => { globalState.isBusy = false; },
@@ -541,36 +556,30 @@ const handlers = {
         mode.modeInfo = modeInfo;
     },
     msg_clear: () => {
+        damageMessagesSpace();
         globalState.messages.length = 0;
-        const gId = getGridId();
-        const msgPos = globalState.messagesPositions[gId];
-        const dimensions = globalState.gridSizes[gId];
-        const [charWidth, charHeight] = getGlyphInfo();
-        pushDamage(gId,
-                   DamageKind.Cell,
-                   Math.min(Math.ceil((canvas.height - msgPos.y) / charHeight) + 2, dimensions.height),
-                   Math.min(Math.ceil((canvas.width - msgPos.x) / charWidth) + 2, dimensions.width),
-                   Math.max(Math.floor(msgPos.x / charWidth) - 1, 0),
-                   Math.max(Math.floor(msgPos.y / charHeight) - 1, 0));
-        msgPos.x = canvas.width;
-        msgPos.y = canvas.height;
     },
     msg_history_show: (entries: any[]) => {
-        globalState.messages = entries.map(([a, b]) => b);
+        damageMessagesSpace();
+        globalState.messages = entries.map(([, b]) => b);
     },
     msg_ruler: (content: Message) => {
+        damageMessagesSpace();
         globalState.ruler = content;
     },
     msg_show: (_: string, content: Message, replace_last: boolean) => {
+        damageMessagesSpace();
         if (replace_last) {
             globalState.messages.length = 0;
         }
         globalState.messages.push(content);
     },
     msg_showcmd: (content: Message) => {
+        damageMessagesSpace();
         globalState.showcmd = content;
     },
     msg_showmode: (content: Message) => {
+        damageMessagesSpace();
         globalState.showmode = content;
     },
     option_set: (option: string, value: any) => {
