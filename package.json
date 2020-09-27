@@ -11,7 +11,7 @@
     "geckodriver": "1.20.0",
     "imports-loader": "^1.1.0",
     "jest": "25.5.4",
-    "monaco-editor": "^0.21.0",
+    "monaco-editor": "^0.21.2",
     "msgpack-lite": "0.1.26",
     "selenium-webdriver": "4.0.0-alpha.7",
     "sharp": "0.26.1",
