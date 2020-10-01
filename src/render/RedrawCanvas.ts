@@ -21,12 +21,15 @@ function setFontString (s : string) {
 function glyphId(char: string, high: number) {
     return char + "-" + high;
 }
-export function setCanvas (cvs: HTMLCanvasElement) {
-    canvas = cvs;
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+function setCanvasDimensions (canvas: HTMLCanvasElement, width: number, height: number) {
     canvas.width = width;
     canvas.height = height;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+}
+export function setCanvas (cvs: HTMLCanvasElement) {
+    canvas = cvs;
+    setCanvasDimensions(cvs, window.innerWidth, window.innerHeight);
     const { fontFamily, fontSize } = window.getComputedStyle(canvas);
     fontString = `${fontSize} ${fontFamily}`;
     context = canvas.getContext("2d", { "alpha": false });
@@ -814,8 +817,7 @@ function paint (_: DOMHighResTimeStamp) {
                 const pixelWidth = damage.w * charWidth;
                 const pixelHeight = damage.h * charHeight;
                 page.resizeEditor(pixelWidth, pixelHeight);
-                canvas.width = pixelWidth;
-                canvas.height = pixelHeight;
+                setCanvasDimensions(canvas, pixelWidth, pixelHeight);
                 // Note: changing width and height resets font, so we have to
                 // set it again. Who thought this was a good idea???
                 context.font = fontString;
