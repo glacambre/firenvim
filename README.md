@@ -213,20 +213,6 @@ let fc['.*'] = { 'cmdline' : 'firenvim' }
 
 When you then enter command mode, the command will appear in a sort of "pop-up" instead of the bottom of the frame.
 
-### Using a single neovim instance
-
-Firenvim can be made to use a single neovim instance. To do so, set the `server` setting to `'persistent'`. Firenvim will automatically start an instance on Firefox's startup and then launch a new one every time the previous one is `:quit`'ed. In this mode, every new Firenvim window is actually a Neovim floating window. This means that having the cursor move to another window/opening new floating windows can be pretty confusing and should be avoided.
-
-Note: this requires Neovim [commit a2efc9c](https://github.com/neovim/neovim/commit/a2efc9c) or later, which has no official release yet.
-
-```vim
-let g:firenvim_config = {
-	\ "globalSettings": {
-		\ "server": "persistent"
-	\}
-\}
-```
-
 ### Special characters on MacOS
 
 On MacOS, the default keyboard layouts emit special characters when the alt (i.e. option) key is held down. From the perspective of the browser, these special characters replace the underlying "main" character of a keystroke event while retaining the modifier. For example, in the standard US layout the key chord alt-o is received in the browser as alt-ø rather than alt-o. Further, certain alt-chords represent "dead keys", which apply a diacritic to the next character entered. Pressing alt-e followed by a produces the single character "á" while alt-u followed by a produces "ä". To produce this behavior, diacritic-mapped strokes like alt-e and alt-u are themselves mapped to a ["Dead key" character](https://en.wikipedia.org/wiki/Dead_key). 

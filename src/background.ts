@@ -101,9 +101,6 @@ function registerErrors(nvim: any, reject: any) {
             updateIcon();
             reject(error);
         }
-        if (getGlobalConf().server === "persistent") {
-            preloadedInstance = createNewInstance();
-        }
     });
     return timeout;
 }
@@ -163,13 +160,6 @@ function applySettings(settings: any) {
     makeDefaults(settings.globalSettings, "<CS-t>", "default");
     makeDefaults(settings.globalSettings, "<CS-w>", "default");
 
-    // "server": "persistent" | "ephemeral"
-    // #197: Allow multiple firenvim instances to connect to a single server
-    makeDefaults(settings.globalSettings, "server", "ephemeral");
-    // "server_url": string
-    // The domain name + port firenvim should connect to. e.g. localhost:8000
-    // Leaving this empty will let firenvim connect to a random port
-    makeDefaults(settings.globalSettings, "server_url", "");
     // "alt": "all" | "alphanum"
     // #202: Only register alt key on alphanums to let swedish osx users type
     //       special chars
@@ -193,39 +183,14 @@ function applySettings(settings: any) {
     browser.storage.local.set(settings);
 }
 
-function fetchSettings() {
-    return new Promise((resolve, reject) => {
-        const nvim = browser.runtime.connectNative("firenvim");
-        const errorTimeout = registerErrors(nvim, reject);
-        nvim.onMessage.addListener((resp: any) => {
-            (nvim as any).replied = true;
-            clearTimeout(errorTimeout);
-            checkVersion(resp.version);
-            resolve(resp.settings);
-            nvim.disconnect();
-        });
-        nvim.postMessage({
-            newInstance: false,
-        });
-    });
-}
-
 function updateSettings() {
-    // In ephemeral mode, we kill the preloaded instance, otherwise people
-    // would need to click "reload" twice to get an instance with the right
-    // settings. We don't do this in persistent mode as this could kill running
-    // frames.
-    if (getGlobalConf().server === "ephemeral") {
-        const tmp = preloadedInstance;
-        preloadedInstance = createNewInstance();
-        tmp.then(nvim => nvim.kill());
-        // It's ok to return the preloadedInstance as a promise because
-        // settings are only applied when the preloadedInstance has returned a
-        // port+settings object anyway.
-        return preloadedInstance;
-    } else {
-        return fetchSettings().then(applySettings);
-    }
+    const tmp = preloadedInstance;
+    preloadedInstance = createNewInstance();
+    tmp.then(nvim => nvim.kill());
+    // It's ok to return the preloadedInstance as a promise because
+    // settings are only applied when the preloadedInstance has returned a
+    // port+settings object anyway.
+    return preloadedInstance;
 }
 
 function createNewInstance() {
@@ -277,9 +242,7 @@ Object.assign(window, {
     getError,
     getNeovimInstance: () => {
         const result = preloadedInstance;
-        if (getGlobalConf().server === "ephemeral") {
-            preloadedInstance = createNewInstance();
-        }
+        preloadedInstance = createNewInstance();
         // Destructuring result to remove kill() from it
         return result.then(({ password, port }) => ({ password, port }));
     },
