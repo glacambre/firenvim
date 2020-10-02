@@ -1,6 +1,6 @@
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
-import { getGridId, getWindowId, onKeyPressed as rendererOnKeyPressed, selectWindow } from "./render/Redraw";
+import { getGridId, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, isFirefox, toFileName } from "./utils/utils";
@@ -41,11 +41,9 @@ export const isReady = new Promise((resolve, reject) => {
 
             await confReady;
             const settings = getGlobalConf();
-            const persistent = settings.server === "persistent";
             nvim.ui_attach(cols, rows, {
                 ext_linegrid: true,
-                ext_messages: getConfForUrl(url).cmdline === "firenvim" || persistent,
-                ext_multigrid: persistent,
+                ext_messages: getConfForUrl(url).cmdline === "firenvim",
                 rgb: true,
             });
 
@@ -73,11 +71,6 @@ export const isReady = new Promise((resolve, reject) => {
                 }
             });
 
-            if (persistent) {
-                await nvim
-                    .open_win(0, true, { width: cols, height: rows, focusable: true, external: true })
-                    .then(selectWindow);
-            }
             // Create file, set its content to the textarea's, write it
             const filename = toFileName(url, selector, language);
             const content = await contentPromise;
@@ -88,11 +81,7 @@ export const isReady = new Promise((resolve, reject) => {
 
             window.addEventListener("beforeunload", () => {
                 nvim.ui_detach();
-                if (persistent) {
-                    nvim.win_close(getWindowId(), true);
-                } else {
-                    nvim.command("qall!");
-                }
+                nvim.command("qall!");
             });
 
             // Keep track of last active instance (necessary for firenvim#focus_input() & others)
@@ -111,13 +100,6 @@ export const isReady = new Promise((resolve, reject) => {
             // - remove own augroup
             const cleanup = `call rpcnotify(${chan}, 'firenvim_vimleave') | `
                         + `call delete('${filename}')`;
-            let winCleanup = "";
-            if (persistent) {
-                winCleanup = `autocmd WinClosed * `
-                    + `if expand("<afile>") == ${getWindowId()} | `
-                        + cleanup
-                    + ` | endif`;
-            }
             // Ask for notifications when user writes/leaves firenvim
             nvim.call_atomic((`augroup ${augroupName}
                             au!
@@ -128,7 +110,6 @@ export const isReady = new Promise((resolve, reject) => {
                                         + `'text': nvim_buf_get_lines(0, 0, -1, 0),`
                                         + `'cursor': nvim_win_get_cursor(0),`
                                     + `})
-                            ${winCleanup}
                             au VimLeave * ${cleanup}
                         augroup END`).split("\n").map(command => ["nvim_command", [command]]));
 

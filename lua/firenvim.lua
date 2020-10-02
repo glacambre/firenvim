@@ -10,7 +10,7 @@ local function close_server(server)
         end)
 end
 
-local function connection_handler(server, sock, config, token)
+local function connection_handler(server, sock, token)
         local pipe = vim.loop.new_pipe(false)
         vim.loop.pipe_connect(pipe, os.getenv("NVIM_LISTEN_ADDRESS"), function(err)
                 assert(not err, err)
@@ -75,9 +75,7 @@ local function connection_handler(server, sock, config, token)
                                 sock:write(websocket.close_frame(decoded_frame))
                                 sock:close()
                                 pipe:close()
-                                if config.globalSettings.server ~= 'persistent' then
-                                        close_server(server)
-                                end
+                                close_server(server)
                                 return
                         end
                         _, decoded_frame = coroutine.resume(frame_decoder, "")
@@ -88,37 +86,13 @@ end
 local function firenvim_start_server(token)
         local server = vim.loop.new_tcp()
         server:nodelay(true)
-
-        local config = {}
-        if vim.fn ~= nil and vim.fn.exists('g:firenvim_config') == 1 then
-                config = vim.api.nvim_get_var('firenvim_config')
-        end
-
-        if config.globalSettings == nil then
-                config.globalSettings = {}
-        end
-        if config.localSettings == nil then
-                config.localSettings = {}
-        end
-
-        local address = '127.0.0.1'
-        local port = 0
-        if config.globalSettings.server == 'persistent'
-                and config.globalSettings.server_url ~= nil
-        then
-                address, port = string.match(config.globalSettings.server_url, "([^:]+):(.+)")
-        end
-
-        server:bind(address, port)
+        server:bind('127.0.0.1', 0)
         server:listen(128, function(err)
                 assert(not err, err)
                 local sock = vim.loop.new_tcp()
                 server:accept(sock)
-                sock:read_start(connection_handler(server, sock, config, token))
+                sock:read_start(connection_handler(server, sock, token))
         end)
-        if port ~= 0 then
-                return port
-        end
         return server:getsockname().port
 end
 

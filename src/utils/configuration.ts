@@ -8,8 +8,6 @@ export interface ISiteConfig {
 export interface IConfig {
     globalSettings: {
         alt: "alphanum" | "all",
-        server: "persistent" | "ephemeral",
-        server_url: string,
         "<C-n>": "default" | "noop",
         "<C-t>": "default" | "noop",
         "<C-w>": "default" | "noop",

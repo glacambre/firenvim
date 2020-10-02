@@ -19,7 +19,7 @@ When the NeoVim process notices a new connection, it makes sure that:
 - The password is in the handshake.
 - The handshake really is a websocket handshake.
 
-If any of these conditions isn't met, the NeoVim process closes its socket and port and then shuts itself down. Note that this will also happen in [persistent mode](https://github.com/glacambre/firenvim#using-a-single-neovim-instance) and might close any Neovim frame started in this mode.
+If any of these conditions isn't met, the NeoVim process closes its socket and port and then shuts itself down.
 
 After a successful websocket handshake, the frame script and neovim process communicate with neovim's msgpack-rpc protocol.
 
@@ -27,7 +27,7 @@ After a successful websocket handshake, the frame script and neovim process comm
 
 ### Malicious page
 
-A malicious page could create an infinite amount of textareas and focus them all ; this could result in PID and/or port and/or memory exhaustion. Preventing this kind of attack can be done by [switching to a persistent server](https://github.com/glacambre/firenvim#using-a-single-neovim-instance).
+A malicious page could create an infinite amount of textareas and focus them all; this could result in PID and/or port and/or memory exhaustion. You can [sandbox firenvim](https://github.com/glacambre/firenvim/issues/238) to protect yourself from that. Finer-grained controls will be implemented some day.
 
 A malicious page could try to connect to the NeoVim process started by the background script with its own-websocket. However, it would have to guess the port and password the NeoVim process was started with in order to be able to send commands to NeoVim.
 
