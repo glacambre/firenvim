@@ -401,6 +401,25 @@ const handlers = {
         if (!matchesSelectedGrid(id)) {
             return;
         }
+        // glacambre: What should actually happen on grid_clear? The
+        //            documentation says "clear the grid", but what does that
+        //            mean? I guess the characters should be removed, but what
+        //            about the highlights? Are there other things that need to
+        //            be cleared?
+        // bfredl: to default bg color
+        //         grid_clear is not meant to be used often
+        //         it is more "the terminal got screwed up, better to be safe
+        //         than sorry"
+        const charGrid = globalState.gridCharacters[id];
+        const highGrid = globalState.gridHighlights[id];
+        const dims = globalState.gridSizes[id];
+        for (let j = 0; j < dims.height; ++j) {
+            for (let i = 0; i < dims.width; ++i) {
+                charGrid[j][i] = " ";
+                highGrid[j][i] = 0;
+            }
+        }
+        pushDamage(id, DamageKind.Cell, 0, dims.width, 0, dims.height);
     },
     grid_cursor_goto: (id: number, row: number, column: number) => {
         const cursor = globalState.cursor;
