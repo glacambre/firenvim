@@ -830,7 +830,7 @@ function paint (_: DOMHighResTimeStamp) {
             case DamageKind.Cell:
                 for (let y = damage.y; y < damage.y + damage.h && y < charactersGrid.length; ++y) {
                     const row = charactersGrid[y];
-                    const highs = highlightsGrid[y];
+                    const rowHigh = highlightsGrid[y];
                     const pixelY = y * charHeight;
 
                     for (let x = damage.x; x < damage.x + damage.w && x < row.length; ++x) {
@@ -838,22 +838,45 @@ function paint (_: DOMHighResTimeStamp) {
                             continue;
                         }
                         const pixelX = x * charWidth;
-                        let id = glyphId(row[x], highs[x]);
+                        let id = glyphId(row[x], rowHigh[x]);
 
                         if (glyphCache[id] === undefined) {
-                            let width = measureWidth(context, row[x]);
-                            if (width > charWidth) {
-                                width = charWidth * 2;
-                            } else {
-                                width = charWidth;
+                            const cellHigh = highlights[rowHigh[x]];
+                            let width = Math.ceil(measureWidth(context, row[x]) / charWidth) * charWidth;
+                            let background = cellHigh.background || highlights[0].background
+                            let foreground = cellHigh.foreground || highlights[0].foreground;
+                            if (cellHigh.reverse) {
+                                const tmp = background;
+                                background = foreground;
+                                foreground = tmp;
                             }
-                            context.fillStyle = highlights[highs[x]].background || highlights[0].background;
+                            context.fillStyle = background;
                             context.fillRect(pixelX,
                                              pixelY,
                                              width,
                                              charHeight);
-                            context.fillStyle = highlights[highs[x]].foreground || highlights[0].foreground;
+                            context.fillStyle = foreground;
+                            let fontStr = "";
+                            if (cellHigh.bold) {
+                                fontStr += " bold ";
+                            }
+                            if (cellHigh.italic) {
+                                fontStr += " italic ";
+                            }
+                            context.font = fontStr + fontString;
                             context.fillText(row[x], pixelX, pixelY + baseline);
+                            if (cellHigh.strikethrough) {
+                                context.fillRect(pixelX, pixelY + baseline / 2, width, 1);
+                            }
+                            context.fillStyle = cellHigh.special;
+                            if (cellHigh.underline) {
+                                context.fillRect(pixelX, pixelY + baseline + 2, width, 1);
+                            }
+                            if (cellHigh.undercurl) {
+                                for (let x = pixelX; x < pixelX + width; ++x) {
+                                    context.fillRect(x, pixelY + baseline + Math.sin(x) + 2, 1, 1);
+                                }
+                            }
                             glyphCache[id] = context.getImageData(
                                 pixelX,
                                 pixelY,
