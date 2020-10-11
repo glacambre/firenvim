@@ -153,7 +153,6 @@ type State = {
     gridHighlights: number[][][],
     gridSizes: GridDimensions[],
     highlights: HighlightInfo[],
-    isBusy: boolean,
     messages: Message[],
     messagesPositions: MessagesPosition[],
     mode: Mode,
@@ -183,7 +182,6 @@ const globalState: State = {
     gridHighlights: [],
     gridSizes: [],
     highlights: [newHighlight(defaultBackground, defaultForeground)],
-    isBusy : false,
     messages: [],
     messagesPositions: [],
     mode: {
@@ -355,8 +353,8 @@ function damageMessagesSpace () {
 }
 
 const handlers = {
-    busy_start: () => { globalState.isBusy = true; },
-    busy_stop: () => { globalState.isBusy = false; },
+    busy_start: () => { canvas.style.cursor = "wait" },
+    busy_stop: () => { canvas.style.cursor = "auto" },
     cmdline_hide: () => {
         globalState.commandLine.status = "hidden";
         damageCommandLineSpace();
@@ -594,11 +592,6 @@ const handlers = {
                 functions.ui_try_resize_grid(getGridId(),
                                              Math.floor(canvas.width / charWidth),
                                              Math.floor(canvas.height / charHeight));
-        }
-    },
-    win_external_pos: (grid: number, win: number) => {
-        if (windowId !== undefined && matchesSelectedWindow(win)) {
-            selectGrid(grid);
         }
     },
 };
@@ -942,6 +935,8 @@ export function onRedraw(events: any[]) {
             for (let i = 1; i < event.length; ++i) {
                 handler.apply(globalState, event[i]);
             }
+        } else {
+            console.error(`${event[0]} is not implemented.`);
         }
     }
 }
