@@ -869,14 +869,22 @@ function paint (_: DOMHighResTimeStamp) {
                                              charHeight);
                             context.fillStyle = foreground;
                             let fontStr = "";
+                            let changeFont = false;
                             if (cellHigh.bold) {
                                 fontStr += " bold ";
+                                changeFont = true;
                             }
                             if (cellHigh.italic) {
                                 fontStr += " italic ";
+                                changeFont = true;
                             }
-                            context.font = fontStr + fontString;
+                            if (changeFont) {
+                                context.font = fontStr + fontString;
+                            }
                             context.fillText(row[x], pixelX, pixelY + baseline);
+                            if (changeFont) {
+                                context.font = fontString;
+                            }
                             if (cellHigh.strikethrough) {
                                 context.fillRect(pixelX, pixelY + baseline / 2, width, 1);
                             }
