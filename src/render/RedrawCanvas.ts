@@ -917,7 +917,14 @@ function paint (_: DOMHighResTimeStamp) {
             const info = mode.styleEnabled
                 ? mode.modeInfo[mode.current]
                 : mode.modeInfo[0];
-            context.fillStyle = highlights[info.attr_id].foreground || highlights[0].foreground;
+            let background = highlights[info.attr_id].background;
+            let foreground = highlights[info.attr_id].foreground;
+            if (info.attr_id === 0) {
+                let tmp = background;
+                background = foreground;
+                foreground = tmp;
+            }
+            context.fillStyle = background;
 
             // Draw cursor background
             let cursorWidth = cursor.x * charWidth;
@@ -936,7 +943,7 @@ function paint (_: DOMHighResTimeStamp) {
                              height);
 
             if (info.cursor_shape === "block") {
-                context.fillStyle = highlights[info.attr_id].background || highlights[0].background;
+                context.fillStyle = foreground;
                 const char = charactersGrid[cursor.y][cursor.x];
                 context.fillText(char, cursor.x * charWidth, cursor.y * charHeight + baseline);
             }
