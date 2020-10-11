@@ -163,7 +163,8 @@ const firefoxConfig = (config, env) => {
   return result;
 }
 
-module.exports = env => {
+module.exports = args => {
+  let env = Object.keys(args)[0];
   if (env === undefined){
     env = "";
   }
