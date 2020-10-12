@@ -125,6 +125,7 @@ type Cursor = {
     currentGrid: number,
     x: number,
     y: number,
+    lastMove: DOMHighResTimeStamp,
 };
 
 type Mode = {
@@ -175,6 +176,7 @@ const globalState: State = {
         currentGrid: 1,
         x: 0,
         y: 0,
+        lastMove: performance.now(),
     },
     gridCharacters: [],
     gridDamages: [],
@@ -427,6 +429,7 @@ const handlers = {
         cursor.currentGrid = id;
         cursor.x = column;
         cursor.y = row;
+        cursor.lastMove = performance.now();
     },
     grid_line: (id: number, row: number, col: number, changes:  any[]) => {
         if (!matchesSelectedGrid(id)) {
@@ -571,6 +574,7 @@ const handlers = {
         }
     },
     mode_info_set: (cursorStyleEnabled: boolean, modeInfo: []) => {
+        // Missing: handling of cell-percentage
         const mode = globalState.mode;
         mode.styleEnabled = cursorStyleEnabled;
         mode.modeInfo = modeInfo;
@@ -921,10 +925,15 @@ function paint (_: DOMHighResTimeStamp) {
     } else {
         const cursor = state.cursor;
         if (cursor.currentGrid === gid) {
+            // Missing: handling of cell-percentage
             const mode = state.mode;
             const info = mode.styleEnabled
                 ? mode.modeInfo[mode.current]
                 : mode.modeInfo[0];
+            const shouldBlink = (info.blinkwait > 0 && info.blinkon > 0 && info.blinkoff > 0);
+
+            // Decide color. As described in the doc, if attr_id is 0 colors
+            // should be reverted.
             let background = highlights[info.attr_id].background;
             let foreground = highlights[info.attr_id].foreground;
             if (info.attr_id === 0) {
@@ -932,9 +941,9 @@ function paint (_: DOMHighResTimeStamp) {
                 background = foreground;
                 foreground = tmp;
             }
-            context.fillStyle = background;
 
-            // Draw cursor background
+            // Decide cursor shape. Default to block, change to
+            // vertical/horizontal if needed.
             let cursorWidth = cursor.x * charWidth;
             let cursorHeight = cursor.y * charHeight;
             let width = charWidth;
@@ -945,6 +954,22 @@ function paint (_: DOMHighResTimeStamp) {
                 cursorHeight += charHeight - 2;
                 height = 1;
             }
+
+            const now = performance.now();
+            // Decide if the cursor should be inverted. This only happens if
+            // blinking is on, we've waited blinkwait time and we're in the
+            // "blinkoff" time slot.
+            const blinkOff = shouldBlink
+                && (now - info.blinkwait > cursor.lastMove)
+                && ((now % (info.blinkon + info.blinkoff)) > info.blinkon);
+            if (blinkOff) {
+                const high = highlights[highlightsGrid[cursor.y][cursor.x]];
+                background = high.background;
+                foreground = high.foreground;
+            }
+
+            // Finally draw cursor
+            context.fillStyle = background;
             context.fillRect(cursorWidth,
                              cursorHeight,
                              width,
@@ -954,6 +979,17 @@ function paint (_: DOMHighResTimeStamp) {
                 context.fillStyle = foreground;
                 const char = charactersGrid[cursor.y][cursor.x];
                 context.fillText(char, cursor.x * charWidth, cursor.y * charHeight + baseline);
+            }
+
+            if (shouldBlink) {
+                // if the cursor should blink, we need to paint continuously
+                // Note: this isn't correct time-wise as it does not take the
+                // time paint() takes into account, so we'll gradually "shift"
+                // our leading edge in a way that will result in a cursor
+                // update being skipped.
+                // The alternative is to call scheduleFrame() directly, but
+                // painting the cursor at 60 fps would drain the battery.
+                setTimeout(scheduleFrame, blinkOff ? info.blinkoff : info.blinkon);
             }
         }
     }
