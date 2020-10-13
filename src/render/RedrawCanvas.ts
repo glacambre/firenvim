@@ -21,11 +21,11 @@ function setFontString (s : string) {
 function glyphId(char: string, high: number) {
     return char + "-" + high;
 }
-function setCanvasDimensions (canvas: HTMLCanvasElement, width: number, height: number) {
-    canvas.width = width;
-    canvas.height = height;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
+function setCanvasDimensions (cvs: HTMLCanvasElement, width: number, height: number) {
+    cvs.width = width;
+    cvs.height = height;
+    cvs.style.width = `${width}px`;
+    cvs.style.height = `${height}px`;
 }
 export function setCanvas (cvs: HTMLCanvasElement) {
     canvas = cvs;
@@ -61,13 +61,13 @@ type HighlightInfo = {
 type GridDimensions = {
     width: number,
     height: number,
-}
+};
 
 enum DamageKind {
     Cell,
     Resize,
     Scroll,
-};
+}
 
 // Used to track rectangles of damage done to a grid and only repaint the
 // necessary bits. These are logic positions (i.e. cells) - not pixels.
@@ -105,7 +105,7 @@ type ScrollDamage = {
     x: number,
     // The bottom line of the scrolling region, in cells
     y: number,
-}
+};
 
 type GridDamage = CellDamage & ResizeDamage & ScrollDamage;
 
@@ -119,7 +119,7 @@ type CommandLineState = {
     prompt: string,
     indent: number,
     level: number
-}
+};
 
 type Cursor = {
     currentGrid: number,
@@ -205,9 +205,9 @@ const globalState: State = {
 };
 
 function pushDamage(grid: number, kind: DamageKind, h: number, w: number, x: number, y: number) {
-    const damages = globalState.gridDamages[grid]
+    const damages = globalState.gridDamages[grid];
     const count = globalState.gridDamagesCount[grid];
-    if (damages.length == count) {
+    if (damages.length === count) {
         damages.push({ kind, h, w, x, y });
     } else {
         damages[count].kind = kind;
@@ -222,7 +222,7 @@ function pushDamage(grid: number, kind: DamageKind, h: number, w: number, x: num
 let maxCellWidth: number;
 let maxCellHeight: number;
 let maxBaselineDistance: number;
-function recomputeCharSize (context: CanvasRenderingContext2D) {
+function recomputeCharSize (ctx: CanvasRenderingContext2D) {
     // 94, K+32: we ignore the first 32 ascii chars because they're non-printable
     const chars = new Array(94)
         .fill(0)
@@ -234,7 +234,7 @@ function recomputeCharSize (context: CanvasRenderingContext2D) {
     let baseline = 0;
     let measure: TextMetrics;
     for (const char of chars) {
-        measure = context.measureText(char);
+        measure = ctx.measureText(char);
         if (measure.width > width) {
             width = measure.width;
         }
@@ -261,9 +261,9 @@ export function getGlyphInfo () {
     }
     return [maxCellWidth, maxCellHeight, maxBaselineDistance];
 }
-function measureWidth(context: CanvasRenderingContext2D, char: string) {
-    let charWidth = getGlyphInfo()[0];
-    return Math.ceil(context.measureText(char).width / charWidth) * charWidth;
+function measureWidth(ctx: CanvasRenderingContext2D, char: string) {
+    const charWidth = getGlyphInfo()[0];
+    return Math.ceil(ctx.measureText(char).width / charWidth) * charWidth;
 }
 
 export function getLogicalSize() {
@@ -355,8 +355,8 @@ function damageMessagesSpace () {
 }
 
 const handlers = {
-    busy_start: () => { canvas.style.cursor = "wait" },
-    busy_stop: () => { canvas.style.cursor = "auto" },
+    busy_start: () => { canvas.style.cursor = "wait"; },
+    busy_stop: () => { canvas.style.cursor = "auto"; },
     cmdline_hide: () => {
         globalState.commandLine.status = "hidden";
         damageCommandLineSpace();
@@ -437,21 +437,22 @@ const handlers = {
         }
         const charGrid = globalState.gridCharacters[id];
         const highlights = globalState.gridHighlights[id];
-        let prevCol = col, high = 0;
+        let prevCol = col;
+        let high = 0;
         for (let i = 0; i < changes.length; ++i) {
             const change = changes[i];
             const chara = change[0];
             if (change[1] !== undefined) {
-                high = change[1]
+                high = change[1];
             }
             const repeat = change[2] === undefined ? 1 : change[2];
 
             pushDamage(id, DamageKind.Cell, 1, repeat, prevCol, row);
 
             const limit = prevCol + repeat;
-            for (let i = prevCol; i < limit; i += 1) {
-                charGrid[row][i] = chara;
-                highlights[row][i] = high;
+            for (let j = prevCol; j < limit; j += 1) {
+                charGrid[row][j] = chara;
+                highlights[row][j] = high;
             }
             prevCol = limit;
         }
@@ -460,7 +461,7 @@ const handlers = {
         if (!matchesSelectedGrid(id)) {
             return;
         }
-        const createGrid = globalState.gridCharacters[id] === undefined
+        const createGrid = globalState.gridCharacters[id] === undefined;
         if (createGrid) {
             globalState.gridCharacters[id] = new Array();
             globalState.gridCharacters[id].push(new Array());
@@ -484,8 +485,8 @@ const handlers = {
         const charGrid = globalState.gridCharacters[id];
         if (width > charGrid[0].length) {
             for (let i = 0; i < charGrid.length; ++i) {
-                let row = charGrid[i];
-                let highs = highlights[i];
+                const row = charGrid[i];
+                const highs = highlights[i];
                 while (row.length < width) {
                     row.push(" ");
                     highs.push(0);
@@ -521,49 +522,49 @@ const handlers = {
         const charGrid = globalState.gridCharacters[id];
         const highGrid = globalState.gridHighlights[id];
         if (rows > 0) {
-            let bottom = (bot + rows) >= dimensions.height
+            const bottom = (bot + rows) >= dimensions.height
                 ? dimensions.height - rows
                 : bot + rows;
             for (let y = top; y < bottom; ++y) {
-                const src_chars = charGrid[y + rows];
-                const dst_chars = charGrid[y];
-                const src_highs = highGrid[y + rows];
-                const dst_highs = highGrid[y];
+                const srcChars = charGrid[y + rows];
+                const dstChars = charGrid[y];
+                const srcHighs = highGrid[y + rows];
+                const dstHighs = highGrid[y];
                 for (let x = 0; x < dimensions.width; ++x) {
-                    dst_chars[x] = src_chars[x];
-                    dst_highs[x] = src_highs[x];
+                    dstChars[x] = srcChars[x];
+                    dstHighs[x] = srcHighs[x];
                 }
             }
             pushDamage(id, DamageKind.Cell, dimensions.height, dimensions.width, 0, 0);
         } else if (rows < 0) {
             for (let y = bot - 1; y >= top && (y + rows) >= 0; --y) {
-                const src_chars = charGrid[y + rows];
-                const dst_chars = charGrid[y];
-                const src_highs = highGrid[y + rows];
-                const dst_highs = highGrid[y];
+                const srcChars = charGrid[y + rows];
+                const dstChars = charGrid[y];
+                const srcHighs = highGrid[y + rows];
+                const dstHighs = highGrid[y];
                 for (let x = 0; x < dimensions.width; ++x) {
-                    dst_chars[x] = src_chars[x];
-                    dst_highs[x] = src_highs[x];
+                    dstChars[x] = srcChars[x];
+                    dstHighs[x] = srcHighs[x];
                 }
             }
             pushDamage(id, DamageKind.Cell, dimensions.height, dimensions.width, 0, 0);
         }
     },
-    hl_attr_define: (id: number, rgb_attr: any) => {
+    hl_attr_define: (id: number, rgbAttr: any) => {
         const highlights = globalState.highlights;
         if (highlights[id] === undefined) {
             highlights[id] = newHighlight(undefined, undefined);
         }
-        highlights[id].foreground = toHexCss(rgb_attr.foreground);
-        highlights[id].background = toHexCss(rgb_attr.background);
-        highlights[id].bold = rgb_attr.bold;
-        highlights[id].blend = rgb_attr.blend;
-        highlights[id].italic = rgb_attr.italic;
-        highlights[id].special = toHexCss(rgb_attr.special);
-        highlights[id].strikethrough = rgb_attr.strikethrough;
-        highlights[id].undercurl = rgb_attr.undercurl;
-        highlights[id].underline = rgb_attr.underline;
-        highlights[id].reverse = rgb_attr.reverse;
+        highlights[id].foreground = toHexCss(rgbAttr.foreground);
+        highlights[id].background = toHexCss(rgbAttr.background);
+        highlights[id].bold = rgbAttr.bold;
+        highlights[id].blend = rgbAttr.blend;
+        highlights[id].italic = rgbAttr.italic;
+        highlights[id].special = toHexCss(rgbAttr.special);
+        highlights[id].strikethrough = rgbAttr.strikethrough;
+        highlights[id].undercurl = rgbAttr.undercurl;
+        highlights[id].underline = rgbAttr.underline;
+        highlights[id].reverse = rgbAttr.reverse;
     },
     mode_change: (_: string, modeIdx: number) => {
         globalState.mode.current = modeIdx;
@@ -591,9 +592,9 @@ const handlers = {
         damageMessagesSpace();
         globalState.ruler = content;
     },
-    msg_show: (_: string, content: Message, replace_last: boolean) => {
+    msg_show: (_: string, content: Message, replaceLast: boolean) => {
         damageMessagesSpace();
-        if (replace_last) {
+        if (replaceLast) {
             globalState.messages.length = 0;
         }
         globalState.messages.push(content);
@@ -629,9 +630,9 @@ function scheduleFrame() {
     }
 }
 
-function paintMessages(state: State, context: CanvasRenderingContext2D) {
+function paintMessages(state: State, ctx: CanvasRenderingContext2D) {
     const gId = getGridId();
-    let messagesPosition = state.messagesPositions[gId];
+    const messagesPosition = state.messagesPositions[gId];
     const [, charHeight, baseline] = getGlyphInfo();
     const messages = state.messages;
     // we need to know the size of the message box in order to draw its border
@@ -644,12 +645,12 @@ function paintMessages(state: State, context: CanvasRenderingContext2D) {
         let renderedX = canvas.width;
         let renderedY = canvas.height - charHeight + baseline;
         for (let i = messages.length - 1; i >= 0; --i) {
-            let message = messages[i];
+            const message = messages[i];
             for (let j = message.length - 1; j >= 0; --j) {
-                let chars = Array.from(message[j][1]);
+                const chars = Array.from(message[j][1]);
                 for (let k = chars.length - 1; k >= 0; --k) {
-                    let char = chars[k];
-                    let measuredWidth = measureWidth(context, char);
+                    const char = chars[k];
+                    const measuredWidth = measureWidth(ctx, char);
                     if (renderedX - measuredWidth < 0) {
                         if (renderedY - charHeight < 0) {
                             return;
@@ -659,7 +660,7 @@ function paintMessages(state: State, context: CanvasRenderingContext2D) {
                     }
                     renderedX = renderedX - measuredWidth;
                     if (draw) {
-                        context.fillText(char, renderedX, renderedY);
+                        ctx.fillText(char, renderedX, renderedY);
                     }
                     if (renderedX < messagesPosition.x) {
                         messagesPosition.x = renderedX;
@@ -674,28 +675,28 @@ function paintMessages(state: State, context: CanvasRenderingContext2D) {
         }
     }
     renderMessages(false);
-    context.fillStyle = state.highlights[0].foreground;
-    context.fillRect(messagesPosition.x - 2,
+    ctx.fillStyle = state.highlights[0].foreground;
+    ctx.fillRect(messagesPosition.x - 2,
                      messagesPosition.y - 2,
                      canvas.width - messagesPosition.x + 2,
                      canvas.height - messagesPosition.y + 2);
 
-    context.fillStyle = state.highlights[0].background;
-    context.fillRect(messagesPosition.x - 1,
+    ctx.fillStyle = state.highlights[0].background;
+    ctx.fillRect(messagesPosition.x - 1,
                      messagesPosition.y - 1,
                      canvas.width - messagesPosition.x + 1,
                      canvas.height - messagesPosition.y + 1);
-    context.fillStyle = state.highlights[0].foreground;
+    ctx.fillStyle = state.highlights[0].foreground;
     renderMessages(true);
 }
 
-function paintCommandlineWindow(state: State, context: CanvasRenderingContext2D) {
+function paintCommandlineWindow(state: State, ctx: CanvasRenderingContext2D) {
     const [charWidth, charHeight, baseline] = getGlyphInfo();
     const commandLine = state.commandLine;
     const rect = getCommandLineRect();
     // outer rectangle
-    context.fillStyle = state.highlights[0].foreground;
-    context.fillRect(rect.x,
+    ctx.fillStyle = state.highlights[0].foreground;
+    ctx.fillRect(rect.x,
                      rect.y,
                      rect.width,
                      rect.height);
@@ -705,8 +706,8 @@ function paintCommandlineWindow(state: State, context: CanvasRenderingContext2D)
     rect.y += 1;
     rect.width -= 2;
     rect.height -= 2;
-    context.fillStyle = state.highlights[0].background;
-    context.fillRect(rect.x,
+    ctx.fillStyle = state.highlights[0].background;
+    ctx.fillRect(rect.x,
                      rect.y,
                      rect.width,
                      rect.height);
@@ -719,17 +720,17 @@ function paintCommandlineWindow(state: State, context: CanvasRenderingContext2D)
 
     // Position where text should be drawn
     let x = rect.x;
-    let y = rect.y;
+    const y = rect.y;
 
     // first character
-    context.fillStyle = state.highlights[0].foreground;
-    context.fillText(commandLine.firstc, x, y + baseline);
+    ctx.fillStyle = state.highlights[0].foreground;
+    ctx.fillText(commandLine.firstc, x, y + baseline);
     x += charWidth;
     rect.width -= charWidth;
 
-    let encoder = new TextEncoder();
+    const encoder = new TextEncoder();
     // reduce the commandline's content to a string for iteration
-    let str = commandLine.content.reduce((r: string, segment: [any, string]) => r + segment[1], "");
+    const str = commandLine.content.reduce((r: string, segment: [any, string]) => r + segment[1], "");
     // Array.from(str) will return an array whose cells are grapheme
     // clusters. It is important to iterate over graphemes instead of the
     // string because iterating over the string would sometimes yield only
@@ -765,14 +766,14 @@ function paintCommandlineWindow(state: State, context: CanvasRenderingContext2D)
     // For each character, find out its width. If it cannot fit in the
     // command line window along with the rest of the slice and the cursor
     // hasn't been found yet, remove characters from the beginning of the
-    // slice until the character fits. 
+    // slice until the character fits.
     // Stop either when all characters are in the slice or when the cursor
     // can be displayed and the slice takes all available width.
     for (let i = 0; i < characters.length; ++i) {
         sliceEnd = i;
         const char = characters[i];
 
-        const cWidth = measureWidth(context, char);
+        const cWidth = measureWidth(ctx, char);
         renderedI += cWidth;
 
         sliceWidth += cWidth;
@@ -782,7 +783,7 @@ function paintCommandlineWindow(state: State, context: CanvasRenderingContext2D)
             }
             do {
                 const removedChar = characters[sliceStart];
-                const removedWidth = measureWidth(context, removedChar);
+                const removedWidth = measureWidth(ctx, removedChar);
                 renderedI -= removedWidth;
                 sliceWidth -= removedWidth;
                 sliceStart += 1;
@@ -790,21 +791,20 @@ function paintCommandlineWindow(state: State, context: CanvasRenderingContext2D)
         }
 
         encodedI += encoder.encode(char).length;
-        if (encodedI == commandLine.pos) {
+        if (encodedI === commandLine.pos) {
             cursorX = renderedI;
             cursorDisplayed = true;
         }
-
     }
     if (characters.length > 0) {
         renderedI = 0;
         for (let i = sliceStart; i <= sliceEnd; ++i) {
             const char = characters[i];
-            context.fillText(char, x + renderedI, y + baseline);
-            renderedI += measureWidth(context, char);
+            ctx.fillText(char, x + renderedI, y + baseline);
+            renderedI += measureWidth(ctx, char);
         }
     }
-    context.fillRect(x + cursorX, y, 1, charHeight);
+    ctx.fillRect(x + cursorX, y, 1, charHeight);
 }
 
 function paint (_: DOMHighResTimeStamp) {
@@ -840,7 +840,7 @@ function paint (_: DOMHighResTimeStamp) {
 
                 // Restore the canvas
                 context.putImageData(data, 0, 0);
-            };
+            }
             break;
             case DamageKind.Scroll:
             case DamageKind.Cell:
@@ -854,12 +854,12 @@ function paint (_: DOMHighResTimeStamp) {
                             continue;
                         }
                         const pixelX = x * charWidth;
-                        let id = glyphId(row[x], rowHigh[x]);
+                        const id = glyphId(row[x], rowHigh[x]);
 
                         if (glyphCache[id] === undefined) {
                             const cellHigh = highlights[rowHigh[x]];
-                            let width = Math.ceil(measureWidth(context, row[x]) / charWidth) * charWidth;
-                            let background = cellHigh.background || highlights[0].background
+                            const width = Math.ceil(measureWidth(context, row[x]) / charWidth) * charWidth;
+                            let background = cellHigh.background || highlights[0].background;
                             let foreground = cellHigh.foreground || highlights[0].foreground;
                             if (cellHigh.reverse) {
                                 const tmp = background;
@@ -897,8 +897,8 @@ function paint (_: DOMHighResTimeStamp) {
                                 context.fillRect(pixelX, pixelY + baseline + 2, width, 1);
                             }
                             if (cellHigh.undercurl) {
-                                for (let x = pixelX; x < pixelX + width; ++x) {
-                                    context.fillRect(x, pixelY + baseline + Math.sin(x) + 2, 1, 1);
+                                for (let abscissa = pixelX; abscissa < pixelX + width; ++abscissa) {
+                                    context.fillRect(abscissa, pixelY + baseline + Math.sin(abscissa) + 2, 1, 1);
                                 }
                             }
                             glyphCache[id] = context.getImageData(
@@ -937,14 +937,14 @@ function paint (_: DOMHighResTimeStamp) {
             let background = highlights[info.attr_id].background;
             let foreground = highlights[info.attr_id].foreground;
             if (info.attr_id === 0) {
-                let tmp = background;
+                const tmp = background;
                 background = foreground;
                 foreground = tmp;
             }
 
             // Decide cursor shape. Default to block, change to
             // vertical/horizontal if needed.
-            let cursorWidth = cursor.x * charWidth;
+            const cursorWidth = cursor.x * charWidth;
             let cursorHeight = cursor.y * charHeight;
             let width = charWidth;
             let height = charHeight;
@@ -999,11 +999,11 @@ function paint (_: DOMHighResTimeStamp) {
 
 export function onRedraw(events: any[]) {
     for (let i = 0; i < events.length; ++i) {
-        let event = events[i];
+        const event = events[i];
         const handler = (handlers as any)[(event[0] as any)];
         if (handler !== undefined) {
-            for (let i = 1; i < event.length; ++i) {
-                handler.apply(globalState, event[i]);
+            for (let j = 1; j < event.length; ++j) {
+                handler.apply(globalState, event[j]);
             }
         } else {
             console.error(`${event[0]} is not implemented.`);

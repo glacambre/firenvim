@@ -4,7 +4,7 @@ import { getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from
 import { getLogicalSize, getGlyphInfo } from "./render/RedrawCanvas";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
-import { getCharSize, getGridSize, isChrome, toFileName } from "./utils/utils";
+import { isChrome, toFileName } from "./utils/utils";
 
 const frameIdPromise = browser
     .runtime
@@ -21,7 +21,8 @@ export const isReady = new Promise((resolve, reject) => {
             const extCmdline = document.getElementById("ext_cmdline") as HTMLSpanElement;
             const extMessages = document.getElementById("ext_messages") as HTMLSpanElement;
             const keyHandler = document.getElementById("keyhandler");
-            const [[url, selector, cursor, language], connectionData] = await Promise.all([infoPromise, connectionPromise]);
+            const [[url, selector, cursor, language], connectionData] =
+                await Promise.all([infoPromise, connectionPromise]);
             const nvimPromise = neovim(canvas, host, extCmdline, extMessages, connectionData);
             const contentPromise = page.getElementContent();
 
