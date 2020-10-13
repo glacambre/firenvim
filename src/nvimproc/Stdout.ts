@@ -51,7 +51,7 @@ export class Stdout {
             if (name) {
                 const handlers = this.listeners.get(name);
                 if (handlers !== undefined) {
-                    for (let handler of handlers) {
+                    for (const handler of handlers) {
                         handler(reqId, data1, data2);
                     }
                 }

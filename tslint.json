@@ -18,6 +18,7 @@
     "no-namespace": false,
     "no-switch-case-fall-through": true,
     "no-useless-cast": false,
+    "prefer-for-of": false,
     "semicolon": [true, "always"]
   }
 }
