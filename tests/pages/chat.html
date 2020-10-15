@@ -8,7 +8,7 @@
                         addEventListener("load", () => {
                                 const textarea = document.getElementById("content-input");
                                 textarea.addEventListener("keyup", (e) => {
-                                        if (e.key === "Enter" && e.ctrlKey) {
+                                        if (e.key === "Enter" && e.ctrlKey && e.keyCode === 13) {
                                                 textarea.value = "Message sent!";
                                                 textarea.focus();
                                         }
