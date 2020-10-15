@@ -307,7 +307,9 @@ export class FirenvimElement {
         this.iframe.style.left = `${rect.left + window.scrollX + this.relativeX}px`;
         this.iframe.style.position = "absolute";
         this.iframe.style.top = `${rect.top + window.scrollY + this.relativeY}px`;
-        this.iframe.style.zIndex = "2147483645";
+        // 2139999995 is hopefully higher than everything else on the page but
+        // lower than Vimium's elements
+        this.iframe.style.zIndex = "2139999995";
 
         // Compare, to know whether the element moved or not
         const posChanged = !!posAttrs.find((attr: any, index) =>
