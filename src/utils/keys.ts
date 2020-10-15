@@ -46,34 +46,62 @@ const nonLiteralVimKeys = Object.fromEntries(Object
                                              .entries(nonLiteralKeys)
                                              .map(([x, y]) => [y, x]));
 
+const nonLiteralKeyCodes: {[key: string]: number} = {
+    "Enter":      13,
+    "Space":      32,
+    "Tab":        9,
+    "Delete":     46,
+    "End":        35,
+    "Home":       36,
+    "Insert":     45,
+    "PageDown":   34,
+    "PageUp":     33,
+    "ArrowDown":  40,
+    "ArrowLeft":  37,
+    "ArrowRight": 39,
+    "ArrowUp":    38,
+    "Escape":     27,
+};
+
 // Given a "special" key representation (e.g. <Enter> or <M-l>), returns an
 // array of three javascript keyevents, the first one representing the
 // corresponding keydown, the second one a keypress and the third one a keyup
 // event.
-function modKeyToEvents(key: string) {
+function modKeyToEvents(k: string) {
     let mods = "";
-    let char = nonLiteralVimKeys[key];
+    let key = nonLiteralVimKeys[k];
     let ctrlKey = false;
     let altKey = false;
     let shiftKey = false;
-    if (char === undefined) {
-        const arr = key.slice(1, -1).split("-");
+    if (key === undefined) {
+        const arr = k.slice(1, -1).split("-");
         mods = arr[0];
-        char = arr[1];
+        key = arr[1];
         ctrlKey = /c/i.test(mods);
         altKey = /a/i.test(mods);
-        const specialChar = "<" + char + ">";
+        const specialChar = "<" + key + ">";
         if (nonLiteralVimKeys[specialChar] !== undefined) {
-            char = nonLiteralVimKeys[specialChar];
+            key = nonLiteralVimKeys[specialChar];
             shiftKey = false;
         } else {
-            shiftKey = char !== char.toLocaleLowerCase();
+            shiftKey = key !== key.toLocaleLowerCase();
         }
     }
+    // Some pages rely on keyCodes to figure out what key was pressed. This is
+    // awful because keycodes aren't guaranteed to be the same acrross
+    // browsers/OS/keyboard layouts but try to do the right thing anyway.
+    // https://github.com/glacambre/firenvim/issues/723
+    let keyCode = 0;
+    if (/^[a-zA-Z0-9]$/.test(key)) {
+        keyCode = key.charCodeAt(0);
+    } else if (nonLiteralKeyCodes[key] !== undefined) {
+        keyCode = nonLiteralKeyCodes[key];
+    }
+    const init = { key, keyCode, ctrlKey, altKey, shiftKey, bubbles: true };
     return [
-        new KeyboardEvent("keydown",  { key: char, ctrlKey, altKey, shiftKey, bubbles: true }),
-        new KeyboardEvent("keypress", { key: char, ctrlKey, altKey, shiftKey, bubbles: true }),
-        new KeyboardEvent("keyup",    { key: char, ctrlKey, altKey, shiftKey, bubbles: true }),
+        new KeyboardEvent("keydown", init),
+        new KeyboardEvent("keypress", init),
+        new KeyboardEvent("keyup", init),
     ];
 }
 
