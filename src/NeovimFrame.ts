@@ -1,7 +1,7 @@
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
 import { getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
-import { getLogicalSize, getGlyphInfo } from "./render/RedrawCanvas";
+import { getLogicalSize, computeGridDimensionsFor, getGridCoordinates } from "./render/RedrawCanvas";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { isChrome, toFileName } from "./utils/utils";
@@ -65,11 +65,9 @@ export const isReady = new Promise((resolve, reject) => {
                     // different from rows but we can't because redraw notifications
                     // might happen without us actually calling ui_try_resize and then
                     // the sizes wouldn't be in sync anymore
-                    const [cellWidth, cellHeight] = getGlyphInfo();
-                    const nCols = Math.floor(width / cellWidth);
-                    const nRows = Math.floor(height / cellHeight);
+                    const [nCols, nRows] = computeGridDimensionsFor(width, height);
                     nvim.ui_try_resize_grid(getGridId(), nCols, nRows);
-                    page.resizeEditor(nCols * cellWidth, nRows * cellHeight);
+                    page.resizeEditor(Math.floor(width / nCols) * nCols, Math.floor(height / nRows) * nRows);
                 }
             });
 
@@ -208,14 +206,13 @@ export const isReady = new Promise((resolve, reject) => {
                     (evt.ctrlKey ? "V" : "") +
                     (evt.metaKey ? "D" : "") +
                     (evt.shiftKey ? "S" : "");
-                const [cWidth, cHeight] = getGlyphInfo();
+                const [x, y] = getGridCoordinates(evt.pageX, evt.pageY);
                 nvim.input_mouse(button,
                                  action,
                                  modifiers,
                                  getGridId(),
-                                 Math.floor(evt.pageY / cHeight),
-                                 Math.floor(evt.pageX / cWidth));
-
+                                 y,
+                                 x);
                 keyHandler.focus();
             }
             window.addEventListener("mousedown", e => {

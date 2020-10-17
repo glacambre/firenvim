@@ -9,12 +9,10 @@ export function setFunctions(fns: any) {
 let metricsInvalidated: boolean = false;
 let glyphCache : any = {};
 
-let canvas : HTMLCanvasElement;
-let context : CanvasRenderingContext2D;
 let fontString : string;
-function setFontString (s : string) {
+function setFontString (state: State, s : string) {
     fontString = s;
-    context.font = fontString;
+    state.context.font = fontString;
     metricsInvalidated = true;
     glyphCache = {};
 }
@@ -28,12 +26,13 @@ function setCanvasDimensions (cvs: HTMLCanvasElement, width: number, height: num
     cvs.style.height = `${height}px`;
 }
 export function setCanvas (cvs: HTMLCanvasElement) {
-    canvas = cvs;
-    setCanvasDimensions(cvs, window.innerWidth, window.innerHeight);
-    const { fontFamily, fontSize } = window.getComputedStyle(canvas);
+    const state = globalState;
+    state.canvas = cvs;
+    setCanvasDimensions(state.canvas, window.innerWidth, window.innerHeight);
+    const { fontFamily, fontSize } = window.getComputedStyle(state.canvas);
     fontString = `${fontSize} ${fontFamily}`;
-    context = canvas.getContext("2d", { "alpha": false });
-    setFontString(fontString);
+    state.context = state.canvas.getContext("2d", { "alpha": false });
+    setFontString(state, fontString);
 }
 
 // We first define highlight information.
@@ -146,6 +145,8 @@ type Message = [number, string][];
 type MessagesPosition = { x: number, y: number };
 
 type State = {
+    canvas: HTMLCanvasElement,
+    context: CanvasRenderingContext2D,
     commandLine : CommandLineState,
     cursor: Cursor,
     gridCharacters: string[][][],
@@ -163,6 +164,8 @@ type State = {
 };
 
 const globalState: State = {
+    canvas: undefined,
+    context: undefined,
     commandLine: {
         status: "hidden",
         content: [],
@@ -252,23 +255,34 @@ function recomputeCharSize (ctx: CanvasRenderingContext2D) {
     maxBaselineDistance = baseline;
     metricsInvalidated = false;
 }
-export function getGlyphInfo () {
+export function getGlyphInfo (state: State) {
     if (metricsInvalidated
         || maxCellWidth === undefined
         || maxCellHeight === undefined
         || maxBaselineDistance === undefined) {
-        recomputeCharSize(context);
+        recomputeCharSize(state.context);
     }
     return [maxCellWidth, maxCellHeight, maxBaselineDistance];
 }
-function measureWidth(ctx: CanvasRenderingContext2D, char: string) {
-    const charWidth = getGlyphInfo()[0];
-    return Math.ceil(ctx.measureText(char).width / charWidth) * charWidth;
+function measureWidth(state: State, char: string) {
+    const charWidth = getGlyphInfo(state)[0];
+    return Math.ceil(state.context.measureText(char).width / charWidth) * charWidth;
 }
 
 export function getLogicalSize() {
-    const [cellWidth, cellHeight] = getGlyphInfo();
-    return [Math.floor(canvas.width / cellWidth), Math.floor(canvas.height / cellHeight)];
+    const state = globalState;
+    const [cellWidth, cellHeight] = getGlyphInfo(state);
+    return [Math.floor(state.canvas.width / cellWidth), Math.floor(state.canvas.height / cellHeight)];
+}
+
+export function computeGridDimensionsFor (width : number, height : number) {
+    const [cellWidth, cellHeight] = getGlyphInfo(globalState);
+    return [Math.floor(width / cellWidth), Math.floor(height / cellHeight)];
+}
+
+export function getGridCoordinates (x: number, y: number) {
+    const [cellWidth, cellHeight] = getGlyphInfo(globalState);
+    return [Math.floor(x / cellWidth), Math.floor(y / cellHeight)];
 }
 
 function newHighlight (bg: string, fg: string): HighlightInfo {
@@ -316,19 +330,19 @@ function matchesSelectedGrid(gid: number) {
     return gridId === undefined || gridId === gid;
 }
 
-function getCommandLineRect () {
-    const [width, height] = getGlyphInfo();
+function getCommandLineRect (state: State) {
+    const [width, height] = getGlyphInfo(state);
     return {
         x: width - 1,
-        y: ((canvas.height - height - 1) / 2),
-        width: (canvas.width - (width * 2)) + 2,
+        y: ((state.canvas.height - height - 1) / 2),
+        width: (state.canvas.width - (width * 2)) + 2,
         height: height + 2,
     };
 }
 
-function damageCommandLineSpace () {
-    const [width, height] = getGlyphInfo();
-    const rect = getCommandLineRect();
+function damageCommandLineSpace (state: State) {
+    const [width, height] = getGlyphInfo(state);
+    const rect = getCommandLineRect(state);
     const gid = getGridId();
     const dimensions = globalState.gridSizes[gid];
     pushDamage(gid,
@@ -339,27 +353,31 @@ function damageCommandLineSpace () {
                Math.max(Math.floor(rect.y / height), 0));
 }
 
-function damageMessagesSpace () {
+function damageMessagesSpace (state: State) {
     const gId = getGridId();
     const msgPos = globalState.messagesPositions[gId];
     const dimensions = globalState.gridSizes[gId];
-    const [charWidth, charHeight] = getGlyphInfo();
+    const [charWidth, charHeight] = getGlyphInfo(state);
     pushDamage(gId,
                DamageKind.Cell,
-               Math.min(Math.ceil((canvas.height - msgPos.y) / charHeight) + 2, dimensions.height),
-               Math.min(Math.ceil((canvas.width - msgPos.x) / charWidth) + 2, dimensions.width),
+               Math.min(
+                   Math.ceil((state.canvas.height - msgPos.y) / charHeight) + 2,
+                   dimensions.height),
+               Math.min(
+                   Math.ceil((state.canvas.width - msgPos.x) / charWidth) + 2,
+                   dimensions.width),
                Math.max(Math.floor(msgPos.x / charWidth) - 1, 0),
                Math.max(Math.floor(msgPos.y / charHeight) - 1, 0));
-    msgPos.x = canvas.width;
-    msgPos.y = canvas.height;
+    msgPos.x = state.canvas.width;
+    msgPos.y = state.canvas.height;
 }
 
 const handlers = {
-    busy_start: () => { canvas.style.cursor = "wait"; },
-    busy_stop: () => { canvas.style.cursor = "auto"; },
+    busy_start: () => { globalState.canvas.style.cursor = "wait"; },
+    busy_stop: () => { globalState.canvas.style.cursor = "auto"; },
     cmdline_hide: () => {
         globalState.commandLine.status = "hidden";
-        damageCommandLineSpace();
+        damageCommandLineSpace(globalState);
     },
     cmdline_pos: (pos: number, level: number) => {
         globalState.commandLine.pos = pos;
@@ -461,16 +479,20 @@ const handlers = {
         if (!matchesSelectedGrid(id)) {
             return;
         }
-        const createGrid = globalState.gridCharacters[id] === undefined;
+        const state = globalState;
+        const createGrid = state.gridCharacters[id] === undefined;
         if (createGrid) {
-            globalState.gridCharacters[id] = new Array();
-            globalState.gridCharacters[id].push(new Array());
-            globalState.gridSizes[id] = { width: 0, height: 0 };
-            globalState.gridDamages[id] = new Array();
-            globalState.gridDamagesCount[id] = 0;
-            globalState.gridHighlights[id] = new Array();
-            globalState.gridHighlights[id].push(new Array());
-            globalState.messagesPositions[id] = { x: canvas.width, y: canvas.height };
+            state.gridCharacters[id] = new Array();
+            state.gridCharacters[id].push(new Array());
+            state.gridSizes[id] = { width: 0, height: 0 };
+            state.gridDamages[id] = new Array();
+            state.gridDamagesCount[id] = 0;
+            state.gridHighlights[id] = new Array();
+            state.gridHighlights[id].push(new Array());
+            state.messagesPositions[id] = {
+                x: state.canvas.width,
+                y: state.canvas.height,
+            };
         }
 
         const curGridSize = globalState.gridSizes[id];
@@ -581,41 +603,42 @@ const handlers = {
         mode.modeInfo = modeInfo;
     },
     msg_clear: () => {
-        damageMessagesSpace();
+        damageMessagesSpace(globalState);
         globalState.messages.length = 0;
     },
     msg_history_show: (entries: any[]) => {
-        damageMessagesSpace();
+        damageMessagesSpace(globalState);
         globalState.messages = entries.map(([, b]) => b);
     },
     msg_ruler: (content: Message) => {
-        damageMessagesSpace();
+        damageMessagesSpace(globalState);
         globalState.ruler = content;
     },
     msg_show: (_: string, content: Message, replaceLast: boolean) => {
-        damageMessagesSpace();
+        damageMessagesSpace(globalState);
         if (replaceLast) {
             globalState.messages.length = 0;
         }
         globalState.messages.push(content);
     },
     msg_showcmd: (content: Message) => {
-        damageMessagesSpace();
+        damageMessagesSpace(globalState);
         globalState.showcmd = content;
     },
     msg_showmode: (content: Message) => {
-        damageMessagesSpace();
+        damageMessagesSpace(globalState);
         globalState.showmode = content;
     },
     option_set: (option: string, value: any) => {
+        const state = globalState;
         switch (option) {
             case "guifont":
                 const guifont = parseGuifont(value || "monospace:h9", {});
-                setFontString((guifont["font-size"] || "") + " " + (guifont["font-family"] || "monospace"));
-                const [charWidth, charHeight] = getGlyphInfo();
+                setFontString(globalState, (guifont["font-size"] || "") + " " + (guifont["font-family"] || "monospace"));
+                const [charWidth, charHeight] = getGlyphInfo(state);
                 functions.ui_try_resize_grid(getGridId(),
-                                             Math.floor(canvas.width / charWidth),
-                                             Math.floor(canvas.height / charHeight));
+                                             Math.floor(state.canvas.width / charWidth),
+                                             Math.floor(state.canvas.height / charHeight));
         }
     },
 };
@@ -630,10 +653,11 @@ function scheduleFrame() {
     }
 }
 
-function paintMessages(state: State, ctx: CanvasRenderingContext2D) {
+function paintMessages(state: State) {
+    const ctx = state.context;
     const gId = getGridId();
     const messagesPosition = state.messagesPositions[gId];
-    const [, charHeight, baseline] = getGlyphInfo();
+    const [, charHeight, baseline] = getGlyphInfo(state);
     const messages = state.messages;
     // we need to know the size of the message box in order to draw its border
     // and background. The algorithm to compute this is equivalent to drawing
@@ -642,20 +666,20 @@ function paintMessages(state: State, ctx: CanvasRenderingContext2D) {
     // drawn. This lets us run the algorithm once to get the dimensions and
     // then again to actually draw text.
     function renderMessages (draw: boolean) {
-        let renderedX = canvas.width;
-        let renderedY = canvas.height - charHeight + baseline;
+        let renderedX = state.canvas.width;
+        let renderedY = state.canvas.height - charHeight + baseline;
         for (let i = messages.length - 1; i >= 0; --i) {
             const message = messages[i];
             for (let j = message.length - 1; j >= 0; --j) {
                 const chars = Array.from(message[j][1]);
                 for (let k = chars.length - 1; k >= 0; --k) {
                     const char = chars[k];
-                    const measuredWidth = measureWidth(ctx, char);
+                    const measuredWidth = measureWidth(state, char);
                     if (renderedX - measuredWidth < 0) {
                         if (renderedY - charHeight < 0) {
                             return;
                         }
-                        renderedX = canvas.width;
+                        renderedX = state.canvas.width;
                         renderedY = renderedY - charHeight;
                     }
                     renderedX = renderedX - measuredWidth;
@@ -670,7 +694,7 @@ function paintMessages(state: State, ctx: CanvasRenderingContext2D) {
                     }
                 }
             }
-            renderedX = canvas.width;
+            renderedX = state.canvas.width;
             renderedY = renderedY - charHeight;
         }
     }
@@ -678,22 +702,23 @@ function paintMessages(state: State, ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = state.highlights[0].foreground;
     ctx.fillRect(messagesPosition.x - 2,
                      messagesPosition.y - 2,
-                     canvas.width - messagesPosition.x + 2,
-                     canvas.height - messagesPosition.y + 2);
+                     state.canvas.width - messagesPosition.x + 2,
+                     state.canvas.height - messagesPosition.y + 2);
 
     ctx.fillStyle = state.highlights[0].background;
     ctx.fillRect(messagesPosition.x - 1,
                      messagesPosition.y - 1,
-                     canvas.width - messagesPosition.x + 1,
-                     canvas.height - messagesPosition.y + 1);
+                     state.canvas.width - messagesPosition.x + 1,
+                     state.canvas.height - messagesPosition.y + 1);
     ctx.fillStyle = state.highlights[0].foreground;
     renderMessages(true);
 }
 
-function paintCommandlineWindow(state: State, ctx: CanvasRenderingContext2D) {
-    const [charWidth, charHeight, baseline] = getGlyphInfo();
+function paintCommandlineWindow(state: State) {
+    const ctx = state.context;
+    const [charWidth, charHeight, baseline] = getGlyphInfo(state);
     const commandLine = state.commandLine;
-    const rect = getCommandLineRect();
+    const rect = getCommandLineRect(state);
     // outer rectangle
     ctx.fillStyle = state.highlights[0].foreground;
     ctx.fillRect(rect.x,
@@ -773,7 +798,7 @@ function paintCommandlineWindow(state: State, ctx: CanvasRenderingContext2D) {
         sliceEnd = i;
         const char = characters[i];
 
-        const cWidth = measureWidth(ctx, char);
+        const cWidth = measureWidth(state, char);
         renderedI += cWidth;
 
         sliceWidth += cWidth;
@@ -783,7 +808,7 @@ function paintCommandlineWindow(state: State, ctx: CanvasRenderingContext2D) {
             }
             do {
                 const removedChar = characters[sliceStart];
-                const removedWidth = measureWidth(ctx, removedChar);
+                const removedWidth = measureWidth(state, removedChar);
                 renderedI -= removedWidth;
                 sliceWidth -= removedWidth;
                 sliceStart += 1;
@@ -801,7 +826,7 @@ function paintCommandlineWindow(state: State, ctx: CanvasRenderingContext2D) {
         for (let i = sliceStart; i <= sliceEnd; ++i) {
             const char = characters[i];
             ctx.fillText(char, x + renderedI, y + baseline);
-            renderedI += measureWidth(ctx, char);
+            renderedI += measureWidth(state, char);
         }
     }
     ctx.fillRect(x + cursorX, y, 1, charHeight);
@@ -811,13 +836,15 @@ function paint (_: DOMHighResTimeStamp) {
     frameScheduled = false;
 
     const state = globalState;
+    const canvas = state.canvas;
+    const context = state.context;
     const gid = getGridId();
     const charactersGrid = state.gridCharacters[gid];
     const highlightsGrid = state.gridHighlights[gid];
     const damages = state.gridDamages[gid];
     const damageCount = state.gridDamagesCount[gid];
     const highlights = state.highlights;
-    const [charWidth, charHeight, baseline] = getGlyphInfo();
+    const [charWidth, charHeight, baseline] = getGlyphInfo(state);
 
     for (let i = 0; i < damageCount; ++i) {
         const damage = damages[i];
@@ -858,7 +885,7 @@ function paint (_: DOMHighResTimeStamp) {
 
                         if (glyphCache[id] === undefined) {
                             const cellHigh = highlights[rowHigh[x]];
-                            const width = Math.ceil(measureWidth(context, row[x]) / charWidth) * charWidth;
+                            const width = Math.ceil(measureWidth(state, row[x]) / charWidth) * charWidth;
                             let background = cellHigh.background || highlights[0].background;
                             let foreground = cellHigh.foreground || highlights[0].foreground;
                             if (cellHigh.reverse) {
@@ -916,12 +943,12 @@ function paint (_: DOMHighResTimeStamp) {
     }
 
     if (state.messages.length > 0) {
-        paintMessages(state, context);
+        paintMessages(state);
     }
 
     // If the command line is shown, the cursor's in it
     if (state.commandLine.status === "shown") {
-        paintCommandlineWindow(state, context);
+        paintCommandlineWindow(state);
     } else {
         const cursor = state.cursor;
         if (cursor.currentGrid === gid) {
