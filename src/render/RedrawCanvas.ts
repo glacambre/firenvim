@@ -973,13 +973,11 @@ function paint (_: DOMHighResTimeStamp) {
 
             if (shouldBlink) {
                 // if the cursor should blink, we need to paint continuously
-                // Note: this isn't correct time-wise as it does not take the
-                // time paint() takes into account, so we'll gradually "shift"
-                // our leading edge in a way that will result in a cursor
-                // update being skipped.
-                // The alternative is to call scheduleFrame() directly, but
-                // painting the cursor at 60 fps would drain the battery.
-                setTimeout(scheduleFrame, blinkOff ? info.blinkoff : info.blinkon);
+                const relativeNow = performance.now() % (info.blinkon + info.blinkoff);
+                const nextPaint = relativeNow < info.blinkon
+                    ? info.blinkon - relativeNow
+                    : info.blinkoff - (relativeNow - info.blinkon);
+                setTimeout(scheduleFrame, nextPaint);
             }
         }
     }
