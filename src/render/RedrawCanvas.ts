@@ -300,9 +300,8 @@ function newHighlight (bg: string, fg: string): HighlightInfo {
     };
 }
 
-let gridId: number;
 export function getGridId() {
-    return gridId !== undefined ? gridId : 1;
+    return 1;
 }
 
 function getCommandLineRect (state: State) {
@@ -597,7 +596,7 @@ const handlers = {
         switch (option) {
             case "guifont":
                 const guifont = parseGuifont(value || "monospace:h9", {});
-                setFontString(globalState, (guifont["font-size"] || "") + " " + (guifont["font-family"] || "monospace"));
+                setFontString(state, (guifont["font-size"] || "") + " " + (guifont["font-family"] || "monospace"));
                 const [charWidth, charHeight] = getGlyphInfo(state);
                 functions.ui_try_resize_grid(getGridId(),
                                              Math.floor(state.canvas.width / charWidth),
