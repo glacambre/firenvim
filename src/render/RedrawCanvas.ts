@@ -421,7 +421,7 @@ const handlers = {
                 highGrid[j][i] = 0;
             }
         }
-        pushDamage(id, DamageKind.Cell, 0, dims.width, 0, dims.height);
+        pushDamage(id, DamageKind.Cell, dims.height, dims.width, 0, 0);
     },
     grid_cursor_goto: (id: number, row: number, column: number) => {
         const cursor = globalState.cursor;
