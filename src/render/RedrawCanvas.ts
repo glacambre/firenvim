@@ -300,34 +300,9 @@ function newHighlight (bg: string, fg: string): HighlightInfo {
     };
 }
 
-let windowId: number;
-export function selectWindow(wid: number) {
-    if (windowId !== undefined) {
-        return;
-    }
-    windowId = wid;
-}
-export function getWindowId() {
-    return windowId;
-}
-function matchesSelectedWindow(wid: number) {
-    return windowId === undefined || windowId === wid;
-}
-
 let gridId: number;
-function selectGrid(gid: number) {
-    if (gridId !== undefined) {
-        return;
-    }
-    gridId = gid;
-}
-
 export function getGridId() {
     return gridId !== undefined ? gridId : 1;
-}
-
-function matchesSelectedGrid(gid: number) {
-    return gridId === undefined || gridId === gid;
 }
 
 function getCommandLineRect (state: State) {
@@ -418,9 +393,6 @@ const handlers = {
         scheduleFrame();
     },
     grid_clear: (id: number) => {
-        if (!matchesSelectedGrid(id)) {
-            return;
-        }
         // glacambre: What should actually happen on grid_clear? The
         //            documentation says "clear the grid", but what does that
         //            mean? I guess the characters should be removed, but what
@@ -450,9 +422,6 @@ const handlers = {
         cursor.lastMove = performance.now();
     },
     grid_line: (id: number, row: number, col: number, changes:  any[]) => {
-        if (!matchesSelectedGrid(id)) {
-            return;
-        }
         const charGrid = globalState.gridCharacters[id];
         const highlights = globalState.gridHighlights[id];
         let prevCol = col;
@@ -476,9 +445,6 @@ const handlers = {
         }
     },
     grid_resize: (id: number, width: number, height: number) => {
-        if (!matchesSelectedGrid(id)) {
-            return;
-        }
         const state = globalState;
         const createGrid = state.gridCharacters[id] === undefined;
         if (createGrid) {
@@ -537,9 +503,6 @@ const handlers = {
                   right: number,
                   rows: number,
                   cols: number) => {
-        if (!matchesSelectedGrid(id)) {
-            return;
-        }
         const dimensions = globalState.gridSizes[id];
         const charGrid = globalState.gridCharacters[id];
         const highGrid = globalState.gridHighlights[id];
