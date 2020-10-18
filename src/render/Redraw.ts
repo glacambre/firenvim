@@ -295,7 +295,6 @@ const redrawFuncs = {
                 nvimFunctions: any) => {
          switch (name) {
             case "guifont":
-            case "guifontset":
             case "guifontwide":
                if (value === "") {
                   break;
