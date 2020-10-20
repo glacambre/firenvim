@@ -737,6 +737,79 @@ export async function testWorksInFrame(driver: webdriver.WebDriver) {
         expect(await input.getAttribute("value")).toBe("a");
 }
 
+export async function testIgnoreKeys(driver: webdriver.WebDriver) {
+        const vimrcContent = await readVimrc();
+        await writeVimrc(`
+nnoremap <C-1> i<LT>C-1><Esc>
+nnoremap <C-2> i<LT>C-2><Esc>
+inoremap <C-1> <LT>C-1>
+inoremap <C-2> <LT>C-2>
+inoremap <C-3> <LT>C-3>
+inoremap <C-4> <LT>C-4>
+let g:firenvim_config = {
+        \\ 'globalSettings': {
+                \\ 'ignoreKeys': {
+                        \\ 'normal': ['<C-1>'],
+                        \\ 'insert': ['<C-2>', '<C-3>'],
+                \\ }
+        \\ }
+\\ }
+${vimrcContent}
+                `);
+        await reloadNeovim(driver);
+        await loadLocalPage(driver, "simple.html", "Key passthrough test");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "input not found");
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        await driver.actions().click(input).perform();
+        const ready = firenvimReady(driver);
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found");
+        await ready;
+        await driver.actions()
+                // normal <C-1>
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("1")
+                .keyUp("1")
+                .keyUp(webdriver.Key.CONTROL)
+                // normal <C-2>
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("2")
+                .keyUp("2")
+                .keyUp(webdriver.Key.CONTROL)
+                // enter insert mode
+                .keyDown("a")
+                .keyUp("a")
+                .pause(1000)
+                // insert <C-1>
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("1")
+                .keyUp("1")
+                .keyUp(webdriver.Key.CONTROL)
+                // insert <C-2>
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("2")
+                .keyUp("2")
+                .keyUp(webdriver.Key.CONTROL)
+                // insert <C-3>
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("3")
+                .keyUp("3")
+                .keyUp(webdriver.Key.CONTROL)
+                // insert <C-4>
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("4")
+                .keyUp("4")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await sendKeys(driver, [webdriver.Key.ESCAPE]
+                       .concat(":wq!".split(""))
+                       .concat(webdriver.Key.ENTER))
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        const result = "<C-2><C-1><C-4>"
+        expect((await input.getAttribute("value")).slice(0, result.length))
+               .toBe(result);
+}
+
 export async function killDriver(driver: webdriver.WebDriver) {
         try {
                 await driver.close()

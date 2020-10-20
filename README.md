@@ -227,6 +227,25 @@ Terminal and standalone GUI applications can solve these problems by changing th
 
 For problem (1), Firenvim will by default drop the alt key on MacOS for any special character, defined here as non-alphanumeric (not matching `/[a-zA-Z0-9]/`). This means alt-o will be forwarded to NeoVim as "ø" rather than "M-ø". Note that this behavior can be changed by setting the `alt` setting of the `globalSettings` configuration to `all`, like this:
 
+### Making Firenvim ignore keys
+
+You can make Firenvim ignore key presses (thus letting the browser handle them) by setting key-value pairs in `globalSettings.ignoreKeys`. The key needs to be the neovim mode the key press should be ignored in and the value should be an array containing the textual representation of the key press you want ignored. If you want to ignore a key press in all modes, you can use `all` as mode key.
+
+For example, if you want to make Firenvim ignore `<C-1>` and `<C-2>` in normal mode and `<C-->` in all modes to let your browser handle them, you should define ignoreKeys like this:
+
+```vim
+let g:firenvim_config = {
+    \ 'globalSettings': {
+        \ 'ignoreKeys': {
+            \ 'all': ['<C-->'],
+            \ 'normal': ['<C-1>', '<C-2>']
+        \ }
+    \ }
+\ }
+```
+
+Mode names are defined in [Neovim's cursor_shape.c](https://github.com/neovim/neovim/blob/master/src/nvim/cursor_shape.c). Note that if the key press contains multiple modifiers, Shift needs to be first, Alt second, Control third and OS/Meta last (e.g. `Ctrl+Alt+Shift+1` needs to be `<SAC-1>`). If your keyboard layout requires you to press shift in order to press numbers, shift should be present in the key representation (e.g. on french azerty keyboards, `<C-1>` should actually be `<SC-1>`).
+
 ### Interacting with the page
 
 You can execute javascript in the page by using `firenvim#eval_js`. Here's an example that creates a `:GithubComment` command that will click on the `Comment` button of Github issues:

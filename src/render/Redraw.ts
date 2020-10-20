@@ -1,3 +1,4 @@
+import { NvimMode } from "../utils/configuration";
 import { page } from "../page/proxy";
 import { guifontsToCSS, toCss, toHexCss } from "../utils/CSSUtils";
 import { getCharSize, getGridSize } from "../utils/utils";
@@ -65,6 +66,11 @@ export function getGridId() {
 
 function matchesSelectedGrid(gid: number) {
    return gridId === undefined || gridId === gid;
+}
+
+let currentMode : NvimMode = "normal";
+export function getCurrentMode() {
+   return currentMode;
 }
 
 const redrawFuncs = {
@@ -208,7 +214,8 @@ const redrawFuncs = {
       highlights[id].undercurl = undercurl;
       highlights[id].underline = underline;
    },
-   mode_change: (elem: HTMLElement, [modename, modeid]: [string, number]) => {
+   mode_change: (elem: HTMLElement, [modename, modeid]: [NvimMode, number]) => {
+      currentMode = modename;
       const modePrefix = "nvim_mode_";
       Array.from(elem.classList)
          .filter((cname: string) => cname.startsWith(modePrefix))

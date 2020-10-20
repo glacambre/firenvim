@@ -1,3 +1,23 @@
+// These modes are defined in https://github.com/neovim/neovim/blob/master/src/nvim/cursor_shape.c
+export type NvimMode = "all"
+  | "normal"
+  | "visual"
+  | "insert"
+  | "replace"
+  | "cmdline_normal"
+  | "cmdline_insert"
+  | "cmdline_replace"
+  | "operator"
+  | "visual_select"
+  | "cmdline_hover"
+  | "statusline_hover"
+  | "statusline_drag"
+  | "vsep_hover"
+  | "vsep_drag"
+  | "more"
+  | "more_lastline"
+  | "showmatch";
+
 export interface ISiteConfig {
     selector: string;
     priority: number;
@@ -14,6 +34,7 @@ export interface IConfig {
         "<CS-n>": "default" | "noop",
         "<CS-t>": "default" | "noop",
         "<CS-w>": "default" | "noop",
+        ignoreKeys: { [key in NvimMode]: string[] },
     };
     localSettings: { [key: string]: ISiteConfig };
 }

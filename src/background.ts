@@ -159,6 +159,8 @@ function applySettings(settings: any) {
     // Chrome and Firefox because this would require the sessions API.
     makeDefaults(settings.globalSettings, "<CS-t>", "default");
     makeDefaults(settings.globalSettings, "<CS-w>", "default");
+    // #717: allow passing keys to the browser
+    makeDefaults(settings.globalSettings, "ignoreKeys", {});
 
     // "alt": "all" | "alphanum"
     // #202: Only register alt key on alphanums to let swedish osx users type

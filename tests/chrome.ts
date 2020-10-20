@@ -15,6 +15,7 @@ import {
  testFocusGainedLost,
  testGStartedByFirenvim,
  testGuifont,
+ testIgnoreKeys,
  testInputFocus,
  testInputFocusedAfterLeave,
  testInputResizes,
@@ -103,6 +104,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("FocusGained/lost autocmds are triggered", () => testFocusGainedLost(driver));
         nonHeadlessTest()("g:started_by_firenvim exists", () => testGStartedByFirenvim(driver));
         nonHeadlessTest()("Guifont works", () => testGuifont(driver));
+        nonHeadlessTest()("Ignoring keys works", () => testIgnoreKeys(driver));
         nonHeadlessTest()("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
         nonHeadlessTest()("InputFocus works", () => testInputFocus(driver));
         nonHeadlessTest()("PageFocus works", () => testPageFocus(driver));
