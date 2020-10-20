@@ -19,6 +19,7 @@ import {
  testFocusGainedLost,
  testGStartedByFirenvim,
  testGuifont,
+ testIgnoreKeys,
  testInputFocus,
  testInputFocusedAfterLeave,
  testInputResizes,
@@ -95,6 +96,7 @@ describe("Firefox", () => {
         test("FocusGained/lost autocmds are triggered", () => testFocusGainedLost(driver));
         test("g:started_by_firenvim exists", () => testGStartedByFirenvim(driver));
         test("Guifont works", () => testGuifont(driver));
+        test("Ignoring keys works", () => testIgnoreKeys(driver));
         test("Input is focused after leaving frame", () => testInputFocusedAfterLeave(driver));
         test("InputFocus works", () => testInputFocus(driver));
         test("PageFocus works", () => testPageFocus(driver));

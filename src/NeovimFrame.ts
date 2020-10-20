@@ -1,6 +1,6 @@
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
-import { getGridId, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
+import { getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { getCharSize, getGridSize, isFirefox, toFileName } from "./utils/utils";
@@ -113,6 +113,7 @@ export const isReady = new Promise((resolve, reject) => {
                             au VimLeave * ${cleanup}
                         augroup END`).split("\n").map(command => ["nvim_command", [command]]));
 
+            const ignoreKeys = settings.ignoreKeys;
             keyHandler.addEventListener("keydown", (evt) => {
                 if (evt.altKey && settings.alt === "alphanum" && !/[a-zA-Z0-9]/.test(evt.key)) {
                     return;
@@ -131,10 +132,21 @@ export const isReady = new Promise((resolve, reject) => {
                             }
                             return key;
                         }, translateKey(evt.key));
-                    nvim.input(text);
-                    evt.preventDefault();
-                    evt.stopImmediatePropagation();
-                    rendererOnKeyPressed(text);
+
+                    const currentMode = getCurrentMode();
+                    let keys : string[] = [];
+                    if (ignoreKeys[currentMode] !== undefined) {
+                        keys = ignoreKeys[currentMode].slice();
+                    }
+                    if (ignoreKeys["all"] !== undefined) {
+                        keys.push.apply(keys, ignoreKeys["all"]);
+                    }
+                    if (!keys.includes(text)) {
+                        nvim.input(text);
+                        evt.preventDefault();
+                        evt.stopImmediatePropagation();
+                        rendererOnKeyPressed(text);
+                    }
                 }
             });
 
