@@ -1,5 +1,6 @@
 import { page } from "../page/proxy";
 import { parseGuifont, toHexCss } from "../utils/CSSUtils";
+import { NvimMode } from "../utils/configuration";
 
 let functions: any;
 export function setFunctions(fns: any) {
@@ -138,6 +139,7 @@ type Mode = {
         blinkwait: number,
         cell_percentage: number,
         cursor_shape: string,
+        name: NvimMode,
     }[],
 };
 
@@ -200,6 +202,7 @@ const globalState: State = {
             blinkwait: 0,
             cell_percentage: 0,
             cursor_shape: "block",
+            name: "normal",
         }]
     },
     ruler: undefined,
@@ -302,6 +305,11 @@ function newHighlight (bg: string, fg: string): HighlightInfo {
 
 export function getGridId() {
     return 1;
+}
+
+export function getCurrentMode() {
+    const mode = globalState.mode;
+    return mode.modeInfo[mode.current].name;
 }
 
 function getCommandLineRect (state: State) {
