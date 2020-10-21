@@ -1,7 +1,6 @@
 import { neovim } from "./nvimproc/Neovim";
 import { page } from "./page/proxy";
-import { getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
-import { getLogicalSize, computeGridDimensionsFor, getGridCoordinates } from "./render/RedrawCanvas";
+import { getGridId, getLogicalSize, getCurrentMode, computeGridDimensionsFor, getGridCoordinates } from "./render/RedrawCanvas";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { isChrome, toFileName } from "./utils/utils";
@@ -145,7 +144,6 @@ export const isReady = new Promise((resolve, reject) => {
                         nvim.input(text);
                         evt.preventDefault();
                         evt.stopImmediatePropagation();
-                        rendererOnKeyPressed(text);
                     }
                 }
             });
@@ -156,7 +154,6 @@ export const isReady = new Promise((resolve, reject) => {
                 evt.stopImmediatePropagation();
                 evt.target.innerText = "";
                 evt.target.value = "";
-                rendererOnKeyPressed(evt.target.value);
             }
             keyHandler.addEventListener("input", (evt: any) => {
                 if (evt.isTrusted && !evt.isComposing) {
