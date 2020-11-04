@@ -105,7 +105,12 @@ export function getIconImageData(kind: IconKind, dimensions = "32x32") {
 // Given a url and a selector, tries to compute a name that will be unique,
 // short and readable for the user.
 export function toFileName(url: string, id: string, language: string) {
-    const parsedURL = new URL(url);
+    let parsedURL;
+    try {
+        parsedURL = new URL(url);
+    } catch (e) {
+        parsedURL = { hostname: 'thunderbird', pathname: 'mail' };
+    }
     const shortId = id.replace(/:nth-of-type/g, "");
     const toAlphaNum = (str: string) => (str.match(/[a-zA-Z0-9]+/g) || [])
         .join("-")

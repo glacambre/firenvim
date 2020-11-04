@@ -19,6 +19,7 @@ export const isReady = new Promise((resolve, reject) => {
             const extCmdline = document.getElementById("ext_cmdline") as HTMLSpanElement;
             const extMessages = document.getElementById("ext_messages") as HTMLSpanElement;
             const keyHandler = document.getElementById("keyhandler");
+            console.log(await Promise.all([infoPromise, connectionPromise]));
             const [[url, selector, cursor, language], connectionData] =
                 await Promise.all([infoPromise, connectionPromise]);
             const nvimPromise = neovim(host, extCmdline, extMessages, connectionData);
