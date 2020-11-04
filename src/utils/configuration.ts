@@ -51,7 +51,9 @@ export const confReady = new Promise(resolve => {
 browser.storage.onChanged.addListener((changes: any) => {
     Object
         .entries(changes)
-        .forEach(([key, value]: [keyof IConfig, any]) => conf[key] = value.newValue);
+        .forEach(([key, value]: [keyof IConfig, any]) => confReady.then(() => {
+            conf[key] = value.newValue
+        }));
 });
 
 export function getGlobalConf() {

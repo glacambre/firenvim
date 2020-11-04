@@ -45,7 +45,7 @@
    "icons": {
       "128": "firenvim.svg"
    },
-   BROWSER_SPECIFIC_SETTINGS,
+   TARGET_SPECIFIC_SETTINGS,
    "manifest_version": 2,
    "name": "Firenvim",
    "permissions": [ "nativeMessaging", "storage", "tabs" ],

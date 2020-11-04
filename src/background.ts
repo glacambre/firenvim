@@ -400,3 +400,10 @@ async function updateIfPossible() {
 }
 (window as any).updateIfPossible = updateIfPossible;
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
+
+// In thunderbird, register the script to be loaded in the compose window
+if ((browser as any).composeScripts !== undefined) {
+    (browser as any).composeScripts.register({
+        js: [{file: "compose.js"}],
+    });
+}
