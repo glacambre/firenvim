@@ -41,14 +41,13 @@
       "matches": [ "<all_urls>" ],
       "run_at": "document_start"
    } ],
-   "description": "PACKAGE_JSON_DESCRIPTION",
+   "description": "replaced_at_compile_time",
    "icons": {
       "128": "firenvim.svg"
    },
-   TARGET_SPECIFIC_SETTINGS,
    "manifest_version": 2,
    "name": "Firenvim",
    "permissions": [ "nativeMessaging", "storage", "tabs" ],
-   "version": "FIRENVIM_VERSION",
+   "version": "replaced_at_compile_time",
    "web_accessible_resources": [ "NeovimFrame.html", "ISSUE_TEMPLATE.md" ]
 }

@@ -1,4 +1,4 @@
-import { isFirefox } from "./utils/utils";
+import { isChrome } from "./utils/utils";
 import { AbstractEditor } from "./editors/AbstractEditor";
 import { getEditor } from "./editors/editors";
 import { computeSelector } from "./utils/CSSUtils";
@@ -218,7 +218,7 @@ export class FirenvimElement {
                 sel.addRange(range);
                 // Then, attempt to "release" the focus from whatever element
                 // is currently focused. This doesn't work on Chrome.
-                if (isFirefox()) {
+                if (!isChrome()) {
                     window.focus();
                     document.documentElement.focus();
                     document.body.focus();

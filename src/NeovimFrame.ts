@@ -3,7 +3,7 @@ import { page } from "./page/proxy";
 import { getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
-import { getCharSize, getGridSize, isFirefox, toFileName } from "./utils/utils";
+import { getCharSize, getGridSize, isChrome, toFileName } from "./utils/utils";
 
 const frameIdPromise = browser
     .runtime
@@ -139,8 +139,8 @@ export const isReady = new Promise((resolve, reject) => {
                     if (ignoreKeys[currentMode] !== undefined) {
                         keys = ignoreKeys[currentMode].slice();
                     }
-                    if (ignoreKeys["all"] !== undefined) {
-                        keys.push.apply(keys, ignoreKeys["all"]);
+                    if (ignoreKeys.all !== undefined) {
+                        keys.push.apply(keys, ignoreKeys.all);
                     }
                     if (!keys.includes(text)) {
                         nvim.input(text);
@@ -179,7 +179,7 @@ export const isReady = new Promise((resolve, reject) => {
             // true! This means that we need to add a chrome-specific event
             // listener on compositionend to do what happens on input events for
             // Firefox.
-            if (!isFirefox()) {
+            if (isChrome()) {
                 keyHandler.addEventListener("compositionend", (evt: any) => {
                     acceptInput(event);
                 });

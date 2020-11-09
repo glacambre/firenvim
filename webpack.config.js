@@ -91,20 +91,20 @@ const chromeConfig = (config, env) => {
       to: chrome_target_dir,
       transform: (content, src) => {
         if (path.basename(src) === "manifest.json") {
-          content = content.toString()
-            .replace('TARGET_SPECIFIC_SETTINGS', '"key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk3pkgh862ElxtREZVPLxVNbiFWo9SnvZtZXZavNvs2GsUTY/mB9yHTPBGJiBMJh6J0l+F5JZivXDG7xdQsVD5t39CL3JGtt93M2svlsNkOEYIMM8tHbp69shNUKKjZOfT3t+aZyigK2OUm7PKedcPeHtMoZAY5cC4L1ytvgo6lge+VYQiypKF87YOsO/BGcs3D+MMdS454tLBuMp6LxMqICQEo/Q7nHGC3eubtL3B09s0l17fJeq/kcQphczKbUFhTVnNnIV0JX++UCWi+BP4QOpyk5FqI6+SVi+gxUosbQPOmZR4xCAbWWpg3OqMk4LqHaWpsBfkW9EUt6EMMMAfQIDAQAB"')
-            .replace("FIRENVIM_VERSION", package_json.version)
-            .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
-          // Chrome doesn't support svgs in its manifest
-            .replace(/"128": *"firenvim\.svg"/g, '"128": "firenvim128.png",\n'
-              + '      "16": "firenvim16.png",\n'
-              + '      "48": "firenvim48.png"'
-            )
-            .replace(/"default_icon": "firenvim.svg"/, '"default_icon": "firenvim128.png"')
-          ;
-          if (env.endsWith("testing")) {
-            content = content.replace(`content.js`, `content.js", "testing.js`);
+          const manifest = JSON.parse(content.toString())
+          manifest["key"] = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk3pkgh862ElxtREZVPLxVNbiFWo9SnvZtZXZavNvs2GsUTY/mB9yHTPBGJiBMJh6J0l+F5JZivXDG7xdQsVD5t39CL3JGtt93M2svlsNkOEYIMM8tHbp69shNUKKjZOfT3t+aZyigK2OUm7PKedcPeHtMoZAY5cC4L1ytvgo6lge+VYQiypKF87YOsO/BGcs3D+MMdS454tLBuMp6LxMqICQEo/Q7nHGC3eubtL3B09s0l17fJeq/kcQphczKbUFhTVnNnIV0JX++UCWi+BP4QOpyk5FqI6+SVi+gxUosbQPOmZR4xCAbWWpg3OqMk4LqHaWpsBfkW9EUt6EMMMAfQIDAQAB";
+          manifest["version"] = package_json.version;
+          manifest["description"] = package_json.description;
+          manifest["icons"] = {
+            "128": "firenvim128.png",
+            "16": "firenvim16.png",
+            "48": "firenvim48.png"
           }
+          manifest.browser_action["default_icon"] = "firenvim128.png";
+          if (env.endsWith("testing")) {
+            manifest.content_scripts[0].js.push("testing.js");
+          }
+          content = JSON.stringify(manifest, undefined, 3);
         }
         return content;
       }
@@ -137,19 +137,19 @@ const firefoxConfig = (config, env) => {
         transform: (content, src) => {
           switch(path.basename(src)) {
             case "manifest.json":
-              content = content.toString().replace("TARGET_SPECIFIC_SETTINGS",
-`  "browser_specific_settings": {
-    "gecko": {
-      "id": "firenvim@lacamb.re",
-      "strict_min_version": "69.0"
-    }
-  }`)
-                .replace("FIRENVIM_VERSION", package_json.version)
-                .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
-              ;
+              const manifest = JSON.parse(content.toString());
+              manifest.browser_specific_settings = {
+                "gecko": {
+                  "id": "firenvim@lacamb.re",
+                  "strict_min_version": "69.0"
+                }
+              };
+              manifest.version = package_json.version;
+              manifest.description = package_json.description;
               if (env.endsWith("testing")) {
-                content = content.replace(`content.js`, `content.js", "testing.js`);
+                manifest.content_scripts[0].js.push("testing.js");
               }
+              content = JSON.stringify(manifest, undefined, 3);
           }
           return content;
         }
@@ -165,6 +165,7 @@ const firefoxConfig = (config, env) => {
 }
 
 const thunderbirdConfig = (config, env) => {
+  config.entry.compose = "./src/compose.ts";
   const result = Object.assign(deepCopy(config), {
     output: {
       path: thunderbird_target_dir,
@@ -176,20 +177,20 @@ const thunderbirdConfig = (config, env) => {
         transform: (content, src) => {
           switch(path.basename(src)) {
             case "manifest.json":
-              content = content.toString().replace("TARGET_SPECIFIC_SETTINGS",
-`  "browser_specific_settings": {
-    "gecko": {
-      "id": "firenvim@lacamb.re",
-      "strict_min_version": "84.0a1"
-    }
-  }`)
-                .replace("FIRENVIM_VERSION", package_json.version)
-                .replace("PACKAGE_JSON_DESCRIPTION", package_json.description)
-                .replace(`"permissions": [`, `"permissions": [ "compose",`);
-              ;
-              if (env.endsWith("testing")) {
-                content = content.replace(`content.js`, `content.js", "testing.js`);
-              }
+              const manifest = JSON.parse(content.toString());
+              manifest.browser_specific_settings = {
+                "gecko": {
+                  "id": "firenvim@lacamb.re",
+                  "strict_min_version": "84.0a1"
+                }
+              };
+              manifest.version = package_json.version;
+              manifest.description = "Turn thunderbird into a Neovim GUI.";
+              delete manifest.browser_action;
+              delete manifest.commands;
+              delete manifest.content_scripts;
+              manifest.permissions.push("compose");
+              content = JSON.stringify(manifest, undefined, 3);
           }
           return content;
         }
@@ -205,9 +206,9 @@ const thunderbirdConfig = (config, env) => {
 }
 
 module.exports = args => {
-  let env = Object.keys(args)[0];
-  if (env === undefined){
-    env = "";
+  let env = "";
+  if (args instanceof Object) {
+    env = Object.keys(args)[0];
   }
 
   if (env.endsWith("testing")) {
@@ -220,7 +221,6 @@ module.exports = args => {
   } else if (env.startsWith("firefox")) {
     return [firefoxConfig(config, env)];
   } else if (env.startsWith("thunderbird")) {
-    config.entry.compose = "./src/compose.ts";
     return [thunderbirdConfig(config, env)];
   }
   return [chromeConfig(config, env), firefoxConfig(config, env), thunderbirdConfig(config, env)];

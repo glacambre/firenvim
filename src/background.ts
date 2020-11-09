@@ -15,7 +15,7 @@
  * content scripts. It rarely acts on its own.
  */
 import { getGlobalConf, ISiteConfig } from "./utils/configuration";
-import { getIconImageData, IconKind } from "./utils/utils";
+import { getIconImageData, IconKind, isThunderbird } from "./utils/utils";
 
 let preloadedInstance: Promise<any>;
 
@@ -51,6 +51,9 @@ async function updateIcon(tabId?: number) {
         name = "error";
     } else if (warning !== "") {
         name = "notification";
+    }
+    if (isThunderbird()) {
+        return Promise.resolve();
     }
     return getIconImageData(name).then((imageData: any) => browser.browserAction.setIcon({ imageData }));
 }
@@ -291,94 +294,97 @@ browser.windows.onFocusChanged.addListener(async (windowId: number) => {
 
 updateIcon();
 
-browser.commands.onCommand.addListener(async (command: string) => {
-    const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
-    let p;
-    switch (command) {
-        case "focus_input":
-            browser.tabs.sendMessage(
-                tab.id,
-                { args: [], funcName: ["focusInput"] },
-                { frameId: 0 },
-            );
-            break;
-        case "focus_page":
-            browser.tabs.sendMessage(
-                tab.id,
-                { args: [], funcName: ["focusPage"] },
-                { frameId: 0 },
-            );
-            break;
-        case "nvimify":
-            browser.tabs.sendMessage(
-                tab.id,
-                { args: [], funcName: ["forceNvimify"] },
-                { frameId: 0 }
-            );
-            break;
-        case "send_C-n":
-            p = browser.tabs.sendMessage(
-                tab.id,
-                { args: ["<C-n>"], funcName: ["sendKey"] },
-                { frameId: 0 }
-            );
-            if (getGlobalConf()["<C-n>"] === "default") {
-                p.catch(() => browser.windows.create());
-            }
-            break;
-        case "send_C-t":
-            p = browser.tabs.sendMessage(
-                tab.id,
-                { args: ["<C-t>"], funcName: ["sendKey"] },
-                { frameId: 0 }
-            );
-            if (getGlobalConf()["<C-t>"] === "default") {
-                p.catch(() => browser.tabs.create({ "windowId": tab.windowId }));
-            }
-            break;
-        case "send_C-w":
-            p = browser.tabs.sendMessage(
-                tab.id,
-                { args: ["<C-w>"], funcName: ["sendKey"] },
-                { frameId: 0 }
-            );
-            if (getGlobalConf()["<C-w>"] === "default") {
-                p.catch(() => browser.tabs.remove(tab.id));
-            }
-            break;
-        case "send_CS-n":
-            p = browser.tabs.sendMessage(
-                tab.id,
-                { args: ["<CS-n>"], funcName: ["sendKey"] },
-                { frameId: 0 }
-            );
-            if (getGlobalConf()["<CS-n>"] === "default") {
-                p.catch(() => browser.windows.create({ "incognito": true }));
-            }
-            break;
-        case "send_CS-t":
-            // <CS-t> can't be emulated without the sessions API.
-            browser.tabs.sendMessage(
-                tab.id,
-                { args: ["<CS-t>"], funcName: ["sendKey"] },
-                { frameId: 0 }
-            );
-            break;
-        case "send_CS-w":
-            p = browser.tabs.sendMessage(
-                tab.id,
-                { args: ["<CS-w>"], funcName: ["sendKey"] },
-                { frameId: 0 }
-            );
-            if (getGlobalConf()["<CS-w>"] === "default") {
-                p.catch(() => browser.windows.remove(tab.windowId));
-            }
-            break;
-        case "toggle_firenvim":
-            toggleDisabled();
-            break;
-    }
-});
+// browser.commmands doesn't exist in thunderbird
+if (!isThunderbird()) {
+    browser.commands.onCommand.addListener(async (command: string) => {
+        const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
+        let p;
+        switch (command) {
+            case "focus_input":
+                browser.tabs.sendMessage(
+                    tab.id,
+                    { args: [], funcName: ["focusInput"] },
+                    { frameId: 0 },
+                );
+                break;
+            case "focus_page":
+                browser.tabs.sendMessage(
+                    tab.id,
+                    { args: [], funcName: ["focusPage"] },
+                    { frameId: 0 },
+                );
+                break;
+            case "nvimify":
+                browser.tabs.sendMessage(
+                    tab.id,
+                    { args: [], funcName: ["forceNvimify"] },
+                    { frameId: 0 }
+                );
+                break;
+            case "send_C-n":
+                p = browser.tabs.sendMessage(
+                    tab.id,
+                    { args: ["<C-n>"], funcName: ["sendKey"] },
+                    { frameId: 0 }
+                );
+                if (getGlobalConf()["<C-n>"] === "default") {
+                    p.catch(() => browser.windows.create());
+                }
+                break;
+            case "send_C-t":
+                p = browser.tabs.sendMessage(
+                    tab.id,
+                    { args: ["<C-t>"], funcName: ["sendKey"] },
+                    { frameId: 0 }
+                );
+                if (getGlobalConf()["<C-t>"] === "default") {
+                    p.catch(() => browser.tabs.create({ "windowId": tab.windowId }));
+                }
+                break;
+            case "send_C-w":
+                p = browser.tabs.sendMessage(
+                    tab.id,
+                    { args: ["<C-w>"], funcName: ["sendKey"] },
+                    { frameId: 0 }
+                );
+                if (getGlobalConf()["<C-w>"] === "default") {
+                    p.catch(() => browser.tabs.remove(tab.id));
+                }
+                break;
+            case "send_CS-n":
+                p = browser.tabs.sendMessage(
+                    tab.id,
+                    { args: ["<CS-n>"], funcName: ["sendKey"] },
+                    { frameId: 0 }
+                );
+                if (getGlobalConf()["<CS-n>"] === "default") {
+                    p.catch(() => browser.windows.create({ "incognito": true }));
+                }
+                break;
+            case "send_CS-t":
+                // <CS-t> can't be emulated without the sessions API.
+                browser.tabs.sendMessage(
+                    tab.id,
+                    { args: ["<CS-t>"], funcName: ["sendKey"] },
+                    { frameId: 0 }
+                );
+                break;
+            case "send_CS-w":
+                p = browser.tabs.sendMessage(
+                    tab.id,
+                    { args: ["<CS-w>"], funcName: ["sendKey"] },
+                    { frameId: 0 }
+                );
+                if (getGlobalConf()["<CS-w>"] === "default") {
+                    p.catch(() => browser.windows.remove(tab.windowId));
+                }
+                break;
+            case "toggle_firenvim":
+                toggleDisabled();
+                break;
+        }
+    });
+}
 
 async function updateIfPossible() {
     const tabs = await browser.tabs.query({});
@@ -402,7 +408,7 @@ async function updateIfPossible() {
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
 
 // In thunderbird, register the script to be loaded in the compose window
-if ((browser as any).composeScripts !== undefined) {
+if (isThunderbird()) {
     (browser as any).composeScripts.register({
         js: [{file: "compose.js"}],
     });

@@ -1,11 +1,21 @@
 // Chrome doesn't have a "browser" object, instead it uses "chrome".
-let curBrowser = "firefox";
+let curHost = "firefox";
 if (window.browser === undefined) {
-    curBrowser = "chrome";
+    curHost = "chrome";
+} else {
+    if ((browser as any).composeScripts !== undefined) {
+        curHost = "thunderbird";
+    }
 }
 
 export function isFirefox() {
-    return curBrowser === "firefox";
+    return curHost === "firefox";
+}
+export function isChrome() {
+    return curHost === "chrome";
+}
+export function isThunderbird() {
+    return curHost === "thunderbird";
 }
 
 // Runs CODE in the page's context by setting up a custom event listener,
