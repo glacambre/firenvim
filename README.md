@@ -248,7 +248,7 @@ Mode names are defined in [Neovim's cursor_shape.c](https://github.com/neovim/ne
 
 ### Interacting with the page
 
-You can execute javascript in the page by using `firenvim#eval_js`. Here's an example that creates a `:GithubComment` command that will click on the `Comment` button of Github issues:
+You can execute javascript in the page by using `firenvim#eval_js`. The code has to be a valid javascript expression (NOT a statement). Here's an example that creates a `:GithubComment` command that will click on the `Comment` button of Github issues:
 
 ```vim
 command GithubComment call firenvim#eval_js('document.getElementById("partial-new-comment-form-actions").getElementsByClassName("btn btn-primary")[0].click()')

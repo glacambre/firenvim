@@ -9,5 +9,5 @@ import { executeInPage } from "../utils/utils";
 window.addEventListener("firenvim-updateSettings", () => {
     browser.runtime.sendMessage({ funcName: [ "updateSettings"] })
         .catch((): undefined => undefined)
-        .then(() => executeInPage(`window.dispatchEvent(new Event("firenvim-settingsUpdated"));`));
+        .then(() => executeInPage(`window.dispatchEvent(new Event("firenvim-settingsUpdated"))`));
 });
