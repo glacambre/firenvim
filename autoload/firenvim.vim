@@ -16,7 +16,7 @@ function! firenvim#get_chan() abort
         return uis[0].chan
 endfunction
 
-function! firenvim#eval_js(js) abort
+function! firenvim#eval_js(js, ...) abort
         let callback_name = get(a:, 1, '')
         call rpcnotify(firenvim#get_chan(), 'firenvim_eval_js', a:js, callback_name)
 endfunction
