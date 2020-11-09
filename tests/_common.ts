@@ -387,7 +387,7 @@ export async function testEvalJs(driver: webdriver.WebDriver) {
         const ready = firenvimReady(driver);
         await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "body > span:nth-child(2) not found");
         await ready;
-        await sendKeys(driver, `:call firenvim#eval_js('document`.split(""));
+        await sendKeys(driver, `:call firenvim#eval_js('(document`.split(""));
         // Using the <C-v> trick here because Chrome somehow replaces `.` with
         // `<`. This might have to do with locale stuff?
         await driver.actions()
@@ -403,7 +403,7 @@ export async function testEvalJs(driver: webdriver.WebDriver) {
                 .keyUp("v")
                 .keyUp(webdriver.Key.CONTROL)
                 .perform();
-        await sendKeys(driver, `046value = "Eval Works!"')`.split("")
+        await sendKeys(driver, `046value = "Eval Works!")')`.split("")
                 .concat(webdriver.Key.ENTER));
         await driver.wait(async () => (await input.getAttribute("value")) !== "", 5000, "Input value did not change");
         expect(await input.getAttribute("value")).toBe("Eval Works!");
