@@ -5,4 +5,4 @@
 import { isReady } from "../NeovimFrame.ts";
 import { page } from "../page/proxy";
 
-isReady.then(() => page.evalInPage(`window.firenvimReady = true;`));
+isReady.then(() => page.evalInPage(`(() => { window.firenvimReady = true })()`));
