@@ -100,8 +100,10 @@ sed 's/"key":\s*"[^"]*",//' -i target/chrome/manifest.json
 rm -f target/chrome.zip
 zip --junk-paths target/chrome.zip target/chrome/*
 source_files="$(echo ./* | sed s@./node_modules@@ | sed s@./target@@)"
-rm -f target/firenvim-sources.tar.gz
-tar -cvzf target/firenvim-sources.tar.gz $source_files
+rm -f target/firenvim-firefox-sources.tar.gz
+tar -cvzf target/firenvim-firefox-sources.tar.gz $source_files
+rm -f target/firenvim-thunderbird-sources.tar.gr
+tar -cvzf target/firenvim-thunderbird-sources.tar.gz $source_files
 
 # Prepare commit message
 COMMIT_TEMPLATE="/tmp/firenvim_release_message"
@@ -119,4 +121,7 @@ git push
 git push --tags
 
 firefox --private-window 'https://chrome.google.com/webstore/devconsole/g06704558984641971849/egpjdkipkomnmjhjmdamaniclmdlobbo/edit?hl=en'
+sleep 1
 firefox --private-window 'https://addons.mozilla.org/en-US/developers/addon/firenvim/versions/submit/'
+sleep 1
+firefox --private-window 'https://addons.thunderbird.net/en-US/developers/addon/firenvim/versions/submit/'
