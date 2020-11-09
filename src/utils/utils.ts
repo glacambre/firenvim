@@ -25,10 +25,10 @@ export function executeInPage(code: string): Promise<any> {
     return new Promise((resolve, reject) => {
         const script = document.createElement("script");
         const eventId = (new URL(browser.runtime.getURL(""))).hostname + Math.random();
-        script.innerHTML = `((evId) => {
+        script.innerHTML = `(async (evId) => {
             try {
                 let result;
-                result = ${code};
+                result = await ${code};
                 window.dispatchEvent(new CustomEvent(evId, {
                     detail: {
                         success: true,

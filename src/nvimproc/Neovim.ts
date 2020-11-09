@@ -65,7 +65,10 @@ export async function neovim(
                     .then(() => { if (hasFocus && !document.hasFocus()) { window.focus(); } });
                 break;
             case "firenvim_eval_js":
-                page.evalInPage(args[0]);
+                const result = await page.evalInPage(args[0]);
+                if (args[1]) {
+                    request("nvim_call_function", [args[1], [JSON.stringify(result)]]);
+                }
                 break;
             case "firenvim_focus_page":
                 page.focusPage();
