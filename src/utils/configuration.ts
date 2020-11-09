@@ -52,7 +52,7 @@ browser.storage.onChanged.addListener((changes: any) => {
     Object
         .entries(changes)
         .forEach(([key, value]: [keyof IConfig, any]) => confReady.then(() => {
-            conf[key] = value.newValue
+            conf[key] = value.newValue;
         }));
 });
 
