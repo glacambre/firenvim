@@ -21,7 +21,7 @@
     "typescript": "3.9.7",
     "web-ext": "5.3.0",
     "web-ext-types": "3.2.1",
-    "webextension-polyfill": "0.6.0",
+    "webextension-polyfill": "0.7.0",
     "webpack": "5.4.0",
     "webpack-cli": "4.2.0"
   },
