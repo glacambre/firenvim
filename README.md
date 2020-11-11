@@ -248,10 +248,10 @@ Mode names are defined in [Neovim's cursor_shape.c](https://github.com/neovim/ne
 
 ### Interacting with the page
 
-You can execute javascript in the page by using `firenvim#eval_js`. The code has to be a valid javascript expression (NOT a statement). Here's an example that creates a `:GithubComment` command that will click on the `Comment` button of Github issues:
+You can execute javascript in the page by using `firenvim#eval_js`. The code has to be a valid javascript expression (NOT a statement). You can provide the name of a function that should be executed with the result of the expression. Note that some pages prevent evaluating JavaScript with their [CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) and this can't be worked around. Here's an example:
 
 ```vim
-command GithubComment call firenvim#eval_js('document.getElementById("partial-new-comment-form-actions").getElementsByClassName("btn btn-primary")[0].click()')
+call firenvim#eval_js('alert("Hello World!")', 'MyFunction')
 ```
 
 You can move focus from the editor back to the page or the input field by calling `firenvim#focus_page` or `firenvim#focus_input`. Here's an example that does exactly this if you press `<Esc>` twice while in normal mode:
