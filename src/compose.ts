@@ -36,7 +36,7 @@ function overrideComputedStyles () {
 overrideComputedStyles();
 
 const firenvimElement = new FirenvimElement(document.body, () => Promise.resolve(), restoreComputedStyles);
-
+firenvimElement.prepareBufferInfo();
 firenvimElement.attachToPage(
     new Promise((resolve, reject) => {
         setTimeout(reject, 10000);
