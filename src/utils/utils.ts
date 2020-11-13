@@ -1,11 +1,9 @@
 // Chrome doesn't have a "browser" object, instead it uses "chrome".
 let curHost = "firefox";
-if (window.browser === undefined) {
+if ((browser as any).composeScripts !== undefined || document.location.href === "about:blank?compose") {
+    curHost = "thunderbird";
+} else if (window.browser === undefined) {
     curHost = "chrome";
-} else {
-    if ((browser as any).composeScripts !== undefined) {
-        curHost = "thunderbird";
-    }
 }
 
 export function isFirefox() {
