@@ -185,6 +185,12 @@ function applySettings(settings: any) {
         // #265: On "once", don't automatically bring back after :q'ing it
         takeover: "always",
     });
+    makeDefaultLocalSetting(settings, "about:blank\\?compose", {
+        cmdline: "neovim",
+        priority: 1,
+        selector: 'body',
+        takeover: "always",
+    });
     browser.storage.local.set(settings);
 }
 
