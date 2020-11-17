@@ -30,17 +30,17 @@ jobs:
       run: |
         sudo npm install -g get-firefox
         get-firefox --platform linux --branch devedition --extract --target $HOME
-        echo "::add-path::$HOME/firefox"
+        echo "$HOME/firefox" >> $GITHUB_PATH
     - name: Install Firefox Dev Edition (MacOS)
       if: matrix.browser == 'firefox' && matrix.os == 'macos'
       run: |
         brew cask --verbose --debug install homebrew/cask-versions/firefox-developer-edition
-        echo "::add-path::/Applications/Firefox Developer Edition.app/Contents/MacOS/"
+        echo "/Applications/Firefox Developer Edition.app/Contents/MacOS/" >> $GITHUB_PATH
     - name: Install Firefox Dev Edition (Windows)
       if: matrix.browser == 'firefox' && matrix.os == 'windows'
       run: |
         choco install firefox-dev --pre
-        echo "::add-path::C:\Program Files\Firefox Dev Edition"
+        echo "C:\Program Files\Firefox Dev Edition" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
     - name: Install Neovim
       uses: rhysd/action-setup-vim@v1
       with:
