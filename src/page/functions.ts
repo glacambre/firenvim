@@ -118,6 +118,12 @@ export function getNeovimFrameFunctions(global: IGlobalState) {
             _focusInput(global, firenvim, conf.takeover !== "once");
             global.firenvimElems.delete(frameId);
         },
+        killEditorSilently: (frameId: number) => {
+            const firenvim = global.firenvimElems.get(frameId);
+            firenvim.detachFromPage();
+            const conf = getConf();
+            global.firenvimElems.delete(frameId);
+        },
         pressKeys: (frameId: number, keys: string[]) => {
             global.firenvimElems.get(frameId).pressKeys(keysToEvents(keys));
         },

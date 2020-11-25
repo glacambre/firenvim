@@ -85,6 +85,10 @@ export async function neovim(
             case "firenvim_vimleave":
                 page.killEditor();
                 break;
+            case "focus_page_and_firenvim_vimleave":
+                page.focusPage();
+                page.killEditorSilently();
+                break;
         }
     });
 
