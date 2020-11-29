@@ -190,6 +190,8 @@ function! s:brave_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'BraveSoftware']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'BraveSoftware']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'BraveSoftware']
         end
         return isdirectory(s:build_path(l:p))
 endfunction
@@ -200,6 +202,8 @@ function! s:opera_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'com.operasoftware.Opera']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'Opera Software']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'opera']
         end
         return isdirectory(s:build_path(l:p))
 endfunction
@@ -210,6 +214,8 @@ function! s:vivaldi_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'Vivaldi']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'Vivaldi']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'vivaldi']
         end
         return isdirectory(s:build_path(l:p))
 endfunction
@@ -220,6 +226,8 @@ function! s:chrome_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'Google', 'Chrome']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'Google', 'Chrome']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'google-chrome']
         end
         return isdirectory(s:build_path(l:p))
 endfunction
@@ -230,6 +238,9 @@ function! s:get_chrome_manifest_dir_path() abort
         elseif has('win32')
                 return s:get_data_dir_path()
         end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'google-chrome', 'NativeMessagingHosts'])
+        end
         return s:build_path([$HOME, '.config', 'google-chrome', 'NativeMessagingHosts'])
 endfunction
 
@@ -238,6 +249,9 @@ function! s:get_brave_manifest_dir_path() abort
                 return s:get_chrome_manifest_dir_path()
         elseif has('win32')
                 return s:get_chrome_manifest_dir_path()
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'])
         end
         return s:build_path([$HOME, '.config', 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'])
 endfunction
@@ -271,6 +285,9 @@ function! s:chromium_config_exists() abort
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'Chromium']
         end
+        if !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'chromium', 'NativeMessagingHosts']
+        end
         return isdirectory(s:build_path(l:p))
 endfunction
 
@@ -279,6 +296,9 @@ function! s:get_chromium_manifest_dir_path() abort
                 return s:build_path([$HOME, 'Library', 'Application Support', 'Chromium', 'NativeMessagingHosts'])
         elseif has('win32')
                 return s:get_data_dir_path()
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'chromium', 'NativeMessagingHosts'])
         end
         return s:build_path([$HOME, '.config', 'chromium', 'NativeMessagingHosts'])
 endfunction
@@ -447,7 +467,7 @@ endfunction
 "   can be found
 " - On windows, also create a registry key that points to the native manifest
 "
-" Manifest paths & registry stuff are specified here: 
+" Manifest paths & registry stuff are specified here:
 " https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Manifest_location
 "
 " firenvim#install accepts the following optional arguments:
@@ -498,7 +518,7 @@ function! firenvim#install(...) abort
                         echo 'Aborting installation for ' . l:name . '. ' . v:exception
                         continue
                 endtry
-                
+
                 if has('win32')
                         let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim-' . l:name . '.json'])
                 endif
