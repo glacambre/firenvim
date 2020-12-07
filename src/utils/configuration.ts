@@ -23,6 +23,7 @@ export interface ISiteConfig {
     priority: number;
     takeover: "always" | "once" | "empty" | "nonempty" | "never";
     cmdline: "neovim" | "firenvim";
+    content: "html" | "text";
 }
 
 export interface IConfig {
