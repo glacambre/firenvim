@@ -1,4 +1,5 @@
 import { AbstractEditor } from "./AbstractEditor";
+import { getConf } from "../utils/configuration";
 
 // TextareaEditor sort of works for contentEditable elements but there should
 // really be a contenteditable-specific editor.
@@ -18,7 +19,11 @@ export class TextareaEditor extends AbstractEditor {
         if ((this.elem as any).value !== undefined) {
             return Promise.resolve((this.elem as any).value);
         }
-        return Promise.resolve(this.elem.innerText);
+        if (getConf().content === "text"){
+            return Promise.resolve(this.elem.innerText);
+        } else {
+            return Promise.resolve(this.elem.innerHTML);
+        }
     }
 
     getCursor () {
@@ -53,6 +58,11 @@ export class TextareaEditor extends AbstractEditor {
             (this.elem as any).value = text;
         } else {
             this.elem.innerText = text;
+            if (getConf().content === "text"){
+                this.elem.innerText = text;
+            } else {
+                this.elem.innerHTML = text;
+            }
         }
         return Promise.resolve();
     }
