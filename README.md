@@ -158,6 +158,7 @@ let g:firenvim_config = {
     \ 'localSettings': {
         \ '.*': {
             \ 'cmdline': 'neovim',
+            \ 'content': 'text',
             \ 'priority': 0,
             \ 'selector': 'textarea',
             \ 'takeover': 'always',
@@ -212,6 +213,14 @@ let fc['.*'] = { 'cmdline' : 'firenvim' }
 ```
 
 When you then enter command mode, the command will appear in a sort of "pop-up" instead of the bottom of the frame.
+
+### Editing HTML directly
+
+The `content` localSetting controls how Firenvim should read the content of an element. Setting it to `html` will make Firenvim fetch the content of elements as HTML, `text` will make it use plaintext. The default value is `text`:
+
+```vim
+let fc['.*'] = { 'content' : 'html' }
+```
 
 ### Special characters on MacOS
 
