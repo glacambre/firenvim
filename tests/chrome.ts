@@ -11,6 +11,7 @@ import {
  testAce,
  testEvalJs,
  testCodemirror,
+ testContentEditable,
  testDynamicTextareas,
  testFocusGainedLost,
  testGStartedByFirenvim,
@@ -97,6 +98,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("Firenvim frame is resized on input resize", () => testInputResizes(driver));
         nonHeadlessTest()("Firenvim works on Ace", () => testAce(driver));
         nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
+        nonHeadlessTest()("Firenvim works on ContentEditable", () => testContentEditable(driver));
         nonHeadlessTest()("Firenvim works on Monaco", () => testMonaco(driver));
         nonHeadlessTest()("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
         nonHeadlessTest()("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
