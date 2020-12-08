@@ -812,6 +812,38 @@ ${vimrcContent}
                .toContain((await input.getAttribute("value")).slice(0, result.length));
 }
 
+export async function testContentEditable(driver: webdriver.WebDriver) {
+        const vimrcContent = await readVimrc();
+        await writeVimrc(`
+let g:firenvim_config = {
+        \\ 'localSettings': {
+                \\ '.*': {
+                        \\ 'selector': '*[contenteditable=true]',
+                        \\ 'content': 'html',
+                \\ }
+        \\ }
+\\ }
+${vimrcContent}`);
+        await reloadNeovim(driver);
+        await loadLocalPage(driver, "contenteditable.html", "Contenteditable test");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "input not found");
+        const innerText = await input.getAttribute("innerText");
+        const innerHTML = await input.getAttribute("innerHTML");
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        await driver.actions().click(input).perform();
+        const ready = firenvimReady(driver);
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found");
+        await ready;
+        await sendKeys(driver, ":%s/b>/i>/g".split("")
+                       .concat(webdriver.Key.ENTER)
+                       .concat(":wq".split(""))
+                       .concat(webdriver.Key.ENTER))
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear");
+        await driver.wait(async () => (await input.getAttribute("innerHTML") !== innerHTML), 5000, "Input value did not change");
+        expect(await input.getAttribute("innerText")).toBe(innerText);
+        expect((await input.getAttribute("innerHTML")).trim()).toBe("<i>Firenvim</i> <i>works</i>!");
+}
+
 export async function killDriver(driver: webdriver.WebDriver) {
         try {
                 await driver.close()
