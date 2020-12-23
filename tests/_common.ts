@@ -844,6 +844,33 @@ ${vimrcContent}`);
         expect((await input.getAttribute("innerHTML")).trim()).toBe("<i>Firenvim</i> <i>works</i>!");
 }
 
+export async function testDisappearing(driver: webdriver.WebDriver) {
+        await loadLocalPage(driver, "disappearing.html", "Modifier test");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "input not found");
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        await driver.actions().click(input).perform();
+        let ready = firenvimReady(driver);
+        // Page will remove the span and firenvim should re-add it
+        let span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found");
+        await ready;
+        // simulate the page making the span disappear again
+        await driver.executeScript("document.querySelector('span').remove()");
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear");
+        await driver.actions().click(input).perform();
+        span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found the second time");
+        await ready;
+        // somehow ready is too fast here, so we need an additional delay
+        await driver.sleep(FIRENVIM_INIT_DELAY);
+        await sendKeys(driver, "iworks".split("")
+                       .concat([webdriver.Key.ESCAPE])
+                       .concat(":wq!".split(""))
+                       .concat(webdriver.Key.ENTER))
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear the second time");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        expect("works").toBe(await input.getAttribute("value"));
+}
+
+
 export async function killDriver(driver: webdriver.WebDriver) {
         try {
                 await driver.close()

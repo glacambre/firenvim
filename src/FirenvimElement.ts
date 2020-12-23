@@ -27,7 +27,11 @@ export class FirenvimElement {
     // We use a mutation observer to detect whether the element is removed from
     // the page. When this happens, the FirenvimElement is removed from the
     // page.
-    private mutationObserver: MutationObserver;
+    private pageObserver: MutationObserver;
+    // We use a mutation observer to detect if the span is removed from the
+    // page by the page. When this happens, the span is re-inserted in the
+    // page.
+    private spanObserver: MutationObserver;
     // nvimify is the function that listens for focus events and creates
     // firenvim elements. We need it in order to be able to remove it as an
     // event listener from the element the user selected when the user wants to
@@ -108,7 +112,16 @@ export class FirenvimElement {
     }
 
     attachToPage (fip: Promise<number>) {
-        this.frameIdPromise = fip.then((f: number) => this.frameId = f);
+        this.frameIdPromise = fip.then((f: number) => {
+            this.frameId = f;
+            // Once a frameId has been acquired, the FirenvimElement would die
+            // if its span was removed from the page. Thus there is no use in
+            // keeping its spanObserver around. It'd even cause issues as the
+            // spanObserver would attempt to re-insert a dead frame in the
+            // page.
+            this.spanObserver.disconnect();
+            return this.frameId;
+        });
 
         // We don't need the iframe to be appended to the page in order to
         // resize it because we're just using the corresponding
@@ -152,6 +165,32 @@ export class FirenvimElement {
 
         this.iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
         this.span.attachShadow({ mode: "closed" }).appendChild(this.iframe);
+
+        // So pages (e.g. Jira, Confluence) remove spans from the page as soon
+        // as they're inserted. We don't wan't that, so for the 5 seconds
+        // following the insertion, detect if the span is removed from the page
+        // by checking visibility changes and re-insert if needed.
+        let reinserts = 0;
+        this.spanObserver = new MutationObserver(
+            (self => (mutations : MutationRecord[], observer: MutationObserver) => {
+            const span = self.getSpan();
+            for (const mutation of mutations) {
+                for (const node of mutation.removedNodes) {
+                    if (node === span) {
+                        reinserts += 1;
+                        if (reinserts >= 10) {
+                            console.error("Firenvim is trying to create an iframe on this site but the page is constantly removing it. Consider disabling Firenvim on this website.");
+                            observer.disconnect();
+                        } else {
+                            setTimeout(() => self.getElement().ownerDocument.body.appendChild(span), reinserts * 100);
+                        }
+                        return;
+                    }
+                }
+            }
+        })(this));
+        this.spanObserver.observe(this.getElement().ownerDocument.body, { childList: true });
+
         this.getElement().ownerDocument.body.appendChild(this.span);
 
         this.focus();
@@ -174,7 +213,7 @@ export class FirenvimElement {
         // We want to remove the FirenvimElement from the page when the
         // corresponding element is removed. We do this by adding a
         // mutationObserver to its parent.
-        this.mutationObserver = new MutationObserver((self => (mutations: MutationRecord[]) => {
+        this.pageObserver = new MutationObserver((self => (mutations: MutationRecord[]) => {
             const elem = self.getElement();
             mutations.forEach(mutation => mutation.removedNodes.forEach(node => {
                 const walker = document.createTreeWalker(node, NodeFilter.SHOW_ALL);
@@ -185,7 +224,7 @@ export class FirenvimElement {
                 }
             }));
         })(this));
-        this.mutationObserver.observe(document.documentElement, {
+        this.pageObserver.observe(document.documentElement, {
             subtree: true,
             childList: true
         });
@@ -195,8 +234,9 @@ export class FirenvimElement {
         const elem = this.getElement();
         this.resizeObserver.unobserve(elem);
         this.intersectionObserver.unobserve(elem);
-        this.mutationObserver.disconnect();
-        this.span.parentNode.removeChild(this.span);
+        this.pageObserver.disconnect();
+        this.spanObserver.disconnect();
+        this.span.remove();
         this.onDetach(this.frameId);
     }
 
@@ -255,6 +295,10 @@ export class FirenvimElement {
 
     getElement () {
         return this.editor.getElement();
+    }
+
+    getFrameId () {
+        return this.frameId;
     }
 
     getIframe () {

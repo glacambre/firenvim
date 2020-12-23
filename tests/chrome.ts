@@ -12,6 +12,7 @@ import {
  testEvalJs,
  testCodemirror,
  testContentEditable,
+ testDisappearing,
  testDynamicTextareas,
  testFocusGainedLost,
  testGStartedByFirenvim,
@@ -100,6 +101,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("Firenvim works on CodeMirror", () => testCodemirror(driver));
         nonHeadlessTest()("Firenvim works on ContentEditable", () => testContentEditable(driver));
         nonHeadlessTest()("Firenvim works on Monaco", () => testMonaco(driver));
+        nonHeadlessTest()("Firenvim works when span disappears", () => testDisappearing(driver));
         nonHeadlessTest()("Firenvim works on dynamically created elements", () => testDynamicTextareas(driver));
         nonHeadlessTest()("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(driver));
         nonHeadlessTest()("Firenvim works with large buffers", () => testLargeBuffers(driver));

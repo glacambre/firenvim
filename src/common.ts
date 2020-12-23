@@ -33,41 +33,6 @@ export const global = {
             await global.disabled;
         }
 
-        // auto is true when nvimify() is called as an event listener, false
-        // when called from forceNvimify()
-        const auto = (evt instanceof FocusEvent);
-
-        const takeover = getConf().takeover;
-        if (global.disabled || (auto && takeover === "never")) {
-            return;
-        }
-
-        const firenvim = new FirenvimElement(
-            evt.target as HTMLElement,
-            global.nvimify,
-            (id: number) => global.firenvimElems.delete(id)
-        );
-        const editor = firenvim.getEditor();
-
-        // If this element already has a neovim frame, stop
-        const alreadyRunning = Array.from(global.firenvimElems.values())
-            .find((instance) => instance.getElement() === editor.getElement());
-        if (alreadyRunning !== undefined) {
-            alreadyRunning.show();
-            alreadyRunning.focus();
-            return;
-        }
-
-        if (auto && (takeover === "empty" || takeover === "nonempty")) {
-            const content = (await editor.getContent()).trim();
-            if ((content !== "" && takeover === "empty")
-                || (content === "" && takeover === "nonempty")) {
-                    return;
-                }
-        }
-
-        firenvim.prepareBufferInfo();
-
         // When creating new frames, we need to know their frameId in order to
         // communicate with them. This can't be retrieved through a
         // synchronous, in-page call so the new frame has to tell the
@@ -82,23 +47,74 @@ export const global = {
             lock = frameIdLock;
             await frameIdLock;
         }
+
         frameIdLock = new Promise(async (unlock: any) => {
-            // TODO: make this timeout the same as the one in background.ts
+            // auto is true when nvimify() is called as an event listener, false
+            // when called from forceNvimify()
+            const auto = (evt instanceof FocusEvent);
+
+            const takeover = getConf().takeover;
+            if (global.disabled || (auto && takeover === "never")) {
+                unlock();
+                return;
+            }
+
+            const firenvim = new FirenvimElement(
+                evt.target as HTMLElement,
+                global.nvimify,
+                (id: number) => global.firenvimElems.delete(id)
+            );
+            const editor = firenvim.getEditor();
+
+            // If this element already has a neovim frame, stop
+            const alreadyRunning = Array.from(global.firenvimElems.values())
+                .find((instance) => instance.getElement() === editor.getElement());
+            if (alreadyRunning !== undefined) {
+                // The span might have been removed from the page by the page
+                // (this happens on Jira/Confluence for example) so we check
+                // for that.
+                const span = alreadyRunning.getSpan();
+                if (span.ownerDocument.contains(span)) {
+                    alreadyRunning.show();
+                    alreadyRunning.focus();
+                    unlock();
+                    return;
+                } else {
+                    // If the span has been removed from the page, the editor
+                    // is dead because removing an iframe from the page kills
+                    // the websocket connection inside of it.
+                    // We just tell the editor to clean itself up and go on as
+                    // if it didn't exist.
+                    alreadyRunning.detachFromPage();
+                }
+            }
+
+            if (auto && (takeover === "empty" || takeover === "nonempty")) {
+                const content = (await editor.getContent()).trim();
+                if ((content !== "" && takeover === "empty")
+                    || (content === "" && takeover === "nonempty")) {
+                        unlock();
+                        return;
+                    }
+            }
+
+            firenvim.prepareBufferInfo();
             const frameIdPromise = new Promise((resolve: (_: number) => void, reject) => {
-                global.frameIdResolve = (frameId: number) => {
-                    global.firenvimElems.set(frameId, firenvim);
-                    global.frameIdResolve = () => undefined;
-                    resolve(frameId);
-                };
+                global.frameIdResolve = resolve;
+                // TODO: make this timeout the same as the one in background.ts
                 setTimeout(reject, 10000);
             });
+            frameIdPromise.then((frameId: number) => {
+                global.firenvimElems.set(frameId, firenvim);
+                global.frameIdResolve = () => undefined;
+                unlock();
+            });
+            frameIdPromise.catch(unlock);
             firenvim.attachToPage(frameIdPromise);
-            frameIdPromise
-                .then(unlock)
-                .catch(unlock);
         });
     },
 
+    // fienvimElems maps frame ids to firenvim elements.
     firenvimElems: new Map<number, FirenvimElement>(),
 };
 
