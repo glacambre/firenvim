@@ -213,8 +213,8 @@ export const isReady = new Promise((resolve, reject) => {
                                  getGridId(),
                                  Math.floor(evt.pageY / cHeight),
                                  Math.floor(evt.pageX / cWidth));
+
                 keyHandler.focus();
-                setTimeout(() => keyHandler.focus(), 10);
             }
             window.addEventListener("mousedown", e => {
                 onMouse(e, "press");
