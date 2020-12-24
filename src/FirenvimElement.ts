@@ -10,6 +10,16 @@ export class FirenvimElement {
     // underlying elements (be they simple textareas, CodeMirror elements or
     // other).
     private editor: AbstractEditor;
+    // focusInfo is used to keep track of focus listeners and timeouts created
+    // by FirenvimElement.focus(). FirenvimElement.focus() creates these
+    // listeners and timeouts in order to work around pages that try to grab
+    // the focus again after the FirenvimElement has been created or after the
+    // underlying element's content has changed.
+    private focusInfo = {
+        finalRefocusTimeouts: [] as any[],
+        refocusRefs: [] as any[],
+        refocusTimeouts: [] as any[],
+    };
     // frameId is the webextension id of the neovim frame. We use it to send
     // commands to the frame.
     private frameId: number;
@@ -230,6 +240,29 @@ export class FirenvimElement {
         });
     }
 
+    clearFocusListeners () {
+        // When the user tries to `:w | call firenvim#focus_page()` in Neovim,
+        // we have a problem. `:w` results in a call to setPageElementContent,
+        // which calls FirenvimElement.focus(), because some pages try to grab
+        // focus when the content of the underlying element changes.
+        // FirenvimElement.focus() creates event listeners and timeouts to
+        // detect when the page tries to grab focus and bring it back to the
+        // FirenvimElement. But since `call firenvim#focus_page()` happens
+        // right after the `:w`, focus_page() triggers the event
+        // listeners/timeouts created by FirenvimElement.focus()!
+        // So we need a way to clear the timeouts and event listeners before
+        // performing focus_page, and that's what this function does.
+        this.focusInfo.finalRefocusTimeouts.forEach(t => clearTimeout(t));
+        this.focusInfo.refocusTimeouts.forEach(t => clearTimeout(t));
+        this.focusInfo.refocusRefs.forEach(f => {
+            this.iframe.removeEventListener("blur", f);
+            this.getElement().removeEventListener("focus", f);
+        });
+        this.focusInfo.finalRefocusTimeouts.length = 0;
+        this.focusInfo.refocusTimeouts.length = 0;
+        this.focusInfo.refocusRefs.length = 0;
+    }
+
     detachFromPage () {
         const elem = this.getElement();
         this.resizeObserver.unobserve(elem);
@@ -247,7 +280,7 @@ export class FirenvimElement {
         // actually stop refocusing the iframe a second after it is created.
         const self = this;
         function refocus() {
-            setTimeout(() => {
+            self.focusInfo.refocusTimeouts.push(setTimeout(() => {
                 // First, destroy current selection. Some websites use the
                 // selection to force-focus an element.
                 const sel = document.getSelection();
@@ -264,15 +297,16 @@ export class FirenvimElement {
                     document.body.focus();
                 }
                 self.iframe.focus();
-            }, 0);
+            }, 0));
         }
+        self.focusInfo.refocusRefs.push(refocus);
         this.iframe.addEventListener("blur", refocus);
         this.getElement().addEventListener("focus", refocus);
-        setTimeout(() => {
+        self.focusInfo.finalRefocusTimeouts.push(setTimeout(() => {
             refocus();
             this.iframe.removeEventListener("blur", refocus);
             this.getElement().removeEventListener("focus", refocus);
-        }, 100);
+        }, 100));
         refocus();
     }
 
@@ -336,8 +370,11 @@ export class FirenvimElement {
     }
 
     pressKeys (keys: KeyboardEvent[]) {
+        const focused = this.isFocused();
         keys.forEach(ev => this.originalElement.dispatchEvent(ev));
-        this.focus();
+        if (focused) {
+            this.focus();
+        }
     }
 
     putEditorCloseToInputOrigin () {
@@ -466,7 +503,11 @@ export class FirenvimElement {
     }
 
     setPageElementCursor (line: number, column: number) {
-        return this.editor.setCursor(line, column);
+        let p = Promise.resolve();
+        if (this.isFocused()) {
+            p = this.editor.setCursor(line, column);
+        }
+        return p;
     }
 
     show () {

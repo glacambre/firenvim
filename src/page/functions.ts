@@ -94,7 +94,9 @@ export function getNeovimFrameFunctions(global: IGlobalState) {
             }
             _focusInput(global, firenvimElement, true);
         },
-        focusPage: () => {
+        focusPage: (frameId: number) => {
+            const firenvimElement = global.firenvimElems.get(frameId);
+            firenvimElement.clearFocusListeners();
             (document.activeElement as any).blur();
             document.documentElement.focus();
         },
@@ -113,9 +115,12 @@ export function getNeovimFrameFunctions(global: IGlobalState) {
         },
         killEditor: (frameId: number) => {
             const firenvim = global.firenvimElems.get(frameId);
+            const isFocused = firenvim.isFocused();
             firenvim.detachFromPage();
             const conf = getConf();
-            _focusInput(global, firenvim, conf.takeover !== "once");
+            if (isFocused) {
+                _focusInput(global, firenvim, conf.takeover !== "once");
+            }
             global.firenvimElems.delete(frameId);
         },
         pressKeys: (frameId: number, keys: string[]) => {
