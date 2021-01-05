@@ -131,6 +131,21 @@ export async function testModifiers(driver: webdriver.WebDriver) {
                .toContain(await input.getAttribute("value"));
 }
 
+export async function testUnfocusedKillEditor(driver: webdriver.WebDriver) {
+        await loadLocalPage(driver, "simple.html", "Unfocused test");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "input not found");
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        await driver.actions().click(input).perform();
+        const ready = firenvimReady(driver);
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")), 5000, "Firenvim span not found");
+        await ready;
+        await sendKeys(driver, ":w | call firenvim#focus_page() | q".split("")
+                       .concat(webdriver.Key.ENTER))
+        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear");
+        expect(["HTML", "BODY"])
+               .toContain(await driver.executeScript("return document.activeElement.tagName;"));
+}
+
 export async function testGStartedByFirenvim(driver: webdriver.WebDriver) {
         await loadLocalPage(driver, "simple.html", "g:started_by_firenvim test");
         const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "Input not found");

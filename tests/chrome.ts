@@ -29,6 +29,7 @@ import {
  testPageFocus,
  testPressKeys,
  testResize,
+ testUnfocusedKillEditor,
  testTakeoverEmpty,
  testTakeoverNonEmpty,
  testTakeoverOnce,
@@ -115,6 +116,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("PressKeys works", () => testPressKeys(driver));
         nonHeadlessTest()("EvalJs works", () => testEvalJs(driver));
         nonHeadlessTest()("Resize works", () => testResize(driver));
+        nonHeadlessTest()("Unfocused killEditor does not focus input", () => testUnfocusedKillEditor(driver));
         nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(driver));
         nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
         nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(driver));
