@@ -36,6 +36,7 @@ import {
  testTakeoverEmpty,
  testTakeoverNonEmpty,
  testTakeoverOnce,
+ testUnfocusedKillEditor,
  testVimrcFailure,
  testWorksInFrame,
 } from "./_common"
@@ -107,6 +108,7 @@ describe("Firefox", () => {
         test("EvalJS works", () => testEvalJs(driver));
         test("PressKeys works", () => testPressKeys(driver));
         test("Resize works", () => testResize(driver));
+        test("Unfocused killEditor does not focus input", () => testUnfocusedKillEditor(driver));
         test("Takeover: empty works", () => testTakeoverEmpty(driver));
         test("Takeover: nonempty works", () => testTakeoverNonEmpty(driver));
         test("Takeover: once works", () => testTakeoverOnce(driver));
