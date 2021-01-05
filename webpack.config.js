@@ -110,8 +110,7 @@ const chromeConfig = (config, env) => {
       }
     })).concat([16, 48, 128].map(n => ({
       from: "static/firenvim.svg",
-      to: chrome_target_dir,
-      transformPath: () => `firenvim${n}.png`,
+      to: () => path.join(chrome_target_dir, `firenvim${n}.png`),
       transform: (content) => sharp(content).resize(n, n).toBuffer(),
     })))}),
       new ProvidePlugin({ "browser": "webextension-polyfill" })
