@@ -6,7 +6,11 @@ const fontFamily = "font-family";
 export function parseGuifont(guifont: string, defaults: any) {
     const options = guifont.split(":");
     const result = Object.assign({}, defaults);
-    result[fontFamily] = JSON.stringify(options[0]);
+    if (/^[a-zA-Z0-9]+$/.test(options[0])) {
+        result[fontFamily] = options[0];
+    } else {
+        result[fontFamily] = JSON.stringify(options[0]);
+    }
     if (defaults[fontFamily]) {
         result[fontFamily] += `, ${defaults[fontFamily]}`;
     }
