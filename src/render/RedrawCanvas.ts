@@ -21,15 +21,17 @@ function glyphId(char: string, high: number) {
     return char + "-" + high;
 }
 function setCanvasDimensions (cvs: HTMLCanvasElement, width: number, height: number) {
-    cvs.width = width;
-    cvs.height = height;
+    cvs.width = width * window.devicePixelRatio;
+    cvs.height = height * window.devicePixelRatio;
     cvs.style.width = `${width}px`;
     cvs.style.height = `${height}px`;
 }
 export function setCanvas (cvs: HTMLCanvasElement) {
     const state = globalState;
     state.canvas = cvs;
-    setCanvasDimensions(state.canvas, window.innerWidth, window.innerHeight);
+    setCanvasDimensions(state.canvas,
+                        window.innerWidth,
+                        window.innerHeight);
     const { fontFamily, fontSize } = window.getComputedStyle(state.canvas);
     fontString = `${fontSize} ${fontFamily}`;
     state.context = state.canvas.getContext("2d", { "alpha": false });
@@ -827,8 +829,8 @@ function paint (_: DOMHighResTimeStamp) {
                 // Save the canvas, which will be lost on resize
                 const data = context.getImageData(0, 0, width * charWidth, height * charHeight);
 
-                const pixelWidth = damage.w * charWidth;
-                const pixelHeight = damage.h * charHeight;
+                const pixelWidth = damage.w * charWidth / window.devicePixelRatio;
+                const pixelHeight = damage.h * charHeight / window.devicePixelRatio;
                 page.resizeEditor(pixelWidth, pixelHeight);
                 setCanvasDimensions(canvas, pixelWidth, pixelHeight);
                 // Note: changing width and height resets font, so we have to
