@@ -519,7 +519,7 @@ const handlers : { [key:string] : (...any: any[])=>void } = {
             const bottom = (bot + rows) >= dimensions.height
                 ? dimensions.height - rows
                 : bot + rows;
-            for (let y = top; y < bottom; ++y) {
+            for (let y = top; y < bottom - 1; ++y) {
                 const srcChars = charGrid[y + rows];
                 const dstChars = charGrid[y];
                 const srcHighs = highGrid[y + rows];
