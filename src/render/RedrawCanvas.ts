@@ -356,7 +356,7 @@ function damageMessagesSpace (state: State) {
     msgPos.y = state.canvas.height;
 }
 
-const handlers = {
+const handlers : { [key:string] : (...any: any[])=>void } = {
     busy_start: () => { globalState.canvas.style.cursor = "wait"; },
     busy_stop: () => { globalState.canvas.style.cursor = "auto"; },
     cmdline_hide: () => {
@@ -903,11 +903,15 @@ function paint (_: DOMHighResTimeStamp) {
                                     context.fillRect(abscissa, pixelY + baseline + Math.sin(abscissa) + 2, 1, 1);
                                 }
                             }
-                            glyphCache[id] = context.getImageData(
-                                pixelX,
-                                pixelY,
-                                width,
-                                charHeight);
+                            // reason for the check: we can't retrieve pixels
+                            // drawn outside the viewport
+                            if (pixelX < canvas.width && pixelY < canvas.height) {
+                                glyphCache[id] = context.getImageData(
+                                    pixelX,
+                                    pixelY,
+                                    width,
+                                    charHeight);
+                            }
                         } else {
                             context.putImageData(glyphCache[id], pixelX, pixelY);
                         }
