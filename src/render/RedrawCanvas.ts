@@ -33,7 +33,7 @@ export function setCanvas (cvs: HTMLCanvasElement) {
                         window.innerWidth,
                         window.innerHeight);
     const { fontFamily, fontSize } = window.getComputedStyle(state.canvas);
-    fontString = `${fontSize} ${fontFamily}`;
+    fontString = `${fontSize} ${fontFamily}, monospace`;
     state.context = state.canvas.getContext("2d", { "alpha": false });
     setFontString(state, fontString);
 }
@@ -605,8 +605,11 @@ const handlers = {
         const state = globalState;
         switch (option) {
             case "guifont":
-                const guifont = parseGuifont(value || "monospace:h9", {});
-                setFontString(state, (guifont["font-size"] || "") + " " + (guifont["font-family"] || "monospace"));
+                const guifont = parseGuifont(((typeof value) === "string" ? value : ""), {
+                    "font-family": "monospace",
+                    "font-size": "12pt"
+                });
+                setFontString(state, `${guifont["font-size"]} ${guifont["font-family"]}`);
                 const [charWidth, charHeight] = getGlyphInfo(state);
                 functions.ui_try_resize_grid(getGridId(),
                                              Math.floor(state.canvas.width / charWidth),
