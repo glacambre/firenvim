@@ -922,12 +922,18 @@ function paint (_: DOMHighResTimeStamp) {
                                 context.fillRect(pixelX, pixelY + baseline / 2, width, 1);
                             }
                             context.fillStyle = cellHigh.special;
+                            const baselineHeight = (charHeight - baseline)
                             if (cellHigh.underline) {
-                                context.fillRect(pixelX, pixelY + baseline + 2, width, 1);
+                                const linepos = baselineHeight * 0.3;
+                                context.fillRect(pixelX, pixelY + baseline + linepos, width, 1);
                             }
                             if (cellHigh.undercurl) {
+                                const curlpos = baselineHeight * 0.6;
                                 for (let abscissa = pixelX; abscissa < pixelX + width; ++abscissa) {
-                                    context.fillRect(abscissa, pixelY + baseline + Math.sin(abscissa) + 2, 1, 1);
+                                    context.fillRect(abscissa,
+                                                     pixelY + baseline + curlpos + Math.cos(abscissa),
+                                                     1,
+                                                     1);
                                 }
                             }
                             // reason for the check: we can't retrieve pixels
