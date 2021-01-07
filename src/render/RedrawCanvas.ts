@@ -607,7 +607,7 @@ const handlers : { [key:string] : (...any: any[])=>void } = {
             case "guifont":
                 const guifont = parseGuifont(((typeof value) === "string" ? value : ""), {
                     "font-family": "monospace",
-                    "font-size": "12pt"
+                    "font-size": "9pt"
                 });
                 setFontString(state, `${guifont["font-size"]} ${guifont["font-family"]}`);
                 const [charWidth, charHeight] = getGlyphInfo(state);
