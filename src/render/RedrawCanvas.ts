@@ -7,15 +7,23 @@ export function setFunctions(fns: any) {
     functions = fns;
 }
 
-let metricsInvalidated: boolean = false;
 let glyphCache : any = {};
+function wipeGlyphCache() {
+    glyphCache = {};
+}
+
+let metricsInvalidated: boolean = false;
+
+function invalidateMetrics() {
+    metricsInvalidated = true;
+    wipeGlyphCache();
+}
 
 let fontString : string;
 function setFontString (state: State, s : string) {
     fontString = s;
     state.context.font = fontString;
-    metricsInvalidated = true;
-    glyphCache = {};
+    invalidateMetrics();
 }
 function glyphId(char: string, high: number) {
     return char + "-" + high;
@@ -159,6 +167,7 @@ type State = {
     gridHighlights: number[][][],
     gridSizes: GridDimensions[],
     highlights: HighlightInfo[],
+    linespace: number,
     messages: Message[],
     messagesPositions: MessagesPosition[],
     mode: Mode,
@@ -191,6 +200,7 @@ const globalState: State = {
     gridHighlights: [],
     gridSizes: [],
     highlights: [newHighlight(defaultBackground, defaultForeground)],
+    linespace: 0,
     messages: [],
     messagesPositions: [],
     mode: {
@@ -256,7 +266,7 @@ function recomputeCharSize (ctx: CanvasRenderingContext2D) {
         }
     }
     maxCellWidth = Math.ceil(width);
-    maxCellHeight = Math.ceil(height);
+    maxCellHeight = Math.ceil(height) + globalState.linespace;
     maxBaselineDistance = baseline;
     metricsInvalidated = false;
 }
@@ -396,7 +406,7 @@ const handlers : { [key:string] : (...any: any[])=>void } = {
         if (curGridSize !== undefined) {
             pushDamage(getGridId(), DamageKind.Cell, curGridSize.height, curGridSize.width, 0, 0);
         }
-        glyphCache = {};
+        wipeGlyphCache();
     },
     flush: () => {
         scheduleFrame();
@@ -604,7 +614,7 @@ const handlers : { [key:string] : (...any: any[])=>void } = {
     option_set: (option: string, value: any) => {
         const state = globalState;
         switch (option) {
-            case "guifont":
+            case "guifont": {
                 const guifont = parseGuifont(((typeof value) === "string" ? value : ""), {
                     "font-family": "monospace",
                     "font-size": "9pt"
@@ -614,6 +624,23 @@ const handlers : { [key:string] : (...any: any[])=>void } = {
                 functions.ui_try_resize_grid(getGridId(),
                                              Math.floor(state.canvas.width / charWidth),
                                              Math.floor(state.canvas.height / charHeight));
+            }
+            break;
+            case "linespace": {
+                state.linespace = value;
+                invalidateMetrics();
+                const [charWidth, charHeight] = getGlyphInfo(state);
+                const gid = getGridId();
+                console.log(gid);
+                const curGridSize = state.gridSizes[gid];
+                if (curGridSize !== undefined) {
+                    pushDamage(getGridId(), DamageKind.Cell, curGridSize.height, curGridSize.width, 0, 0);
+                }
+                functions.ui_try_resize_grid(gid,
+                                             Math.floor(state.canvas.width / charWidth),
+                                             Math.floor(state.canvas.height / charHeight));
+            };
+            break;
         }
     },
 };
