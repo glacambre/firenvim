@@ -208,10 +208,12 @@ module.exports = args => {
   let env = "";
   if (args instanceof Object) {
     delete args.WEBPACK_BUNDLE;
-    env = Object.keys(args)[0];
+    const keys = Object.keys(args);
+    if (keys.length > 0) {
+      env = keys[0];
+    }
   }
 
-  console.log(args, env);
   if (env.endsWith("testing")) {
     config.entry.testing = "./src/testing/content.ts";
     config.entry.nvimui = "./src/testing/frame.ts";
