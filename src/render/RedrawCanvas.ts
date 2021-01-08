@@ -631,7 +631,6 @@ const handlers : { [key:string] : (...any: any[])=>void } = {
                 invalidateMetrics();
                 const [charWidth, charHeight] = getGlyphInfo(state);
                 const gid = getGridId();
-                console.log(gid);
                 const curGridSize = state.gridSizes[gid];
                 if (curGridSize !== undefined) {
                     pushDamage(getGridId(), DamageKind.Cell, curGridSize.height, curGridSize.width, 0, 0);
@@ -1043,7 +1042,7 @@ export function onRedraw(events: any[]) {
                 handler.apply(globalState, event[j]);
             }
         } else {
-            console.error(`${event[0]} is not implemented.`);
+            // console.error(`${event[0]} is not implemented.`);
         }
     }
 }

@@ -5,9 +5,6 @@ import { Stdout } from "./Stdout";
 
 export async function neovim(
         canvas: HTMLCanvasElement,
-        element: HTMLPreElement,
-        extCmdline: HTMLSpanElement,
-        extMessages: HTMLSpanElement,
         { port, password }: { port: number, password: number },
     ) {
     let stdin: Stdin;

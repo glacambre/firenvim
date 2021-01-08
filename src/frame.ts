@@ -16,13 +16,10 @@ export const isReady = new Promise((resolve, reject) => {
     window.addEventListener("load", async () => {
         try {
             const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-            const host = document.getElementById("host") as HTMLPreElement;
-            const extCmdline = document.getElementById("ext_cmdline") as HTMLSpanElement;
-            const extMessages = document.getElementById("ext_messages") as HTMLSpanElement;
             const keyHandler = document.getElementById("keyhandler");
             const [[url, selector, cursor, language], connectionData] =
                 await Promise.all([infoPromise, connectionPromise]);
-            const nvimPromise = neovim(canvas, host, extCmdline, extMessages, connectionData);
+            const nvimPromise = neovim(canvas, connectionData);
             const contentPromise = page.getElementContent();
 
             const [cols, rows] = getLogicalSize();

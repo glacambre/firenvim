@@ -19,7 +19,7 @@ function deepCopy (obj) {
 const CopyWebPackFiles = [
   "ISSUE_TEMPLATE.md",
   "src/manifest.json",
-  "src/NeovimFrame.html",
+  "src/index.html",
   "src/browserAction.html",
   "static/firenvim.svg",
 ]
@@ -31,7 +31,7 @@ const config = {
     background: "./src/background.ts",
     browserAction: "./src/browserAction.ts",
     content: "./src/content.ts",
-    nvimui: "./src/NeovimFrame.ts",
+    index: "./src/frame.ts",
   },
   output: {
     filename: "[name].js",
@@ -216,7 +216,7 @@ module.exports = args => {
 
   if (env.endsWith("testing")) {
     config.entry.testing = "./src/testing/content.ts";
-    config.entry.nvimui = "./src/testing/frame.ts";
+    config.entry.index = "./src/testing/frame.ts";
   }
 
   if (env.startsWith("chrome")) {
