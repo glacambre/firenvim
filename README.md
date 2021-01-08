@@ -177,13 +177,10 @@ let fc['.*'] = { 'takeover': 'always' }
 
 ### Using the external command line
 
-You can chose to use an external command line (and thus save a line of space) by setting the localSetting named `cmdline` to `firenvim`. Its default value is `neovim`:
-
+You can chose between neovim's built-in command line and firenvim's command line by setting the localSetting named `cmdline` to either `neovim` or `firenvim`, e.g.:
 ```vim
 let fc['.*'] = { 'cmdline' : 'firenvim' }
 ```
-
-When you then enter command mode, the command will appear in a sort of "pop-up" instead of the bottom of the frame.
 
 ### Editing HTML directly
 

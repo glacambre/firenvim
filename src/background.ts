@@ -178,7 +178,7 @@ function applySettings(settings: any) {
     makeDefaultLocalSetting(settings, ".*", {
         // "cmdline": "neovim" | "firenvim"
         // #168: Use an external commandline to preserve space
-        cmdline: "neovim",
+        cmdline: "firenvim",
         content: "text",
         priority: 0,
         renderer: "canvas",
@@ -188,7 +188,7 @@ function applySettings(settings: any) {
         takeover: "always",
     });
     makeDefaultLocalSetting(settings, "about:blank\\?compose", {
-        cmdline: "neovim",
+        cmdline: "firenvim",
         content: "text",
         priority: 1,
         renderer: "canvas",
