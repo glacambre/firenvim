@@ -47,6 +47,7 @@
     "webpack": "webpack"
   },
   "jest": {
+    "bail": 1,
     "testRegex": "/tests/[^_].*\\.(jsx?|tsx?)$",
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
