@@ -1,3 +1,4 @@
+import { getConf } from "./utils/configuration";
 import { isChrome } from "./utils/utils";
 import { AbstractEditor } from "./editors/AbstractEditor";
 import { getEditor } from "./editors/editors";
@@ -173,7 +174,8 @@ export class FirenvimElement {
         })(this));
         this.resizeObserver.observe(this.getElement(), { box: "border-box" });
 
-        this.iframe.src = (browser as any).extension.getURL("/index.html");
+        const renderer = getConf().renderer === "canvas" ? "/index.html" : "/NeovimFrame.html";
+        this.iframe.src = (browser as any).extension.getURL(renderer);
         this.span.attachShadow({ mode: "closed" }).appendChild(this.iframe);
 
         // So pages (e.g. Jira, Confluence) remove spans from the page as soon
