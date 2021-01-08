@@ -366,7 +366,7 @@ function damageMessagesSpace (state: State) {
     msgPos.y = state.canvas.height;
 }
 
-const handlers : { [key:string] : (...any: any[])=>void } = {
+const handlers : { [key:string] : (...args: any[])=>void } = {
     busy_start: () => { globalState.canvas.style.cursor = "wait"; },
     busy_stop: () => { globalState.canvas.style.cursor = "auto"; },
     cmdline_hide: () => {
@@ -638,7 +638,7 @@ const handlers : { [key:string] : (...any: any[])=>void } = {
                 functions.ui_try_resize_grid(gid,
                                              Math.floor(state.canvas.width / charWidth),
                                              Math.floor(state.canvas.height / charHeight));
-            };
+            }
             break;
         }
     },
@@ -921,7 +921,7 @@ function paint (_: DOMHighResTimeStamp) {
                                 context.fillRect(pixelX, pixelY + baseline / 2, width, 1);
                             }
                             context.fillStyle = cellHigh.special;
-                            const baselineHeight = (charHeight - baseline)
+                            const baselineHeight = (charHeight - baseline);
                             if (cellHigh.underline) {
                                 const linepos = baselineHeight * 0.3;
                                 context.fillRect(pixelX, pixelY + baseline + linepos, width, 1);
