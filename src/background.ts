@@ -312,28 +312,24 @@ if (!isThunderbird()) {
                 browser.tabs.sendMessage(
                     tab.id,
                     { args: [], funcName: ["focusInput"] },
-                    { frameId: 0 },
                 );
                 break;
             case "focus_page":
                 browser.tabs.sendMessage(
                     tab.id,
                     { args: [], funcName: ["focusPage"] },
-                    { frameId: 0 },
                 );
                 break;
             case "nvimify":
                 browser.tabs.sendMessage(
                     tab.id,
                     { args: [], funcName: ["forceNvimify"] },
-                    { frameId: 0 }
                 );
                 break;
             case "send_C-n":
                 p = browser.tabs.sendMessage(
                     tab.id,
                     { args: ["<C-n>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
                 );
                 if (getGlobalConf()["<C-n>"] === "default") {
                     p.catch(() => browser.windows.create());
@@ -343,7 +339,6 @@ if (!isThunderbird()) {
                 p = browser.tabs.sendMessage(
                     tab.id,
                     { args: ["<C-t>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
                 );
                 if (getGlobalConf()["<C-t>"] === "default") {
                     p.catch(() => browser.tabs.create({ "windowId": tab.windowId }));
@@ -353,7 +348,6 @@ if (!isThunderbird()) {
                 p = browser.tabs.sendMessage(
                     tab.id,
                     { args: ["<C-w>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
                 );
                 if (getGlobalConf()["<C-w>"] === "default") {
                     p.catch(() => browser.tabs.remove(tab.id));
@@ -363,7 +357,6 @@ if (!isThunderbird()) {
                 p = browser.tabs.sendMessage(
                     tab.id,
                     { args: ["<CS-n>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
                 );
                 if (getGlobalConf()["<CS-n>"] === "default") {
                     p.catch(() => browser.windows.create({ "incognito": true }));
@@ -374,14 +367,12 @@ if (!isThunderbird()) {
                 browser.tabs.sendMessage(
                     tab.id,
                     { args: ["<CS-t>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
                 );
                 break;
             case "send_CS-w":
                 p = browser.tabs.sendMessage(
                     tab.id,
                     { args: ["<CS-w>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
                 );
                 if (getGlobalConf()["<CS-w>"] === "default") {
                     p.catch(() => browser.windows.remove(tab.windowId));

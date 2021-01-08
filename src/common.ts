@@ -118,11 +118,9 @@ export const global = {
     firenvimElems: new Map<number, FirenvimElement>(),
 };
 
-let ownFrameId: number;
-browser.runtime.sendMessage({ args: [], funcName: ["getOwnFrameId"] })
-    .then((frameId: number) => { ownFrameId = frameId; });
-window.addEventListener("focus", async () => {
-    const frameId = ownFrameId;
+const ownFrameId = browser.runtime.sendMessage({ args: [], funcName: ["getOwnFrameId"] });
+async function announceFocus () {
+    const frameId = await ownFrameId;
     global.lastFocusedContentScript = frameId;
     browser.runtime.sendMessage({
         args: {
@@ -131,7 +129,23 @@ window.addEventListener("focus", async () => {
         },
         funcName: ["messagePage"]
     });
+}
+// When the frame is created, we might receive focus, check for that
+ownFrameId.then(_ => {
+    if (document.hasFocus()) {
+        announceFocus();
+    }
 });
+async function addFocusListener () {
+    window.removeEventListener("focus", announceFocus);
+    window.addEventListener("focus", announceFocus);
+}
+addFocusListener();
+// We need to use setInterval to periodically re-add the focus listeners as in
+// frames the document could get deleted and re-created without our knowledge.
+const intervalId = setInterval(addFocusListener, 100);
+// But we don't want to syphon the user's battery so we stop checking after a second
+setTimeout(() => clearInterval(intervalId), 1000);
 
 export const frameFunctions = getNeovimFrameFunctions(global);
 export const activeFunctions = getActiveContentFunctions(global);
@@ -147,7 +161,7 @@ browser.runtime.onMessage.addListener(async (request: { funcName: string[], args
     // The only content script that should react to activeFunctions is the active one
     fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], activeFunctions);
     if (fn !== undefined) {
-        if (global.lastFocusedContentScript === ownFrameId) {
+        if (global.lastFocusedContentScript === await ownFrameId) {
             return fn(...request.args);
         }
         return new Promise(() => undefined);
