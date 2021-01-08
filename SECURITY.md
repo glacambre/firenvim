@@ -5,7 +5,7 @@
 Webextensions are made of [several kinds of processes](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Anatomy_of_a_WebExtension) (also named "scripts"). Firenvim uses three kinds of scripts:
 - The [background script](src/background.ts).
 - The [content script](src/content.ts).
-- The ["frame" script](src/NeovimFrame.ts).
+- The ["frame" script](src/frame.ts).
 
 These scripts have different permissions. For example, the background script can start new processes on your computer but cannot access the content of your tabs. The content script has the opposite permissions. The frame script is just a kind of content script that executes in a frame.
 

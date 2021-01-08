@@ -19,11 +19,12 @@ export type NvimMode = "all"
   | "showmatch";
 
 export interface ISiteConfig {
-    selector: string;
-    priority: number;
-    takeover: "always" | "once" | "empty" | "nonempty" | "never";
     cmdline: "neovim" | "firenvim";
     content: "html" | "text";
+    priority: number;
+    renderer: "html" | "canvas";
+    selector: string;
+    takeover: "always" | "once" | "empty" | "nonempty" | "never";
 }
 
 export interface IConfig {

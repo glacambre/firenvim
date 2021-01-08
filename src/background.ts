@@ -179,19 +179,21 @@ function applySettings(settings: any) {
         // "cmdline": "neovim" | "firenvim"
         // #168: Use an external commandline to preserve space
         cmdline: "neovim",
+        content: "text",
         priority: 0,
+        renderer: "canvas",
         selector: 'textarea:not([readonly]), div[role="textbox"]',
         // "takeover": "always" | "once" | "empty" | "nonempty" | "never"
         // #265: On "once", don't automatically bring back after :q'ing it
         takeover: "always",
-        content: "text",
     });
     makeDefaultLocalSetting(settings, "about:blank\\?compose", {
         cmdline: "neovim",
+        content: "text",
         priority: 1,
+        renderer: "canvas",
         selector: 'body',
         takeover: "always",
-        content: "text",
     });
     browser.storage.local.set(settings);
 }

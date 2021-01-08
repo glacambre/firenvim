@@ -30,7 +30,7 @@ let firenvimReady = (driver: webdriver.WebDriver) => {
                         return true;
                 }
                 return false;
-        });
+        }, 11000, "window.firenvimReady never became true");
 }
 
 // Returns the path of the newest file in directory

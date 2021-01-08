@@ -173,7 +173,7 @@ export class FirenvimElement {
         })(this));
         this.resizeObserver.observe(this.getElement(), { box: "border-box" });
 
-        this.iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
+        this.iframe.src = (browser as any).extension.getURL("/index.html");
         this.span.attachShadow({ mode: "closed" }).appendChild(this.iframe);
 
         // So pages (e.g. Jira, Confluence) remove spans from the page as soon
