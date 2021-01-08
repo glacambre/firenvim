@@ -20,6 +20,7 @@ const CopyWebPackFiles = [
   "ISSUE_TEMPLATE.md",
   "src/manifest.json",
   "src/index.html",
+  "src/NeovimFrame.html",
   "src/browserAction.html",
   "static/firenvim.svg",
 ]
@@ -32,6 +33,7 @@ const config = {
     browserAction: "./src/browserAction.ts",
     content: "./src/content.ts",
     index: "./src/frame.ts",
+    nvimui: "./src/NeovimFrame.ts",
   },
   output: {
     filename: "[name].js",
