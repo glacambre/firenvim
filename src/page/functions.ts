@@ -51,7 +51,10 @@ export function getActiveContentFunctions(global: IGlobalState) {
     return {
         forceNvimify: () => {
             let elem = document.activeElement;
-            if (!elem || elem === document.documentElement || elem === document.body) {
+            if (!elem
+                || (!(elem as any).contentEditable
+                    && (elem === document.documentElement
+                        || elem === document.body))) {
                 function isVisible(e: HTMLElement) {
                     const rect = e.getBoundingClientRect();
                     const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
