@@ -61,7 +61,10 @@ export const isReady = new Promise((resolve, reject) => {
                     // different from rows but we can't because redraw notifications
                     // might happen without us actually calling ui_try_resize and then
                     // the sizes wouldn't be in sync anymore
-                    const [nCols, nRows] = computeGridDimensionsFor(width, height);
+                    const [nCols, nRows] = computeGridDimensionsFor(
+                        width * window.devicePixelRatio,
+                        height * window.devicePixelRatio
+                    );
                     nvim.ui_try_resize_grid(getGridId(), nCols, nRows);
                     page.resizeEditor(Math.floor(width / nCols) * nCols, Math.floor(height / nRows) * nRows);
                 }
