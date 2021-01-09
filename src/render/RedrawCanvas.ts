@@ -482,11 +482,7 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
 
         const curGridSize = globalState.gridSizes[id];
 
-        // When not creating a new grid, we need to save the drawing context we
-        // have on canvas resize.
-        if (!createGrid) {
-            pushDamage(id, DamageKind.Resize, height, width, curGridSize.width, curGridSize.height);
-        }
+        pushDamage(id, DamageKind.Resize, height, width, curGridSize.width, curGridSize.height);
 
         const highlights = globalState.gridHighlights[id];
         const charGrid = globalState.gridCharacters[id];
@@ -500,18 +496,13 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
                 }
             }
         }
-        if (width > curGridSize.width) {
-            pushDamage(id, DamageKind.Cell, curGridSize.height, width - curGridSize.width, curGridSize.width, 0);
-        }
         if (height > charGrid.length) {
             while (charGrid.length < height) {
                 charGrid.push((new Array(width)).fill(" "));
                 highlights.push((new Array(width)).fill(0));
             }
         }
-        if (height > curGridSize.height) {
-            pushDamage(id, DamageKind.Cell, height - curGridSize.height, width, 0, curGridSize.height);
-        }
+        pushDamage(id, DamageKind.Cell, 0, width, 0, curGridSize.height);
         curGridSize.width = width;
         curGridSize.height = height;
     },
@@ -851,13 +842,6 @@ function paint (_: DOMHighResTimeStamp) {
         const damage = damages[i];
         switch (damage.kind) {
             case DamageKind.Resize: {
-                // Get smallest width between old width and new width
-                const width = damage.w > damage.x ? damage.x : damage.w;
-                // Get smallest height between old height and new height
-                const height = damage.h > damage.y ? damage.y : damage.h;
-                // Save the canvas, which will be lost on resize
-                const data = context.getImageData(0, 0, width * charWidth, height * charHeight);
-
                 const pixelWidth = damage.w * charWidth / window.devicePixelRatio;
                 const pixelHeight = damage.h * charHeight / window.devicePixelRatio;
                 page.resizeEditor(pixelWidth, pixelHeight);
@@ -865,9 +849,6 @@ function paint (_: DOMHighResTimeStamp) {
                 // Note: changing width and height resets font, so we have to
                 // set it again. Who thought this was a good idea???
                 context.font = fontString;
-
-                // Restore the canvas
-                context.putImageData(data, 0, 0);
             }
             break;
             case DamageKind.Scroll:
