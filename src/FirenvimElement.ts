@@ -203,7 +203,14 @@ export class FirenvimElement {
         })(this));
         this.spanObserver.observe(this.getElement().ownerDocument.body, { childList: true });
 
-        this.getElement().ownerDocument.body.appendChild(this.span);
+        let parentElement = this.getElement().ownerDocument.body;
+        // We can't insert the frame in the body if the element we're going to
+        // replace the content of is the body, as replacing the content would
+        // destroy the frame.
+        if (parentElement === this.getElement()) {
+            parentElement = parentElement.parentElement;
+        }
+        parentElement.appendChild(this.span);
 
         this.focus();
 
