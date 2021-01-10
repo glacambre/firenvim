@@ -34,16 +34,22 @@ function setCanvasDimensions (cvs: HTMLCanvasElement, width: number, height: num
     cvs.style.width = `${width}px`;
     cvs.style.height = `${height}px`;
 }
+function makeFontString(fontSize: string, fontFamily: string) {
+    return `${fontSize} ${fontFamily}`;
+}
+let defaultFontSize = "";
+let defaultFontFamily = "monospace";
+let defaultFontString = "";
 export function setCanvas (cvs: HTMLCanvasElement) {
     const state = globalState;
     state.canvas = cvs;
     setCanvasDimensions(state.canvas,
                         window.innerWidth,
                         window.innerHeight);
-    const { fontFamily, fontSize } = window.getComputedStyle(state.canvas);
-    fontString = `${fontSize} ${fontFamily}, monospace`;
+    defaultFontSize = window.getComputedStyle(state.canvas).fontSize;
+    defaultFontString = makeFontString(defaultFontSize, defaultFontFamily);
     state.context = state.canvas.getContext("2d", { "alpha": false });
-    setFontString(state, fontString);
+    setFontString(state, defaultFontString);
 }
 
 // We first define highlight information.
@@ -606,11 +612,20 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
         const state = globalState;
         switch (option) {
             case "guifont": {
-                const guifont = parseGuifont(((typeof value) === "string" ? value : ""), {
-                    "font-family": "monospace",
-                    "font-size": "9pt"
-                });
-                setFontString(state, `${guifont["font-size"]} ${guifont["font-family"]}`);
+                let newFontString;
+                if (value === "") {
+                    newFontString = defaultFontString;
+                } else {
+                    const guifont = parseGuifont(value, {
+                        "font-family": defaultFontFamily,
+                        "font-size": defaultFontSize,
+                    });
+                    newFontString =  makeFontString(guifont["font-size"], guifont["font-family"]);
+                }
+                if (newFontString === fontString) {
+                    break;
+                }
+                setFontString(state, newFontString);
                 const [charWidth, charHeight] = getGlyphInfo(state);
                 functions.ui_try_resize_grid(getGridId(),
                                              Math.floor(state.canvas.width / charWidth),
@@ -618,6 +633,9 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
             }
             break;
             case "linespace": {
+                if (state.linespace === value) {
+                    break;
+                }
                 state.linespace = value;
                 invalidateMetrics();
                 const [charWidth, charHeight] = getGlyphInfo(state);
