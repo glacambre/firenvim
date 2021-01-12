@@ -38,12 +38,13 @@
   "license": "GPL-3.0",
   "name": "Firenvim",
   "scripts": {
-    "build": "tslint --fix --project . && webpack && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest -n firefox-latest.xpi && web-ext build --source-dir target/thunderbird --artifacts-dir target/xpi --overwrite-dest -n thunderbird-latest.xpi",
+    "build": "webpack && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest -n firefox-latest.xpi && web-ext build --source-dir target/thunderbird --artifacts-dir target/xpi --overwrite-dest -n thunderbird-latest.xpi",
     "clean": "rm -rf target",
     "install_manifests": "nvim --headless -u NORC -i NONE -n -c \":set rtp+=.\" -c \"call firenvim#install(1)\" -c \"quit\"",
     "jest": "jest",
     "pack": "web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest",
     "test": "webpack --env=testing && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest && jest",
+    "tslint": "tslint",
     "webpack": "webpack"
   },
   "jest": {
