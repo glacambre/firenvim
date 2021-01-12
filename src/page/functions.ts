@@ -51,10 +51,14 @@ export function getActiveContentFunctions(global: IGlobalState) {
     return {
         forceNvimify: () => {
             let elem = document.activeElement;
-            if (!elem
-                || (!(elem as any).contentEditable
-                    && (elem === document.documentElement
-                        || elem === document.body))) {
+            const isNull = elem === null || elem === undefined;
+            const pageNotEditable = document.documentElement.contentEditable !== "true";
+            const bodyNotEditable = (document.body.contentEditable === "false"
+                        || (document.body.contentEditable === "inherit"
+                            && document.documentElement.contentEditable !== "true"))
+            if (isNull
+                || (elem === document.documentElement && pageNotEditable)
+                || (elem === document.body && bodyNotEditable)) {
                 function isVisible(e: HTMLElement) {
                     const rect = e.getBoundingClientRect();
                     const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
