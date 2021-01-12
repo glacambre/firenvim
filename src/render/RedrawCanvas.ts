@@ -38,7 +38,7 @@ function makeFontString(fontSize: string, fontFamily: string) {
     return `${fontSize} ${fontFamily}`;
 }
 let defaultFontSize = "";
-let defaultFontFamily = "monospace";
+const defaultFontFamily = "monospace";
 let defaultFontString = "";
 export function setCanvas (cvs: HTMLCanvasElement) {
     const state = globalState;
