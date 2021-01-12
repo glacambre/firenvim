@@ -55,7 +55,7 @@ export function getActiveContentFunctions(global: IGlobalState) {
             const pageNotEditable = document.documentElement.contentEditable !== "true";
             const bodyNotEditable = (document.body.contentEditable === "false"
                         || (document.body.contentEditable === "inherit"
-                            && document.documentElement.contentEditable !== "true"))
+                            && document.documentElement.contentEditable !== "true"));
             if (isNull
                 || (elem === document.documentElement && pageNotEditable)
                 || (elem === document.body && bodyNotEditable)) {
