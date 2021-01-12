@@ -1,0 +1,21 @@
+name: Tslint
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - '*'
+
+jobs:
+  tslint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Install NPM dependencies
+      run: npm ci
+    - name: Run TSlint
+      run: npm run tslint -- --project .
