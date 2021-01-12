@@ -936,7 +936,10 @@ function paint (_: DOMHighResTimeStamp) {
                             }
                             // reason for the check: we can't retrieve pixels
                             // drawn outside the viewport
-                            if (pixelX < canvas.width && pixelY < canvas.height) {
+                            if (pixelX >= 0
+                                && pixelY >= 0
+                                && (pixelX + width < canvas.width)
+                                && (pixelY + charHeight < canvas.height)) {
                                 glyphCache[id] = context.getImageData(
                                     pixelX,
                                     pixelY,
