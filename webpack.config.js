@@ -104,7 +104,7 @@ const chromeConfig = (config, env) => {
           }
           manifest.browser_action["default_icon"] = "firenvim128.png";
           if (env.endsWith("testing")) {
-            manifest.content_scripts[0].js.push("testing.js");
+            manifest.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self';"
           }
           content = JSON.stringify(manifest, undefined, 3);
         }
@@ -148,7 +148,7 @@ const firefoxConfig = (config, env) => {
               manifest.version = package_json.version;
               manifest.description = package_json.description;
               if (env.endsWith("testing")) {
-                manifest.content_scripts[0].js.push("testing.js");
+                manifest.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self';"
               }
               content = JSON.stringify(manifest, undefined, 3);
           }
@@ -218,8 +218,9 @@ module.exports = args => {
   }
 
   if (env.endsWith("testing")) {
-    config.entry.testing = "./src/testing/content.ts";
+    config.entry.content = "./src/testing/content.ts";
     config.entry.index = "./src/testing/frame.ts";
+    config.entry.background = "./src/testing/background.ts";
   }
 
   if (env.startsWith("chrome")) {

@@ -4,10 +4,14 @@
 // necessary for testing reasons (we sometimes might create states that
 // "poison" firenvim and need to reset it).
 
+import { makeRequest, makeRequestHandler } from "./rpc";
 import { executeInPage } from "../utils/utils";
+import { listenersSetup } from "../content";
 
-window.addEventListener("firenvim-updateSettings", () => {
-    browser.runtime.sendMessage({ funcName: [ "updateSettings"] })
-        .catch((): undefined => undefined)
-        .then(() => executeInPage(`window.dispatchEvent(new Event("firenvim-settingsUpdated"))`));
+listenersSetup.then(() => {
+    const socket = new WebSocket('ws://127.0.0.1:12345');
+    socket.addEventListener('message',
+                            makeRequestHandler(socket,
+                                               "content",
+                                               (new Function("return this"))().__coverage__ || {}));
 });

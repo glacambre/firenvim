@@ -295,7 +295,13 @@ export class FirenvimElement {
                 const sel = document.getSelection();
                 sel.removeAllRanges();
                 const range = document.createRange();
-                range.setStart(self.span, 0);
+                // There's a race condition in the testsuite on chrome that
+                // results in self.span not being in the document and errors
+                // being logged, so we check if self.span really is in its
+                // ownerDocument.
+                if (self.span.ownerDocument.contains(self.span)) {
+                    range.setStart(self.span, 0);
+                }
                 range.collapse(true);
                 sel.addRange(range);
                 // Then, attempt to "release" the focus from whatever element

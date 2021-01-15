@@ -17,7 +17,7 @@
 import { getGlobalConf, ISiteConfig } from "./utils/configuration";
 import { getIconImageData, IconKind, isThunderbird } from "./utils/utils";
 
-let preloadedInstance: Promise<any>;
+export let preloadedInstance: Promise<any>;
 
 // We can't use the sessions.setTabValue/getTabValue apis firefox has because
 // chrome doesn't support them. Instead, we create a map of tabid => {} kept in
