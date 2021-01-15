@@ -98,9 +98,12 @@ function setupListeners(selector: string) {
     elements.forEach(elem => addNvimListener(elem));
 }
 
-confReady.then(() => {
-    const conf: { selector: string } = getConf();
-    if (conf.selector !== undefined && conf.selector !== "") {
-        setupListeners(conf.selector);
-    }
+export const listenersSetup = new Promise(resolve => {
+    confReady.then(() => {
+        const conf: { selector: string } = getConf();
+        if (conf.selector !== undefined && conf.selector !== "") {
+            setupListeners(conf.selector);
+        }
+        resolve();
+    });
 });
