@@ -30,14 +30,14 @@ export class AceEditor extends AbstractEditor {
     }
 
     getContent () {
-        return executeInPage(`(${(selec: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
             const elem = document.querySelector(selec) as any;
             return (window as any).ace.edit(elem).getValue();
         }})(${JSON.stringify(computeSelector(this.elem))})`);
     }
 
     getCursor () {
-        return executeInPage(`(${(selec: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
             const elem = document.querySelector(selec) as any;
             let position;
             if ((window as any).ace.edit !== undefined) {
@@ -54,7 +54,7 @@ export class AceEditor extends AbstractEditor {
     }
 
     getLanguage () {
-        return executeInPage(`(${(selec: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
             const elem = document.querySelector(selec) as any;
             let ace = (window as any).ace;
             if (ace.edit !== undefined) {
@@ -65,14 +65,14 @@ export class AceEditor extends AbstractEditor {
     }
 
     setContent (text: string) {
-        return executeInPage(`(${(selec: string, str: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string, str: string) => {
             const elem = document.querySelector(selec) as any;
             return (window as any).ace.edit(elem).setValue(str, 1);
         }})(${JSON.stringify(computeSelector(this.elem))}, ${JSON.stringify(text)})`);
     }
 
     setCursor (line: number, column: number) {
-        return executeInPage(`(${(selec: string, l: number, c: number) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string, l: number, c: number) => {
             const elem = document.querySelector(selec) as any;
             const selection = (window as any).ace.edit(elem).getSelection();
             return selection.moveCursorTo(l - 1, c, false);

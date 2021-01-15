@@ -30,14 +30,14 @@ export class CodeMirrorEditor extends AbstractEditor {
     }
 
     getContent () {
-        return executeInPage(`(${(selec: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
             const elem = document.querySelector(selec) as any;
             return elem.CodeMirror.getValue();
         }})(${JSON.stringify(computeSelector(this.elem))})`);
     }
 
     getCursor () {
-        return executeInPage(`(${(selec: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
             const elem = document.querySelector(selec) as any;
             const position = elem.CodeMirror.getCursor();
             return [position.line + 1, position.ch];
@@ -49,21 +49,21 @@ export class CodeMirrorEditor extends AbstractEditor {
     }
 
     getLanguage () {
-        return executeInPage(`(${(selec: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
             const elem = document.querySelector(selec) as any;
             return elem.CodeMirror.getMode().name;
         }})(${JSON.stringify(computeSelector(this.elem))})`);
     }
 
     setContent (text: string) {
-        return executeInPage(`(${(selec: string, str: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string, str: string) => {
             const elem = document.querySelector(selec) as any;
             return elem.CodeMirror.setValue(str);
         }})(${JSON.stringify(computeSelector(this.elem))}, ${JSON.stringify(text)})`);
     }
 
     setCursor (line: number, column: number) {
-        return executeInPage(`(${(selec: string, l: number, c: number) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string, l: number, c: number) => {
             const elem = document.querySelector(selec) as any;
             return elem.CodeMirror.getCursor(l - 1, c);
         }})(${JSON.stringify(computeSelector(this.elem))}, ${line}, ${column})`);

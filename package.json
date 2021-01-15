@@ -5,13 +5,16 @@
     "@types/msgpack-lite": "0.1.7",
     "@types/node": "14.14.22",
     "@types/selenium-webdriver": "4.0.11",
+    "@types/ws": "^7.4.0",
     "ace-builds": "^1.4.12",
     "codemirror": "^5.59.1",
     "copy-webpack-plugin": "7.0.0",
     "imports-loader": "^1.2.0",
+    "istanbul-lib-coverage": "^3.0.0",
     "jest": "25.5.4",
     "monaco-editor": "^0.21.3",
     "msgpack-lite": "0.1.26",
+    "nyc": "^15.1.0",
     "selenium-webdriver": "4.0.0-alpha.8",
     "sharp": "0.27.0",
     "ts-jest": "25.5.1",
@@ -22,7 +25,8 @@
     "web-ext-types": "3.2.1",
     "webextension-polyfill": "0.7.0",
     "webpack": "5.15.0",
-    "webpack-cli": "4.4.0"
+    "webpack-cli": "4.4.0",
+    "ws": "^7.2.5"
   },
   "description": "Turn your browser into a Neovim GUI.",
   "keywords": [
@@ -41,8 +45,9 @@
     "clean": "rm -rf target",
     "install_manifests": "nvim --headless -u NORC -i NONE -n -c \":set rtp+=.\" -c \"call firenvim#install(1)\" -c \"quit\"",
     "jest": "jest",
+    "nyc": "nyc",
     "pack": "web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest",
-    "test": "webpack --env=testing && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest && jest",
+    "test": "webpack --env=testing && nyc instrument --in-place target/chrome && nyc instrument --in-place target/firefox && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest && jest",
     "tslint": "tslint",
     "webpack": "webpack"
   },
