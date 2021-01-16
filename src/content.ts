@@ -1,6 +1,6 @@
 import { autofill } from "./autofill";
 import { confReady, getConf } from "./utils/configuration";
-import { global, activeFunctions } from "./common";
+import { firenvimGlobal, activeFunctions } from "./common";
 
 if (document.location.href === "https://github.com/glacambre/firenvim/issues/new") {
     addEventListener("load", autofill);
@@ -9,7 +9,7 @@ if (document.location.href === "https://github.com/glacambre/firenvim/issues/new
 function setupListeners(selector: string) {
     function onScroll(cont: boolean) {
         window.requestAnimationFrame(() => {
-            const posChanged = Array.from(global.firenvimElems.entries())
+            const posChanged = Array.from(firenvimGlobal.firenvimElems.entries())
                 .map(([_, elem]) => elem.putEditorCloseToInputOrigin())
                 .find(changed => changed.posChanged);
             if (posChanged) {
@@ -34,8 +34,8 @@ function setupListeners(selector: string) {
     })).observe(document.documentElement);
 
     function addNvimListener(elem: Element) {
-        elem.removeEventListener("focus", global.nvimify);
-        elem.addEventListener("focus", global.nvimify);
+        elem.removeEventListener("focus", firenvimGlobal.nvimify);
+        elem.addEventListener("focus", firenvimGlobal.nvimify);
         let parent = elem.parentElement;
         while (parent) {
             parent.removeEventListener("scroll", doScroll);

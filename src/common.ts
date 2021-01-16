@@ -6,7 +6,7 @@ import { FirenvimElement } from "./FirenvimElement";
 // of neovim frames
 let frameIdLock = Promise.resolve();
 
-export const global = {
+export const firenvimGlobal = {
     // Whether Firenvim is disabled in this tab
     disabled: browser.runtime.sendMessage({
                 args: ["disabled"],
@@ -29,8 +29,8 @@ export const global = {
     // nvimify: triggered when an element is focused, takes care of creating
     // the editor iframe, appending it to the page and focusing it.
     nvimify: async (evt: { target: EventTarget }) => {
-        if (global.disabled instanceof Promise) {
-            await global.disabled;
+        if (firenvimGlobal.disabled instanceof Promise) {
+            await firenvimGlobal.disabled;
         }
 
         // When creating new frames, we need to know their frameId in order to
@@ -54,20 +54,20 @@ export const global = {
             const auto = (evt instanceof FocusEvent);
 
             const takeover = getConf().takeover;
-            if (global.disabled || (auto && takeover === "never")) {
+            if (firenvimGlobal.disabled || (auto && takeover === "never")) {
                 unlock();
                 return;
             }
 
             const firenvim = new FirenvimElement(
                 evt.target as HTMLElement,
-                global.nvimify,
-                (id: number) => global.firenvimElems.delete(id)
+                firenvimGlobal.nvimify,
+                (id: number) => firenvimGlobal.firenvimElems.delete(id)
             );
             const editor = firenvim.getEditor();
 
             // If this element already has a neovim frame, stop
-            const alreadyRunning = Array.from(global.firenvimElems.values())
+            const alreadyRunning = Array.from(firenvimGlobal.firenvimElems.values())
                 .find((instance) => instance.getElement() === editor.getElement());
             if (alreadyRunning !== undefined) {
                 // The span might have been removed from the page by the page
@@ -100,13 +100,13 @@ export const global = {
 
             firenvim.prepareBufferInfo();
             const frameIdPromise = new Promise((resolve: (_: number) => void, reject) => {
-                global.frameIdResolve = resolve;
+                firenvimGlobal.frameIdResolve = resolve;
                 // TODO: make this timeout the same as the one in background.ts
                 setTimeout(reject, 10000);
             });
             frameIdPromise.then((frameId: number) => {
-                global.firenvimElems.set(frameId, firenvim);
-                global.frameIdResolve = () => undefined;
+                firenvimGlobal.firenvimElems.set(frameId, firenvim);
+                firenvimGlobal.frameIdResolve = () => undefined;
                 unlock();
             });
             frameIdPromise.catch(unlock);
@@ -121,7 +121,7 @@ export const global = {
 const ownFrameId = browser.runtime.sendMessage({ args: [], funcName: ["getOwnFrameId"] });
 async function announceFocus () {
     const frameId = await ownFrameId;
-    global.lastFocusedContentScript = frameId;
+    firenvimGlobal.lastFocusedContentScript = frameId;
     browser.runtime.sendMessage({
         args: {
             args: [ frameId ],
@@ -147,9 +147,9 @@ const intervalId = setInterval(addFocusListener, 100);
 // But we don't want to syphon the user's battery so we stop checking after a second
 setTimeout(() => clearInterval(intervalId), 1000);
 
-export const frameFunctions = getNeovimFrameFunctions(global);
-export const activeFunctions = getActiveContentFunctions(global);
-export const tabFunctions = getTabFunctions(global);
+export const frameFunctions = getNeovimFrameFunctions(firenvimGlobal);
+export const activeFunctions = getActiveContentFunctions(firenvimGlobal);
+export const tabFunctions = getTabFunctions(firenvimGlobal);
 Object.assign(window, frameFunctions, activeFunctions, tabFunctions);
 browser.runtime.onMessage.addListener(async (request: { funcName: string[], args: any[] }) => {
     // All content scripts must react to tab functions
@@ -161,7 +161,7 @@ browser.runtime.onMessage.addListener(async (request: { funcName: string[], args
     // The only content script that should react to activeFunctions is the active one
     fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], activeFunctions);
     if (fn !== undefined) {
-        if (global.lastFocusedContentScript === await ownFrameId) {
+        if (firenvimGlobal.lastFocusedContentScript === await ownFrameId) {
             return fn(...request.args);
         }
         return new Promise(() => undefined);
@@ -171,7 +171,7 @@ browser.runtime.onMessage.addListener(async (request: { funcName: string[], args
     // that owns the frame that sent the request
     fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], frameFunctions);
     if (fn !== undefined) {
-        if (global.firenvimElems.get(request.args[0]) !== undefined) {
+        if (firenvimGlobal.firenvimElems.get(request.args[0]) !== undefined) {
             return fn(...request.args);
         }
         return new Promise(() => undefined);

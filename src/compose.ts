@@ -1,5 +1,5 @@
 import { confReady } from "./utils/configuration";
-import { global } from "./common";
+import { firenvimGlobal } from "./common";
 
 const overridenStyles : {[k: string]: string} = {
     "height": "100%",
@@ -26,5 +26,5 @@ confReady.then(() => {
     // FocusEvent constructor???
     const fakeEvent = { target: document.body };
     (fakeEvent as any).__proto__ = (new FocusEvent("focus") as any).__proto__;
-    global.nvimify(fakeEvent);
+    firenvimGlobal.nvimify(fakeEvent);
 });
