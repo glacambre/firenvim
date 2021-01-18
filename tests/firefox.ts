@@ -125,8 +125,7 @@ describe("Firefox", () => {
         test("EvalJS works", () => testEvalJs(server, driver));
         test("PressKeys works", () => testPressKeys(server, driver));
         test("Resize works", () => testResize(server, driver));
-        // TODO: figure out why coverage breaks this test
-        // test("Unfocused killEditor does not focus input", () => testUnfocusedKillEditor(server, driver));
+        test("Unfocused killEditor does not focus input", () => testUnfocusedKillEditor(server, driver));
         test("Takeover: empty works", () => testTakeoverEmpty(server, driver));
         test("Takeover: nonempty works", () => testTakeoverNonEmpty(server, driver));
         test("Takeover: once works", () => testTakeoverOnce(server, driver));

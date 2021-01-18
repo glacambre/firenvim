@@ -137,8 +137,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("PressKeys works", () => testPressKeys(server, driver));
         nonHeadlessTest()("EvalJs works", () => testEvalJs(server, driver));
         nonHeadlessTest()("Resize works", () => testResize(server, driver));
-        // Code coverage kills this test. Why????
-        // nonHeadlessTest()("Unfocused killEditor does not focus input", () => testUnfocusedKillEditor(server, driver));
+        nonHeadlessTest()("Unfocused killEditor does not focus input", () => testUnfocusedKillEditor(server, driver));
         nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(server, driver));
         nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(server, driver));
         nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(server, driver));
