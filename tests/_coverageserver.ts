@@ -84,7 +84,7 @@ export const getNextContentConnection = getNextXConnection("content");
 
 const covMap = istanbul.createCoverageMap({});
 function saveCoverageData(coverageData: string) {
-        const data = coverageData.replace(/webpack:\/\/Firenvim\/./g, process.cwd());
+        const data = coverageData.replace(/webpack:\/\/Firenvim\/./g, process.cwd().replace("\\", "/"));
         covMap.merge(JSON.parse(data));
 }
 
