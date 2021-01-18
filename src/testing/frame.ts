@@ -5,7 +5,7 @@
 import { makeRequest, makeRequestHandler } from "./rpc";
 import { page } from "../page/proxy";
 
-const coverageData = (window as any).__coverage__;
+const coverageData = (window as any).__coverage__ || {};
 
 let socket: WebSocket;
 function createSocket(): Promise<WebSocket> {

@@ -13,5 +13,5 @@ listenersSetup.then(() => {
     socket.addEventListener('message',
                             makeRequestHandler(socket,
                                                "content",
-                                               (new Function("return this"))().__coverage__));
+                                               (new Function("return this"))().__coverage__ || {}));
 });

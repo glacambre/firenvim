@@ -50,7 +50,8 @@ jobs:
       run: npm ci
     - name: Build Firenvim
       run: npm run webpack -- --env=${{ matrix.browser }}-testing
-    - name: Instrument Firenvim
+    - name: Instrument Firenvim (Linux/Firefox/Stable only)
+      if: matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
       run: npm run nyc -- instrument --in-place target/${{ matrix.browser }}
     - name: Pack Firenvim (Firefox)
       if: matrix.browser == 'firefox'
