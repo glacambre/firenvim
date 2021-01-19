@@ -113,12 +113,11 @@ function screenShotOnFail(f: (server: any, driver: webdriver.WebDriver) => Promi
                                 const buff = new Buffer(b64, 'base64');
                                 const name = error.stack
                                         .split("\n")
-                                        .slice(3)
-                                        .join("")
+                                        .find(s => /_common.ts/.test(s))
                                         .replace(process.cwd(), "")
                                         .match(/[a-zA-Z0-9_\.]+/g)
                                         .join("-")
-                                        .slice(3);
+                                        .slice(3, 43);
                                 fs.writeFileSync(path.join(testFailuresDirectory, name + ".png"), buff);
                         }
                 }
