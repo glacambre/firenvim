@@ -96,9 +96,10 @@ export async function createFirenvimFor (server: Server, driver: webdriver.WebDr
 const testFailuresDirectory = path.join(process.cwd(), "failures");
 fs.rmdirSync(testFailuresDirectory, { recursive: true });
 fs.mkdirSync(testFailuresDirectory, { recursive: true });
-
+let testCount = 0;
 function screenShotOnFail(f: (server: any, driver: webdriver.WebDriver) => Promise<void>) {
         return async (server: any, driver: webdriver.WebDriver) => {
+                testCount += 1;
                 let result: void;
                 let error: Error;
                 let failures = 0;
@@ -111,15 +112,9 @@ function screenShotOnFail(f: (server: any, driver: webdriver.WebDriver) => Promi
                                 error = e;
                                 const b64 = await driver.takeScreenshot();
                                 const buff = new Buffer(b64, 'base64');
-                                console.log(e);
-                                const name = error.stack
-                                        .split("\n")
-                                        .find(s => /_common.ts/.test(s))
-                                        .replace(process.cwd(), "")
-                                        .match(/[a-zA-Z0-9_\.]+/g)
-                                        .join("-")
-                                        .slice(3, 43);
-                                fs.writeFileSync(path.join(testFailuresDirectory, name + ".png"), buff);
+                                const p = path.join(testFailuresDirectory, "" + testCount);
+                                fs.writeFileSync(p + ".png", buff);
+                                fs.writeFileSync(p + ".txt", e.stack.toString());
                         }
                 }
                 if (attempts == failures) {
