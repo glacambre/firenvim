@@ -328,9 +328,19 @@ export const testVimrcFailure = screenShotOnFail(async (server: any, driver: web
         await writeVimrc("call");
         await reloadNeovim(server, driver);
         const contentSocket = await loadLocalPage(server, driver, "simple.html", "Vimrc failure");
-        const [_, span] = await createFirenvimFor(server, driver, By.id("content-input"));
-        // The firenvim frame should disappear after a second
-        await driver.wait(Until.stalenessOf(span), 50000, "Firenvim span did not go stale.");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input");
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        await driver.actions().click(input).perform();
+        try {
+                const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")),
+                                               1000,
+                                               "Element not found");
+                // The firenvim frame should disappear after a second
+                await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        } catch (e) {
+                // We weren't fast enough to catch the frame appear/disappear,
+                // that's ok
+        }
         await server.pullCoverageData(contentSocket);
 });
 
