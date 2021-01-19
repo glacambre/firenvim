@@ -111,6 +111,7 @@ function screenShotOnFail(f: (server: any, driver: webdriver.WebDriver) => Promi
                                 error = e;
                                 const b64 = await driver.takeScreenshot();
                                 const buff = new Buffer(b64, 'base64');
+                                console.log(e);
                                 const name = error.stack
                                         .split("\n")
                                         .find(s => /_common.ts/.test(s))
