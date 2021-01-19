@@ -60,18 +60,10 @@ jobs:
       run: npm run install_manifests
     - name: Test (Linux)
       if: matrix.os == 'ubuntu'
-      run: |
-        xvfb-run --auto-servernum npm run jest -- ${{ matrix.browser }} \
-        || xvfb-run --auto-servernum npm run jest -- ${{ matrix.browser }} \
-        || xvfb-run --auto-servernum npm run jest -- ${{ matrix.browser }} \
-        || xvfb-run --auto-servernum npm run jest -- ${{ matrix.browser }} \
+      run: xvfb-run --auto-servernum npm run jest -- ${{ matrix.browser }} \
     - name: Test (Windows/MacOs)
       if: matrix.os != 'ubuntu'
-      run: |
-        npm run jest -- ${{ matrix.browser }} \
-        || npm run jest -- ${{ matrix.browser }} \
-        || npm run jest -- ${{ matrix.browser }} \
-        || npm run jest -- ${{ matrix.browser }} \
+      run: npm run jest -- ${{ matrix.browser }} \
     - name: Artifact upload (failure only)
       uses: actions/upload-artifact@v2
       if: failure()
