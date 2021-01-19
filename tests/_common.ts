@@ -12,7 +12,7 @@ type Server = typeof coverageServer;
 
 import { readVimrc, writeVimrc } from "./_vimrc";
 
-jest.setTimeout(15000);
+jest.setTimeout(20000);
 const FIRENVIM_INIT_DELAY = 1000;
 
 export const pagesDir = path.resolve(path.join("tests", "pages"));
@@ -100,21 +100,30 @@ fs.mkdirSync(testFailuresDirectory, { recursive: true });
 function screenShotOnFail(f: (server: any, driver: webdriver.WebDriver) => Promise<void>) {
         return async (server: any, driver: webdriver.WebDriver) => {
                 let result: void;
-                try {
-                        result = await f(server, driver);
-                } catch (e) {
-                        const b64 = await driver.takeScreenshot();
-                        const buff = new Buffer(b64, 'base64');
-                        const name = e.stack
-                                .split("\n")
-                                .slice(3)
-                                .join("")
-                                .replace(process.cwd(), "")
-                                .match(/[a-zA-Z0-9_\.]+/g)
-                                .join("-")
-                                .slice(3);
-                        fs.writeFileSync(path.join(testFailuresDirectory, name + ".png"), buff);
-                        throw e;
+                let error: Error;
+                let failures = 0;
+                let attempts = 0;
+                for (attempts = 0; attempts == failures && attempts < 3; ++attempts) {
+                        try {
+                                result = await f(server, driver);
+                        } catch (e) {
+                                failures += 1;
+                                error = e;
+                                const b64 = await driver.takeScreenshot();
+                                const buff = new Buffer(b64, 'base64');
+                                const name = error.stack
+                                        .split("\n")
+                                        .slice(3)
+                                        .join("")
+                                        .replace(process.cwd(), "")
+                                        .match(/[a-zA-Z0-9_\.]+/g)
+                                        .join("-")
+                                        .slice(3);
+                                fs.writeFileSync(path.join(testFailuresDirectory, name + ".png"), buff);
+                        }
+                }
+                if (attempts == failures) {
+                        throw error;
                 }
                 return result;
         }
