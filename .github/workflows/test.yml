@@ -81,3 +81,10 @@ jobs:
         || npm run jest -- ${{ matrix.browser }} \
         || npm run jest -- ${{ matrix.browser }} \
         || npm run jest -- ${{ matrix.browser }} \
+    - name: Artifact upload (failure only)
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: failure-${{ matrix.os }}-${{ matrix.browser }}-${{ matrix.neovim }}
+        path: failures
+        retention-days: 2
