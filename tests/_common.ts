@@ -12,26 +12,12 @@ type Server = typeof coverageServer;
 
 import { readVimrc, writeVimrc } from "./_vimrc";
 
-jest.setTimeout(20000);
+jest.setTimeout(30000);
 const FIRENVIM_INIT_DELAY = 1000;
+const WAIT_DELAY = 3000;
 
 export const pagesDir = path.resolve(path.join("tests", "pages"));
 export const extensionDir = path.resolve("target");
-
-let firenvimReady = (server: any, driver: webdriver.WebDriver) => {
-        return driver.wait(async () => {
-                let firenvimReady = await driver.executeScript("return window.firenvimReady;");
-                if (firenvimReady === true) {
-                        // We need to set firenvimReady back to false otherwise
-                        // opening multiple firenvim instances will result in
-                        // Selenium believing that the second firenvim is ready
-                        // before it actually is.
-                        await driver.executeScript("window.firenvimReady = false");
-                        return true;
-                }
-                return false;
-        }, 11000, "window.firenvimReady never became true");
-}
 
 // Returns the path of the newest file in directory
 export async function getNewestFileIn(directory: string) {
@@ -86,10 +72,10 @@ export async function loadLocalPage(server: Server, driver: webdriver.WebDriver,
 
 export async function createFirenvimFor (server: Server, driver: webdriver.WebDriver, element: any) {
         const frameSocketProm = server.getNextFrameConnection();
-        const input = await driver.wait(Until.elementLocated(element), 5000, "element not found");
+        const input = await driver.wait(Until.elementLocated(element), WAIT_DELAY, "element not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         await driver.actions().click(input).perform();
-        const firenvimElemProm = driver.wait(Until.elementLocated(By.css("body > span:last-of-type")), 5000, "Firenvim span not found");
+        const firenvimElemProm = driver.wait(Until.elementLocated(By.css("body > span:last-of-type")), WAIT_DELAY, "Firenvim span not found");
         return [input, ...(await Promise.all([firenvimElemProm, frameSocketProm]))] as [webdriver.WebElement, webdriver.WebElement, any];
 }
 
@@ -104,7 +90,7 @@ function screenShotOnFail(f: (server: any, driver: webdriver.WebDriver) => Promi
                 let error: Error;
                 let failures = 0;
                 let attempts = 0;
-                for (attempts = 0; attempts == failures && attempts < 3; ++attempts) {
+                for (attempts = 0; attempts == failures && attempts < 5; ++attempts) {
                         try {
                                 result = await f(server, driver);
                         } catch (e) {
@@ -162,8 +148,8 @@ export const testModifiers = screenShotOnFail(async (server: any, driver: webdri
         await sendKeys(driver, [webdriver.Key.ESCAPE]
                        .concat(":wq!".split(""))
                        .concat(webdriver.Key.ENTER))
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear");
-        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         await server.pullCoverageData(contentSocket);
         expect(["\u0011<M-q><D-q><S-Left>", "\u0001<M-a><D-a><S-Left>"])
                .toContain(await input.getAttribute("value"));
@@ -174,7 +160,7 @@ export const testUnfocusedKillEditor = screenShotOnFail(async (server: any, driv
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":w | call firenvim#focus_page() | q".split("")
                        .concat(webdriver.Key.ENTER))
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
         expect(["HTML", "BODY"])
                .toContain(await driver.executeScript("return document.activeElement.tagName;"));
         await server.pullCoverageData(contentSocket);
@@ -195,8 +181,8 @@ export const testGStartedByFirenvim = screenShotOnFail(async (server: any, drive
                        .concat([webdriver.Key.ESCAPE])
                        .concat(":wq!".split(""))
                        .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale");
-        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         await server.pullCoverageData(contentSocket);
         expect(await input.getAttribute("value")).toMatch("true");
 });
@@ -227,8 +213,8 @@ export const testCodemirror = screenShotOnFail(async (server: any, driver: webdr
                        .concat(webdriver.Key.ESCAPE)
                        .concat(":wq!".split(""))
                        .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span), 5000, "Span handle did not go stale.");
-        await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue, 5000, "CodeMirror element's content did not change.");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Span handle did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue, WAIT_DELAY, "CodeMirror element's content did not change.");
         await server.pullCoverageData(contentSocket);
         expect(await input.getAttribute("innerText")).toMatch(/Testhtml<!--/);
 });
@@ -250,8 +236,8 @@ export const testAce = screenShotOnFail(async (server: any, driver: webdriver.We
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
         );
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span handle did not go stale");
-        await driver.wait(async () => (await input.getAttribute("innerText")) != initialValue, 5000, "input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span handle did not go stale");
+        await driver.wait(async () => (await input.getAttribute("innerText")) != initialValue, WAIT_DELAY, "input value did not change");
         await server.pullCoverageData(contentSocket);
         expect(await input.getAttribute("innerText")).toMatch(/Testjavascriptalert()/);
 });
@@ -273,8 +259,8 @@ export const testMonaco = screenShotOnFail(async (server: any, driver: webdriver
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
         );
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
-        await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue, 5000, "Value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("innerText")) != originalValue, WAIT_DELAY, "Value did not change");
         await server.pullCoverageData(contentSocket);
         expect(await input.getAttribute("innerText")).toMatch(/^1\n2\n3\nTesttypescriptfunction/);
 });
@@ -282,19 +268,19 @@ export const testMonaco = screenShotOnFail(async (server: any, driver: webdriver
 export const testDynamicTextareas = screenShotOnFail(async (server: any, driver: webdriver.WebDriver) => {
         const contentSocket = await loadLocalPage(server, driver, "dynamic.html", "Dynamic textareas test");
         const frameSocketPromise = server.getNextFrameConnection();
-        const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")), 5000, "insert-textarea not found");
+        const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")), WAIT_DELAY, "insert-textarea not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", btn);
         await driver.actions().click(btn).perform();
         await frameSocketPromise;
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")), 5000, "Firenvim span not found");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")), WAIT_DELAY, "Firenvim span not found");
         await sendKeys(driver, "aTest".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
         );
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
-        const txtarea = await driver.wait(Until.elementLocated(By.css("body > textarea")), 5000, "body > textarea not found");
-        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""), 5000, "Input alue did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        const txtarea = await driver.wait(Until.elementLocated(By.css("body > textarea")), WAIT_DELAY, "body > textarea not found");
+        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""), WAIT_DELAY, "Input alue did not change");
         await server.pullCoverageData(contentSocket);
         expect(await txtarea.getAttribute("value")).toMatch("Test");
 });
@@ -302,19 +288,19 @@ export const testDynamicTextareas = screenShotOnFail(async (server: any, driver:
 export const testNestedDynamicTextareas = screenShotOnFail(async (server: any, driver: webdriver.WebDriver) => {
         const contentSocket = await loadLocalPage(server, driver, "dynamic_nested.html", "Nested dynamic textareas");
         const frameSocketPromise = server.getNextFrameConnection();
-        const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")), 5000, "insert-textarea not found");
+        const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")), WAIT_DELAY, "insert-textarea not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", btn);
         await driver.actions().click(btn).perform();
         await frameSocketPromise;
-        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")), 5000, "Firenvim span not found");
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(4)")), WAIT_DELAY, "Firenvim span not found");
         await sendKeys(driver, "aTest".split("")
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER)
         );
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
-        const txtarea = await driver.wait(Until.elementLocated(By.css("body > div:nth-child(3) > textarea:nth-child(1)")), 5000, "body > div:nth-child(3) > textarea:nth-child(1) not found");
-        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""), 5000, "Input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        const txtarea = await driver.wait(Until.elementLocated(By.css("body > div:nth-child(3) > textarea:nth-child(1)")), WAIT_DELAY, "body > div:nth-child(3) > textarea:nth-child(1) not found");
+        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         await server.pullCoverageData(contentSocket);
         expect(await txtarea.getAttribute("value")).toMatch("Test");
 });
@@ -328,18 +314,24 @@ export const testVimrcFailure = screenShotOnFail(async (server: any, driver: web
         await writeVimrc("call");
         await reloadNeovim(server, driver);
         const contentSocket = await loadLocalPage(server, driver, "simple.html", "Vimrc failure");
-        const input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input");
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), WAIT_DELAY, "content-input");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         await driver.actions().click(input).perform();
+        let shouldCheck: boolean;
+        let span;
         try {
-                const span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")),
-                                               1000,
-                                               "Element not found");
-                // The firenvim frame should disappear after a second
-                await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+                span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")),
+                                         1000,
+                                         "Element not found");
+                shouldCheck = true;
         } catch (e) {
                 // We weren't fast enough to catch the frame appear/disappear,
                 // that's ok
+                shouldCheck = false; 
+        }
+        if (shouldCheck) {
+                // The firenvim frame should disappear after a second
+                await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
         }
         await server.pullCoverageData(contentSocket);
 });
@@ -359,8 +351,7 @@ ${backup}
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
-        await driver.sleep(100);
-        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         const initVal = await input.getAttribute("value");
         expect(initVal).toMatch(/a+ba+/);
         await driver.executeScript(`document.activeElement.blur();
@@ -373,10 +364,10 @@ ${backup}
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
-        await server.pullCoverageData(contentSocket);
         // We don't test for a specific value because size is dependant on browser config
-        await driver.wait(async () => (await input.getAttribute("value") !== initVal), 5000, "Input value did not change");
+        await driver.wait(async () => (await input.getAttribute("value") !== initVal), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("value")).toMatch(/a*ba+ba*/);
+        await server.pullCoverageData(contentSocket);
 });
 
 export const testPageFocus = screenShotOnFail(async (server: any, driver: webdriver.WebDriver) => {
@@ -384,7 +375,7 @@ export const testPageFocus = screenShotOnFail(async (server: any, driver: webdri
         const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":call firenvim#focus_page()".split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(async () => ["html", "body"].includes(await driver.switchTo().activeElement().getAttribute("id")), 5000, "Page focus did not change");
+        await driver.wait(async () => ["html", "body"].includes(await driver.switchTo().activeElement().getAttribute("id")), WAIT_DELAY, "Page focus did not change");
         await server.pullCoverageData(contentSocket);
         await server.pullCoverageData(frameSocket);
 });
@@ -394,7 +385,7 @@ export const testInputFocus = screenShotOnFail(async (server: any, driver: webdr
         const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":call firenvim#focus_input()".split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")), 5000, "Page focus did not change");
+        await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")), WAIT_DELAY, "Page focus did not change");
         await server.pullCoverageData(contentSocket);
         await server.pullCoverageData(frameSocket);
 });
@@ -420,7 +411,7 @@ export const testEvalJs = screenShotOnFail(async (server: any, driver: webdriver
                 .perform();
         await sendKeys(driver, `046value = "Eval Works!")')`.split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(async () => (await input.getAttribute("value")) !== "", 5000, "Input value did not change");
+        await driver.wait(async () => (await input.getAttribute("value")) !== "", WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("value")).toBe("Eval Works!");
         await server.pullCoverageData(contentSocket);
         await server.pullCoverageData(frameSocket);
@@ -437,7 +428,7 @@ export const testPressKeys = screenShotOnFail(async (server: any, driver: webdri
                 .concat(webdriver.Key.ENTER)
                 .concat(":q!".split(""))
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(async () => (await input.getAttribute("value")).startsWith("Message sent!"), 120000, "Input value did not change");
+        await driver.wait(async () => (await input.getAttribute("value")).startsWith("Message sent!"), WAIT_DELAY, "Input value did not change");
         await server.pullCoverageData(contentSocket);
 });
 
@@ -446,9 +437,9 @@ export const testInputFocusedAfterLeave = screenShotOnFail(async (server: any, d
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":q!".split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
         await server.pullCoverageData(contentSocket);
-        await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")), 5000, "Input element not focused after leaving frame");
+        await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")), WAIT_DELAY, "Input element not focused after leaving frame");
 });;
 
 export const testFocusGainedLost = screenShotOnFail(async (server: any, driver: webdriver.WebDriver) => {
@@ -476,12 +467,12 @@ export const testFocusGainedLost = screenShotOnFail(async (server: any, driver: 
                                     document.body.focus();`);
         expect(["html", "body"].includes(await driver.switchTo().activeElement().getAttribute("id")))
                 .toBe(true);
-        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("value")).toBe("a");
         await driver.actions().click(input).perform();
         await sendKeys(driver, ":wq!".split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(async () => (await input.getAttribute("value") !== "a"), 5000, "Input value did not change the second time");
+        await driver.wait(async () => (await input.getAttribute("value") !== "a"), WAIT_DELAY, "Input value did not change the second time");
         await server.pullCoverageData(contentSocket);
         expect(await input.getAttribute("value")).toBe("ab");
 });
@@ -497,8 +488,8 @@ ${backup}
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":q!".split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
-        const body = await driver.wait(Until.elementLocated(By.id("body")), 5000, "body not found");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        const body = await driver.wait(Until.elementLocated(By.id("body")), WAIT_DELAY, "body not found");
         await driver.actions().click(body).perform();
         await driver.actions().click(input).perform();
         await driver.sleep(FIRENVIM_INIT_DELAY);
@@ -529,8 +520,8 @@ ${backup}
             .concat(webdriver.Key.ESCAPE)
             .concat(":wq!".split(""))
             .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
-        await driver.wait(async () => (await input.getAttribute("value")) !== "", 5000, "Input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value")) !== "", WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("value")).toBe("\n\n\n");
         await driver.executeScript(`arguments[0].blur();
                                     document.documentElement.focus();
@@ -541,8 +532,8 @@ ${backup}
             .concat(webdriver.Key.ESCAPE)
             .concat(":wq!".split(""))
             .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
-        await driver.wait(async () => (await input.getAttribute("value")) !== "\n\n\n", 5000, "Input value did not change the second time");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value")) !== "\n\n\n", WAIT_DELAY, "Input value did not change the second time");
         expect(await input.getAttribute("value")).toBe("i");
         await driver.executeScript(`arguments[0].blur();
                                     document.documentElement.focus();
@@ -567,7 +558,7 @@ ${backup}
                 `);
         await reloadNeovim(server, driver);
         const contentSocket = await loadLocalPage(server, driver, "simple.html", "takeover: nonempty test");
-        let input = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input not found");
+        let input = await driver.wait(Until.elementLocated(By.id("content-input")), WAIT_DELAY, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         await driver.actions().click(input).perform();
         await driver.sleep(FIRENVIM_INIT_DELAY);
@@ -585,13 +576,13 @@ ${backup}
         await driver.actions().click(input).perform();
         const [_, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":q!".split("").concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
         await server.pullCoverageData(contentSocket);
 });
 
 export const testLargeBuffers = screenShotOnFail(async (server: any, driver: webdriver.WebDriver) => {
         const contentSocket = await loadLocalPage(server, driver, "simple.html", "Large buffers test");
-        const i = await driver.wait(Until.elementLocated(By.id("content-input")), 5000, "content-input");
+        const i = await driver.wait(Until.elementLocated(By.id("content-input")), WAIT_DELAY, "content-input");
         await driver.executeScript(`arguments[0].scrollIntoView(true);
                                    arguments[0].value = (new Array(5000)).fill("a").join("");`, i);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
@@ -599,8 +590,8 @@ export const testLargeBuffers = screenShotOnFail(async (server: any, driver: web
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
-        await driver.wait(async () => (await input.getAttribute("value")) == (new Array(5001)).fill("a").join(""), 5000, "Input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value")) == (new Array(5001)).fill("a").join(""), WAIT_DELAY, "Input value did not change");
         await server.pullCoverageData(contentSocket);
 });
 
@@ -613,7 +604,7 @@ export const testNoLingeringNeovims = screenShotOnFail(async (server: any, drive
         contentSocket = await loadLocalPage(server, driver, "simple.html", "No lingering neovims test");
         [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":q!".split("").concat(webdriver.Key.ENTER))
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
 
         await driver.sleep(3000);
 
@@ -639,7 +630,7 @@ export const testInputResizes = screenShotOnFail(async (server: any, driver: web
                        .concat(webdriver.Key.ESCAPE)
                        .concat("^gjib".split(""))
                        .concat(webdriver.Key.ESCAPE));
-        const button = await driver.wait(Until.elementLocated(By.id("button")), 5000, "button not found");
+        const button = await driver.wait(Until.elementLocated(By.id("button")), WAIT_DELAY, "button not found");
         await driver.actions().click(button).perform();
         await driver.actions().click(input).perform();
         await sendKeys(driver, "^gjib".split("")
@@ -647,7 +638,7 @@ export const testInputResizes = screenShotOnFail(async (server: any, driver: web
                        .concat(":wq!".split(""))
                        .concat(webdriver.Key.ENTER));
         // We don't test for a specific value because size is dependant on browser config
-        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("value")).toMatch(/a*ba+ba*/);
         await server.pullCoverageData(contentSocket);
 });;
@@ -682,8 +673,8 @@ export const testResize = screenShotOnFail(async (server: any, driver: webdriver
                        .concat(webdriver.Key.ESCAPE)
                        .concat(":wq".split(""))
                        .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
-        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         const [lines, columns] = (await input.getAttribute("value"))
                 .split("\n")
                 .map((v: string) => parseInt(v));
@@ -705,8 +696,8 @@ export const testWorksInFrame = screenShotOnFail(async (server: any, driver: web
                 .concat(":wq".split(""))
                 .concat([webdriver.Key.ENTER])
         );
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not go stale.");
-        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("value")).toBe("a");
         await server.pullCoverageData(contentSocket);
 });
@@ -772,8 +763,8 @@ ${vimrcContent}
         await sendKeys(driver, [webdriver.Key.ESCAPE]
                        .concat(":wq!".split(""))
                        .concat(webdriver.Key.ENTER))
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear");
-        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         const result = "<C-2><C-1><C-4>"
         // The reason for the exclamation mark is that chromedriver sucks for
         // working with non us-qwerty keyboard layouts.
@@ -805,8 +796,8 @@ ${vimrcContent}`);
                        .concat(webdriver.Key.ENTER)
                        .concat(":wq".split(""))
                        .concat(webdriver.Key.ENTER))
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear");
-        await driver.wait(async () => (await input.getAttribute("innerHTML") !== innerHTML), 5000, "Input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
+        await driver.wait(async () => (await input.getAttribute("innerHTML") !== innerHTML), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("innerText")).toBe(innerText);
         expect((await input.getAttribute("innerHTML")).trim()).toBe("<i>Firenvim</i> <i>works</i>!");
         await server.pullCoverageData(contentSocket);
@@ -817,7 +808,7 @@ export const testDisappearing = screenShotOnFail(async (server: any, driver: web
         let [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         // simulate the page making the span disappear again
         await driver.executeScript("document.querySelector('span').remove()");
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
         [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         // somehow ready is too fast here, so we need an additional delay
         // commented when switched to coverage server. uncomment if issues.
@@ -826,8 +817,8 @@ export const testDisappearing = screenShotOnFail(async (server: any, driver: web
                        .concat([webdriver.Key.ESCAPE])
                        .concat(":wq!".split(""))
                        .concat(webdriver.Key.ENTER))
-        await driver.wait(Until.stalenessOf(span), 5000, "Firenvim span did not disappear the second time");
-        await driver.wait(async () => (await input.getAttribute("value") !== ""), 5000, "Input value did not change");
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear the second time");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         expect("works").toBe(await input.getAttribute("value"));
         await server.pullCoverageData(contentSocket);
 });
