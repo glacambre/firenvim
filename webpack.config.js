@@ -210,6 +210,7 @@ module.exports = args => {
   let env = "";
   if (args instanceof Object) {
     delete args.WEBPACK_BUNDLE;
+    delete args.WEBPACK_BUILD;
     const keys = Object.keys(args);
     if (keys.length > 0) {
       env = keys[0];
