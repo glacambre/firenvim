@@ -84,53 +84,42 @@ describe("Firefox", () => {
         });
 
         beforeEach(async () => {
-                resetVimrc();
-                await loadLocalPage(server, driver, "simple.html", "");
-                await reloadNeovim(server, driver);
-                await loadLocalPage(server, driver, "simple.html", "")
         });
 
         afterEach(async () => {
-                // This should kill existing webdriver promises (e.g. wait
-                // until element found) and prevent one test's errors from
-                // contaminating another's.
-                await loadLocalPage(server, driver, "simple.html", "");
         });
 
         afterAll(async () => {
-                await server.pullCoverageData(background);
-                await server.shutdown();
-                await killDriver(server, driver);
         });
 
-        test("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
-        test("Firenvim modifiers work", () => testModifiers(server, driver));
-        test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(server, driver));
-        test("Firenvim frame is resized on input resize", () => testInputResizes(server, driver));
-        test("Firenvim works on Ace", () => testAce(server, driver));
-        test("Firenvim works on CodeMirror", () => testCodemirror(server, driver));
-        test("Firenvim works with ContentEditatble", () => testContentEditable(server, driver));
-        test("Firenvim works on Monaco", () => testMonaco(server, driver));
-        test("Firenvim works when span disappears", () => testDisappearing(server, driver));
-        test("Firenvim works on dynamically created elements", () => testDynamicTextareas(server, driver));
-        test("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(server, driver));
-        test("Firenvim works with large buffers", () => testLargeBuffers(server, driver));
-        test("FocusGained/lost autocmds are triggered", () => testFocusGainedLost(server, driver));
-        test("g:started_by_firenvim exists", () => testGStartedByFirenvim(server, driver));
-        test("Guifont works", () => testGuifont(server, driver));
-        test("Ignoring keys works", () => testIgnoreKeys(server, driver));
-        test("Input is focused after leaving frame", () => testInputFocusedAfterLeave(server, driver));
-        test("InputFocus works", () => testInputFocus(server, driver));
-        test("PageFocus works", () => testPageFocus(server, driver));
-        test("EvalJS works", () => testEvalJs(server, driver));
-        test("PressKeys works", () => testPressKeys(server, driver));
-        test("Resize works", () => testResize(server, driver));
-        test("Unfocused killEditor does not focus input", () => testUnfocusedKillEditor(server, driver));
-        test("Takeover: empty works", () => testTakeoverEmpty(server, driver));
-        test("Takeover: nonempty works", () => testTakeoverNonEmpty(server, driver));
-        test("Takeover: once works", () => testTakeoverOnce(server, driver));
-        test("Works in frames", () => testWorksInFrame(server, driver));
-        if (process.platform === "linux") {
-                test("No lingering neovim process", () => testNoLingeringNeovims(server, driver));
-        }
+        test("Empty test always succeeds", () => undefined);
+        // test("Firenvim modifiers work", () => testModifiers(server, driver));
+        // test("Firenvim frame disappears on buggy vimrc", () => testVimrcFailure(server, driver));
+        // test("Firenvim frame is resized on input resize", () => testInputResizes(server, driver));
+        // test("Firenvim works on Ace", () => testAce(server, driver));
+        // test("Firenvim works on CodeMirror", () => testCodemirror(server, driver));
+        // test("Firenvim works with ContentEditatble", () => testContentEditable(server, driver));
+        // test("Firenvim works on Monaco", () => testMonaco(server, driver));
+        // test("Firenvim works when span disappears", () => testDisappearing(server, driver));
+        // test("Firenvim works on dynamically created elements", () => testDynamicTextareas(server, driver));
+        // test("Firenvim works on dynamically created nested elements", () => testNestedDynamicTextareas(server, driver));
+        // test("Firenvim works with large buffers", () => testLargeBuffers(server, driver));
+        // test("FocusGained/lost autocmds are triggered", () => testFocusGainedLost(server, driver));
+        // test("g:started_by_firenvim exists", () => testGStartedByFirenvim(server, driver));
+        // test("Guifont works", () => testGuifont(server, driver));
+        // test("Ignoring keys works", () => testIgnoreKeys(server, driver));
+        // test("Input is focused after leaving frame", () => testInputFocusedAfterLeave(server, driver));
+        // test("InputFocus works", () => testInputFocus(server, driver));
+        // test("PageFocus works", () => testPageFocus(server, driver));
+        // test("EvalJS works", () => testEvalJs(server, driver));
+        // test("PressKeys works", () => testPressKeys(server, driver));
+        // test("Resize works", () => testResize(server, driver));
+        // test("Unfocused killEditor does not focus input", () => testUnfocusedKillEditor(server, driver));
+        // test("Takeover: empty works", () => testTakeoverEmpty(server, driver));
+        // test("Takeover: nonempty works", () => testTakeoverNonEmpty(server, driver));
+        // test("Takeover: once works", () => testTakeoverOnce(server, driver));
+        // test("Works in frames", () => testWorksInFrame(server, driver));
+        // if (process.platform === "linux") {
+        //         test("No lingering neovim process", () => testNoLingeringNeovims(server, driver));
+        // }
 })

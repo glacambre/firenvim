@@ -48,7 +48,9 @@ export function start(port: number, path: string) {
         coverage_dir = path;
         server = new Server({ host: "127.0.0.1", port });
         server.on("connection", s => {
+                console.log("new conn");
                 s.on("message", makeRequestHandler(s))
+                console.log("resolving ", connectionResolves.length, " promises");
                 connectionResolves.forEach(r => r(s));
                 connectionResolves.length = 0;
         });
@@ -60,6 +62,7 @@ export function start(port: number, path: string) {
 // Returns a promise that resolves once a websocket is created
 export function getNextConnection () {
         return new Promise((resolve) => {
+                console.log("getNextConnection called, pushing promise...");
                 connectionResolves.push(resolve);
         });
 }
@@ -67,17 +70,23 @@ export function getNextConnection () {
 // Returns a function that returns a promise that resolves once an object with
 // an attribute named kind and whose value matches X is returned.
 function getNextXConnection (X: "content" | "frame" | "background") {
-        return function () {
-                return new Promise(async (resolve) => {
-                        let isX: boolean;
-                        let socket : any;
-                        do {
-                                socket = await getNextConnection();
-                                const context = await makeRequest(socket, "getContext");
-                                isX = context === X;
-                        } while (!isX);
-                        resolve(socket);
-                });
+        return async function () {
+                console.log("a");
+                let isX: boolean;
+                console.log("b");
+                let socket : any;
+                console.log("c");
+                do {
+                        console.log("d");
+                        socket = await getNextConnection();
+                        console.log("e");
+                        const context = await makeRequest(socket, "getContext");
+                        console.log("f", context);
+                        isX = context === X;
+                        console.log("g");
+                } while (!isX);
+                console.log("h");
+                return (socket);
         }
 }
 
