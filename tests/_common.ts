@@ -111,7 +111,7 @@ function screenShotOnFail(f: (server: any, driver: webdriver.WebDriver) => Promi
                                 failures += 1;
                                 error = e;
                                 const b64 = await driver.takeScreenshot();
-                                const buff = new Buffer(b64, 'base64');
+                                const buff = Buffer.from(b64, 'base64');
                                 const p = path.join(testFailuresDirectory, "" + testCount);
                                 fs.writeFileSync(p + ".png", buff);
                                 fs.writeFileSync(p + ".txt", e.stack.toString());
