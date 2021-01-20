@@ -43,10 +43,15 @@ function makeRequestHandler(s: any) {
 let server : Server = undefined;
 let backgroundSocket : Promise<any> = undefined;
 let coverage_dir : string = undefined;
+const connectionResolves : any[] = [];
 export function start(port: number, path: string) {
         coverage_dir = path;
         server = new Server({ host: "127.0.0.1", port });
-        server.on("connection", s => s.on("message", makeRequestHandler(s)));
+        server.on("connection", s => {
+                s.on("message", makeRequestHandler(s))
+                connectionResolves.forEach(r => r(s));
+                connectionResolves.length = 0;
+        });
         backgroundSocket = getNextBackgroundConnection();
         return server;
 }
@@ -54,10 +59,8 @@ export function start(port: number, path: string) {
 
 // Returns a promise that resolves once a websocket is created
 export function getNextConnection () {
-        return new Promise((resolve, reject) => {
-                server.once('connection', (socket) => {
-                        resolve(socket);
-                });
+        return new Promise((resolve) => {
+                connectionResolves.push(resolve);
         });
 }
 
@@ -65,7 +68,7 @@ export function getNextConnection () {
 // an attribute named kind and whose value matches X is returned.
 function getNextXConnection (X: "content" | "frame" | "background") {
         return function () {
-                return new Promise(async (resolve, reject) => {
+                return new Promise(async (resolve) => {
                         let isX: boolean;
                         let socket : any;
                         do {
