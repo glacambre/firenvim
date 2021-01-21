@@ -25,6 +25,12 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@master
+    - name: Install ffmpeg (Linux)
+      if: matrix.os == 'ubuntu'
+      run: sudo apt update -y && sudo apt install -y ffmpeg
+    - name: Install ffmpeg (Windows)
+      if: matrix.os == 'windows'
+      run: choco install ffmpeg
     - name: Install Firefox Dev Edition (Linux)
       if: matrix.browser == 'firefox' && matrix.os == 'ubuntu'
       run: |
@@ -60,10 +66,17 @@ jobs:
       run: npm run install_manifests
     - name: Test (Linux)
       if: matrix.os == 'ubuntu'
-      run: xvfb-run --auto-servernum npm run jest -- ${{ matrix.browser }} \
-    - name: Test (Windows/MacOs)
-      if: matrix.os != 'ubuntu'
-      run: npm run jest -- ${{ matrix.browser }} \
+      run: mkdir failures && xvfb-run --auto-servernum -s "-screen 0 920x690x24" sh -c 'npm run jest -- ${{ matrix.browser }} & (sleep 10 && ffmpeg -t 180 -an -video_size 920x690 -framerate 60 -f x11grab -i $DISPLAY failures/video.webm)'
+    - name: Test (MacOS)
+      if: matrix.os == 'macos'
+      run: npm run jest -- ${{ matrix.browser }}
+    - name: Test (Windows)
+      if: matrix.os == 'windows'
+      run: |
+        Start-Job { ffmpeg -t 180 -framerate 60 -f gdigrab -i desktop D:\a\firenvim\firenvim\video.webm }
+        npm run jest -- ${{ matrix.browser }}
+        Get-Job | Wait-Job
+        mv video.webm failures
     - name: Artifact upload (failure only)
       uses: actions/upload-artifact@v2
       if: failure()
