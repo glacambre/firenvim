@@ -157,6 +157,7 @@ export function getGridSize(host: HTMLElement) {
 // Given a language name, returns a filename extension. Can return undefined.
 export function languageToExtensions(language: string) {
     const lang = language.toLowerCase();
+    /* istanbul ignore next */
     switch (lang) {
         case "apl":              return "apl";
         case "brainfuck":        return "bf";
