@@ -56,7 +56,10 @@ export class Stdout {
                     }
                 }
             } else {
-                console.log(`Unhandled message kind ${name}`);
+                // Can't be tested because this would mean messages that break
+                // the msgpack-rpc spec, so coverage impossible to get.
+                /* istanbul ignore next */
+                console.error(`Unhandled message kind ${name}`);
             }
         }
     }
