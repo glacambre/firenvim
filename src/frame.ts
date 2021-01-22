@@ -30,7 +30,7 @@ export const isReady = new Promise((resolve, reject) => {
             // info to be available when UIEnter is triggered
             const extInfo = browser.runtime.getManifest();
             const [major, minor, patch] = extInfo.version.split(".");
-            nvim.set_client_info(extInfo.name + Math.random(),
+            nvim.set_client_info(extInfo.name,
                 { major, minor, patch },
                 "ui",
                 {},
