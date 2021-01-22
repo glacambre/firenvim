@@ -90,8 +90,8 @@ fi
 npm run tslint --project tslint.json
 
 # npm run test takes care of building the extension in test mode
-npm run test firefox
-npm run test chrome
+npm run test-firefox
+npm run test-chrome
 
 # now we need a release build
 npm run build

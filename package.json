@@ -47,7 +47,9 @@
     "jest": "jest",
     "nyc": "nyc",
     "pack": "web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest",
-    "test": "webpack --env=testing && nyc instrument --in-place target/chrome && nyc instrument --in-place target/firefox && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest && jest",
+    "tests": "npm run test-firefox && npm run test-chrome",
+    "test-firefox": "webpack --env=firefox-testing && nyc instrument --in-place target/firefox && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest && jest firefox",
+    "test-chrome": "webpack --env=chrome-testing && nyc instrument --in-place target/chrome && jest chrome",
     "tslint": "tslint",
     "webpack": "webpack"
   },

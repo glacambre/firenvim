@@ -84,6 +84,6 @@ The browser action process corresponds to the small Firenvim button next to the 
 
 ## Testing your changes
 
-The CI tests changes automatically, so running tests on your machine is not required. If you do want to test Firenvim on your machine, you will need to install either Geckodriver (firefox) or Chromedriver (Chrome & Chromium). Once that is done, run `npm run test firefox` or `npm run test chrome`. This will build the add-on in testing mode, load it in a browser and run a few tests to make sure nothing is particularily broken.
+The CI tests changes automatically, so running tests on your machine is not required. If you do want to test Firenvim on your machine, you will need to install either Geckodriver (firefox) or Chromedriver (Chrome & Chromium). Once that is done, run `npm run test-firefox` or `npm run test-chrome`. This will build the add-on in testing mode, load it in a browser and run a few tests to make sure nothing is particularily broken.
 
 Writing new tests is currently rather complicated, so feel free to let me handle that if you don't want to deal with it.
