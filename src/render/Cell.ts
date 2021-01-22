@@ -1,4 +1,6 @@
-import { toHighlightClassName } from "../utils/CSSUtils";
+export function toHighlightClassName(n: number) {
+    return "nvim_highlight_" + n;
+}
 
 export class Cell {
     private highlightValue: number;
