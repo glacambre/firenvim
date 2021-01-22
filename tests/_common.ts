@@ -156,7 +156,7 @@ export const testModifiers = screenShotOnFail(async (server: any, driver: webdri
 });
 
 export const testUnfocusedKillEditor = screenShotOnFail(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "Unfocused test");
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", "Unfocused killEditor test");
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":w | call firenvim#focus_page() | q".split("")
                        .concat(webdriver.Key.ENTER))
