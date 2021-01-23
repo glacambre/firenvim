@@ -28,6 +28,8 @@ jobs:
     - name: Install ffmpeg (Linux)
       if: matrix.os == 'ubuntu'
       run: sudo apt update -y && sudo apt install -y ffmpeg
+    - name: Install ffmpeg (MacOs)
+      run: curl -JL https://evermeet.cx/ffmpeg/get/zip --output ffmpeg.zip && unzip ffmpeg.zip && echo "$PWD" >> $GITHUB_PATH
     - name: Install ffmpeg (Windows)
       if: matrix.os == 'windows'
       run: choco install ffmpeg
@@ -66,21 +68,22 @@ jobs:
       run: npm run install_manifests
     - name: Test (Linux)
       if: matrix.os == 'ubuntu'
-      run: mkdir failures && xvfb-run --auto-servernum -s "-screen 0 920x690x24" sh -c 'npm run jest -- ${{ matrix.browser }} & (sleep 10 && ffmpeg -t 180 -an -video_size 920x690 -framerate 60 -f x11grab -i $DISPLAY failures/video.webm)'
+      run: xvfb-run --auto-servernum -s "-screen 0 920x690x24" sh -c '(sleep 3 && ffmpeg -loglevel warning -t 120 -an -video_size 920x690 -framerate 30 -f x11grab -i $DISPLAY video.webm) & npm run jest -- ${{ matrix.browser }}'
     - name: Test (MacOS)
       if: matrix.os == 'macos'
-      run: npm run jest -- ${{ matrix.browser }}
+      run: |
+        ffmpeg -loglevel warning -t 180 -framerate 30 -f avfoundation -i "0:0" video.webm &
+        exit_code=0 && npm run jest -- ${{ matrix.browser }} || exit_code=$? && sleep 20 && exit $exit_code
     - name: Test (Windows)
       if: matrix.os == 'windows'
       run: |
-        Start-Job { ffmpeg -t 180 -framerate 60 -f gdigrab -i desktop D:\a\firenvim\firenvim\video.webm }
+        Start-Job { ffmpeg -loglevel warning -t 150 -framerate 30 -f gdigrab -i desktop D:\a\firenvim\firenvim\video.webm }
         npm run jest -- ${{ matrix.browser }}
         Get-Job | Wait-Job
-        mv video.webm failures
     - name: Artifact upload (failure only)
       uses: actions/upload-artifact@v2
       if: failure()
       with:
-        name: failure-${{ matrix.os }}-${{ matrix.browser }}-${{ matrix.neovim }}
-        path: failures
+        name: ${{ matrix.os }}-${{ matrix.browser }}-${{ matrix.neovim }}
+        path: video.webm
         retention-days: 2
