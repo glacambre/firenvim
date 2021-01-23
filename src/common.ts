@@ -14,7 +14,7 @@ export const firenvimGlobal = {
         })
         // Note: this relies on setDisabled existing in the object returned by
         // getFunctions and attached to the window object
-        .then((disabled: boolean) => (window as any).setDisabled(!!disabled)),
+        .then((disabled: boolean) => (window as any).setDisabled(disabled)),
     // Promise-resolution function called when a frameId is received from the
     // background script
     frameIdResolve: (_: number): void => undefined,

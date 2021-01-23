@@ -36,6 +36,7 @@ import {
  testTakeoverEmpty,
  testTakeoverNonEmpty,
  testTakeoverOnce,
+ testToggleFirenvim,
  testUnfocusedKillEditor,
  testVimrcFailure,
  testWorksInFrame,
@@ -130,6 +131,7 @@ describe("Firefox", () => {
         test("Takeover: empty works", () => testTakeoverEmpty(server, driver));
         test("Takeover: nonempty works", () => testTakeoverNonEmpty(server, driver));
         test("Takeover: once works", () => testTakeoverOnce(server, driver));
+        test("Toggling firenvim works", () => testToggleFirenvim(server, driver));
         test("Works in frames", () => testWorksInFrame(server, driver));
         test("Github autofill works", () => testGithubAutofill(server, driver));
         if (process.platform === "linux") {
