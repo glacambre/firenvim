@@ -16,6 +16,7 @@ import {
  testDisappearing,
  testDynamicTextareas,
  testFocusGainedLost,
+ testGithubAutofill,
  testGStartedByFirenvim,
  testGuifont,
  testIgnoreKeys,
@@ -142,6 +143,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(server, driver));
         nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(server, driver));
         nonHeadlessTest()("Works in frame", () => testWorksInFrame(server, driver));
+        nonHeadlessTest()("Github autofill works", () => testGithubAutofill(server, driver));
         if (process.platform === "linux") {
                 nonHeadlessTest()("No lingering neovim process", () => testNoLingeringNeovims(server, driver));
         }

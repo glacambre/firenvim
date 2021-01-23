@@ -18,6 +18,7 @@ import {
  testDynamicTextareas,
  testEvalJs,
  testFocusGainedLost,
+ testGithubAutofill,
  testGStartedByFirenvim,
  testGuifont,
  testIgnoreKeys,
@@ -130,6 +131,7 @@ describe("Firefox", () => {
         test("Takeover: nonempty works", () => testTakeoverNonEmpty(server, driver));
         test("Takeover: once works", () => testTakeoverOnce(server, driver));
         test("Works in frames", () => testWorksInFrame(server, driver));
+        test("Github autofill works", () => testGithubAutofill(server, driver));
         if (process.platform === "linux") {
                 test("No lingering neovim process", () => testNoLingeringNeovims(server, driver));
         }
