@@ -830,7 +830,6 @@ export async function testGithubAutofill(server: any, driver: webdriver.WebDrive
                 /<textarea[^>]+><\/textarea>/,
                 `<textarea id="issue_body" cols="80" rows="20">${template_content}</textarea>`
         );
-        console.log("writing to ", path.join(pagesDir, "github.html"));
         fs.writeFileSync(path.join(pagesDir, "github.html"), github_content);
 
         // compute the information we expect to see
@@ -845,6 +844,47 @@ export async function testGithubAutofill(server: any, driver: webdriver.WebDrive
         expect(issue_content).toMatch(new RegExp(`Browser Version:.*(Chrom|Firefox)`, 'g'));
         expect(issue_content).toMatch(new RegExp(`Browser Addon Version: ${version}`, 'g'));
         expect(issue_content).toMatch(new RegExp(`Neovim Plugin Version: ${version}`, 'g'));
+        await server.pullCoverageData(contentSocket);
+};
+
+export async function testToggleFirenvim(server: any, driver: webdriver.WebDriver) {
+        // Loading page and toggling correctly disables firenvim in tab
+        let contentSocket = await loadLocalPage(server, driver, "simple.html", "Firenvim toggle test");
+        await server.toggleFirenvim();
+        let input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.actions().click(input).perform();
+        await driver.sleep(FIRENVIM_INIT_DELAY);
+        await driver.findElement(By.css("body > span:nth-child(2)"))
+                .catch((): void => undefined)
+                .then((e: any) => {
+                        if (e !== undefined) {
+                                throw new Error("Frame created while Firenvim should have been disabled!");
+                        }
+                });
+        await server.pullCoverageData(contentSocket);
+
+        // Firenvim stays disabled when loading a new page in a disabled tab
+        contentSocket = await loadLocalPage(server, driver, "simple.html", "Firenvim toggle test");
+        input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.actions().click(input).perform();
+        await driver.sleep(FIRENVIM_INIT_DELAY);
+        await driver.findElement(By.css("body > span:nth-child(2)"))
+                .catch((): void => undefined)
+                .then((e: any) => {
+                        if (e !== undefined) {
+                                throw new Error("Frame created while Firenvim should have been disabled!");
+                        }
+                });
+
+        // Re-enabling firenvim when it was loaded in a disabled tab works
+        await server.toggleFirenvim();
+        await driver.executeScript(`arguments[0].blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`, input);
+        await driver.sleep(FIRENVIM_INIT_DELAY);
+        const [, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await sendKeys(driver, ":q!".split("").concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim frame did not disappear!");
         await server.pullCoverageData(contentSocket);
 };
 

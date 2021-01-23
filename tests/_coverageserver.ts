@@ -99,6 +99,10 @@ export function updateSettings () {
         return backgroundSocket.then((s : any) => makeRequest(s, "updateSettings"));
 };
 
+export function toggleFirenvim () {
+        return backgroundSocket.then((s : any) => makeRequest(s, "toggleFirenvim"));
+};
+
 export function shutdown () {
         fs.writeFileSync(path.join(coverage_dir, "results"),
                          JSON.stringify(covMap));

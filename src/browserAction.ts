@@ -25,7 +25,7 @@ async function updateDisableButton() {
         funcName: ["getTabValueFor"],
     }));
     const button = document.getElementById("disableFirenvim");
-    if (disabled === "true") {
+    if (disabled === true) {
         button.innerText = "Enable in this tab";
     } else {
         button.innerText = "Disable in this tab";

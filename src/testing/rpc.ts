@@ -47,6 +47,15 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
                     }));
                 });
                 break;
+            case "toggleFirenvim":
+                (window as any).acceptCommand("toggle_firenvim").finally(() => {
+                    s.send(JSON.stringify({
+                        args: [],
+                        funcName: ["resolve"],
+                        reqId: req.reqId,
+                    }));
+                });
+                break;
         }
     };
 }

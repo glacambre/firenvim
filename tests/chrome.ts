@@ -35,6 +35,7 @@ import {
  testTakeoverEmpty,
  testTakeoverNonEmpty,
  testTakeoverOnce,
+ testToggleFirenvim,
  testVimrcFailure,
  testWorksInFrame,
 } from "./_common"
@@ -142,6 +143,7 @@ describe("Chrome", () => {
         nonHeadlessTest()("Takeover: empty works", () => testTakeoverEmpty(server, driver));
         nonHeadlessTest()("Takeover: nonempty works", () => testTakeoverNonEmpty(server, driver));
         nonHeadlessTest()("Takeover: once works", () => testTakeoverOnce(server, driver));
+        nonHeadlessTest()("Toggling firenvim works", () => testToggleFirenvim(server, driver));
         nonHeadlessTest()("Works in frame", () => testWorksInFrame(server, driver));
         nonHeadlessTest()("Github autofill works", () => testGithubAutofill(server, driver));
         if (process.platform === "linux") {
