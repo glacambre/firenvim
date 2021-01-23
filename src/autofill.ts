@@ -33,7 +33,9 @@ export async function autofill() {
         nvimPluginVersion,
         issueTemplate,
     ] = await Promise.all([platInfoPromise, manifestPromise, nvimPluginPromise, issueTemplatePromise]);
-    if (!textarea || textarea.value !== issueTemplate) {
+    // Can't happen, but doesn't cost much to handle!
+    /* istanbul ignore next */
+    if (!textarea || textarea.value.replace(/\r/g, "") !== issueTemplate.replace(/\r/g, "")) {
         return;
     }
     textarea.value = issueTemplate
