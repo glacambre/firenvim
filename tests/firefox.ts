@@ -1,3 +1,4 @@
+import { exec } from "child_process";
 import * as fs from "fs";
 import * as process from "process";
 const env = process.env;
@@ -13,6 +14,7 @@ import {
  killDriver,
  reloadNeovim,
  testAce,
+ testBrowserShortcuts,
  testCodemirror,
  testContentEditable,
  testDisappearing,
@@ -45,13 +47,21 @@ import {
 import { setupVimrc, resetVimrc } from "./_vimrc";
 import * as coverageServer  from "./_coverageserver";
 
+
 describe("Firefox", () => {
 
         let driver: any = undefined;
         let server: any = coverageServer;
         let background: any = undefined;
+        let neovimVersion: number = 0;
 
         beforeAll(async () => {
+                neovimVersion = await new Promise(resolve => {
+                        exec("nvim --version", (_, stdout) => {
+                                resolve(parseFloat(stdout.match(/nvim v[0-9]+\.[0-9]+\.[0-9]+/gi)[0].slice(6)));
+                        });
+                });
+
                 const coverage_dir = path.join(process.cwd(), ".nyc_output");
                 try {
                         fs.rmdirSync(coverage_dir, { recursive: true });
@@ -114,7 +124,7 @@ describe("Firefox", () => {
                 return test.only(s, () => f(s, server, driver), ms);
         }
 
-        t("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
+        o("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
         t("Modifiers work", testModifiers);
         t("Buggy Vimrc", testVimrcFailure, 60000);
         t("Input resize", testInputResizes);
@@ -143,6 +153,10 @@ describe("Firefox", () => {
         t("Toggling firenvim", testToggleFirenvim);
         t("Works in frames", testWorksInFrame);
         t("Github autofill", testGithubAutofill);
+        t("Frame browser shortcuts", (...args) => neovimVersion >= 0.5
+                ? testBrowserShortcuts(...args)
+                : undefined
+         );
         if (process.platform === "linux") {
                 t("No lingering neovim process", testNoLingeringNeovims);
         }

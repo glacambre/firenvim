@@ -775,7 +775,7 @@ export const testDisappearing = retryTest(withLocalPage("disappearing.html", asy
         await sendKeys(driver, "iworks".split("")
                        .concat([webdriver.Key.ESCAPE])
                        .concat(":wq!".split(""))
-                       .concat(webdriver.Key.ENTER))
+                       .concat(webdriver.Key.ENTER));
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear the second time");
         await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         expect("works").toBe(await input.getAttribute("value"));
@@ -806,7 +806,7 @@ export const testGithubAutofill = retryTest(async (testTitle: string, server: an
         await server.pullCoverageData(contentSocket);
 });
 
-export async function testToggleFirenvim(testTitle: string, server: any, driver: webdriver.WebDriver) {
+export const testToggleFirenvim = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         // Loading page and toggling correctly disables firenvim in tab
         let contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         await server.toggleFirenvim();
@@ -845,7 +845,57 @@ export async function testToggleFirenvim(testTitle: string, server: any, driver:
         await sendKeys(driver, ":q!".split("").concat(webdriver.Key.ENTER));
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim frame did not disappear!");
         await server.pullCoverageData(contentSocket);
-};
+});
+
+export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await sendKeys(driver, ["i"]);
+        async function ctrlV() {
+                await driver.actions()
+                        .keyDown(webdriver.Key.CONTROL)
+                        .keyDown("v")
+                        .keyUp("v")
+                        .keyUp(webdriver.Key.CONTROL)
+                        .perform();
+                return driver.sleep(10);
+        }
+        await ctrlV();
+        await server.browserShortcut("<C-n>");
+        await ctrlV();
+        await server.browserShortcut("<C-t>");
+        await ctrlV();
+        await server.browserShortcut("<C-w>");
+        // Turn special chars into ascii representation that we will be able to
+        // retrieve from textarea
+        await sendKeys(driver, [webdriver.Key.ESCAPE]
+                      .concat('^:redir @"'.split(""))
+                      .concat(webdriver.Key.ENTER)
+                      .concat(":ascii".split(""))
+                      .concat(webdriver.Key.ENTER)
+                      .concat("l:ascii".split(""))
+                      .concat(webdriver.Key.ENTER)
+                      .concat("l:ascii".split(""))
+                      .concat(webdriver.Key.ENTER)
+                      .concat(":redir END".split(""))
+                      .concat(webdriver.Key.ENTER)
+                      .concat("VpGo".split("")));
+        await ctrlV();
+        await server.browserShortcut("<CS-n>");
+        await ctrlV();
+        await server.browserShortcut("<CS-t>");
+        await ctrlV();
+        await server.browserShortcut("<CS-w>");
+        await sendKeys(driver, [webdriver.Key.ESCAPE]
+                                .concat(":wq!".split(""))
+                                .concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim frame did not disappear!");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
+        expect(await input.getAttribute("value")).toBe("\n"
+                                                       + "\n<^N>  14,  Hex 0e,  Oct 016, Digr SO\n"
+                                                       + "\n<^T>  20,  Hex 14,  Oct 024, Digr D4\n"
+                                                       + "\n<^W>  23,  Hex 17,  Oct 027, Digr EB\n"
+                                                       + "<C-S-N><C-S-T><C-S-W>");
+}));
 
 
 export async function killDriver(server: any, driver: webdriver.WebDriver) {

@@ -47,7 +47,7 @@ export const isReady = new Promise((resolve, reject) => {
 
             let resizeReqId = 0;
             browser.runtime.onMessage.addListener((request: any, sender: any, sendResponse: any) => {
-                if (request.funcName[0] === "sendKey") {
+                if (request.funcName[0] === "frame_sendKey") {
                     nvim.input(request.args.join(""));
                 } else if (request.funcName[0] === "resize" && request.args[0] > resizeReqId) {
                     const [id, width, height] = request.args;

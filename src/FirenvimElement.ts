@@ -494,7 +494,7 @@ export class FirenvimElement {
                 frameId: this.frameId,
                 message: {
                     args: [key],
-                    funcName: ["sendKey"],
+                    funcName: ["frame_sendKey"],
                 }
             },
             funcName: ["messageFrame"],

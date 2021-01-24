@@ -100,7 +100,12 @@ export function updateSettings () {
 };
 
 export function toggleFirenvim () {
-        return backgroundSocket.then((s : any) => makeRequest(s, "toggleFirenvim"));
+        return backgroundSocket.then((s : any) => makeRequest(s, "acceptCommand", ["toggle_firenvim"]));
+};
+
+export function browserShortcut (k: string) {
+        const command = "send_" + k.slice(1,-1);
+        return backgroundSocket.then((s : any) => makeRequest(s, "acceptCommand", [command]));
 };
 
 export function shutdown () {
