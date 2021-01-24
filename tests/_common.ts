@@ -763,6 +763,39 @@ ${vimrcContent}`);
         expect((await input.getAttribute("innerHTML")).trim()).toBe("<i>Firenvim</i> <i>works</i>!");
 }));
 
+export const testConfigPriorities = retryTest(withLocalPage("contenteditable.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const vimrcContent = await readVimrc();
+        await writeVimrc(`
+let g:firenvim_config = {
+        \\ 'localSettings': {
+                \\ '.*': {
+                        \\ 'selector': '*[contenteditable=true]',
+                        \\ 'content': 'html',
+                \\ },
+                \\ '.*.html': {
+                        \\ 'content': 'html',
+                \\ },
+                \\ 'contenteditable.html': {
+                        \\ 'content': 'text',
+                        \\ 'priority': 10,
+                \\ }
+        \\ }
+\\ }
+${vimrcContent}`);
+        await reloadNeovim(server, driver);
+        const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        const innerText = await input.getAttribute("innerText");
+        const innerHTML = await input.getAttribute("innerHTML");
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        await driver.actions().click(input).perform();
+        await sendKeys(driver, ":wq".split("").concat(webdriver.Key.ENTER))
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
+        await driver.wait(async () => (await input.getAttribute("innerHTML") !== innerHTML), WAIT_DELAY, "Input value did not change");
+        expect(await input.getAttribute("innerText")).toBe(innerText);
+        expect((await input.getAttribute("innerHTML")).trim()).toBe(innerText);
+}));
+
+
 export const testDisappearing = retryTest(withLocalPage("disappearing.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         let [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         // simulate the page making the span disappear again
