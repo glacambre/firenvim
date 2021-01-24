@@ -1,14 +1,14 @@
-// Chrome doesn't have a "browser" object, instead it uses "chrome".
 let curHost = "firefox";
+
+// Can't get coverage for thunderbird.
+/* istanbul ignore next */
 if ((browser as any).composeScripts !== undefined || document.location.href === "about:blank?compose") {
     curHost = "thunderbird";
+// Chrome doesn't have a "browser" object, instead it uses "chrome".
 } else if (window.browser === undefined) {
     curHost = "chrome";
 }
 
-export function isFirefox() {
-    return curHost === "firefox";
-}
 export function isChrome() {
     return curHost === "chrome";
 }
@@ -92,11 +92,7 @@ export type IconKind = keyof typeof transformations;
 
 // Takes an icon kind and dimensions as parameter, draws that to a canvas and
 // returns a promise that will be resolved with the canvas' image data.
-export function getIconImageData(kind: IconKind, dimensions = "32x32") {
-    const [width, height] = dimensions.split("x").map(x => parseInt(x, 10));
-    if (!width || !height) {
-        throw new Error("Dimensions not correctly formated");
-    }
+export function getIconImageData(kind: IconKind, width: number = 32, height: number = 32) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     const img = new Image(width, height);
@@ -117,6 +113,8 @@ export function toFileName(url: string, id: string, language: string) {
     try {
         parsedURL = new URL(url);
     } catch (e) {
+        // Only happens with thunderbird, where we can't get coverage
+        /* istanbul ignore next */
         parsedURL = { hostname: 'thunderbird', pathname: 'mail' };
     }
     const shortId = id.replace(/:nth-of-type/g, "");
