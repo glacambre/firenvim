@@ -112,6 +112,10 @@ export function forceNvimify () {
         return backgroundSocket.then((s : any) => makeRequest(s, "acceptCommand", ["nvimify"]));
 }
 
+export function tryUpdate () {
+        return backgroundSocket.then((s : any) => makeRequest(s, "tryUpdate"));
+};
+
 export function shutdown () {
         fs.writeFileSync(path.join(coverage_dir, "results"),
                          JSON.stringify(covMap));

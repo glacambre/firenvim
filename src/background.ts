@@ -56,6 +56,8 @@ async function updateIcon(tabid?: number) {
     } else if (warning !== "") {
         name = "notification";
     }
+    // Can't test on the bird of thunder
+    /* istanbul ignore next */
     if (isThunderbird()) {
         return Promise.resolve();
     }
@@ -415,8 +417,10 @@ async function updateIfPossible() {
 (window as any).updateIfPossible = updateIfPossible;
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
 
-// In thunderbird, register the script to be loaded in the compose window
+// Can't test on the bird of thunder
+/* istanbul ignore next */
 if (isThunderbird()) {
+    // In thunderbird, register the script to be loaded in the compose window
     (browser as any).composeScripts.register({
         js: [{file: "compose.js"}],
     });

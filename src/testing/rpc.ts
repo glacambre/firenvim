@@ -48,6 +48,15 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
                     }));
                 });
                 break;
+            case "tryUpdate":
+                (window as any).updateIfPossible().finally(() => {
+                    s.send(JSON.stringify({
+                        args: [],
+                        funcName: ["resolve"],
+                        reqId: req.reqId,
+                    }));
+                });
+                break;
             case "acceptCommand":
                 (window as any).acceptCommand(...req.args).finally(() => {
                     s.send(JSON.stringify({

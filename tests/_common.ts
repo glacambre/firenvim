@@ -953,6 +953,18 @@ export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async
                                                        + "<C-S-N><C-S-T><C-S-W>");
 }));
 
+export const testUpdates = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await server.tryUpdate();
+        await sendKeys(driver, "iUpdates working!".split("")
+                       .concat(webdriver.Key.ESCAPE)
+                       .concat(":wq!")
+                       .concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim frame did not disappear!");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
+        expect(await input.getAttribute("value")).toBe("Updates working!");
+}));
+
 
 export async function killDriver(server: any, driver: webdriver.WebDriver) {
         try {
