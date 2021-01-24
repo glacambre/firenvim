@@ -364,6 +364,22 @@ ${backup}
         expect(await input.getAttribute("value")).toMatch(/a*ba+ba*/);
 }));
 
+export const testForceNvimify = retryTest(withLocalPage("input.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")), WAIT_DELAY, "Input field not found");
+        const originalValue = await input.getAttribute("value");
+        const frameSocketProm = server.getNextFrameConnection();
+        await server.forceNvimify();
+        const span = await driver.wait(Until.elementLocated(By.css("body > span:last-of-type")), WAIT_DELAY, "Firenvim span not found");
+        await frameSocketProm;
+        await sendKeys(driver, "A world".split("")
+                       .concat(webdriver.Key.ESCAPE)
+                       .concat(":wq!".split(""))
+                       .concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        await driver.wait(async () => (await input.getAttribute("value") !== originalValue), WAIT_DELAY, "Input value did not change");
+        expect(await input.getAttribute("value")).toBe(originalValue + " world");
+}));
+
 export const testFocusPage = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":call firenvim#focus_page()".split("")

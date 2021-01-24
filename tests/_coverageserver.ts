@@ -108,6 +108,10 @@ export function browserShortcut (k: string) {
         return backgroundSocket.then((s : any) => makeRequest(s, "acceptCommand", [command]));
 };
 
+export function forceNvimify () {
+        return backgroundSocket.then((s : any) => makeRequest(s, "acceptCommand", ["nvimify"]));
+}
+
 export function shutdown () {
         fs.writeFileSync(path.join(coverage_dir, "results"),
                          JSON.stringify(covMap));
