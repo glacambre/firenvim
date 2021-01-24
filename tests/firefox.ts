@@ -43,6 +43,7 @@ import {
  testTakeoverOnce,
  testToggleFirenvim,
  testUnfocusedKillEditor,
+ testUpdates,
  testVimrcFailure,
  testWorksInFrame,
 } from "./_common"
@@ -161,6 +162,7 @@ describe("Firefox", () => {
                 ? testBrowserShortcuts(...args)
                 : undefined
          , 30000);
+        t("Add-on udpates", testUpdates);
         if (process.platform === "linux") {
                 t("No lingering neovim process", testNoLingeringNeovims);
         }
