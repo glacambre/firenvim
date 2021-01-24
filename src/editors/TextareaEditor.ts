@@ -57,7 +57,6 @@ export class TextareaEditor extends AbstractEditor {
         if ((this.elem as any).value !== undefined) {
             (this.elem as any).value = text;
         } else {
-            this.elem.innerText = text;
             if (getConf().content === "text"){
                 this.elem.innerText = text;
             } else {
