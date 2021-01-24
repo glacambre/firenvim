@@ -74,7 +74,7 @@ export const isReady = new Promise((resolve, reject) => {
             const filename = toFileName(url, selector, language);
             const content = await contentPromise;
             const [line, col] = cursor;
-            nvim.call_function("writefile", [content.split("\n"), filename])
+            const writeFilePromise = nvim.call_function("writefile", [content.split("\n"), filename])
                 .then(() => nvim.command(`noswapfile edit ${filename} `
                                          + `| call nvim_win_set_cursor(0, [${line}, ${col}])`));
 
@@ -238,7 +238,8 @@ export const isReady = new Promise((resolve, reject) => {
             keyHandler.focus();
             setTimeout(() => {
                 keyHandler.focus();
-                resolve();
+                writeFilePromise.then(() => resolve());
+                writeFilePromise.catch(() => reject());
             }, 10);
         } catch (e) {
             console.error(e);
