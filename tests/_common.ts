@@ -887,13 +887,14 @@ export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ["i"]);
         async function ctrlV() {
+                await driver.sleep(20);
                 await driver.actions()
                         .keyDown(webdriver.Key.CONTROL)
                         .keyDown("v")
                         .keyUp("v")
                         .keyUp(webdriver.Key.CONTROL)
                         .perform();
-                return driver.sleep(10);
+                return driver.sleep(20);
         }
         await ctrlV();
         await server.browserShortcut("<C-n>");
@@ -901,6 +902,7 @@ export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async
         await server.browserShortcut("<C-t>");
         await ctrlV();
         await server.browserShortcut("<C-w>");
+        await driver.sleep(50);
         // Turn special chars into ascii representation that we will be able to
         // retrieve from textarea
         await sendKeys(driver, [webdriver.Key.ESCAPE]
@@ -915,12 +917,14 @@ export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async
                       .concat(":redir END".split(""))
                       .concat(webdriver.Key.ENTER)
                       .concat("VpGo".split("")));
+        await driver.sleep(50);
         await ctrlV();
         await server.browserShortcut("<CS-n>");
         await ctrlV();
         await server.browserShortcut("<CS-t>");
         await ctrlV();
         await server.browserShortcut("<CS-w>");
+        await driver.sleep(50);
         await sendKeys(driver, [webdriver.Key.ESCAPE]
                                 .concat(":wq!".split(""))
                                 .concat(webdriver.Key.ENTER));
