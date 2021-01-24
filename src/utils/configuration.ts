@@ -59,6 +59,8 @@ browser.storage.onChanged.addListener((changes: any) => {
 });
 
 export function getGlobalConf() {
+    // Can't be tested for
+    /* istanbul ignore next */
     if (conf === undefined) {
         throw new Error("getGlobalConf called before config was ready");
     }
@@ -77,6 +79,8 @@ export function getConfForUrl(url: string): ISiteConfig {
         }
         return val;
     }
+    // Can't be tested for
+    /* istanbul ignore next */
     if (localSettings === undefined) {
         throw new Error("Error: your settings are undefined. Try reloading the page. If this error persists, try the troubleshooting guide: https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md");
     }

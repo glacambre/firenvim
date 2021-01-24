@@ -17,6 +17,7 @@ import {
  testBrowserShortcuts,
  testCodemirror,
  testContentEditable,
+ testConfigPriorities,
  testDisappearing,
  testDynamicTextareas,
  testEvalJs,
@@ -153,6 +154,7 @@ describe("Firefox", () => {
         t("Toggling firenvim", testToggleFirenvim);
         t("Works in frames", testWorksInFrame);
         t("Github autofill", testGithubAutofill);
+        t("Config priorities", testConfigPriorities);
         t("Frame browser shortcuts", (...args) => neovimVersion >= 0.5
                 ? testBrowserShortcuts(...args)
                 : undefined
