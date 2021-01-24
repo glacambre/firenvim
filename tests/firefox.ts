@@ -6,6 +6,7 @@ import * as webdriver from "selenium-webdriver";
 import { Options } from "selenium-webdriver/firefox";
 
 import {
+ writeFailures,
  loadLocalPage,
  extensionDir,
  getNewestFileIn,
@@ -102,6 +103,7 @@ describe("Firefox", () => {
         afterAll(async () => {
                 await server.pullCoverageData(background);
                 await server.shutdown();
+                writeFailures();
                 await killDriver(server, driver);
         }, 60000);
 

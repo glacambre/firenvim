@@ -85,5 +85,7 @@ jobs:
       if: failure()
       with:
         name: ${{ matrix.os }}-${{ matrix.browser }}-${{ matrix.neovim }}
-        path: video.webm
+        path: |
+          video.webm
+          failures.txt
         retention-days: 2

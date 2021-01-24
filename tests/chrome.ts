@@ -7,6 +7,7 @@ import * as webdriver from "selenium-webdriver";
 import {
  loadLocalPage,
  extensionDir,
+ writeFailures,
  killDriver,
  reloadNeovim,
  testAce,
@@ -114,6 +115,7 @@ describe("Chrome", () => {
         afterAll(async () => {
                 await server.pullCoverageData(background);
                 await server.shutdown();
+                writeFailures();
                 await killDriver(server, driver);
         }, 60000);
 
