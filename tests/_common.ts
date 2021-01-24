@@ -94,6 +94,7 @@ function withLocalPage(page: string, f: testFunction): testFunction {
         }
 }
 
+let failureLog = "";
 function retryTest(f: testFunction): testFunction {
         return async (s: string, server: any, driver: webdriver.WebDriver) => {
                 let result: void;
@@ -101,10 +102,15 @@ function retryTest(f: testFunction): testFunction {
                 let failures = 0;
                 let attempts = 0;
                 for (attempts = 0; attempts == failures && attempts < 3; ++attempts) {
+                        const vimrcBefore = readVimrc();
                         try {
                                 result = await f(s, server, driver);
                         } catch (e) {
                                 failures += 1;
+                                failureLog += `\n\n===== ${s} attempt ${failures} =====\n`
+                                failureLog += e.toString();
+                                failureLog += `\n== VimrcBefore ==:\n${vimrcBefore}\n`;
+                                failureLog += `\n== VimrcAfter ==:\n${readVimrc()}\n`;
                                 error = e;
                         }
                 }
@@ -114,6 +120,9 @@ function retryTest(f: testFunction): testFunction {
                 return result;
         }
 }
+export function writeFailures() {
+        fs.writeFileSync(path.join(process.cwd(), "failures.txt"), failureLog);
+};
 
 export const testModifiers = retryTest(withLocalPage("simple.html", async (_: string, server: any, driver: webdriver.WebDriver) => {
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
