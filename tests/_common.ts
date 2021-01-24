@@ -80,8 +80,8 @@ export async function createFirenvimFor (server: Server, driver: webdriver.WebDr
 }
 
 let testCount = 0;
-function retryTest(f: (server: any, driver: webdriver.WebDriver) => Promise<void>) {
-        return async (server: any, driver: webdriver.WebDriver) => {
+function retryTest(f: (s: string, server: any, driver: webdriver.WebDriver) => Promise<void>) {
+        return async (s: string, server: any, driver: webdriver.WebDriver) => {
                 testCount += 1;
                 let result: void;
                 let error: Error;
@@ -89,7 +89,7 @@ function retryTest(f: (server: any, driver: webdriver.WebDriver) => Promise<void
                 let attempts = 0;
                 for (attempts = 0; attempts == failures && attempts < 3; ++attempts) {
                         try {
-                                result = await f(server, driver);
+                                result = await f(s, server, driver);
                         } catch (e) {
                                 failures += 1;
                                 error = e;
@@ -102,8 +102,8 @@ function retryTest(f: (server: any, driver: webdriver.WebDriver) => Promise<void
         }
 }
 
-export const testModifiers = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "Modifier test");
+export const testModifiers = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await driver.actions()
                 .keyDown("a")
@@ -147,8 +147,8 @@ export const testModifiers = retryTest(async (server: any, driver: webdriver.Web
                .toContain(await input.getAttribute("value"));
 });
 
-export const testUnfocusedKillEditor = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "Unfocused killEditor test");
+export const testUnfocusedKillEditor = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":w | call firenvim#focus_page() | q".split("")
                        .concat(webdriver.Key.ENTER))
@@ -158,8 +158,8 @@ export const testUnfocusedKillEditor = retryTest(async (server: any, driver: web
         await server.pullCoverageData(contentSocket);
 });
 
-export const testGStartedByFirenvim = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "g:started_by_firenvim test");
+export const testGStartedByFirenvim = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ["a"])
         await driver.actions()
@@ -179,8 +179,8 @@ export const testGStartedByFirenvim = retryTest(async (server: any, driver: webd
         expect(await input.getAttribute("value")).toMatch("true");
 });
 
-export const testCodemirror = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "codemirror.html", "CodeMirror test");
+export const testCodemirror = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "codemirror.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.css("div.CodeMirror"));
         const originalValue = (await input.getAttribute("innerText"));
         // Somehow there's a focus issue with this test. We actively attempt to
@@ -211,8 +211,8 @@ export const testCodemirror = retryTest(async (server: any, driver: webdriver.We
         expect(await input.getAttribute("innerText")).toMatch(/Testhtml<!--/);
 });
 
-export const testAce = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "ace.html", "Ace test");
+export const testAce = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "ace.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.css("#editor"));
         const initialValue = await input.getAttribute("innerText");
         await sendKeys(driver, "ggITest".split(""));
@@ -234,8 +234,8 @@ export const testAce = retryTest(async (server: any, driver: webdriver.WebDriver
         expect(await input.getAttribute("innerText")).toMatch(/Testjavascriptalert()/);
 });
 
-export const testMonaco = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "monaco.html", "Monaco test");
+export const testMonaco = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "monaco.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.css("#container"));
         const originalValue = await input.getAttribute("innerText");
         await sendKeys(driver, "ggITest".split(""));
@@ -257,8 +257,8 @@ export const testMonaco = retryTest(async (server: any, driver: webdriver.WebDri
         expect(await input.getAttribute("innerText")).toMatch(/^1\n2\n3\nTesttypescriptfunction/);
 });
 
-export const testDynamicTextareas = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "dynamic.html", "Dynamic textareas test");
+export const testDynamicTextareas = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "dynamic.html", testTitle);
         const frameSocketPromise = server.getNextFrameConnection();
         const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")), WAIT_DELAY, "insert-textarea not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", btn);
@@ -277,8 +277,8 @@ export const testDynamicTextareas = retryTest(async (server: any, driver: webdri
         expect(await txtarea.getAttribute("value")).toMatch("Test");
 });
 
-export const testNestedDynamicTextareas = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "dynamic_nested.html", "Nested dynamic textareas");
+export const testNestedDynamicTextareas = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "dynamic_nested.html", testTitle);
         const frameSocketPromise = server.getNextFrameConnection();
         const btn = await driver.wait(Until.elementLocated(By.id("insert-textarea")), WAIT_DELAY, "insert-textarea not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", btn);
@@ -302,10 +302,10 @@ export function reloadNeovim(server: any, driver: webdriver.WebDriver) {
         return server.updateSettings();
 }
 
-export const testVimrcFailure = retryTest(async (server: any, driver: webdriver.WebDriver) => {
+export const testVimrcFailure = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         await writeVimrc("call");
         await reloadNeovim(server, driver);
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "Vimrc failure");
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const input = await driver.wait(Until.elementLocated(By.id("content-input")), WAIT_DELAY, "content-input");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         await driver.actions().click(input).perform();
@@ -328,13 +328,13 @@ export const testVimrcFailure = retryTest(async (server: any, driver: webdriver.
         await server.pullCoverageData(contentSocket);
 });
 
-export const testGuifont = retryTest(async (server: any, driver: webdriver.WebDriver) => {
+export const testGuifont = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const backup = await readVimrc();
         await writeVimrc(`
 set guifont=monospace:h50
 ${backup}
                 `);
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "Guifont test");
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         await reloadNeovim(server, driver);
         let [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, "100aa".split("")
@@ -362,8 +362,8 @@ ${backup}
         await server.pullCoverageData(contentSocket);
 });
 
-export const testPageFocus = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "PageFocus test");
+export const testFocusPage = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":call firenvim#focus_page()".split("")
                 .concat(webdriver.Key.ENTER));
@@ -372,8 +372,8 @@ export const testPageFocus = retryTest(async (server: any, driver: webdriver.Web
         await server.pullCoverageData(frameSocket);
 });
 
-export const testInputFocus = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "InputFocus test");
+export const testFocusInput = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":call firenvim#focus_input()".split("")
                 .concat(webdriver.Key.ENTER));
@@ -382,8 +382,8 @@ export const testInputFocus = retryTest(async (server: any, driver: webdriver.We
         await server.pullCoverageData(frameSocket);
 });
 
-export const testEvalJs = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "EvalJs test");
+export const testEvalJs = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, `:call firenvim#eval_js('(document`.split(""));
         // Using the <C-v> trick here because Chrome somehow replaces `.` with
@@ -409,8 +409,8 @@ export const testEvalJs = retryTest(async (server: any, driver: webdriver.WebDri
         await server.pullCoverageData(frameSocket);
 });
 
-export const testPressKeys = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "chat.html", "PressKeys test");
+export const testPressKeys = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "chat.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, "iHello".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -424,8 +424,8 @@ export const testPressKeys = retryTest(async (server: any, driver: webdriver.Web
         await server.pullCoverageData(contentSocket);
 });
 
-export const testInputFocusedAfterLeave = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "Input focus after leave test");
+export const testInputFocusedAfterLeave = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":q!".split("")
                 .concat(webdriver.Key.ENTER));
@@ -434,8 +434,8 @@ export const testInputFocusedAfterLeave = retryTest(async (server: any, driver: 
         await driver.wait(async () => "content-input" === (await driver.switchTo().activeElement().getAttribute("id")), WAIT_DELAY, "Input element not focused after leaving frame");
 });;
 
-export const testFocusGainedLost = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "FocusGainedLost test");
+export const testFocusGainedLost = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, "aa".split("")
                 .concat(webdriver.Key.ESCAPE)
@@ -469,13 +469,13 @@ export const testFocusGainedLost = retryTest(async (server: any, driver: webdriv
         expect(await input.getAttribute("value")).toBe("ab");
 });
 
-export const testTakeoverOnce = retryTest(async (server: any, driver: webdriver.WebDriver) => {
+export const testTakeoverOnce = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const backup = await readVimrc();
         await writeVimrc(`
 let g:firenvim_config = { 'localSettings': { '.*': { 'selector': 'textarea', 'takeover': 'once' } } }
 ${backup}
                 `);
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "takeover: once test");
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         await reloadNeovim(server, driver);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":q!".split("")
@@ -495,14 +495,14 @@ ${backup}
         await server.pullCoverageData(contentSocket);
 });
 
-export const testTakeoverEmpty = retryTest(async (server: any, driver: webdriver.WebDriver) => {
+export const testTakeoverEmpty = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const backup = await readVimrc();
         await writeVimrc(`
 let g:firenvim_config = { 'localSettings': { '.*': { 'takeover': 'empty' } } }
 ${backup}
                 `);
         await reloadNeovim(server, driver);
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "takeover: empty");
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         let [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         // Makign sure that whitespace == empty
         await sendKeys(driver, "i".split("")
@@ -542,14 +542,14 @@ ${backup}
         await server.pullCoverageData(contentSocket);
 });
 
-export const testTakeoverNonEmpty = retryTest(async (server: any, driver: webdriver.WebDriver) => {
+export const testTakeoverNonEmpty = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const backup = await readVimrc();
         await writeVimrc(`
 let g:firenvim_config = { 'localSettings': { '.*': { 'takeover': 'nonempty' } } }
 ${backup}
                 `);
         await reloadNeovim(server, driver);
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "takeover: nonempty test");
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         let input = await driver.wait(Until.elementLocated(By.id("content-input")), WAIT_DELAY, "content-input not found");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         await driver.actions().click(input).perform();
@@ -571,8 +571,8 @@ ${backup}
         await server.pullCoverageData(contentSocket);
 });
 
-export const testLargeBuffers = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "Large buffers test");
+export const testLargeBuffers = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const i = await driver.wait(Until.elementLocated(By.id("content-input")), WAIT_DELAY, "content-input");
         await driver.executeScript(`arguments[0].scrollIntoView(true);
                                    arguments[0].value = (new Array(5000)).fill("a").join("");`, i);
@@ -586,13 +586,13 @@ export const testLargeBuffers = retryTest(async (server: any, driver: webdriver.
         await server.pullCoverageData(contentSocket);
 });
 
-export const testNoLingeringNeovims = retryTest(async (server: any, driver: webdriver.WebDriver) => {
+export const testNoLingeringNeovims = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         // Load neovim once and kill the tab, then load neovim again and kill
         // the frame.
-        let contentSocket = await loadLocalPage(server, driver, "simple.html", "No lingering neovims test");
+        let contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         let [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await server.pullCoverageData(contentSocket);
-        contentSocket = await loadLocalPage(server, driver, "simple.html", "No lingering neovims test");
+        contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":q!".split("").concat(webdriver.Key.ENTER))
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
@@ -614,8 +614,8 @@ export const testNoLingeringNeovims = retryTest(async (server: any, driver: webd
         await server.pullCoverageData(contentSocket);
 });
 
-export const testInputResizes = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "resize.html", "Input resize test");
+export const testInputResizes = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "resize.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, "100aa".split("")
                        .concat(webdriver.Key.ESCAPE)
@@ -634,8 +634,8 @@ export const testInputResizes = retryTest(async (server: any, driver: webdriver.
         await server.pullCoverageData(contentSocket);
 });;
 
-export const testResize = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "Resizing test");
+export const testResize = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ":set lines=100".split("")
                        .concat(webdriver.Key.ENTER)
@@ -677,8 +677,8 @@ export const testResize = retryTest(async (server: any, driver: webdriver.WebDri
 // /!\ NO CONTENT COVERAGE FOR THIS TEST! /!\
 // This is because the inner frames creates a second content socket and we
 // don't know how to deal with that...
-export const testWorksInFrame = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "parentframe.html", "Iframe test");
+export const testWorksInFrame = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "parentframe.html", testTitle);
         const frame = await driver.wait(Until.elementLocated(By.id("frame")));
         driver.switchTo().frame(frame);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
@@ -693,7 +693,7 @@ export const testWorksInFrame = retryTest(async (server: any, driver: webdriver.
         await server.pullCoverageData(contentSocket);
 });
 
-export const testIgnoreKeys = retryTest(async (server: any, driver: webdriver.WebDriver) => {
+export const testIgnoreKeys = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const vimrcContent = await readVimrc();
         await writeVimrc(`
 nnoremap <C-1> i<LT>C-1><Esc>
@@ -713,7 +713,7 @@ let g:firenvim_config = {
 ${vimrcContent}
                 `);
         await reloadNeovim(server, driver);
-        const contentSocket = await loadLocalPage(server, driver, "simple.html", "Key passthrough test");
+        const contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await driver.actions()
                 // normal <C-1>
@@ -764,7 +764,7 @@ ${vimrcContent}
         await server.pullCoverageData(contentSocket);
 });
 
-export const testContentEditable = retryTest(async (server: any, driver: webdriver.WebDriver) => {
+export const testContentEditable = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const vimrcContent = await readVimrc();
         await writeVimrc(`
 let g:firenvim_config = {
@@ -777,7 +777,7 @@ let g:firenvim_config = {
 \\ }
 ${vimrcContent}`);
         await reloadNeovim(server, driver);
-        const contentSocket = await loadLocalPage(server, driver, "contenteditable.html", "Contenteditable test");
+        const contentSocket = await loadLocalPage(server, driver, "contenteditable.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         const innerText = await input.getAttribute("innerText");
         const innerHTML = await input.getAttribute("innerHTML");
@@ -794,8 +794,8 @@ ${vimrcContent}`);
         await server.pullCoverageData(contentSocket);
 });
 
-export const testDisappearing = retryTest(async (server: any, driver: webdriver.WebDriver) => {
-        const contentSocket = await loadLocalPage(server, driver, "disappearing.html", "Modifier test");
+export const testDisappearing = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const contentSocket = await loadLocalPage(server, driver, "disappearing.html", testTitle);
         let [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         // simulate the page making the span disappear again
         await driver.executeScript("document.querySelector('span').remove()");
@@ -814,7 +814,7 @@ export const testDisappearing = retryTest(async (server: any, driver: webdriver.
         await server.pullCoverageData(contentSocket);
 });
 
-export async function testGithubAutofill(server: any, driver: webdriver.WebDriver) {
+export const testGithubAutofill = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         // Prepare page, which has to contain issue template
         const template_content = fs.readFileSync(path.join(process.cwd(), "ISSUE_TEMPLATE.md")).toString();
         const simple_content = fs.readFileSync(path.join(pagesDir, "simple.html")).toString();
@@ -828,7 +828,7 @@ export async function testGithubAutofill(server: any, driver: webdriver.WebDrive
         const version = JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json")).toString()).version;
 
         // Now load page and check that browser info was filled
-        const contentSocket = await loadLocalPage(server, driver, "github.html", "Github autofill test");
+        const contentSocket = await loadLocalPage(server, driver, "github.html", testTitle);
         const issue_body = await driver.wait(Until.elementLocated(By.id("issue_body")));
         await driver.wait(async () => (await issue_body.getAttribute("value") !== github_content), WAIT_DELAY, "Issue body not filled!");
         const issue_content = await issue_body.getAttribute("value");
@@ -837,11 +837,11 @@ export async function testGithubAutofill(server: any, driver: webdriver.WebDrive
         expect(issue_content).toMatch(new RegExp(`Browser Addon Version: ${version}`, 'g'));
         expect(issue_content).toMatch(new RegExp(`Neovim Plugin Version: ${version}`, 'g'));
         await server.pullCoverageData(contentSocket);
-};
+});
 
-export async function testToggleFirenvim(server: any, driver: webdriver.WebDriver) {
+export async function testToggleFirenvim(testTitle: string, server: any, driver: webdriver.WebDriver) {
         // Loading page and toggling correctly disables firenvim in tab
-        let contentSocket = await loadLocalPage(server, driver, "simple.html", "Firenvim toggle test");
+        let contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         await server.toggleFirenvim();
         let input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.actions().click(input).perform();
@@ -856,7 +856,7 @@ export async function testToggleFirenvim(server: any, driver: webdriver.WebDrive
         await server.pullCoverageData(contentSocket);
 
         // Firenvim stays disabled when loading a new page in a disabled tab
-        contentSocket = await loadLocalPage(server, driver, "simple.html", "Firenvim toggle test");
+        contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
         input = await driver.wait(Until.elementLocated(By.id("content-input")));
         await driver.actions().click(input).perform();
         await driver.sleep(FIRENVIM_INIT_DELAY);
