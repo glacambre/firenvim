@@ -1,8 +1,7 @@
 import { getConf } from "./utils/configuration";
-import { isChrome } from "./utils/utils";
+import { computeSelector, isChrome } from "./utils/utils";
 import { AbstractEditor } from "./editors/AbstractEditor";
 import { getEditor } from "./editors/editors";
-import { computeSelector } from "./utils/CSSUtils";
 
 export class FirenvimElement {
 

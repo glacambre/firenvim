@@ -1,5 +1,4 @@
-import { executeInPage } from "../utils/utils";
-import { computeSelector } from "../utils/CSSUtils";
+import { computeSelector, executeInPage } from "../utils/utils";
 import { AbstractEditor } from "./AbstractEditor";
 
 export class CodeMirrorEditor extends AbstractEditor {
