@@ -133,27 +133,6 @@ export function toFileName(url: string, id: string, language: string) {
     return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(shortId)}.${ext}`;
 }
 
-// Returns a number tuple representing the size of characters in the host
-export function getCharSize(host: HTMLElement) {
-    const span = document.createElement("span");
-    span.style.position = "absolute";
-    span.style.top = "0px";
-    span.style.left = "0px";
-    span.innerText = " ";
-    host.appendChild(span);
-    const { width, height } = span.getBoundingClientRect();
-    host.removeChild(span);
-    return [width, height];
-}
-
-// Returns a number tuple representing how many columns and rows can fit in the
-// host.
-export function getGridSize(host: HTMLElement) {
-    const rect = host.getBoundingClientRect();
-    const [width, height] = getCharSize(host);
-    return [Math.floor(rect.width / width), Math.floor(rect.height / height)];
-}
-
 // Given a language name, returns a filename extension. Can return undefined.
 export function languageToExtensions(language: string) {
     const lang = language.toLowerCase();

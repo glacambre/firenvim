@@ -1,9 +1,9 @@
 import { neovim } from "./nvimproc/HTMLNeovim";
 import { page } from "./page/proxy";
-import { getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
+import { getCharSize, getGridSize, getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
-import { getCharSize, getGridSize, isChrome, toFileName } from "./utils/utils";
+import { isChrome, toFileName } from "./utils/utils";
 
 const frameIdPromise = browser
     .runtime
