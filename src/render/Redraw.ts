@@ -1,7 +1,6 @@
 import { NvimMode } from "../utils/configuration";
 import { page } from "../page/proxy";
-import { parseGuifont, toHexCss } from "../utils/CSSUtils";
-import { getCharSize, getGridSize } from "../utils/utils";
+import { getCharSize, getGridSize, parseGuifont, toHexCss } from "../utils/utils";
 import { Grid } from "./Grid";
 
 // Takes a `guifont` declaration and returns that same font declaration but as

@@ -1,5 +1,5 @@
 import { page } from "../page/proxy";
-import { parseGuifont, toHexCss } from "../utils/CSSUtils";
+import { parseGuifont, toHexCss } from "../utils/utils";
 import { NvimMode } from "../utils/configuration";
 
 let functions: any;
