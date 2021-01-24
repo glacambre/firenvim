@@ -22,6 +22,9 @@ page.killEditor = (f => async () => {
         socket = await createSocket();
     }
     await makeRequest(socket, "pushCoverage", [JSON.stringify(coverageData)]);
+    // Ignoring this return because it's reached but after cov info has been
+    // sent.
+    /* istanbul ignore next */
     return f();
 })(page.killEditor);
 
