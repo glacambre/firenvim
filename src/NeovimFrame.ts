@@ -1,4 +1,4 @@
-import { neovim } from "./nvimproc/HTMLNeovim";
+import { neovim } from "./HTMLNeovim";
 import { page } from "./page/proxy";
 import { getCharSize, getGridSize, getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";

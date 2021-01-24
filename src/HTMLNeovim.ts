@@ -1,5 +1,5 @@
-import { page } from "../page/proxy";
-import { onRedraw } from "../render/Redraw";
+import { page } from "./page/proxy";
+import { onRedraw } from "./render/Redraw";
 import { Stdin } from "./Stdin";
 import { Stdout } from "./Stdout";
 

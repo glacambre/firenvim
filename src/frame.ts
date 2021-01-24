@@ -1,4 +1,4 @@
-import { neovim } from "./nvimproc/Neovim";
+import { neovim } from "./Neovim";
 import { page } from "./page/proxy";
 import { getGridId, getLogicalSize, getCurrentMode, computeGridDimensionsFor, getGridCoordinates } from "./render/RedrawCanvas";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
