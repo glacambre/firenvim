@@ -160,7 +160,7 @@ describe("Firefox", () => {
         t("Frame browser shortcuts", (...args) => neovimVersion >= 0.5
                 ? testBrowserShortcuts(...args)
                 : undefined
-         );
+         , 30000);
         if (process.platform === "linux") {
                 t("No lingering neovim process", testNoLingeringNeovims);
         }
