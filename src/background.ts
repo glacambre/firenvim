@@ -72,7 +72,9 @@ browser.runtime.getPlatformInfo().then((plat: any) => os = plat.os);
 // Last error message
 let error = "";
 
-// Simple getter for easy RPC calls
+// Simple getter for easy RPC calls. Can't be tested as requires opening
+// browserAction.
+/* istanbul ignore next */
 function getError() {
     return error;
 }
@@ -89,6 +91,9 @@ function registerErrors(nvim: any, reject: any) {
     nvim.onDisconnect.addListener(async (p: any) => {
         clearTimeout(timeout);
         updateIcon();
+        // Unfortunately this error handling can't be tested as it requires
+        // side-effects on the OS.
+        /* istanbul ignore next */
         if (p.error) {
             const errstr = p.error.toString();
             if (errstr.match(/no such native application/i)) {
@@ -116,6 +121,7 @@ function registerErrors(nvim: any, reject: any) {
 
 // Last warning message
 let warning = "";
+/* istanbul ignore next */
 function getWarning() {
     return warning;
 }
@@ -124,6 +130,8 @@ async function checkVersion(nvimVersion: string) {
     nvimPluginVersion = nvimVersion;
     const manifest = browser.runtime.getManifest();
     warning = "";
+    // Can't be tested as it would require side effects on the OS.
+    /* istanbul ignore next */
     if (manifest.version !== nvimVersion) {
         warning = `Neovim plugin version (${nvimVersion}) and browser addon `
             + `version (${manifest.version}) do not match.`;
@@ -373,6 +381,8 @@ Object.assign(window, {
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResponse: any) => {
     const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
+    // Can't be tested as there's no way to force an incorrect content request.
+    /* istanbul ignore next */
     if (!fn) {
         throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
     }
@@ -408,6 +418,9 @@ async function updateIfPossible() {
                                                      { frameId: 0 })
                                         .catch(() => 0));
     const instances = await (Promise.all(messages));
+    // Can't be covered as reload() would destroy websockets and thus coverage
+    // data.
+    /* istanbul ignore next */
     if (instances.find(n => n > 0) === undefined) {
         browser.runtime.reload();
     } else {
