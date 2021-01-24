@@ -48,7 +48,7 @@ export async function getNewestFileIn(directory: string) {
 
 function sendKeys(driver: webdriver.WebDriver, keys: any[]) {
         return keys.reduce((prom, key) => prom
-                .then((action: any) => action.sendKeys(key))
+                .then((action: any) => action.pause(5).sendKeys(key))
                 , Promise.resolve(driver.actions()))
             .then((action: any) => action.perform());
 }
