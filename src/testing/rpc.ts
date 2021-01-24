@@ -47,8 +47,8 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
                     }));
                 });
                 break;
-            case "toggleFirenvim":
-                (window as any).acceptCommand("toggle_firenvim").finally(() => {
+            case "acceptCommand":
+                (window as any).acceptCommand(...req.args).finally(() => {
                     s.send(JSON.stringify({
                         args: [],
                         funcName: ["resolve"],
