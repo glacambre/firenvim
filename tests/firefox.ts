@@ -22,6 +22,7 @@ import {
  testDynamicTextareas,
  testEvalJs,
  testFocusGainedLost,
+ testForceNvimify,
  testGithubAutofill,
  testGStartedByFirenvim,
  testGuifont,
@@ -155,6 +156,7 @@ describe("Firefox", () => {
         t("Works in frames", testWorksInFrame);
         t("Github autofill", testGithubAutofill);
         t("Config priorities", testConfigPriorities);
+        t("Force nvimify", testForceNvimify);
         t("Frame browser shortcuts", (...args) => neovimVersion >= 0.5
                 ? testBrowserShortcuts(...args)
                 : undefined
