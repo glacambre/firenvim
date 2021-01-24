@@ -735,7 +735,7 @@ ${vimrcContent}
                .toContain((await input.getAttribute("value")).slice(0, result.length));
 }));
 
-export const testContentEditable = retryTest(withLocalPage("contenteditable.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+export const testContentEditable = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const vimrcContent = await readVimrc();
         await writeVimrc(`
 let g:firenvim_config = {
@@ -748,11 +748,12 @@ let g:firenvim_config = {
 \\ }
 ${vimrcContent}`);
         await reloadNeovim(server, driver);
+        // Need to load the page manually here as propagating the selector
+        // modifications do not result in creating new event listeners.
+        const contentSocket = await loadLocalPage(server, driver, "contenteditable.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         const innerText = await input.getAttribute("innerText");
         const innerHTML = await input.getAttribute("innerHTML");
-        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        await driver.actions().click(input).perform();
         await sendKeys(driver, ":%s/b>/i>/g".split("")
                        .concat(webdriver.Key.ENTER)
                        .concat(":wq".split(""))
@@ -761,9 +762,10 @@ ${vimrcContent}`);
         await driver.wait(async () => (await input.getAttribute("innerHTML") !== innerHTML), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("innerText")).toBe(innerText);
         expect((await input.getAttribute("innerHTML")).trim()).toBe("<i>Firenvim</i> <i>works</i>!");
-}));
+        await server.pullCoverageData(contentSocket);
+});
 
-export const testConfigPriorities = retryTest(withLocalPage("contenteditable.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+export const testConfigPriorities = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const vimrcContent = await readVimrc();
         await writeVimrc(`
 let g:firenvim_config = {
@@ -783,17 +785,18 @@ let g:firenvim_config = {
 \\ }
 ${vimrcContent}`);
         await reloadNeovim(server, driver);
+        // see contenteditable test to know why manual loading is required
+        const contentSocket = await loadLocalPage(server, driver, "contenteditable.html", testTitle);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         const innerText = await input.getAttribute("innerText");
         const innerHTML = await input.getAttribute("innerHTML");
-        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
-        await driver.actions().click(input).perform();
         await sendKeys(driver, ":wq".split("").concat(webdriver.Key.ENTER))
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
         await driver.wait(async () => (await input.getAttribute("innerHTML") !== innerHTML), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("innerText")).toBe(innerText);
         expect((await input.getAttribute("innerHTML")).trim()).toBe(innerText);
-}));
+        await server.pullCoverageData(contentSocket);
+});
 
 
 export const testDisappearing = retryTest(withLocalPage("disappearing.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
