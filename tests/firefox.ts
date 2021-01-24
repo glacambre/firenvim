@@ -124,7 +124,7 @@ describe("Firefox", () => {
                 return test.only(s, () => f(s, server, driver), ms);
         }
 
-        o("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
+        t("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
         t("Modifiers work", testModifiers);
         t("Buggy Vimrc", testVimrcFailure, 60000);
         t("Input resize", testInputResizes);
