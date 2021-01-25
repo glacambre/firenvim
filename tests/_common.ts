@@ -132,30 +132,42 @@ export const testModifiers = retryTest(withLocalPage("simple.html", async (_: st
                 .keyDown(webdriver.Key.CONTROL)
                 .keyDown("v")
                 .keyUp("v")
-                .keyDown("a")
-                .keyUp("a")
+                .keyDown("i")
+                .keyUp("i")
                 .keyDown("v")
                 .keyUp("v")
                 .keyUp(webdriver.Key.CONTROL)
                 .keyDown(webdriver.Key.ALT)
-                .keyDown("a")
-                .keyUp("a")
+                .keyDown("i")
+                .keyUp("i")
                 .keyUp(webdriver.Key.ALT)
                 .keyDown(webdriver.Key.CONTROL)
                 .keyDown("v")
                 .keyUp("v")
                 .keyUp(webdriver.Key.CONTROL)
                 .keyDown(webdriver.Key.COMMAND)
-                .keyDown("a")
-                .keyUp("a")
+                .keyDown("i")
+                .keyUp("i")
                 .keyUp(webdriver.Key.COMMAND)
                 .keyDown(webdriver.Key.CONTROL)
                 .keyDown("v")
                 .keyUp("v")
                 .keyUp(webdriver.Key.CONTROL)
+                .keyUp(webdriver.Key.COMMAND)
                 .keyDown(webdriver.Key.SHIFT)
                 .keyDown(webdriver.Key.ARROW_LEFT)
-                .keyDown(webdriver.Key.ARROW_LEFT)
+                .keyUp(webdriver.Key.ARROW_LEFT)
+                .keyUp(webdriver.Key.SHIFT)
+                .keyUp(webdriver.Key.CONTROL)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .keyDown(webdriver.Key.SHIFT)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown(webdriver.Key.ENTER)
+                .keyDown(webdriver.Key.ENTER)
+                .keyUp(webdriver.Key.CONTROL)
                 .keyUp(webdriver.Key.SHIFT)
                 .perform();
         await sendKeys(driver, [webdriver.Key.ESCAPE]
@@ -163,8 +175,7 @@ export const testModifiers = retryTest(withLocalPage("simple.html", async (_: st
                        .concat(webdriver.Key.ENTER))
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
         await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
-        expect(["\u0011<M-q><D-q><S-Left>", "\u0001<M-a><D-a><S-Left>"])
-               .toContain(await input.getAttribute("value"));
+        expect(await input.getAttribute("value")).toBe("	<M-i><D-i><S-Left><C-S-CR>\n");
 }));
 
 export const testUnfocusedKillEditor = retryTest(withLocalPage("simple.html", async (_: string, server: any, driver: webdriver.WebDriver) => {
@@ -436,16 +447,28 @@ export const testEvalJs = retryTest(withLocalPage("simple.html", async (testTitl
 }));
 
 export const testPressKeys = retryTest(withLocalPage("chat.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
-        const [input] = await createFirenvimFor(server, driver, By.id("content-input"));
-        await sendKeys(driver, "iHello".split("")
-                .concat(webdriver.Key.ESCAPE)
-                .concat(":w".split(""))
-                .concat(webdriver.Key.ENTER)
-                .concat(":call firenvim#press_keys('<C-CR>')".split(""))
-                .concat(webdriver.Key.ENTER)
-                .concat(":q!".split(""))
+        const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        let value = await input.getAttribute("value");
+        await sendKeys(driver, ":call firenvim#press_keys('<C-CR>')".split("")
                 .concat(webdriver.Key.ENTER));
-        await driver.wait(async () => (await input.getAttribute("value")).startsWith("Message sent!"), WAIT_DELAY, "Input value did not change");
+        await driver.wait(async () => ((await input.getAttribute("value")) !== value), WAIT_DELAY, "Input value did not change");
+        value = await input.getAttribute("value");
+        await sendKeys(driver, ":call firenvim#press_keys('<C-A>')".split("")
+                .concat(webdriver.Key.ENTER));
+        await driver.wait(async () => ((await input.getAttribute("value")) !== value), WAIT_DELAY, "Input value did not change");
+        value = await input.getAttribute("value");
+        await sendKeys(driver, ":call firenvim#press_keys('b')".split("")
+                .concat(webdriver.Key.ENTER));
+        await driver.wait(async () => ((await input.getAttribute("value")) !== value), WAIT_DELAY, "Input value did not change");
+        value = await input.getAttribute("value");
+        await sendKeys(driver, ":call firenvim#press_keys('<Space>')".split("")
+                .concat(webdriver.Key.ENTER));
+        await driver.wait(async () => ((await input.getAttribute("value")) !== value), WAIT_DELAY, "Input value did not change");
+        value = await input.getAttribute("value");
+        await sendKeys(driver, ":q!".split("")
+                .concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        expect(await input.getAttribute("value")).toBe("<C-Enter> pressed!<C-A> pressed!b pressed!Space pressed!")
 }));
 
 export const testInputFocusedAfterLeave = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {

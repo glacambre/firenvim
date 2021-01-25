@@ -54,6 +54,16 @@ export async function neovim(
 
     let lastLostFocus = performance.now();
     stdout.addListener("notification", async (name: string, args: any[]) => {
+        // A very tricky sequence of events could happen here:
+        // - firenvim_bufwrite is received page.setElementContent is called
+        //   asynchronously
+        // - firenvim_focus_page is called, page.focusPage() is called
+        //   asynchronously, lastLostFocus is set to now
+        // - page.setElementContent completes, lastLostFocus is checked to see
+        //   if focus should be grabbed or not
+        // That's why we have to check for lastLostFocus after
+        // page.setElementContent/Cursor! Same thing for firenvim_press_keys.
+        const hadFocus = document.hasFocus();
         switch (name) {
             case "redraw":
                 if (args) {
@@ -61,16 +71,6 @@ export async function neovim(
                 }
                 break;
             case "firenvim_bufwrite":
-                // A very tricky sequence of events could happen here:
-                // - firenvim_bufwrite is received page.setElementContent is
-                //   called asynchronously
-                // - firenvim_focus_page is called, page.focusPage() is called
-                //   asynchronously, lastLostFocus is set to now
-                // - page.setElementContent completes, lastLostFocus is checked
-                //   to see if focus should be grabbed or not
-                // That's why we have to check for lastLostFocus after
-                // page.setElementContent/Cursor!
-                const hadFocus = document.hasFocus();
                 const data = args[0] as { text: string[], cursor: [number, number] };
                 page.setElementContent(data.text.join("\n"))
                     .then(() => page.setElementCursor(...(data.cursor)))
@@ -101,7 +101,14 @@ export async function neovim(
                 page.hideEditor();
                 break;
             case "firenvim_press_keys":
-                page.pressKeys(args[0]);
+                page.pressKeys(args[0]) .then(() => {
+                    if (hadFocus
+                        && !document.hasFocus()
+                        && (performance.now() - lastLostFocus > 1000)) {
+                        window.focus();
+                    }
+                });
+
                 break;
             case "firenvim_vimleave":
                 lastLostFocus = performance.now();
