@@ -37,6 +37,7 @@ import {
  testFocusPage,
  testPressKeys,
  testResize,
+ testSetCursor,
  testUnfocusedKillEditor,
  testUpdates,
  testTakeoverEmpty,
@@ -176,6 +177,8 @@ describe("Chrome", () => {
          , 30000);
         t("Add-on udpates", testUpdates);
         t("Hide editor", testHideEditor);
+        // setCursor doesn't work on chrome for some reason
+        // t("Textarea.setCursor", testSetCursor);
         if (process.platform === "linux") {
                 t("No lingering neovim process", testNoLingeringNeovims);
         }

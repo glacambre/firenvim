@@ -83,6 +83,8 @@ export class TextareaEditor extends AbstractEditor {
             // character that is more than 1 byte long, we have to remove that
             // amount from column, but only two characters from CHARACTER!
             while (column > 0 && character < text.length) {
+                // Can't happen, but better be safe than sorry
+                /* istanbul ignore next */
                 if (text[character] === "\n") {
                     break;
                 }
