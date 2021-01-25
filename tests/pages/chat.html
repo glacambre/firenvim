@@ -9,9 +9,15 @@
                                 const textarea = document.getElementById("content-input");
                                 textarea.addEventListener("keyup", (e) => {
                                         if (e.key === "Enter" && e.ctrlKey && e.keyCode === 13) {
-                                                textarea.value = "Message sent!";
-                                                textarea.focus();
+                                                textarea.value += "<C-Enter> pressed!";
+                                        } else if (e.key === "A" && e.ctrlKey) {
+                                                textarea.value += "<C-A> pressed!";
+                                        } else if (e.key === "b" && !e.ctrlKey) {
+                                                textarea.value += "b pressed!";
+                                        } else if (e.key === " " && !e.ctrlKey) {
+                                                textarea.value += "Space pressed!";
                                         }
+                                        textarea.focus();
                                 });
                         });
                 </script>
