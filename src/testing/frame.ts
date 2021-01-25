@@ -5,7 +5,9 @@
 import { makeRequest, makeRequestHandler } from "./rpc";
 import { page } from "../page/proxy";
 
-const coverageData = (window as any).__coverage__ || {};
+// Of course we have to ignore the case where
+// coverage data doesn't exist.
+const coverageData = (window as any).__coverage__ || /* istanbul ignore next */ {};
 
 let socket: WebSocket;
 function createSocket(): Promise<WebSocket> {
