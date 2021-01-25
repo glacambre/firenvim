@@ -265,18 +265,6 @@ async function acceptCommand (command: string) {
     const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
     let p;
     switch (command) {
-        case "focus_input":
-            p = browser.tabs.sendMessage(
-                tab.id,
-                { args: [], funcName: ["focusInput"] },
-        );
-        break;
-        case "focus_page":
-            p = browser.tabs.sendMessage(
-                tab.id,
-                { args: [], funcName: ["focusPage"] },
-        );
-        break;
         case "nvimify":
             p = browser.tabs.sendMessage(
                 tab.id,
