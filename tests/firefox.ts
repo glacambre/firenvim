@@ -39,6 +39,7 @@ import {
  testFocusPage,
  testPressKeys,
  testResize,
+ testSetCursor,
  testTakeoverEmpty,
  testTakeoverNonEmpty,
  testTakeoverOnce,
@@ -165,6 +166,7 @@ describe("Firefox", () => {
          , 30000);
         t("Add-on udpates", testUpdates);
         t("Hide editor", testHideEditor);
+        t("Textarea.setCursor", testSetCursor);
         if (process.platform === "linux") {
                 t("No lingering neovim process", testNoLingeringNeovims);
         }

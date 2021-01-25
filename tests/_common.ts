@@ -1012,6 +1012,19 @@ export const testHideEditor = retryTest(withLocalPage("simple.html", async (test
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim frame did not disappear!");
 }));
 
+export const testSetCursor = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const input = await driver.wait(Until.elementLocated(By.id("content-input")));
+        await driver.executeScript(`arguments[0].value = "a$a€a𐐷a💩a\\na💩a𐐷a€a$a"`, input);
+        const [,span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await sendKeys(driver, [webdriver.Key.ESCAPE]
+                                .concat(":norm gg^G$h".split(""))
+                                .concat(webdriver.Key.ENTER)
+                                .concat(":wq!")
+                                .concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim frame did not disappear!");
+        const cursor = await driver.executeScript("return document.activeElement.selectionStart");
+        expect(cursor).toBe(21);
+}));
 
 export async function killDriver(server: any, driver: webdriver.WebDriver) {
         try {
