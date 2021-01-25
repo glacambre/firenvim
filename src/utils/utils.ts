@@ -121,18 +121,15 @@ export function toFileName(url: string, id: string, language: string) {
     const toAlphaNum = (str: string) => (str.match(/[a-zA-Z0-9]+/g) || [])
         .join("-")
         .slice(-32);
-    let ext = "txt";
-    if (language !== undefined && language !== null) {
-        const ext2 = languageToExtensions(language);
-        if (ext2 !== undefined) {
-            ext = ext2;
-        }
-    }
+    const ext = languageToExtensions(language);
     return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(shortId)}.${ext}`;
 }
 
 // Given a language name, returns a filename extension. Can return undefined.
 export function languageToExtensions(language: string) {
+    if (language === undefined || language === null) {
+        language = "";
+    }
     const lang = language.toLowerCase();
     /* istanbul ignore next */
     switch (lang) {
@@ -222,13 +219,16 @@ export function languageToExtensions(language: string) {
         case "yaml":             return "yaml";
         case "z80":              return "z8a";
     }
+    return "txt"
 }
 
 // Make tslint happy
 const fontFamily = "font-family";
 
 // Parses a guifont declaration as described in `:h E244`
-// defaults: default value for each of
+// defaults: default value for each of.
+// Can't be tested e2e :/
+/* istanbul ignore next */
 export function parseGuifont(guifont: string, defaults: any) {
     const options = guifont.split(":");
     const result = Object.assign({}, defaults);
