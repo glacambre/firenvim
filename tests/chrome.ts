@@ -24,6 +24,7 @@ import {
  testGithubAutofill,
  testGStartedByFirenvim,
  testGuifont,
+ testHideEditor,
  testIgnoreKeys,
  testFocusInput,
  testInputFocusedAfterLeave,
@@ -174,6 +175,7 @@ describe("Chrome", () => {
                 : undefined
          , 30000);
         t("Add-on udpates", testUpdates);
+        t("Hide editor", testHideEditor);
         if (process.platform === "linux") {
                 t("No lingering neovim process", testNoLingeringNeovims);
         }
