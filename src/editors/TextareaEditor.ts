@@ -5,10 +5,6 @@ import { getConf } from "../utils/configuration";
 // really be a contenteditable-specific editor.
 export class TextareaEditor extends AbstractEditor {
 
-    static matches (e: HTMLElement) {
-        return true;
-    }
-
     private elem: HTMLElement;
     constructor (e: HTMLElement) {
         super();
