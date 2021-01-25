@@ -83,7 +83,7 @@ export async function neovim(
                     });
                 break;
             case "firenvim_eval_js":
-                const result = await page.evalInPage(args[0]);
+                const result = await page.evalInPage(args[0]).catch(_ => _);
                 if (args[1]) {
                     request("nvim_call_function", [args[1], [JSON.stringify(result)]]);
                 }
