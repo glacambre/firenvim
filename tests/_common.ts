@@ -999,6 +999,19 @@ export const testUpdates = retryTest(withLocalPage("simple.html", async (testTit
         expect(await input.getAttribute("value")).toBe("Updates working!");
 }));
 
+export const testHideEditor = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await sendKeys(driver, ":call firenvim#hide_frame()".split("").concat(webdriver.Key.ENTER));
+        await driver.wait(async () => (await driver.switchTo().activeElement().getAttribute("id") === "content-input"), WAIT_DELAY, "Focus didn't switch back to input");
+        await driver.executeScript(`arguments[0].blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`, input);
+        await driver.actions().click(input).perform();
+        await driver.wait(async () => (await driver.switchTo().activeElement() !== input), WAIT_DELAY, "Focus didn't switch back to span");
+        await sendKeys(driver, ":wq!".split("").concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim frame did not disappear!");
+}));
+
 
 export async function killDriver(server: any, driver: webdriver.WebDriver) {
         try {
