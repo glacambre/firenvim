@@ -447,7 +447,7 @@ export const testEvalJs = retryTest(withLocalPage("simple.html", async (testTitl
 }));
 
 export const testPressKeys = retryTest(withLocalPage("chat.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
-        const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
         let value = await input.getAttribute("value");
         await sendKeys(driver, ":call firenvim#press_keys('<C-CR>')".split("")
                 .concat(webdriver.Key.ENTER));
@@ -464,11 +464,8 @@ export const testPressKeys = retryTest(withLocalPage("chat.html", async (testTit
         await sendKeys(driver, ":call firenvim#press_keys('<Space>')".split("")
                 .concat(webdriver.Key.ENTER));
         await driver.wait(async () => ((await input.getAttribute("value")) !== value), WAIT_DELAY, "Input value did not change");
-        value = await input.getAttribute("value");
-        await sendKeys(driver, ":q!".split("")
-                .concat(webdriver.Key.ENTER));
-        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
         expect(await input.getAttribute("value")).toBe("<C-Enter> pressed!<C-A> pressed!b pressed!Space pressed!")
+        await server.pullCoverageData(frameSocket);
 }));
 
 export const testInputFocusedAfterLeave = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
