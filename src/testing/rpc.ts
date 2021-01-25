@@ -14,6 +14,9 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
     return (m: any) => {
         const req = JSON.parse(m.data);
         switch(req.funcName[0]) {
+            // Ignoring the resolve case because the browser has no reason to
+            // send requests to the coverage server for now.
+            /* istanbul ignore next */
             case "resolve":
                 const r = requests.get(req.reqId);
                 if (r !== undefined) {

@@ -219,7 +219,7 @@ export function languageToExtensions(language: string) {
         case "yaml":             return "yaml";
         case "z80":              return "z8a";
     }
-    return "txt"
+    return "txt";
 }
 
 // Make tslint happy
