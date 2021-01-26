@@ -130,43 +130,43 @@ describe("Firefox", () => {
         }
 
         t("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
-        t("Modifiers work", testModifiers);
-        t("Buggy Vimrc", testVimrcFailure, 60000);
-        t("Input resize", testInputResizes);
-        t("Ace editor", testAce);
-        t("CodeMirror", testCodemirror);
-        t("Contenteditable", testContentEditable);
-        t("Monaco editor", testMonaco);
-        t("Span removed", testDisappearing);
+        t("Github autofill", testGithubAutofill);
+        t("Force nvimify", testForceNvimify);
+        t("Input focused after frame", testInputFocusedAfterLeave);
+        t("FocusInput", testFocusInput);
         t("Dynamically created elements", testDynamicTextareas);
         t("Dynamically created nested elements", testNestedDynamicTextareas);
         t("Large buffers", testLargeBuffers);
-        t("FocusGained/lost autocmds", testFocusGainedLost);
-        t("g:started_by_firenvim", testGStartedByFirenvim);
-        t("Guifont", testGuifont);
-        t("Ignoring keys", testIgnoreKeys);
-        t("Input focused after frame", testInputFocusedAfterLeave);
-        t("FocusInput", testFocusInput);
-        t("FocusPage", testFocusPage);
-        t("EvalJS", testEvalJs);
-        t("PressKeys", testPressKeys);
-        t(":set columns lines", testResize);
-        t("Unfocused killEditor", testUnfocusedKillEditor);
-        t("Takeover: empty", testTakeoverEmpty);
-        t("Takeover: nonempty", testTakeoverNonEmpty);
-        t("Takeover: once", testTakeoverOnce);
-        t("Toggling firenvim", testToggleFirenvim);
-        t("Works in frames", testWorksInFrame);
-        t("Github autofill", testGithubAutofill);
+        t("Modifiers work", testModifiers);
         t("Config priorities", testConfigPriorities);
-        t("Force nvimify", testForceNvimify);
+        t("Add-on udpates", testUpdates);
+        t("CodeMirror", testCodemirror);
+        t("Contenteditable", testContentEditable);
+        t("Input resize", testInputResizes);
+        t("g:started_by_firenvim", testGStartedByFirenvim);
+        t("Works in frames", testWorksInFrame);
+        t("FocusPage", testFocusPage);
+        t("Ace editor", testAce);
+        t("Unfocused killEditor", testUnfocusedKillEditor);
+        t("Textarea.setCursor", testSetCursor);
+        t("Hide editor", testHideEditor);
+        t("Monaco editor", testMonaco);
+        t("Span removed", testDisappearing);
+        t("Ignoring keys", testIgnoreKeys);
         t("Frame browser shortcuts", (...args) => neovimVersion >= 0.5
                 ? testBrowserShortcuts(...args)
                 : undefined
          , 30000);
-        t("Add-on udpates", testUpdates);
-        t("Hide editor", testHideEditor);
-        t("Textarea.setCursor", testSetCursor);
+        t("Takeover: nonempty", testTakeoverNonEmpty);
+        t("Guifont", testGuifont);
+        t("Takeover: once", testTakeoverOnce);
+        t("PressKeys", testPressKeys);
+        t("FocusGained/lost autocmds", testFocusGainedLost);
+        t(":set columns lines", testResize);
+        t("EvalJS", testEvalJs);
+        t("Takeover: empty", testTakeoverEmpty);
+        t("Toggling firenvim", testToggleFirenvim);
+        t("Buggy Vimrc", testVimrcFailure, 60000);
         if (process.platform === "linux") {
                 t("No lingering neovim process", testNoLingeringNeovims);
         }
