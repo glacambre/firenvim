@@ -99,28 +99,28 @@ describe("Firefox", () => {
                 background = await backgroundPromise;
                 const pageLoaded = loadLocalPage(server, driver, "simple.html", "");
                 return await pageLoaded;
-        }, 60000);
+        }, 120000);
 
         beforeEach(async () => {
                 resetVimrc();
                 await loadLocalPage(server, driver, "simple.html", "");
                 await reloadNeovim(server, driver);
                 await loadLocalPage(server, driver, "simple.html", "")
-        }, 60000);
+        }, 120000);
 
         afterEach(async () => {
                 // This should kill existing webdriver promises (e.g. wait
                 // until element found) and prevent one test's errors from
                 // contaminating another's.
                 await loadLocalPage(server, driver, "simple.html", "");
-        }, 60000);
+        }, 120000);
 
         afterAll(async () => {
                 await server.pullCoverageData(background);
                 await server.shutdown();
                 writeFailures();
                 await killDriver(server, driver);
-        }, 60000);
+        }, 120000);
 
         function t(s: string, f: (s: string, s2: any, d: any) => Promise<any>, ms?: number) {
                 return test(s, () => f(s, server, driver), ms);
