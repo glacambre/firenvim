@@ -159,8 +159,7 @@ describe("Chrome", () => {
         t("FocusPage", testFocusPage);
         t("Ace editor", testAce);
         t("Unfocused killEditor", testUnfocusedKillEditor);
-        // setCursor doesn't work on chrome for some reason
-        // t("Textarea.setCursor", testSetCursor);
+        t("Textarea.setCursor", testSetCursor);
         t("Hide editor", testHideEditor);
         t("Monaco editor", testMonaco);
         t("Span removed", testDisappearing);

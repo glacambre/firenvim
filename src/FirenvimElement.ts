@@ -93,6 +93,9 @@ export class FirenvimElement {
     // information requires evaluating code in the page's context.
     private bufferInfo = (Promise.resolve(["", "", [1, 1], undefined]) as
                           Promise<[string, string, [number, number], string]>);
+    // cursor: last known cursor position. Updated on getPageElementCursor and
+    // setPageElementCursor
+    private cursor = [1, 1] as [number, number];
 
 
     // elem is the element that received the focusEvent.
@@ -272,6 +275,7 @@ export class FirenvimElement {
     }
 
     detachFromPage () {
+        this.clearFocusListeners();
         const elem = this.getElement();
         this.resizeObserver.unobserve(elem);
         this.intersectionObserver.unobserve(elem);
@@ -327,7 +331,15 @@ export class FirenvimElement {
     focusOriginalElement (addListener: boolean) {
         (document.activeElement as any).blur();
         this.originalElement.removeEventListener("focus", this.nvimify);
+        const sel = document.getSelection();
+        sel.removeAllRanges();
+        const range = document.createRange();
+        if (this.originalElement.ownerDocument.contains(this.originalElement)) {
+            range.setStart(this.originalElement, 0);
+        }
+        range.collapse(true);
         this.originalElement.focus();
+        sel.addRange(range);
         if (addListener) {
             this.originalElement.addEventListener("focus", this.nvimify);
         }
@@ -357,6 +369,12 @@ export class FirenvimElement {
         return this.getEditor().getContent();
     }
 
+    getPageElementCursor () {
+        const p = this.editor.getCursor().catch(() => [1, 1]) as Promise<[number, number]>;
+        p.then(c => this.cursor = c);
+        return p;
+    }
+
     getSelector () {
         return computeSelector(this.getElement());
     }
@@ -378,7 +396,7 @@ export class FirenvimElement {
         this.bufferInfo = new Promise(async r => r([
             document.location.href,
             this.getSelector(),
-            await (this.editor.getCursor().catch(() => [1, 1])),
+            await this.getPageElementCursor(),
             await (this.editor.getLanguage().catch(() => undefined))
         ]));
     }
@@ -518,6 +536,8 @@ export class FirenvimElement {
 
     setPageElementCursor (line: number, column: number) {
         let p = Promise.resolve();
+        this.cursor[0] = line;
+        this.cursor[1] = column;
         if (this.isFocused()) {
             p = this.editor.setCursor(line, column);
         }
