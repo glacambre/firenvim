@@ -1049,6 +1049,8 @@ export const testSetCursor = retryTest(withLocalPage("simple.html", async (testT
                                 .concat(":wq!")
                                 .concat(webdriver.Key.ENTER));
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim frame did not disappear!");
+        // Give a bit more time for the cursor to move. Avoids race conditions.
+        await driver.sleep(1000);
         const cursor = await driver.executeScript("return document.activeElement.selectionStart");
         expect(cursor).toBe(21);
 }));
