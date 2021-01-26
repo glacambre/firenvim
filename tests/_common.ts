@@ -320,13 +320,40 @@ export function reloadNeovim(server: any, driver: webdriver.WebDriver) {
 }
 
 export const testVimrcFailure = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
-        await writeVimrc("call");
+        // Check case where the vimrc doesn't load the neovim plugin
+        await writeVimrc("");
         await reloadNeovim(server, driver);
+        await driver.sleep(10000);
+
         const input = await driver.wait(Until.elementLocated(By.id("content-input")), WAIT_DELAY, "content-input");
         await driver.executeScript("arguments[0].scrollIntoView(true);", input);
         await driver.actions().click(input).perform();
         let shouldCheck: boolean;
         let span;
+        try {
+                span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")),
+                                         1000,
+                                         "Element not found");
+                shouldCheck = true;
+        } catch (e) {
+                // We weren't fast enough to catch the frame appear/disappear,
+                // that's ok
+                shouldCheck = false; 
+        }
+        if (shouldCheck) {
+                // The firenvim frame should disappear after a second
+                await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        }
+        await driver.executeScript(`document.activeElement.blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`);
+
+        // Check case where the vimrc is broken and makes neovim emit an error
+        // message
+        await writeVimrc("call");
+        await reloadNeovim(server, driver);
+        await driver.executeScript("arguments[0].scrollIntoView(true);", input);
+        await driver.actions().click(input).perform();
         try {
                 span = await driver.wait(Until.elementLocated(By.css("body > span:nth-child(2)")),
                                          1000,
