@@ -180,6 +180,6 @@ describe("Chrome", () => {
         t("Toggling firenvim", testToggleFirenvim);
         t("Buggy Vimrc", testVimrcFailure, 60000);
         if (process.platform === "linux") {
-                t("No lingering neovim process", testNoLingeringNeovims);
+                t("No lingering neovim process", testNoLingeringNeovims, 20000);
         }
 })
