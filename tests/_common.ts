@@ -12,7 +12,7 @@ type Server = typeof coverageServer;
 
 import { readVimrc, writeVimrc } from "./_vimrc";
 
-jest.setTimeout(10000);
+jest.setTimeout(20000);
 const FIRENVIM_INIT_DELAY = 1000;
 const WAIT_DELAY = 3000;
 
