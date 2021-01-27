@@ -2,6 +2,8 @@
 const requests = new Map();
 
 let reqId = 0;
+// No reason to make requests for now.
+/* istanbul ignore next */
 export function makeRequest(socket: any, func: string, args?: any[]): any {
     return new Promise(resolve => {
         reqId += 1;
