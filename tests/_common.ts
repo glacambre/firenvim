@@ -752,11 +752,14 @@ inoremap <C-1> <LT>C-1>
 inoremap <C-2> <LT>C-2>
 inoremap <C-3> <LT>C-3>
 inoremap <C-4> <LT>C-4>
+inoremap <C-5> <LT>C-5>
+nnoremap <C-5> i<LT>C-5><Esc>
 let g:firenvim_config = {
         \\ 'globalSettings': {
                 \\ 'ignoreKeys': {
                         \\ 'normal': ['<C-1>'],
                         \\ 'insert': ['<C-2>', '<C-3>'],
+                        \\ 'all': ['<C-5>'],
                 \\ }
         \\ }
 \\ }
@@ -774,6 +777,11 @@ ${vimrcContent}
                 .keyDown(webdriver.Key.CONTROL)
                 .keyDown("2")
                 .keyUp("2")
+                .keyUp(webdriver.Key.CONTROL)
+                // normal <C-5>
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("5")
+                .keyUp("5")
                 .keyUp(webdriver.Key.CONTROL)
                 // enter insert mode
                 .keyDown("a")
@@ -798,6 +806,11 @@ ${vimrcContent}
                 .keyDown(webdriver.Key.CONTROL)
                 .keyDown("4")
                 .keyUp("4")
+                .keyUp(webdriver.Key.CONTROL)
+                // insert <C-5>
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("5")
+                .keyUp("5")
                 .keyUp(webdriver.Key.CONTROL)
                 .perform();
         await sendKeys(driver, [webdriver.Key.ESCAPE]
