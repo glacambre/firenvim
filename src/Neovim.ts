@@ -15,10 +15,11 @@ export async function neovim(
     CanvasRenderer.setFunctions(functions);
     CanvasRenderer.setCanvas(canvas);
 
+    let prevNotificationPromise = Promise.resolve();
     const socket = new WebSocket(`ws://127.0.0.1:${port}/${password}`);
     socket.binaryType = "arraybuffer";
     socket.addEventListener("close", ((_: any) => {
-        page.killEditor();
+        prevNotificationPromise = prevNotificationPromise.finally(() => page.killEditor());
     }));
     await (new Promise(resolve => socket.addEventListener("open", () => {
         resolve();
@@ -54,67 +55,57 @@ export async function neovim(
 
     let lastLostFocus = performance.now();
     stdout.addListener("notification", async (name: string, args: any[]) => {
-        // A very tricky sequence of events could happen here:
-        // - firenvim_bufwrite is received page.setElementContent is called
-        //   asynchronously
-        // - firenvim_focus_page is called, page.focusPage() is called
-        //   asynchronously, lastLostFocus is set to now
-        // - page.setElementContent completes, lastLostFocus is checked to see
-        //   if focus should be grabbed or not
-        // That's why we have to check for lastLostFocus after
-        // page.setElementContent/Cursor! Same thing for firenvim_press_keys.
-        const hadFocus = document.hasFocus();
-        switch (name) {
-            case "redraw":
-                if (args) {
-                    CanvasRenderer.onRedraw(args);
-                }
-                break;
-            case "firenvim_bufwrite":
-                const data = args[0] as { text: string[], cursor: [number, number] };
-                page.setElementContent(data.text.join("\n"))
-                    .then(() => page.setElementCursor(...(data.cursor)))
-                    .then(() => {
-                        if (hadFocus
-                            && !document.hasFocus()
-                            && (performance.now() - lastLostFocus > 1000)) {
-                            window.focus();
+        if (name === "redraw" && args) {
+            CanvasRenderer.onRedraw(args);
+            return;
+        }
+        prevNotificationPromise = prevNotificationPromise.finally(() => {
+            // A very tricky sequence of events could happen here:
+            // - firenvim_bufwrite is received page.setElementContent is called
+            //   asynchronously
+            // - firenvim_focus_page is called, page.focusPage() is called
+            //   asynchronously, lastLostFocus is set to now
+            // - page.setElementContent completes, lastLostFocus is checked to see
+            //   if focus should be grabbed or not
+            // That's why we have to check for lastLostFocus after
+            // page.setElementContent/Cursor! Same thing for firenvim_press_keys
+            const hadFocus = document.hasFocus();
+            canvas.style.display = "none";
+            document.body.appendChild(document.createTextNode(name + " "));
+            switch (name) {
+                case "firenvim_bufwrite":
+                    const data = args[0] as { text: string[], cursor: [number, number] };
+                    return page.setElementContent(data.text.join("\n"))
+                        .then(() => page.setElementCursor(...(data.cursor)))
+                        .then(() => {
+                            if (hadFocus
+                                && !document.hasFocus()
+                                && (performance.now() - lastLostFocus > 3000)) {
+                                window.focus();
+                            }
+                        });
+                case "firenvim_eval_js":
+                    return page.evalInPage(args[0]).catch(_ => _).then(result => {
+                        if (args[1]) {
+                            request("nvim_call_function", [args[1], [JSON.stringify(result)]]);
                         }
                     });
-                break;
-            case "firenvim_eval_js":
-                const result = await page.evalInPage(args[0]).catch(_ => _);
-                if (args[1]) {
-                    request("nvim_call_function", [args[1], [JSON.stringify(result)]]);
-                }
-                break;
-            case "firenvim_focus_page":
-                lastLostFocus = performance.now();
-                page.focusPage();
-                break;
-            case "firenvim_focus_input":
-                lastLostFocus = performance.now();
-                page.focusInput();
-                break;
-            case "firenvim_hide_frame":
-                lastLostFocus = performance.now();
-                page.hideEditor();
-                break;
-            case "firenvim_press_keys":
-                page.pressKeys(args[0]) .then(() => {
-                    if (hadFocus
-                        && !document.hasFocus()
-                        && (performance.now() - lastLostFocus > 1000)) {
-                        window.focus();
-                    }
-                });
-
-                break;
-            case "firenvim_vimleave":
-                lastLostFocus = performance.now();
-                page.killEditor();
-                break;
-        }
+                case "firenvim_focus_page":
+                    lastLostFocus = performance.now();
+                    return page.focusPage();
+                case "firenvim_focus_input":
+                    lastLostFocus = performance.now();
+                    return page.focusInput();
+                case "firenvim_hide_frame":
+                    lastLostFocus = performance.now();
+                    return page.hideEditor();
+                case "firenvim_press_keys":
+                    return page.pressKeys(args[0]);
+                case "firenvim_vimleave":
+                    lastLostFocus = performance.now();
+                    return page.killEditor();
+            }
+        });
     });
 
     const { 0: channel, 1: apiInfo } = (await request("nvim_get_api_info", [])) as INvimApiInfo;
