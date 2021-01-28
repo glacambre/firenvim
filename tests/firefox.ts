@@ -15,6 +15,7 @@ import {
  reloadNeovim,
  testAce,
  testBrowserShortcuts,
+ testFrameBrowserShortcuts,
  testCodemirror,
  testContentEditable,
  testConfigPriorities,
@@ -153,8 +154,9 @@ describe("Firefox", () => {
         t("Monaco editor", testMonaco);
         t("Span removed", testDisappearing);
         t("Ignoring keys", testIgnoreKeys);
+        t("Browser shortcuts", testBrowserShortcuts);
         t("Frame browser shortcuts", (...args) => neovimVersion >= 0.5
-                ? testBrowserShortcuts(...args)
+                ? testFrameBrowserShortcuts(...args)
                 : undefined
          , 30000);
         t("Takeover: nonempty", testTakeoverNonEmpty);

@@ -81,7 +81,11 @@ function getNextXConnection (X: "content" | "frame" | "background") {
         }
 }
 
-export const getNextBackgroundConnection = getNextXConnection("background");
+export const getNextBackgroundSocket = getNextXConnection("background");
+export const getNextBackgroundConnection = () => {
+        backgroundSocket = getNextBackgroundSocket();
+        return backgroundSocket;
+};
 export const getNextFrameConnection = getNextXConnection("frame");
 export const getNextContentConnection = getNextXConnection("content");
 
@@ -114,6 +118,10 @@ export function forceNvimify () {
 
 export function tryUpdate () {
         return backgroundSocket.then((s : any) => makeRequest(s, "tryUpdate"));
+};
+
+export function backgroundEval (code: string) {
+        return backgroundSocket.then((s : any) => makeRequest(s, "eval", [code]));
 };
 
 export function shutdown () {
