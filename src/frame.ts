@@ -78,6 +78,9 @@ export const isReady = new Promise((resolve, reject) => {
                 .then(() => nvim.command(`noswapfile edit ${filename} `
                                          + `| call nvim_win_set_cursor(0, [${line}, ${col}])`));
 
+            // Can't get coverage for this as browsers don't let us reliably
+            // push data to the server on beforeunload.
+            /* istanbul ignore next */
             window.addEventListener("beforeunload", () => {
                 nvim.ui_detach();
                 nvim.command("qall!");
@@ -187,6 +190,9 @@ export const isReady = new Promise((resolve, reject) => {
             // true! This means that we need to add a chrome-specific event
             // listener on compositionend to do what happens on input events for
             // Firefox.
+            // Don't instrument this branch as coverage is only generated on
+            // Firefox.
+            /* istanbul ignore next */
             if (isChrome()) {
                 keyHandler.addEventListener("compositionend", (evt: any) => {
                     acceptInput(event);
@@ -251,6 +257,10 @@ export const isReady = new Promise((resolve, reject) => {
             setTimeout(() => {
                 keyHandler.focus();
                 writeFilePromise.then(() => resolve());
+                // To hard to test (we'd need to find a way to make neovim fail
+                // to write the file, which requires too many os-dependent side
+                // effects), so don't instrument.
+                /* istanbul ignore next */
                 writeFilePromise.catch(() => reject());
             }, 10);
         } catch (e) {
