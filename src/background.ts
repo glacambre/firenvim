@@ -182,6 +182,9 @@ function applySettings(settings: any) {
     // "alt": "all" | "alphanum"
     // #202: Only register alt key on alphanums to let swedish osx users type
     //       special chars
+    // Only tested on OSX, where we don't pull coverage reports, so don't
+    // instrument function.
+    /* istanbul ignore next */
     if (os === "mac") {
         makeDefaults(settings.globalSettings, "alt", "alphanum");
     } else {
@@ -389,7 +392,9 @@ browser.windows.onFocusChanged.addListener(async (windowId: number) => {
 
 updateIcon();
 
-// browser.commmands doesn't exist in thunderbird
+// browser.commmands doesn't exist in thunderbird. Else branch can't be covered
+// so don't instrument the if.
+/* istanbul ignore next */
 if (!isThunderbird()) {
     browser.commands.onCommand.addListener(acceptCommand);
 }
