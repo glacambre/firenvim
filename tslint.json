@@ -1,5 +1,10 @@
 {
   "extends": ["tslint:recommended"],
+  "linterOptions": {
+      "exclude": [
+          "src/testing/rpc.ts"
+      ]
+  },
   "rules": {
     "arrow-parens": false,
     "cognitive-complexity": false,

@@ -83,6 +83,10 @@ type testFunction = (s: string, server: any, driver: webdriver.WebDriver) => Pro
 
 function withLocalPage(page: string, f: testFunction): testFunction {
         return async function (title, server, driver) {
+                await server.backgroundEval(`Promise.all(
+                        browser.windows.getAll()
+                                .then(a => a.slice(1).map(w => browser.windows.remove(w.id)))
+                )`);
                 const contentSocket = await loadLocalPage(server, driver, page, title);
                 try {
                         return await f(title, server, driver);
@@ -973,7 +977,7 @@ export const testToggleFirenvim = retryTest(async (testTitle: string, server: an
         await server.pullCoverageData(contentSocket);
 });
 
-export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+export const testFrameBrowserShortcuts = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, ["i"]);
         async function ctrlV() {
@@ -1066,6 +1070,90 @@ export const testSetCursor = retryTest(withLocalPage("simple.html", async (testT
         await driver.sleep(1000);
         const cursor = await driver.executeScript("return document.activeElement.selectionStart");
         expect(cursor).toBe(21);
+}));
+
+export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        function getWindowCount () {
+                return server.backgroundEval("browser.windows.getAll({}).then(a => a.length)")
+        }
+        function getTabCount () {
+                return server.backgroundEval("browser.tabs.query({}).then(a => a.length)")
+        }
+        function windowCountChange (windowCount: number, err: string) {
+                return driver.wait(async () => (await getWindowCount() !== windowCount), WAIT_DELAY, err);
+        }
+        function tabCountChange (tabCount: number, err: string) {
+                return driver.wait(async () => (await getTabCount() !== tabCount), WAIT_DELAY, err);
+        }
+
+        // <C-n> creates a new window
+        let windowCount = await getWindowCount();
+        await server.browserShortcut("<C-n>");
+        await windowCountChange(windowCount, "<C-n> did not change the number of windows");
+        let newWindowCount = await getWindowCount();
+        expect(newWindowCount).toBe(windowCount + 1);
+
+        // <C-t> crates a new tab
+        let tabCount = await getTabCount();
+        await server.browserShortcut("<C-t>");
+        await tabCountChange(tabCount, "<C-t> did not change the number of tabs");
+        let newTabCount = await getTabCount();
+        expect(newTabCount).toBe(tabCount + 1);
+
+        // <C-w> closes the new tab
+        tabCount = await getTabCount();
+        await server.browserShortcut("<C-w>");
+        await tabCountChange(tabCount, "<C-w> did not change the number of tabs");
+        newTabCount = await getTabCount();
+        expect(newTabCount).toBe(tabCount - 1);
+
+        // <CS-n> creates a new incognito window. This is chrome behavior but
+        // we can't emulate firefox because it requires an additonal permission
+        windowCount = await getWindowCount();
+        await server.browserShortcut("<CS-n>");
+        await windowCountChange(windowCount, "<CS-n> did not change the number of windows");
+        newWindowCount = await getWindowCount();
+        expect(newWindowCount).toBe(windowCount + 1);
+
+        // <CS-w> closes the current window
+        windowCount = await getWindowCount();
+        await server.browserShortcut("<CS-w>");
+        await windowCountChange(windowCount, "<CS-w> did not close any window the first time");
+        await server.browserShortcut("<CS-w>");
+        await windowCountChange(windowCount - 1, "<CS-w> did not close any window the second time");
+        newWindowCount = await getWindowCount();
+        expect(newWindowCount).toBe(windowCount - 2);
+
+        // Now don't fall back to browser behavior
+        const vimrcContent = await readVimrc();
+        await writeVimrc(`
+let g:firenvim_config = {
+        \\ 'globalSettings': {
+                \\ '<C-n>': 'noop',
+                \\ '<C-t>': 'noop',
+                \\ '<C-w>': 'noop',
+                \\ '<CS-n>': 'noop',
+                \\ '<CS-t>': 'noop',
+                \\ '<CS-w>': 'noop'
+        \\ }
+\\ }
+${vimrcContent}`);
+        await reloadNeovim(server, driver);
+        tabCount = await getTabCount();
+        windowCount = await getWindowCount();
+        await server.browserShortcut("<C-n>");
+        await server.browserShortcut("<C-n>");
+        await server.browserShortcut("<C-n>");
+        await server.browserShortcut("<C-t>");
+        await server.browserShortcut("<C-t>");
+        await server.browserShortcut("<C-w>");
+        await server.browserShortcut("<CS-n>");
+        await server.browserShortcut("<CS-w>");
+        await driver.sleep(1000);
+        newTabCount = await getTabCount();
+        newWindowCount = await getWindowCount();
+        expect(newTabCount).toBe(tabCount);
+        expect(newWindowCount).toBe(windowCount);
 }));
 
 export async function killDriver(server: any, driver: webdriver.WebDriver) {

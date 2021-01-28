@@ -71,6 +71,14 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
                     }));
                 });
                 break;
+            case "eval":
+                Promise.resolve(eval(req.args[0])).catch(() => {}).then((result) => {
+                    s.send(JSON.stringify({
+                        args: [result],
+                        funcName: ["resolve"],
+                        reqId: req.reqId,
+                    }));
+                });
         }
     };
 }

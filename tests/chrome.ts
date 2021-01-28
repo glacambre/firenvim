@@ -13,6 +13,7 @@ import {
  reloadNeovim,
  testAce,
  testBrowserShortcuts,
+ testFrameBrowserShortcuts,
  testCodemirror,
  testConfigPriorities,
  testContentEditable,
@@ -72,7 +73,7 @@ describe("Chrome", () => {
                 fs.mkdirSync(coverage_dir, { recursive: true })
 
                 await coverageServer.start(12345, coverage_dir);
-                const backgroundPromise = coverageServer.getNextBackgroundConnection();
+                let backgroundPromise = coverageServer.getNextBackgroundConnection();
 
                 setupVimrc();
                 // Disabling the GPU is required on windows
@@ -107,9 +108,25 @@ describe("Chrome", () => {
                         .setChromeOptions(options)
                         .build();
 
+                // Wait for extension to be loaded
                 background = await backgroundPromise;
-                const pageLoaded = loadLocalPage(server, driver, "simple.html", "");
-                return await pageLoaded;
+                await driver.sleep(1000);
+
+                // Now we need to enable the extension in incognito mode if
+                // it's not enabled. This is required for the browser keyboard
+                // shortcut fallback test.
+                await driver.get("chrome://extensions/?id=egpjdkipkomnmjhjmdamaniclmdlobbo");
+                let incognitoToggle = "document.querySelector('extensions-manager').shadowRoot.querySelector('#viewManager > extensions-detail-view.active').shadowRoot.querySelector('div#container.page-container > div.page-content > div#options-section extensions-toggle-row#allow-incognito').shadowRoot.querySelector('label#label input')";
+                const mustToggle = await driver.executeScript(`return !${incognitoToggle}.checked`);
+                if (mustToggle) {
+                        // Extension is going to be reloaded when enabling incognito mode, so be prepared
+                        backgroundPromise = coverageServer.getNextBackgroundConnection();
+                        await driver.sleep(1000);
+                        await driver.executeScript(`${incognitoToggle}.click()`);
+                        await driver.sleep(1000);
+                        background = await backgroundPromise;
+                }
+                return await loadLocalPage(server, driver, "simple.html", "");
         }, 120000);
 
         beforeEach(async () => {
@@ -164,8 +181,9 @@ describe("Chrome", () => {
         t("Monaco editor", testMonaco);
         t("Span removed", testDisappearing);
         t("Ignoring keys", testIgnoreKeys);
+        t("Browser shortcuts", testBrowserShortcuts);
         t("Frame browser shortcuts", (...args) => neovimVersion >= 0.5
-                ? testBrowserShortcuts(...args)
+                ? testFrameBrowserShortcuts(...args)
                 : undefined
          , 30000);
         t("Takeover: nonempty", testTakeoverNonEmpty);
