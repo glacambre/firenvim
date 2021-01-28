@@ -33,6 +33,7 @@ import {
  testLargeBuffers,
  testModifiers,
  testMonaco,
+ testMouse,
  testNestedDynamicTextareas,
  testNoLingeringNeovims,
  testFocusPage,
@@ -196,6 +197,10 @@ describe("Chrome", () => {
         t("Takeover: empty", testTakeoverEmpty);
         t("Toggling firenvim", testToggleFirenvim);
         t("Buggy Vimrc", testVimrcFailure, 60000);
+        if (process.platform !== "darwin") {
+                // This test somehow fails on osx+chrome, so don't run it on this combination!
+                t("Mouse", testMouse);
+        }
         if (process.platform === "linux") {
                 t("No lingering neovim process", testNoLingeringNeovims, 20000);
         }
