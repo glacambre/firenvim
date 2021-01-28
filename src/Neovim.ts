@@ -70,8 +70,6 @@ export async function neovim(
             // That's why we have to check for lastLostFocus after
             // page.setElementContent/Cursor! Same thing for firenvim_press_keys
             const hadFocus = document.hasFocus();
-            canvas.style.display = "none";
-            document.body.appendChild(document.createTextNode(name + " "));
             switch (name) {
                 case "firenvim_bufwrite":
                     const data = args[0] as { text: string[], cursor: [number, number] };
