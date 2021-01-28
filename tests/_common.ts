@@ -1156,6 +1156,100 @@ ${vimrcContent}`);
         expect(newWindowCount).toBe(windowCount);
 }));
 
+export const testMouse = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        await reloadNeovim(server, driver);
+        const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await sendKeys(driver, ["i"]);
+        // Selenium doesn't let you simulate mouse wheel :(
+        await driver.actions()
+                .move({x: 10, y: 10, origin: input})
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .press(webdriver.Button.LEFT)
+                .release(webdriver.Button.LEFT)
+                .pause(500)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .press(webdriver.Button.MIDDLE)
+                .release(webdriver.Button.MIDDLE)
+                .pause(500)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .press(webdriver.Button.RIGHT)
+                .release(webdriver.Button.RIGHT)
+                .pause(500)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .keyDown(webdriver.Key.CONTROL)
+                .press(webdriver.Button.LEFT)
+                .release(webdriver.Button.LEFT)
+                .keyUp(webdriver.Key.CONTROL)
+                .pause(500)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .keyDown(webdriver.Key.META)
+                .press(webdriver.Button.LEFT)
+                .release(webdriver.Button.LEFT)
+                .keyUp(webdriver.Key.META)
+                .pause(500)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .keyDown(webdriver.Key.SHIFT)
+                .press(webdriver.Button.LEFT)
+                .release(webdriver.Button.LEFT)
+                .keyUp(webdriver.Key.SHIFT)
+                .pause(500)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .keyDown(webdriver.Key.ALT)
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown(webdriver.Key.META)
+                .keyDown(webdriver.Key.SHIFT)
+                .press(webdriver.Button.LEFT)
+                .release(webdriver.Button.LEFT)
+                .keyUp(webdriver.Key.ALT)
+                .keyUp(webdriver.Key.CONTROL)
+                .keyUp(webdriver.Key.META)
+                .keyUp(webdriver.Key.SHIFT)
+                .pause(500) // pause required otherwise we might sendKeys too soon
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("v")
+                .keyUp("v")
+                .keyUp(webdriver.Key.CONTROL)
+                .keyDown(webdriver.Key.ALT)
+                .press(webdriver.Button.LEFT)
+                .release(webdriver.Button.LEFT)
+                .keyUp(webdriver.Key.ALT)
+                .pause(500)
+                .keyDown(webdriver.Key.ESCAPE)
+                .keyUp(webdriver.Key.ESCAPE)
+                .pause(500) // pause required otherwise we might sendKeys too soon
+                .press(webdriver.Button.LEFT)
+                .release(webdriver.Button.LEFT)
+                .perform();
+        await sendKeys(driver, [webdriver.Key.ESCAPE] // Yup, escape twice. Helps with instabilities.
+                       .concat(":wq!".split(""))
+                       .concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim frame did not disappear!");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
+        const controlMouse = process.platform !== "darwin" ? "LeftMouse" : "RightMouse";
+        expect(await input.getAttribute("value")).toBe(`<LeftMouse><MiddleMouse><RightMouse><C-${controlMouse}><D-LeftMouse><S-LeftMouse><M-C-S-D-${controlMouse}><M-LeftMouse>`);
+}));
+
 export async function killDriver(server: any, driver: webdriver.WebDriver) {
         try {
                 await driver.close()

@@ -208,17 +208,19 @@ export const isReady = new Promise((resolve, reject) => {
                 if (evt instanceof WheelEvent) {
                     button = "wheel";
                 } else {
-                    if (evt.button !== 0 && evt.button !== 2) {
+                    // Selenium can't generate mouse events with more buttons :(
+                    /* istanbul ignore next */
+                    if (evt.button > 2) {
                         // Neovim doesn't handle other mouse buttons for now
                         return;
                     }
-                    button = evt.button === 0 ? "left" : "right";
+                    button = ["left", "middle", "right"][evt.button];
                 }
                 evt.preventDefault();
                 evt.stopImmediatePropagation();
 
                 const modifiers = (evt.altKey ? "A" : "") +
-                    (evt.ctrlKey ? "V" : "") +
+                    (evt.ctrlKey ? "C" : "") +
                     (evt.metaKey ? "D" : "") +
                     (evt.shiftKey ? "S" : "");
                 const [x, y] = getGridCoordinates(evt.pageX, evt.pageY);
@@ -236,6 +238,8 @@ export const isReady = new Promise((resolve, reject) => {
             window.addEventListener("mouseup", e => {
                 onMouse(e, "release");
             });
+            // Selenium doesn't let you simulate mouse wheel events :(
+            /* istanbul ignore next */
             window.addEventListener("wheel", evt => {
                 if (Math.abs(evt.deltaY) >= Math.abs(evt.deltaX)) {
                     onMouse(evt, evt.deltaY < 0 ? "up" : "down");
