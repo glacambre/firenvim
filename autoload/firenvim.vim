@@ -232,6 +232,14 @@ function! s:chrome_config_exists() abort
         return isdirectory(s:build_path(l:p))
 endfunction
 
+function! s:chrome_dev_config_exists() abort
+        let l:p = [$HOME, '.config', 'google-chrome-unstable']
+        if !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'google-chrome-unstable']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
 function! s:get_chrome_manifest_dir_path() abort
         if has('mac')
                 return s:build_path([$HOME, 'Library', 'Application Support', 'Google', 'Chrome', 'NativeMessagingHosts'])
@@ -242,6 +250,18 @@ function! s:get_chrome_manifest_dir_path() abort
                 return s:build_path([$XDG_CONFIG_HOME, 'google-chrome', 'NativeMessagingHosts'])
         end
         return s:build_path([$HOME, '.config', 'google-chrome', 'NativeMessagingHosts'])
+endfunction
+
+function! s:get_chrome_dev_manifest_dir_path() abort
+        if has('mac')
+                throw "No chrome dev on mac."
+        elseif has('win32')
+                throw "No chrome dev on win32."
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'google-chrome-unstable', 'NativeMessagingHosts'])
+        end
+        return s:build_path([$HOME, '.config', 'google-chrome-unstable', 'NativeMessagingHosts'])
 endfunction
 
 function! s:get_brave_manifest_dir_path() abort
@@ -426,6 +446,12 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_dir_path': function('s:get_canary_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \},
+                \'chrome-dev': {
+                        \ 'has_config': s:chrome_dev_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_chrome_dev_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \},
                 \'chromium': {
                         \ 'has_config': s:chromium_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
@@ -455,6 +481,7 @@ function! s:get_browser_configuration() abort
                 call remove(l:browsers, 'brave')
                 call remove(l:browsers, 'vivaldi')
                 call remove(l:browsers, 'opera')
+                call remove(l:browsers, 'chrome-dev')
         endif
         return l:browsers
 endfunction
