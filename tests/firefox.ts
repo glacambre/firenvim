@@ -47,6 +47,7 @@ import {
  testTakeoverOnce,
  testToggleFirenvim,
  testUnfocusedKillEditor,
+ testUntrustedInput,
  testUpdates,
  testVimrcFailure,
  testWorksInFrame,
@@ -171,6 +172,7 @@ describe("Firefox", () => {
         t("Toggling firenvim", testToggleFirenvim);
         t("Buggy Vimrc", testVimrcFailure, 60000);
         t("Mouse", testMouse);
+        t("Untrusted input", testUntrustedInput);
         if (process.platform === "linux") {
                 t("No lingering neovim process", testNoLingeringNeovims, 20000);
         }
