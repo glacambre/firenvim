@@ -124,6 +124,10 @@ export function backgroundEval (code: string) {
         return backgroundSocket.then((s : any) => makeRequest(s, "eval", [code]));
 };
 
+export function contentEval (s: WebSocket, code: string) {
+        return makeRequest(s, "eval", [code]);
+};
+
 export function shutdown () {
         fs.writeFileSync(path.join(coverage_dir, "results"),
                          JSON.stringify(covMap));

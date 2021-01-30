@@ -1248,6 +1248,40 @@ export const testMouse = retryTest(withLocalPage("simple.html", async (testTitle
         expect(await input.getAttribute("value")).toBe(`<LeftMouse><MiddleMouse><RightMouse><C-${controlMouse}><D-LeftMouse><S-LeftMouse><M-C-S-D-${controlMouse}><M-LeftMouse>`);
 }));
 
+export const testUntrustedInput = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const vimrcContent = await readVimrc();
+        await writeVimrc(`
+nnoremap a aFirenvim let through an a in normal mode
+inoremap a aFirenvim let through an a in insert mode
+nnoremap <C-a> aFirenvim let through a C-a in normal mode
+inoremap <C-a> aFirenvim let through a C-a in insert mode
+${vimrcContent}`);
+        await reloadNeovim(server, driver);
+        const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await server.contentEval (frameSocket, `const target = document.getElementById("keyhandler");
+target.value = "a";
+[
+    new KeyboardEvent("keydown",     { key: "a", bubbles: true }),
+    new KeyboardEvent("keyup",       { key: "a", bubbles: true }),
+    new KeyboardEvent("keypress",    { key: "a", bubbles: true }),
+    new InputEvent("beforeinput", { data: "a", bubbles: true }),
+    new InputEvent("input",       { data: "a", bubbles: true }),
+    new InputEvent("change",      { data: "a", bubbles: true }),
+    new KeyboardEvent("keydown",     { key: "a", ctrlKey: true, bubbles: true }),
+    new KeyboardEvent("keyup",       { key: "a", ctrlKey: true, bubbles: true }),
+    new KeyboardEvent("keypress",    { key: "a", ctrlKey: true, bubbles: true }),
+].forEach(e => target.dispatchEvent(e));
+target.value = "";
+`);
+        await sendKeys(driver, "ii".split("")
+                       .concat(webdriver.Key.ESCAPE)
+                       .concat(":wq!".split(""))
+                       .concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim frame did not disappear!");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
+        expect(await input.getAttribute("value")).toBe("i");
+}));
+
 export async function killDriver(server: any, driver: webdriver.WebDriver) {
         try {
                 await driver.close()

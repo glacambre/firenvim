@@ -42,6 +42,7 @@ import {
  testSetCursor,
  testUnfocusedKillEditor,
  testUpdates,
+ testUntrustedInput,
  testTakeoverEmpty,
  testTakeoverNonEmpty,
  testTakeoverOnce,
@@ -201,6 +202,7 @@ describe("Chrome", () => {
                 // This test somehow fails on osx+chrome, so don't run it on this combination!
                 t("Mouse", testMouse);
         }
+        t("Untrusted input", testUntrustedInput);
         if (process.platform === "linux") {
                 t("No lingering neovim process", testNoLingeringNeovims, 20000);
         }
