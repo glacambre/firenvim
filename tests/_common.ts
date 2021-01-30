@@ -10,7 +10,7 @@ const By = webdriver.By;
 import * as coverageServer from "./_coverageserver";
 type Server = typeof coverageServer;
 
-import { readVimrc, writeVimrc } from "./_vimrc";
+import { readVimrc, resetVimrc, writeVimrc } from "./_vimrc";
 
 jest.setTimeout(20000);
 const FIRENVIM_INIT_DELAY = 1000;
@@ -106,14 +106,14 @@ function retryTest(f: testFunction): testFunction {
                 let failures = 0;
                 let attempts = 0;
                 for (attempts = 0; attempts == failures && attempts < 3; ++attempts) {
-                        const vimrcBefore = readVimrc();
+                        resetVimrc();
                         try {
                                 result = await f(s, server, driver);
                         } catch (e) {
                                 failures += 1;
                                 failureLog += `\n\n===== ${s} attempt ${failures} =====\n`
+                                failureLog += e.stack.toString();
                                 failureLog += e.toString();
-                                failureLog += `\n== VimrcBefore ==:\n${vimrcBefore}\n`;
                                 failureLog += `\n== VimrcAfter ==:\n${readVimrc()}\n`;
                                 error = e;
                         }
