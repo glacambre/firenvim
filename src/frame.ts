@@ -205,6 +205,8 @@ export const isReady = new Promise((resolve, reject) => {
             });
             function onMouse(evt: MouseEvent, action: string) {
                 let button;
+                // Selenium can't generate wheel events yet :(
+                /* istanbul ignore next */
                 if (evt instanceof WheelEvent) {
                     button = "wheel";
                 } else {
