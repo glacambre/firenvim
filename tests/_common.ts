@@ -439,6 +439,14 @@ export const testFocusInput = retryTest(withLocalPage("simple.html", async (test
 }));
 
 export const testEvalJs = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const backup = await readVimrc();
+        await writeVimrc(`
+au TextChanged * ++nested write
+function! OnResult(result) abort
+        call nvim_buf_set_lines(0, 0, -1, 0, [a:result])
+endfunction
+${backup}`);
+        await reloadNeovim(server, driver);
         const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
         await sendKeys(driver, `:call firenvim#eval_js('(document`.split(""));
         // Using the <C-v> trick here because Chrome somehow replaces `.` with
@@ -461,18 +469,8 @@ export const testEvalJs = retryTest(withLocalPage("simple.html", async (testTitl
         await driver.wait(async () => (await input.getAttribute("value")) !== "", WAIT_DELAY, "Input value did not change");
         const value = await input.getAttribute("value");
         expect(value).toBe("Eval Works!");
-        await sendKeys(driver, `:au TextChanged * ++nested write`.split("")
-                .concat([webdriver.Key.ENTER])
-                .concat(`:function! OnResult(result) abort`.split(""))
-                .concat([webdriver.Key.ENTER])
-                .concat(`call nvim_buf_set_lines(0, 0, -1, 0, [a:result])`.split(""))
-                .concat([webdriver.Key.ENTER])
-                .concat(`endfunction`.split(""))
-                .concat([webdriver.Key.ENTER])
-                .concat(`:call firenvim#eval_js("(()=>{throw new Error()})()", "OnResult")`)
-                .concat([webdriver.Key.ENTER])
-        )
-        await driver.wait(async () => (await input.getAttribute("value")) !== value, WAIT_DELAY, "Input value did not change");
+        await sendKeys(driver, `:call firenvim#eval_js("(()=>{throw new Error()})()", "OnResult")`.split("").concat([webdriver.Key.ENTER]))
+        await driver.wait(async () => (await input.getAttribute("value")) !== value, WAIT_DELAY, "Input value did not change the second time");
         expect(await input.getAttribute("value")).toBe("{}");
         await server.pullCoverageData(frameSocket);
 }));
