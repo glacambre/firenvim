@@ -212,7 +212,7 @@ function applySettings(settings: any) {
         selector: 'body',
         takeover: "always",
     });
-    browser.storage.local.set(settings);
+    return browser.storage.local.set(settings);
 }
 
 function updateSettings() {
@@ -237,11 +237,12 @@ function createNewInstance() {
             (nvim as any).replied = true;
             clearTimeout(errorTimeout);
             checkVersion(resp.version);
-            applySettings(resp.settings);
-            resolve({
-                kill: () => nvim.disconnect(),
-                password,
-                port: resp.port,
+            applySettings(resp.settings).finally(() => {
+                resolve({
+                    kill: () => nvim.disconnect(),
+                    password,
+                    port: resp.port,
+                });
             });
         });
         nvim.postMessage({
