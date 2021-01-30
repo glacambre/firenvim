@@ -254,9 +254,9 @@ endfunction
 
 function! s:get_chrome_dev_manifest_dir_path() abort
         if has('mac')
-                throw "No chrome dev on mac."
+                throw 'No chrome dev on mac.'
         elseif has('win32')
-                throw "No chrome dev on win32."
+                throw 'No chrome dev on win32.'
         end
         if !empty($XDG_CONFIG_HOME)
                 return s:build_path([$XDG_CONFIG_HOME, 'google-chrome-unstable', 'NativeMessagingHosts'])
