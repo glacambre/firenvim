@@ -303,7 +303,7 @@ export function computeGridDimensionsFor (width : number, height : number) {
 
 export function getGridCoordinates (x: number, y: number) {
     const [cellWidth, cellHeight] = getGlyphInfo(globalState);
-    return [Math.floor(x / cellWidth), Math.floor(y / cellHeight)];
+    return [Math.floor(x * window.devicePixelRatio / cellWidth), Math.floor(y * window.devicePixelRatio / cellHeight)];
 }
 
 function newHighlight (bg: string, fg: string): HighlightInfo {
