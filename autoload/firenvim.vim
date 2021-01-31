@@ -295,6 +295,20 @@ function! s:chrome_config_exists() abort
         return isdirectory(s:build_path(l:p))
 endfunction
 
+function! s:edge_config_exists() abort
+        let l:p = [$HOME, '.config', 'microsoft-edge']
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'Microsoft', 'Edge']
+        elseif has('win32')
+                let l:p = [$HOME, 'AppData', 'Local', 'Microsoft', 'Edge']
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%LOCALAPPDATA%'), 'Microsoft', 'Edge']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'microsoft-edge']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
 function! s:chrome_dev_config_exists() abort
         let l:p = [$HOME, '.config', 'google-chrome-unstable']
         if !empty($XDG_CONFIG_HOME)
@@ -313,6 +327,18 @@ function! s:get_chrome_manifest_dir_path() abort
                 return s:build_path([$XDG_CONFIG_HOME, 'google-chrome', 'NativeMessagingHosts'])
         end
         return s:build_path([$HOME, '.config', 'google-chrome', 'NativeMessagingHosts'])
+endfunction
+
+function! s:get_edge_manifest_dir_path() abort
+        if has('mac')
+                return s:build_path([$HOME, 'Library', 'Application Support', 'Microsoft', 'Edge', 'NativeMessagingHosts'])
+        elseif has('win32') || s:is_wsl
+                return s:get_data_dir_path()
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'microsoft-edge', 'NativeMessagingHosts'])
+        end
+        return s:build_path([$HOME, '.config', 'microsoft-edge', 'NativeMessagingHosts'])
 endfunction
 
 function! s:get_chrome_dev_manifest_dir_path() abort
@@ -529,6 +555,12 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_dir_path': function('s:get_chromium_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Chromium\NativeMessagingHosts\firenvim',
                 \},
+                \'edge': {
+                        \ 'has_config': s:edge_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_edge_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Microsoft\Edge\NativeMessagingHosts\firenvim',
+                \},
                 \'firefox': {
                         \ 'has_config': s:firefox_config_exists(),
                         \ 'manifest_content': function('s:get_firefox_manifest'),
@@ -555,6 +587,7 @@ function! s:get_browser_configuration() abort
                 call remove(l:browsers, 'chrome-dev')
         endif
         return l:browsers
+
 endfunction
 
 " Installing firenvim requires several steps:
