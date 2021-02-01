@@ -57,8 +57,6 @@ function! firenvim#press_keys(...) abort
         call rpcnotify(firenvim#get_chan(), 'firenvim_press_keys', l:keys)
 endfunction
 
-let s:is_wsl = !empty($WSLENV) || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
-
 " Turns a wsl path (forward slashes) into a windows one (backslashes)
 function! s:to_windows_path(path) abort
         if a:path[0] !=# '/'
@@ -590,6 +588,12 @@ function! s:get_browser_configuration() abort
 
 endfunction
 
+" At first, is_wsl is set to false, even on WSL. This lets us install firenvim
+" on the wsl side, in case people want to use a wsl browser.
+" Then, we set is_wsl to true if we're on wsl and launch firenvim#install
+" again, installing things on the host side.
+let s:is_wsl = v:false
+
 " Installing firenvim requires several steps:
 " - Create a batch/shell script that takes care of starting neovim with the
 "   right arguments. This is needed because the webextension api doesn't let
@@ -685,6 +689,14 @@ function! firenvim#install(...) abort
                         echo 'Created registry key for ' . l:name . '.'
                 endif
         endfor
+
+        if !s:is_wsl
+                let s:is_wsl = !empty($WSLENV) || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
+                if s:is_wsl
+                        echo 'Installation complete on the wsl side. Performing install on the windows side.'
+                        call firenvim#install(l:force_install, l:script_prolog)
+                endif
+        endif
 endfunction
 
 " Removes files created by Firenvim during its installation process
