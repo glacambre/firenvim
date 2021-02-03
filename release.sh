@@ -87,7 +87,7 @@ if [ "$(git diff --name-only | grep -v "package\(-lock\)\?.json")" != "" ] ; the
 fi
 
 # Make sure everything's properly linted
-npm run tslint -- --project tslint.json
+npm run tslint -- --project .
 
 # npm run test takes care of building the extension in test mode
 npm run test-firefox
