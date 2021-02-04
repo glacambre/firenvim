@@ -105,6 +105,8 @@ function registerErrors(nvim: any, reject: any) {
                     error += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
                 }
                 error += ".";
+            } else if (errstr.match(/Native application tried to send a message of/)) {
+                error = "Unexpected output. Run `nvim --headless` and ensure it prints nothing.";
             } else {
                 error = errstr;
             }
