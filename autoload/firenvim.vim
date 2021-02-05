@@ -57,14 +57,58 @@ function! firenvim#press_keys(...) abort
         call rpcnotify(firenvim#get_chan(), 'firenvim_press_keys', l:keys)
 endfunction
 
+" Turns a wsl path (forward slashes) into a windows one (backslashes)
+function! s:to_windows_path(path) abort
+        if a:path[0] !=# '/'
+                return a:path
+        endif
+        let l:path_components = split(a:path, '/')
+        return join([toupper(l:path_components[1]) . ':'] + path_components[2:-1], '\')
+endfunction
+
+" Turns a windows path (backslashes) into a wsl one (forward slashes)
+function! s:to_wsl_path(path) abort
+        if a:path[0] ==# '/'
+                return a:path
+        endif
+        let l:path_components = split(a:path, '\\')
+        return join(['/mnt', tolower(path_components[0][0:-2])] + l:path_components[1:-1], '/')
+endfunction
+
+
 " Simple helper to build the right path depending on the platform.
 function! s:build_path(list) abort
         let l:path_separator = '/'
         if has('win32')
                 let l:path_separator = "\\"
         endif
+        if s:is_wsl
+                let a:list[0] = s:to_wsl_path(a:list[0])
+        endif
         return join(a:list, l:path_separator)
 endfunction
+
+" Retrieves a windows env var from wsl. Retrieves a windows path (with
+" backslashes!)
+function! s:get_windows_env_path(env) abort
+        if has('win32')
+                let l:env = a:env
+                if l:env[0] ==# '%'
+                        let l:env = '$' . l:env[1:-2]
+                endif
+                return expand(l:env)
+        endif
+        if s:is_wsl
+                let l:env = a:env
+                if l:env[0] ==# '$'
+                        let l:env = '%' . l:env[1:-1] . '%'
+                endif
+                let l:cmd_output = system(['cmd.exe', '/c', 'echo', l:env])
+                return cmd_output[match(l:cmd_output, 'C:\\'):-3]
+        endif
+        throw 'Used get_windows_env_path on non-windows platform!'
+endfunction
+
 
 " Entry point of the vim-side of the extension.
 " This function does the following things:
@@ -124,23 +168,27 @@ function! firenvim#run() abort
         let l:chanid = stdioopen({ 'on_stdin': 'OnStdin' })
 endfunction
 
+" Returns the name of the script that should be executed by the browser.
 function! s:get_executable_name() abort
-        if has('win32')
+        if has('win32') || s:is_wsl
                 return 'firenvim.bat'
         endif
         return 'firenvim'
 endfunction
 
+" Returns the path of the directory in which firenvim will run when the
+" browser launches it.
+" On wsl, this is a path living on the linux side.
 function! s:get_runtime_dir_path() abort
         let l:xdg_runtime_dir = $XDG_RUNTIME_DIR
         if l:xdg_runtime_dir ==# ''
-                if has('win32')
-                        let l:xdg_runtime_dir = expand('$TEMP')
+                if has('win32') || s:is_wsl
+                        let l:xdg_runtime_dir = s:get_windows_env_path('$TEMP')
                         if l:xdg_runtime_dir ==# ''
-                                let l:xdg_runtime_dir = expand('$TMP')
+                                let l:xdg_runtime_dir = s:get_windows_env_path('$TMP')
                         endif
                         if l:xdg_runtime_dir ==# ''
-                                let l:xdg_runtime_dir = expand('$USERPROFILE')
+                                let l:xdg_runtime_dir = s:get_windows_env_path('$USERPROFILE')
                                 if l:xdg_runtime_dir ==# ''
                                         let l:xdg_runtime_dir = fnamemodify(stdpath('data'), ':h')
                                 else
@@ -157,9 +205,12 @@ function! s:get_runtime_dir_path() abort
         return s:build_path([l:xdg_runtime_dir, 'firenvim'])
 endfunction
 
+" Returns the directory in which the firenvim script is written.
 function! s:get_data_dir_path() abort
         let l:xdg_data_home = $XDG_DATA_HOME
-        if l:xdg_data_home ==# ''
+        if s:is_wsl
+                let l:xdg_data_home = s:get_windows_env_path('%LOCALAPPDATA%')
+        elseif l:xdg_data_home ==# ''
                 let l:xdg_data_home = fnamemodify(stdpath('data'), ':h')
         endif
         return s:build_path([l:xdg_data_home, 'firenvim'])
@@ -171,14 +222,16 @@ function! s:firefox_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'Mozilla']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Roaming', 'Mozilla', 'Firefox']
-        end
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%APPDATA%'), 'Mozilla', 'Firefox']
+        endif
         return isdirectory(s:build_path(l:p))
 endfunction
 
 function! s:get_firefox_manifest_dir_path() abort
         if has('mac')
                 return s:build_path([$HOME, 'Library', 'Application Support', 'Mozilla', 'NativeMessagingHosts'])
-        elseif has('win32')
+        elseif has('win32') || s:is_wsl
                 return s:get_data_dir_path()
         end
         return s:build_path([$HOME, '.mozilla', 'native-messaging-hosts'])
@@ -190,6 +243,10 @@ function! s:brave_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'BraveSoftware']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'BraveSoftware']
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%LOCALAPPDATA%'), 'BraveSoftware']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'BraveSoftware']
         end
         return isdirectory(s:build_path(l:p))
 endfunction
@@ -200,6 +257,10 @@ function! s:opera_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'com.operasoftware.Opera']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'Opera Software']
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%LOCALAPPDATA%'), 'Opera Software']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'opera']
         end
         return isdirectory(s:build_path(l:p))
 endfunction
@@ -210,6 +271,10 @@ function! s:vivaldi_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'Vivaldi']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'Vivaldi']
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%LOCALAPPDATA%'), 'Vivaldi']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'vivaldi']
         end
         return isdirectory(s:build_path(l:p))
 endfunction
@@ -220,6 +285,32 @@ function! s:chrome_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'Google', 'Chrome']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'Google', 'Chrome']
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%LOCALAPPDATA%'), 'Google', 'Chrome']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'google-chrome']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
+function! s:edge_config_exists() abort
+        let l:p = [$HOME, '.config', 'microsoft-edge']
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'Microsoft', 'Edge']
+        elseif has('win32')
+                let l:p = [$HOME, 'AppData', 'Local', 'Microsoft', 'Edge']
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%LOCALAPPDATA%'), 'Microsoft', 'Edge']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'microsoft-edge']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
+function! s:chrome_dev_config_exists() abort
+        let l:p = [$HOME, '.config', 'google-chrome-unstable']
+        if !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'google-chrome-unstable']
         end
         return isdirectory(s:build_path(l:p))
 endfunction
@@ -227,17 +318,47 @@ endfunction
 function! s:get_chrome_manifest_dir_path() abort
         if has('mac')
                 return s:build_path([$HOME, 'Library', 'Application Support', 'Google', 'Chrome', 'NativeMessagingHosts'])
-        elseif has('win32')
+        elseif has('win32') || s:is_wsl
                 return s:get_data_dir_path()
         end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'google-chrome', 'NativeMessagingHosts'])
+        end
         return s:build_path([$HOME, '.config', 'google-chrome', 'NativeMessagingHosts'])
+endfunction
+
+function! s:get_edge_manifest_dir_path() abort
+        if has('mac')
+                return s:build_path([$HOME, 'Library', 'Application Support', 'Microsoft', 'Edge', 'NativeMessagingHosts'])
+        elseif has('win32') || s:is_wsl
+                return s:get_data_dir_path()
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'microsoft-edge', 'NativeMessagingHosts'])
+        end
+        return s:build_path([$HOME, '.config', 'microsoft-edge', 'NativeMessagingHosts'])
+endfunction
+
+function! s:get_chrome_dev_manifest_dir_path() abort
+        if has('mac')
+                throw 'No chrome dev on mac.'
+        elseif has('win32') || s:is_wsl
+                throw 'No chrome dev on win32.'
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'google-chrome-unstable', 'NativeMessagingHosts'])
+        end
+        return s:build_path([$HOME, '.config', 'google-chrome-unstable', 'NativeMessagingHosts'])
 endfunction
 
 function! s:get_brave_manifest_dir_path() abort
         if has('mac')
                 return s:get_chrome_manifest_dir_path()
-        elseif has('win32')
+        elseif has('win32') || s:is_wsl
                 return s:get_chrome_manifest_dir_path()
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'])
         end
         return s:build_path([$HOME, '.config', 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'])
 endfunction
@@ -247,6 +368,8 @@ function! s:canary_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'Google', 'Chrome Canary']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'Google', 'Chrome SxS']
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%LOCALAPPDATA%'), 'Google', 'Chrome SxS']
         else
                 " Chrome canary doesn't exist on linux
                 return v:false
@@ -257,12 +380,11 @@ endfunction
 function! s:get_canary_manifest_dir_path() abort
         if has('mac')
                 return s:build_path([$HOME, 'Library', 'Application Support', 'Google', 'Chrome Canary', 'NativeMessagingHosts'])
-        elseif has('win32')
+        elseif has('win32') || s:is_wsl
                 return s:get_data_dir_path()
         end
         throw "Chrome Canary doesn't exist on Linux"
 endfunction
-
 
 function! s:chromium_config_exists() abort
         let l:p = [$HOME, '.config', 'chromium']
@@ -270,6 +392,11 @@ function! s:chromium_config_exists() abort
                 let l:p = [$HOME, 'Library', 'Application Support', 'Chromium']
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'Chromium']
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%LOCALAPPDATA%'), 'Chromium']
+        end
+        if !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'chromium', 'NativeMessagingHosts']
         end
         return isdirectory(s:build_path(l:p))
 endfunction
@@ -277,8 +404,11 @@ endfunction
 function! s:get_chromium_manifest_dir_path() abort
         if has('mac')
                 return s:build_path([$HOME, 'Library', 'Application Support', 'Chromium', 'NativeMessagingHosts'])
-        elseif has('win32')
+        elseif has('win32') || s:is_wsl
                 return s:get_data_dir_path()
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'chromium', 'NativeMessagingHosts'])
         end
         return s:build_path([$HOME, '.config', 'chromium', 'NativeMessagingHosts'])
 endfunction
@@ -332,12 +462,17 @@ function! s:get_progpath() abort
 endfunction
 
 function! s:get_executable_content(data_dir, prolog) abort
-        if has('win32')
+        if has('win32') || s:is_wsl
+                let l:wsl_prefix = ''
+                if s:is_wsl
+                        let l:wsl_prefix = 'wsl'
+                endif
+                let l:dir = s:to_windows_path(a:data_dir)
                 return  "@echo off\r\n" .
-                                        \ "mkdir \"" . a:data_dir . "\" 2>nul\r\n" .
-                                        \ "cd \"" . a:data_dir . "\"\r\n" .
+                                        \ "mkdir \"" . l:dir . "\" 2>nul\r\n" .
+                                        \ "cd \"" . l:dir . "\"\r\n" .
                                         \ a:prolog . "\r\n" .
-                                        \ "\"" . s:get_progpath() . "\" --headless --cmd \"let g:started_by_firenvim = v:true\" -c \"call firenvim#run()\"\r\n"
+                                        \ l:wsl_prefix . ' ' . "\"" . s:get_progpath() . "\" --headless --cmd \"let g:started_by_firenvim = v:true\" -c \"call firenvim#run()\"\r\n"
         endif
         return "#!/bin/sh\n" .
                                 \ 'mkdir -p ' . a:data_dir . "\n" .
@@ -382,7 +517,7 @@ function! s:key_to_ps1_str(key, manifest_path) abort
         " Then, assign a value to it
         return l:ps1_content . "\nSet-Item -Path \"" .
                                 \ a:key .
-                                \ '\" -Value "' . a:manifest_path . '"'
+                                \ '\" -Value "' . s:to_windows_path(a:manifest_path) . '"'
 endfunction
 
 function! s:get_browser_configuration() abort
@@ -406,11 +541,23 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_dir_path': function('s:get_canary_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \},
+                \'chrome-dev': {
+                        \ 'has_config': s:chrome_dev_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_chrome_dev_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \},
                 \'chromium': {
                         \ 'has_config': s:chromium_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
                         \ 'manifest_dir_path': function('s:get_chromium_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Chromium\NativeMessagingHosts\firenvim',
+                \},
+                \'edge': {
+                        \ 'has_config': s:edge_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_edge_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Microsoft\Edge\NativeMessagingHosts\firenvim',
                 \},
                 \'firefox': {
                         \ 'has_config': s:firefox_config_exists(),
@@ -435,9 +582,17 @@ function! s:get_browser_configuration() abort
                 call remove(l:browsers, 'brave')
                 call remove(l:browsers, 'vivaldi')
                 call remove(l:browsers, 'opera')
+                call remove(l:browsers, 'chrome-dev')
         endif
         return l:browsers
+
 endfunction
+
+" At first, is_wsl is set to false, even on WSL. This lets us install firenvim
+" on the wsl side, in case people want to use a wsl browser.
+" Then, we set is_wsl to true if we're on wsl and launch firenvim#install
+" again, installing things on the host side.
+let s:is_wsl = v:false
 
 " Installing firenvim requires several steps:
 " - Create a batch/shell script that takes care of starting neovim with the
@@ -447,7 +602,7 @@ endfunction
 "   can be found
 " - On windows, also create a registry key that points to the native manifest
 "
-" Manifest paths & registry stuff are specified here: 
+" Manifest paths & registry stuff are specified here:
 " https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Manifest_location
 "
 " firenvim#install accepts the following optional arguments:
@@ -473,11 +628,18 @@ function! firenvim#install(...) abort
         " Decide where the script responsible for starting neovim should be
         let l:data_dir = s:get_data_dir_path()
         let l:execute_nvim_path = s:build_path([l:data_dir, s:get_executable_name()])
+
         " Write said script to said path
         let l:execute_nvim = s:get_executable_content(s:get_runtime_dir_path(), l:script_prolog)
 
         call mkdir(l:data_dir, 'p', 0700)
+        if s:is_wsl
+                let l:execute_nvim_path = s:to_wsl_path(l:execute_nvim_path)
+        endif
         call writefile(split(l:execute_nvim, "\n"), l:execute_nvim_path)
+        if s:is_wsl
+                let l:execute_nvim_path = s:to_windows_path(l:execute_nvim_path)
+        endif
         call setfperm(l:execute_nvim_path, 'rwx------')
 
         let l:browsers = s:get_browser_configuration()
@@ -498,8 +660,8 @@ function! firenvim#install(...) abort
                         echo 'Aborting installation for ' . l:name . '. ' . v:exception
                         continue
                 endtry
-                
-                if has('win32')
+
+                if has('win32') || s:is_wsl
                         let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim-' . l:name . '.json'])
                 endif
 
@@ -509,7 +671,7 @@ function! firenvim#install(...) abort
 
                 echo 'Installed native manifest for ' . l:name . '.'
 
-                if has('win32')
+                if has('win32') || s:is_wsl
                         " On windows, also create a registry key. We do this
                         " by writing a powershell script to a file and
                         " executing it.
@@ -519,7 +681,7 @@ function! firenvim#install(...) abort
                         echo 'Creating registry key for ' . l:name . '. This may take a while. Script: ' . l:ps1_path
                         call writefile(split(l:ps1_content, "\n"), l:ps1_path)
                         call setfperm(l:ps1_path, 'rwx------')
-                        let o = system(['powershell', '-Command', '-'], readfile(l:ps1_path))
+                        let o = system(['powershell.exe', '-Command', '-'], readfile(l:ps1_path))
                         if v:shell_error
                           echo o
                         endif
@@ -527,6 +689,14 @@ function! firenvim#install(...) abort
                         echo 'Created registry key for ' . l:name . '.'
                 endif
         endfor
+
+        if !s:is_wsl
+                let s:is_wsl = !empty($WSLENV) || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
+                if s:is_wsl
+                        echo 'Installation complete on the wsl side. Performing install on the windows side.'
+                        call firenvim#install(l:force_install, l:script_prolog)
+                endif
+        endif
 endfunction
 
 " Removes files created by Firenvim during its installation process
@@ -551,10 +721,10 @@ function! firenvim#uninstall() abort
                         let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim-' . l:name . '.json'])
                 endif
 
-                if has('win32')
+                if has('win32') || s:is_wsl
                         echo 'Removing registry key for ' . l:name . '. This may take a while.'
                         let l:ps1_content = 'Remove-Item -Path "' . l:cur_browser['registry_key'] . '" -Recurse'
-                        let o = system(['powershell', '-Command', '-'], [l:ps1_content])
+                        let o = system(['powershell.exe', '-Command', '-'], [l:ps1_content])
                         if v:shell_error
                           echo o
                         endif

@@ -9,12 +9,6 @@
       "default_title": "Firenvim"
    },
    "commands": {
-      "focus_input": {
-         "description": "Focus the input field that matches the currently focused iframe."
-      },
-      "focus_page": {
-         "description": "Focus the page."
-      },
       "nvimify": {
          "description": "Turn the currently focused element into a neovim iframe.",
          "suggested_key": {
@@ -49,5 +43,5 @@
    "name": "Firenvim",
    "permissions": [ "nativeMessaging", "storage", "tabs" ],
    "version": "replaced_at_compile_time",
-   "web_accessible_resources": [ "NeovimFrame.html", "ISSUE_TEMPLATE.md" ]
+   "web_accessible_resources": [ "index.html", "NeovimFrame.html", "ISSUE_TEMPLATE.md" ]
 }

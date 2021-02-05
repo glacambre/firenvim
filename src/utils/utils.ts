@@ -1,14 +1,14 @@
-// Chrome doesn't have a "browser" object, instead it uses "chrome".
 let curHost = "firefox";
+
+// Can't get coverage for thunderbird.
+/* istanbul ignore next */
 if ((browser as any).composeScripts !== undefined || document.location.href === "about:blank?compose") {
     curHost = "thunderbird";
+// Chrome doesn't have a "browser" object, instead it uses "chrome".
 } else if (window.browser === undefined) {
     curHost = "chrome";
 }
 
-export function isFirefox() {
-    return curHost === "firefox";
-}
 export function isChrome() {
     return curHost === "chrome";
 }
@@ -92,11 +92,7 @@ export type IconKind = keyof typeof transformations;
 
 // Takes an icon kind and dimensions as parameter, draws that to a canvas and
 // returns a promise that will be resolved with the canvas' image data.
-export function getIconImageData(kind: IconKind, dimensions = "32x32") {
-    const [width, height] = dimensions.split("x").map(x => parseInt(x, 10));
-    if (!width || !height) {
-        throw new Error("Dimensions not correctly formated");
-    }
+export function getIconImageData(kind: IconKind, width: number = 32, height: number = 32) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     const img = new Image(width, height);
@@ -117,46 +113,25 @@ export function toFileName(url: string, id: string, language: string) {
     try {
         parsedURL = new URL(url);
     } catch (e) {
+        // Only happens with thunderbird, where we can't get coverage
+        /* istanbul ignore next */
         parsedURL = { hostname: 'thunderbird', pathname: 'mail' };
     }
     const shortId = id.replace(/:nth-of-type/g, "");
     const toAlphaNum = (str: string) => (str.match(/[a-zA-Z0-9]+/g) || [])
         .join("-")
         .slice(-32);
-    let ext = "txt";
-    if (language !== undefined && language !== null) {
-        const ext2 = languageToExtensions(language);
-        if (ext2 !== undefined) {
-            ext = ext2;
-        }
-    }
+    const ext = languageToExtensions(language);
     return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(shortId)}.${ext}`;
-}
-
-// Returns a number tuple representing the size of characters in the host
-export function getCharSize(host: HTMLElement) {
-    const span = document.createElement("span");
-    span.style.position = "absolute";
-    span.style.top = "0px";
-    span.style.left = "0px";
-    span.innerText = " ";
-    host.appendChild(span);
-    const { width, height } = span.getBoundingClientRect();
-    host.removeChild(span);
-    return [width, height];
-}
-
-// Returns a number tuple representing how many columns and rows can fit in the
-// host.
-export function getGridSize(host: HTMLElement) {
-    const rect = host.getBoundingClientRect();
-    const [width, height] = getCharSize(host);
-    return [Math.floor(rect.width / width), Math.floor(rect.height / height)];
 }
 
 // Given a language name, returns a filename extension. Can return undefined.
 export function languageToExtensions(language: string) {
+    if (language === undefined || language === null) {
+        language = "";
+    }
     const lang = language.toLowerCase();
+    /* istanbul ignore next */
     switch (lang) {
         case "apl":              return "apl";
         case "brainfuck":        return "bf";
@@ -244,4 +219,80 @@ export function languageToExtensions(language: string) {
         case "yaml":             return "yaml";
         case "z80":              return "z8a";
     }
+    return "txt";
 }
+
+// Make tslint happy
+const fontFamily = "font-family";
+
+// Parses a guifont declaration as described in `:h E244`
+// defaults: default value for each of.
+// Can't be tested e2e :/
+/* istanbul ignore next */
+export function parseGuifont(guifont: string, defaults: any) {
+    const options = guifont.split(":");
+    const result = Object.assign({}, defaults);
+    if (/^[a-zA-Z0-9]+$/.test(options[0])) {
+        result[fontFamily] = options[0];
+    } else {
+        result[fontFamily] = JSON.stringify(options[0]);
+    }
+    if (defaults[fontFamily]) {
+        result[fontFamily] += `, ${defaults[fontFamily]}`;
+    }
+    return options.slice(1).reduce((acc, option) => {
+            switch (option[0]) {
+                case "h":
+                    acc["font-size"] = `${option.slice(1)}pt`;
+                    break;
+                case "b":
+                    acc["font-weight"] = "bold";
+                    break;
+                case "i":
+                    acc["font-style"] = "italic";
+                    break;
+                case "u":
+                    acc["text-decoration"] = "underline";
+                    break;
+                case "s":
+                    acc["text-decoration"] = "line-through";
+                    break;
+                case "w": // Can't set font width. Would have to adjust cell width.
+                case "c": // Can't set character set
+                    break;
+            }
+            return acc;
+        }, result as any);
+}
+
+// Computes a unique selector for its argument.
+export function computeSelector(element: HTMLElement) {
+    function uniqueSelector(e: HTMLElement): string {
+        // Only matching alphanumeric selectors because others chars might have special meaning in CSS
+        if (e.id && e.id.match("^[a-zA-Z0-9_-]+$")) {
+            const id = e.tagName + `[id="${e.id}"]`;
+            if (document.querySelectorAll(id).length === 1) {
+                return id;
+            }
+        }
+        // If we reached the top of the document
+        if (!e.parentElement) { return "HTML"; }
+        // Compute the position of the element
+        const index =
+            Array.from(e.parentElement.children)
+                .filter(child => child.tagName === e.tagName)
+                .indexOf(e) + 1;
+        return `${uniqueSelector(e.parentElement)} > ${e.tagName}:nth-of-type(${index})`;
+    }
+    return uniqueSelector(element);
+}
+
+// Turns a number into its hash+6 number hexadecimal representation.
+export function toHexCss(n: number) {
+    if (n === undefined)
+        return undefined;
+    const str = n.toString(16);
+    // Pad with leading zeros
+    return "#" + (new Array(6 - str.length)).fill("0").join("") + str;
+}
+

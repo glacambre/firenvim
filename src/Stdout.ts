@@ -49,12 +49,17 @@ export class Stdout {
             const [kind, reqId, data1, data2] = decoded;
             const name = this.messageNames.get(kind);
             if (name) {
-                const arr = this.listeners.get(name);
-                if (arr) {
-                    arr.forEach(l => l(reqId, data1, data2));
+                const handlers = this.listeners.get(name);
+                if (handlers !== undefined) {
+                    for (const handler of handlers) {
+                        handler(reqId, data1, data2);
+                    }
                 }
             } else {
-                console.log(`Unhandled message kind ${name}`);
+                // Can't be tested because this would mean messages that break
+                // the msgpack-rpc spec, so coverage impossible to get.
+                /* istanbul ignore next */
+                console.error(`Unhandled message kind ${name}`);
             }
         }
     }

@@ -1,5 +1,4 @@
-import { executeInPage } from "../utils/utils";
-import { computeSelector } from "../utils/CSSUtils";
+import { computeSelector, executeInPage } from "../utils/utils";
 import { AbstractEditor } from "./AbstractEditor";
 
 export class MonacoEditor extends AbstractEditor {
@@ -31,7 +30,7 @@ export class MonacoEditor extends AbstractEditor {
     }
 
     getContent () {
-        return executeInPage(`(${(selec: string, str: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string, str: string) => {
             const elem = document.querySelector(selec) as any;
             const uri = elem.getAttribute("data-uri");
             const model = (window as any).monaco.editor.getModel(uri);
@@ -50,7 +49,7 @@ export class MonacoEditor extends AbstractEditor {
     }
 
     getLanguage () {
-        return executeInPage(`(${(selec: string, str: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string, str: string) => {
             const elem = document.querySelector(selec) as any;
             const uri = elem.getAttribute("data-uri");
             const model = (window as any).monaco.editor.getModel(uri);
@@ -59,7 +58,7 @@ export class MonacoEditor extends AbstractEditor {
     }
 
     setContent (text: string) {
-        return executeInPage(`(${(selec: string, str: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string, str: string) => {
             const elem = document.querySelector(selec) as any;
             const uri = elem.getAttribute("data-uri");
             const model = (window as any).monaco.editor.getModel(uri);

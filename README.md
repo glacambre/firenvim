@@ -1,4 +1,4 @@
-# Firenvim  [![Build & Test](https://github.com/glacambre/firenvim/workflows/Test/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Test) [![Total alerts](https://img.shields.io/lgtm/alerts/g/glacambre/firenvim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/glacambre/firenvim/alerts/) [![Vint](https://github.com/glacambre/firenvim/workflows/Vint/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Vint) [![Luacheck](https://github.com/glacambre/firenvim/workflows/Luacheck/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Luacheck) [![Matrix](https://img.shields.io/matrix/firenvim:matrix.org)](https://riot.im/app/#/room/#firenvim:matrix.org) [![Wiki](https://img.shields.io/badge/wiki-open-brightgreen)](https://github.com/glacambre/firenvim/wiki)
+# Firenvim  [![Build & Test](https://github.com/glacambre/firenvim/workflows/Test/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Test) [![Total alerts](https://img.shields.io/lgtm/alerts/g/glacambre/firenvim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/glacambre/firenvim/alerts/) [![Vint](https://github.com/glacambre/firenvim/workflows/Vint/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Vint) [![Luacheck](https://github.com/glacambre/firenvim/workflows/Luacheck/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Luacheck) [![Matrix](https://img.shields.io/matrix/firenvim:matrix.org)](https://app.element.io/#/room/#firenvim:matrix.org) [![Wiki](https://img.shields.io/badge/wiki-open-brightgreen)](https://github.com/glacambre/firenvim/wiki)
 
 Turn your browser¹ into a Neovim client (demos: [justinmk 🇺🇸](https://www.youtube.com/watch?v=suvh0yFfIB8), [ThePrimeagen 🇺🇸](https://www.youtube.com/watch?v=ID_kNcj9cMo), [Sean Feng 🇨🇳](https://www.youtube.com/watch?v=dNQJONKnJrg)).
 
@@ -13,8 +13,6 @@ Just click on any textarea and it will be immediately replaced by an instance of
 ## Installing
 
 Before installing anything please read [SECURITY.md](SECURITY.md) and make sure you're okay with everything mentioned. In the event you think of a way to compromise Firenvim, please send me an email (you can find my address in my commits).
-
-### Pre-built
 
 1. Make sure you are using [Neovim][nvim] 0.4.0 or later. This plugin will not work with vanilla [VIM][vim] or [Vimr][vimr]. Also make sure that your browser hasn't been installed with Snap or Flatpak - these are sandboxed and thus won't work.
 
@@ -53,34 +51,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
 
 4. Finally, install the Firenvim addon for your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
 
-### From source
-
-#### Requirements
-
-Installing from source requires NodeJS, npm, and Neovim >= 0.4.
-
-#### Cross-browser steps
-
-First, install Firenvim like a regular vim plugin (either by changing your runtime path manually or by [using your favourite plugin manager](#pre-built)).
-
-Then run the following commands:
-```sh
-git clone https://git.sr.ht/~glacambre/firenvim
-cd firenvim
-npm install
-npm run build
-npm run install_manifests
-```
-
-These commands should create three directories: `target/chrome`, `target/firefox` and `target/xpi`.
-
-#### Firefox-specific steps
-
-Go to `about:addons`, click on the cog icon, select `install addon from file` and select the `target/firefox` directory (note: this might require setting `xpinstall.signatures.required` to false in `about:config`).
-
-#### Google Chrome/Chromium-specific steps
-
-Go to `chrome://extensions`, enable "Developer mode", click on `Load unpacked` and select the `target/chrome` directory.
+If you would rather build and install Firenvim from source, check [CONTRIBUTING.md](CONTRIBUTING.md).
 
 #### Other browsers
 
@@ -92,7 +63,7 @@ Firenvim currently requires the following permissions for the following reasons:
 
 - [Access your data for all websites](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions?as=u&utm_source=inproduct#w_access-your-data-for-all-websites): this is necessary in order to be able to append elements (= the neovim iframe) to the DOM.
 - [Exchange messages with programs other than Firefox](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions?as=u#w_exchange-messages-with-programs-other-than-firefox): this is necessary in order to be able to start neovim instances.
-- [Access browser tabs](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions?as=u#w_access-browser-tabs): This is required in order to find out what the currently active tab is.
+- [Access browser tabs](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions?as=u#w_access-browser-tabs): This is required in order to find out what the current tab is.
 
 ## Configuring Firenvim
 
@@ -158,6 +129,7 @@ let g:firenvim_config = {
     \ 'localSettings': {
         \ '.*': {
             \ 'cmdline': 'neovim',
+            \ 'content': 'text',
             \ 'priority': 0,
             \ 'selector': 'textarea',
             \ 'takeover': 'always',
@@ -205,13 +177,18 @@ let fc['.*'] = { 'takeover': 'always' }
 
 ### Using the external command line
 
-You can chose to use an external command line (and thus save a line of space) by setting the localSetting named `cmdline` to `firenvim`. Its default value is `neovim`:
-
+You can chose between neovim's built-in command line and firenvim's command line by setting the localSetting named `cmdline` to either `neovim` or `firenvim`, e.g.:
 ```vim
 let fc['.*'] = { 'cmdline' : 'firenvim' }
 ```
 
-When you then enter command mode, the command will appear in a sort of "pop-up" instead of the bottom of the frame.
+### Editing HTML directly
+
+The `content` localSetting controls how Firenvim should read the content of an element. Setting it to `html` will make Firenvim fetch the content of elements as HTML, `text` will make it use plaintext. The default value is `text`:
+
+```vim
+let fc['.*'] = { 'content' : 'html' }
+```
 
 ### Special characters on MacOS
 

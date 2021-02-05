@@ -1,8 +1,82 @@
 import { NvimMode } from "../utils/configuration";
 import { page } from "../page/proxy";
-import { guifontsToCSS, toCss, toHexCss } from "../utils/CSSUtils";
-import { getCharSize, getGridSize } from "../utils/utils";
+import { parseGuifont, toHexCss } from "../utils/utils";
 import { Grid } from "./Grid";
+
+// Returns a number tuple representing the size of characters in the host
+export function getCharSize(host: HTMLElement) {
+    const span = document.createElement("span");
+    span.style.position = "absolute";
+    span.style.top = "0px";
+    span.style.left = "0px";
+    span.innerText = " ";
+    host.appendChild(span);
+    const { width, height } = span.getBoundingClientRect();
+    host.removeChild(span);
+    return [width, height];
+}
+
+// Returns a number tuple representing how many columns and rows can fit in the
+// host.
+export function getGridSize(host: HTMLElement) {
+    const rect = host.getBoundingClientRect();
+    const [width, height] = getCharSize(host);
+    return [Math.floor(rect.width / width), Math.floor(rect.height / height)];
+}
+
+
+
+// Takes a `guifont` declaration and returns that same font declaration but as
+// a bunch of CSS declarations.
+export function guifontToMultiDecl(guifont: string) {
+    const defaults: any = {};
+    defaults["font-family"] = "Monospace";
+    defaults["font-size"] = "9pt";
+    return Object.entries(parseGuifont(guifont, defaults))
+        .map(([key, value]) => `${key}: ${value};\n`)
+        .join("\n");
+}
+// Takes an array of `guifont` declarations and returns them as a single CSS
+// declaration, using font-family for font fallback.
+export function guifontsToFontFamily(guifonts: string[]) {
+    const defaults: any = {};
+    defaults["font-family"] = "Monospace";
+    defaults["font-size"] = "9pt";
+    const reducedGuifonts = guifonts
+        .slice()
+        .reverse()
+        .reduce((acc, cur) => parseGuifont(cur, acc), defaults);
+    return `font-family: ${reducedGuifonts["font-family"]}; font-size: ${reducedGuifonts["font-size"]};`;
+}
+// Takes a string formatted according to the `guifont` spec and returns a CSS
+// declaration that matches it.
+export function guifontsToCSS(guifont: string) {
+    const guifonts = (guifont + ",")
+        .match(/.+?[^\\],/g) // split on non-escaped commas
+        .map(s => s.slice(0, -1)); // remove last comma of each font
+    if (guifonts.length > 1) {
+        // If there are multiple font declarations, we use a CSS declaration
+        // like this: `font-family: font-family1 font-size font-style
+        // font-weight, font-family2...`. This prevents us from setting
+        // size/bold/italics/underlnie/strikethrough but enables letting the
+        // browser fallback to other fonts if one can't be found.
+        return guifontsToFontFamily(guifonts);
+    }
+    return guifontToMultiDecl(guifonts[0]);
+}
+
+export function toHighlightClassName(n: number) {
+    return "nvim_highlight_" + n;
+}
+
+// Computes a CSS stylesheet that represents the HighlightArray
+export function toCss(highs: HighlightArray) {
+    const bg = highs[0].background;
+    const fg = highs[0].foreground;
+    return highs.reduce((css, elem, id) => css +
+        `.${toHighlightClassName(id)}{background: ${elem.background || bg};color:${elem.foreground || fg};font-style:${elem.italic ? "italic" : "normal"};font-weight:${elem.bold ? "bold" : "normal"};text-decoration-line:${(elem.undercurl || elem.underline) ? "underline" : (elem.strikethrough ? "line-through" : "none")};text-decoration-style:${elem.undercurl ? "wavy" : "solid"};}`
+        , "");
+}
 
 const defaultColors = { background: 16777215, foreground: 0 };
 const grids: Grid[] = [];

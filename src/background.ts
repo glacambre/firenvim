@@ -17,22 +17,26 @@
 import { getGlobalConf, ISiteConfig } from "./utils/configuration";
 import { getIconImageData, IconKind, isThunderbird } from "./utils/utils";
 
-let preloadedInstance: Promise<any>;
+export let preloadedInstance: Promise<any>;
 
+type tabId = number;
+type tabStorage = {
+    disabled: boolean,
+};
 // We can't use the sessions.setTabValue/getTabValue apis firefox has because
 // chrome doesn't support them. Instead, we create a map of tabid => {} kept in
 // the background. This has the disadvantage of not surviving browser restarts,
 // but's it's cross platform.
-const tabValues = new Map();
-function setTabValue(tabid: any, item: any, value: any) {
+const tabValues = new Map<tabId, tabStorage>();
+function setTabValue(tabid: tabId, item: keyof tabStorage, value: any) {
     let obj = tabValues.get(tabid);
     if (obj === undefined) {
-        obj = {};
+        obj = { "disabled": false };
         tabValues.set(tabid, obj);
     }
     obj[item] = value;
 }
-function getTabValue(tabid: any, item: any) {
+function getTabValue(tabid: tabId, item: keyof tabStorage) {
     const obj = tabValues.get(tabid);
     if (obj === undefined) {
         return undefined;
@@ -40,18 +44,20 @@ function getTabValue(tabid: any, item: any) {
     return obj[item];
 }
 
-async function updateIcon(tabId?: number) {
+async function updateIcon(tabid?: number) {
     let name: IconKind = "normal";
-    if (tabId === undefined) {
-        tabId = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
+    if (tabid === undefined) {
+        tabid = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
     }
-    if (getTabValue(tabId, "disabled") === "true") {
+    if (getTabValue(tabid, "disabled") === true) {
         name = "disabled";
     } else if (error !== "") {
         name = "error";
     } else if (warning !== "") {
         name = "notification";
     }
+    // Can't test on the bird of thunder
+    /* istanbul ignore next */
     if (isThunderbird()) {
         return Promise.resolve();
     }
@@ -66,7 +72,9 @@ browser.runtime.getPlatformInfo().then((plat: any) => os = plat.os);
 // Last error message
 let error = "";
 
-// Simple getter for easy RPC calls
+// Simple getter for easy RPC calls. Can't be tested as requires opening
+// browserAction.
+/* istanbul ignore next */
 function getError() {
     return error;
 }
@@ -83,6 +91,9 @@ function registerErrors(nvim: any, reject: any) {
     nvim.onDisconnect.addListener(async (p: any) => {
         clearTimeout(timeout);
         updateIcon();
+        // Unfortunately this error handling can't be tested as it requires
+        // side-effects on the OS.
+        /* istanbul ignore next */
         if (p.error) {
             const errstr = p.error.toString();
             if (errstr.match(/no such native application/i)) {
@@ -94,6 +105,8 @@ function registerErrors(nvim: any, reject: any) {
                     error += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
                 }
                 error += ".";
+            } else if (errstr.match(/Native application tried to send a message of/)) {
+                error = "Unexpected output. Run `nvim --headless` and ensure it prints nothing.";
             } else {
                 error = errstr;
             }
@@ -110,6 +123,7 @@ function registerErrors(nvim: any, reject: any) {
 
 // Last warning message
 let warning = "";
+/* istanbul ignore next */
 function getWarning() {
     return warning;
 }
@@ -118,6 +132,8 @@ async function checkVersion(nvimVersion: string) {
     nvimPluginVersion = nvimVersion;
     const manifest = browser.runtime.getManifest();
     warning = "";
+    // Can't be tested as it would require side effects on the OS.
+    /* istanbul ignore next */
     if (manifest.version !== nvimVersion) {
         warning = `Neovim plugin version (${nvimVersion}) and browser addon `
             + `version (${manifest.version}) do not match.`;
@@ -168,6 +184,9 @@ function applySettings(settings: any) {
     // "alt": "all" | "alphanum"
     // #202: Only register alt key on alphanums to let swedish osx users type
     //       special chars
+    // Only tested on OSX, where we don't pull coverage reports, so don't
+    // instrument function.
+    /* istanbul ignore next */
     if (os === "mac") {
         makeDefaults(settings.globalSettings, "alt", "alphanum");
     } else {
@@ -178,20 +197,24 @@ function applySettings(settings: any) {
     makeDefaultLocalSetting(settings, ".*", {
         // "cmdline": "neovim" | "firenvim"
         // #168: Use an external commandline to preserve space
-        cmdline: "neovim",
+        cmdline: "firenvim",
+        content: "text",
         priority: 0,
+        renderer: "canvas",
         selector: 'textarea:not([readonly]), div[role="textbox"]',
         // "takeover": "always" | "once" | "empty" | "nonempty" | "never"
         // #265: On "once", don't automatically bring back after :q'ing it
         takeover: "always",
     });
     makeDefaultLocalSetting(settings, "about:blank\\?compose", {
-        cmdline: "neovim",
+        cmdline: "firenvim",
+        content: "text",
         priority: 1,
+        renderer: "canvas",
         selector: 'body',
         takeover: "always",
     });
-    browser.storage.local.set(settings);
+    return browser.storage.local.set(settings);
 }
 
 function updateSettings() {
@@ -216,11 +239,12 @@ function createNewInstance() {
             (nvim as any).replied = true;
             clearTimeout(errorTimeout);
             checkVersion(resp.version);
-            applySettings(resp.settings);
-            resolve({
-                kill: () => nvim.disconnect(),
-                password,
-                port: resp.port,
+            applySettings(resp.settings).finally(() => {
+                resolve({
+                    kill: () => nvim.disconnect(),
+                    password,
+                    port: resp.port,
+                });
             });
         });
         nvim.postMessage({
@@ -236,15 +260,84 @@ function createNewInstance() {
 preloadedInstance = createNewInstance();
 
 async function toggleDisabled() {
-    const tabId = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
-    const tabValue = getTabValue(tabId, "disabled");
-    const disabled = !JSON.parse((tabValue as string) || "false");
-    setTabValue(tabId, "disabled", `${disabled}`);
-    updateIcon(tabId);
-    return browser.tabs.sendMessage(tabId, { args: [disabled], funcName: ["setDisabled"] });
+    const tabid = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
+    const disabled = !getTabValue(tabid, "disabled");
+    setTabValue(tabid, "disabled", disabled);
+    updateIcon(tabid);
+    return browser.tabs.sendMessage(tabid, { args: [disabled], funcName: ["setDisabled"] });
+}
+
+async function acceptCommand (command: string) {
+    const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
+    let p;
+    switch (command) {
+        case "nvimify":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: [], funcName: ["forceNvimify"] },
+        );
+        break;
+        case "send_C-n":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<C-n>"], funcName: ["sendKey"] },
+        );
+        if (getGlobalConf()["<C-n>"] === "default") {
+            p = p.catch(() => browser.windows.create());
+        }
+        break;
+        case "send_C-t":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<C-t>"], funcName: ["sendKey"] },
+        );
+        if (getGlobalConf()["<C-t>"] === "default") {
+            p = p.catch(() => browser.tabs.create({ "windowId": tab.windowId }));
+        }
+        break;
+        case "send_C-w":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<C-w>"], funcName: ["sendKey"] },
+        );
+        if (getGlobalConf()["<C-w>"] === "default") {
+            p = p.catch(() => browser.tabs.remove(tab.id));
+        }
+        break;
+        case "send_CS-n":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<CS-n>"], funcName: ["sendKey"] },
+        );
+        if (getGlobalConf()["<CS-n>"] === "default") {
+            p = p.catch(() => browser.windows.create({ "incognito": true }));
+        }
+        break;
+        case "send_CS-t":
+            // <CS-t> can't be emulated without the sessions API.
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<CS-t>"], funcName: ["sendKey"] },
+        );
+        break;
+        case "send_CS-w":
+            p = browser.tabs.sendMessage(
+                tab.id,
+                { args: ["<CS-w>"], funcName: ["sendKey"] },
+        );
+        if (getGlobalConf()["<CS-w>"] === "default") {
+            p = p.catch(() => browser.windows.remove(tab.windowId));
+        }
+        break;
+        case "toggle_firenvim":
+            p = toggleDisabled();
+        break;
+    }
+    return p;
 }
 
 Object.assign(window, {
+    acceptCommand,
     // We need to stick the browser polyfill in `window` if we want the `exec`
     // call to be able to find it on Chrome
     browser,
@@ -282,14 +375,16 @@ Object.assign(window, {
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResponse: any) => {
     const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
+    // Can't be tested as there's no way to force an incorrect content request.
+    /* istanbul ignore next */
     if (!fn) {
         throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
     }
     return fn(sender, request.args !== undefined ? request.args : []);
 });
 
-browser.tabs.onActivated.addListener(({ tabId }: { tabId: number }) => {
-    updateIcon(tabId);
+browser.tabs.onActivated.addListener(tab => {
+    updateIcon(tab.tabId);
 });
 browser.windows.onFocusChanged.addListener(async (windowId: number) => {
     const tabs = await browser.tabs.query({ active: true, windowId });
@@ -300,96 +395,11 @@ browser.windows.onFocusChanged.addListener(async (windowId: number) => {
 
 updateIcon();
 
-// browser.commmands doesn't exist in thunderbird
+// browser.commmands doesn't exist in thunderbird. Else branch can't be covered
+// so don't instrument the if.
+/* istanbul ignore next */
 if (!isThunderbird()) {
-    browser.commands.onCommand.addListener(async (command: string) => {
-        const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
-        let p;
-        switch (command) {
-            case "focus_input":
-                browser.tabs.sendMessage(
-                    tab.id,
-                    { args: [], funcName: ["focusInput"] },
-                    { frameId: 0 },
-                );
-                break;
-            case "focus_page":
-                browser.tabs.sendMessage(
-                    tab.id,
-                    { args: [], funcName: ["focusPage"] },
-                    { frameId: 0 },
-                );
-                break;
-            case "nvimify":
-                browser.tabs.sendMessage(
-                    tab.id,
-                    { args: [], funcName: ["forceNvimify"] },
-                    { frameId: 0 }
-                );
-                break;
-            case "send_C-n":
-                p = browser.tabs.sendMessage(
-                    tab.id,
-                    { args: ["<C-n>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
-                );
-                if (getGlobalConf()["<C-n>"] === "default") {
-                    p.catch(() => browser.windows.create());
-                }
-                break;
-            case "send_C-t":
-                p = browser.tabs.sendMessage(
-                    tab.id,
-                    { args: ["<C-t>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
-                );
-                if (getGlobalConf()["<C-t>"] === "default") {
-                    p.catch(() => browser.tabs.create({ "windowId": tab.windowId }));
-                }
-                break;
-            case "send_C-w":
-                p = browser.tabs.sendMessage(
-                    tab.id,
-                    { args: ["<C-w>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
-                );
-                if (getGlobalConf()["<C-w>"] === "default") {
-                    p.catch(() => browser.tabs.remove(tab.id));
-                }
-                break;
-            case "send_CS-n":
-                p = browser.tabs.sendMessage(
-                    tab.id,
-                    { args: ["<CS-n>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
-                );
-                if (getGlobalConf()["<CS-n>"] === "default") {
-                    p.catch(() => browser.windows.create({ "incognito": true }));
-                }
-                break;
-            case "send_CS-t":
-                // <CS-t> can't be emulated without the sessions API.
-                browser.tabs.sendMessage(
-                    tab.id,
-                    { args: ["<CS-t>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
-                );
-                break;
-            case "send_CS-w":
-                p = browser.tabs.sendMessage(
-                    tab.id,
-                    { args: ["<CS-w>"], funcName: ["sendKey"] },
-                    { frameId: 0 }
-                );
-                if (getGlobalConf()["<CS-w>"] === "default") {
-                    p.catch(() => browser.windows.remove(tab.windowId));
-                }
-                break;
-            case "toggle_firenvim":
-                toggleDisabled();
-                break;
-        }
-    });
+    browser.commands.onCommand.addListener(acceptCommand);
 }
 
 async function updateIfPossible() {
@@ -404,6 +414,9 @@ async function updateIfPossible() {
                                                      { frameId: 0 })
                                         .catch(() => 0));
     const instances = await (Promise.all(messages));
+    // Can't be covered as reload() would destroy websockets and thus coverage
+    // data.
+    /* istanbul ignore next */
     if (instances.find(n => n > 0) === undefined) {
         browser.runtime.reload();
     } else {
@@ -413,8 +426,10 @@ async function updateIfPossible() {
 (window as any).updateIfPossible = updateIfPossible;
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
 
-// In thunderbird, register the script to be loaded in the compose window
+// Can't test on the bird of thunder
+/* istanbul ignore next */
 if (isThunderbird()) {
+    // In thunderbird, register the script to be loaded in the compose window
     (browser as any).composeScripts.register({
         js: [{file: "compose.js"}],
     });

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" id="html">
+        <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Test Page</title>
+                <script>
+window.addEventListener("load", () => {
+  const observer = new MutationObserver((mutations, observer) => {
+    let removed = false;
+    for (const mutation of mutations) {
+      for (let node of mutation.addedNodes) {
+        node.remove();
+        removed = true;
+      }
+    }
+    if (removed) {
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+});
+                </script>
+        </head>
+        <body id="body">
+                <textarea id="content-input" rows="20" cols="80"></textarea>
+        </body>
+</html>

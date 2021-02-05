@@ -1,15 +1,16 @@
 import { autofill } from "./autofill";
 import { confReady, getConf } from "./utils/configuration";
-import { global, activeFunctions } from "./common";
+import { firenvimGlobal, activeFunctions } from "./common";
 
-if (document.location.href === "https://github.com/glacambre/firenvim/issues/new") {
+if (document.location.href === "https://github.com/glacambre/firenvim/issues/new"
+   || document.location.protocol === "file:" && document.location.href.endsWith("github.html")) {
     addEventListener("load", autofill);
 }
 
 function setupListeners(selector: string) {
     function onScroll(cont: boolean) {
         window.requestAnimationFrame(() => {
-            const posChanged = Array.from(global.firenvimElems.entries())
+            const posChanged = Array.from(firenvimGlobal.firenvimElems.entries())
                 .map(([_, elem]) => elem.putEditorCloseToInputOrigin())
                 .find(changed => changed.posChanged);
             if (posChanged) {
@@ -34,8 +35,8 @@ function setupListeners(selector: string) {
     })).observe(document.documentElement);
 
     function addNvimListener(elem: Element) {
-        elem.removeEventListener("focus", global.nvimify);
-        elem.addEventListener("focus", global.nvimify);
+        elem.removeEventListener("focus", firenvimGlobal.nvimify);
+        elem.addEventListener("focus", firenvimGlobal.nvimify);
         let parent = elem.parentElement;
         while (parent) {
             parent.removeEventListener("scroll", doScroll);
@@ -98,9 +99,12 @@ function setupListeners(selector: string) {
     elements.forEach(elem => addNvimListener(elem));
 }
 
-confReady.then(() => {
-    const conf: { selector: string } = getConf();
-    if (conf.selector !== undefined && conf.selector !== "") {
-        setupListeners(conf.selector);
-    }
+export const listenersSetup = new Promise(resolve => {
+    confReady.then(() => {
+        const conf: { selector: string } = getConf();
+        if (conf.selector !== undefined && conf.selector !== "") {
+            setupListeners(conf.selector);
+        }
+        resolve();
+    });
 });

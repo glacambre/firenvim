@@ -25,6 +25,15 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@master
+    - name: Install ffmpeg (Linux)
+      if: matrix.os == 'ubuntu'
+      run: sudo apt update -y && sudo apt install -y ffmpeg
+    - name: Install ffmpeg (MacOs)
+      if: matrix.os == 'macos'
+      run: curl -JL https://evermeet.cx/ffmpeg/get/zip --output ffmpeg.zip && unzip ffmpeg.zip && echo "$PWD" >> $GITHUB_PATH
+    - name: Install ffmpeg (Windows)
+      if: matrix.os == 'windows'
+      run: choco install ffmpeg
     - name: Install Firefox Dev Edition (Linux)
       if: matrix.browser == 'firefox' && matrix.os == 'ubuntu'
       run: |
@@ -34,7 +43,7 @@ jobs:
     - name: Install Firefox Dev Edition (MacOS)
       if: matrix.browser == 'firefox' && matrix.os == 'macos'
       run: |
-        brew cask --verbose --debug install homebrew/cask-versions/firefox-developer-edition
+        brew install --cask homebrew/cask-versions/firefox-developer-edition
         echo "/Applications/Firefox Developer Edition.app/Contents/MacOS/" >> $GITHUB_PATH
     - name: Install Firefox Dev Edition (Windows)
       if: matrix.browser == 'firefox' && matrix.os == 'windows'
@@ -47,34 +56,42 @@ jobs:
         neovim: true
         version: ${{ matrix.neovim }}
     - name: Install NPM dependencies
+      timeout-minutes: 5
       run: npm ci
     - name: Build Firenvim
+      timeout-minutes: 1
       run: npm run webpack -- --env=${{ matrix.browser }}-testing
+    - name: Instrument Firenvim (Linux/Firefox/Stable only)
+      if: matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
+      run: npm run nyc -- instrument --in-place target/${{ matrix.browser }}
     - name: Pack Firenvim (Firefox)
       if: matrix.browser == 'firefox'
       run: npm run pack
     - name: Install Manifest
       run: npm run install_manifests
-    - name: Test (Firefox)
-      if: matrix.browser != 'chrome'
-      env:
-        HEADLESS: 1
+    - name: Test (Linux)
+      timeout-minutes: 10
+      if: matrix.os == 'ubuntu'
+      run: xvfb-run --auto-servernum -s "-screen 0 920x690x24" sh -c '(sleep 3 && ffmpeg -loglevel error -t 240 -an -video_size 920x690 -framerate 30 -f x11grab -i $DISPLAY video.webm) & npm run jest -- ${{ matrix.browser }}'
+    - name: Test (MacOS)
+      if: matrix.os == 'macos'
+      timeout-minutes: 10
       run: |
-        npm run jest -- ${{ matrix.browser }} \
-        || npm run jest -- ${{ matrix.browser }} \
-        || npm run jest -- ${{ matrix.browser }} \
-        || npm run jest -- ${{ matrix.browser }} \
-    - name: Test (Chrome, Linux)
-      if: matrix.browser == 'chrome' && matrix.os == 'ubuntu'
+        ffmpeg -loglevel warning -t 240 -framerate 30 -f avfoundation -i "0:0" video.webm &
+        exit_code=0 && npm run jest -- ${{ matrix.browser }} || exit_code=$? && sleep 20 && exit $exit_code
+    - name: Test (Windows)
+      if: matrix.os == 'windows'
+      timeout-minutes: 10
       run: |
-        xvfb-run --auto-servernum npm run jest -- ${{ matrix.browser }} \
-        || xvfb-run --auto-servernum npm run jest -- ${{ matrix.browser }} \
-        || xvfb-run --auto-servernum npm run jest -- ${{ matrix.browser }} \
-        || xvfb-run --auto-servernum npm run jest -- ${{ matrix.browser }} \
-    - name: Test (Chrome, Windows/MacOs)
-      if: matrix.browser == 'chrome' && matrix.os != 'ubuntu'
-      run: |
-        npm run jest -- ${{ matrix.browser }} \
-        || npm run jest -- ${{ matrix.browser }} \
-        || npm run jest -- ${{ matrix.browser }} \
-        || npm run jest -- ${{ matrix.browser }} \
+        Start-Job { ffmpeg -loglevel warning -t 240 -framerate 30 -f gdigrab -i desktop D:\a\firenvim\firenvim\video.webm }
+        npm run jest -- ${{ matrix.browser }}
+        Get-Job | Wait-Job
+    - name: Artifact upload (failure only)
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: ${{ matrix.os }}-${{ matrix.browser }}-${{ matrix.neovim }}
+        path: |
+          video.webm
+          failures.txt
+        retention-days: 2

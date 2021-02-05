@@ -15,7 +15,9 @@ export const page = {} as {
 
 let funcName: keyof typeof functions;
 for (funcName in functions) {
-    if (!functions.hasOwnProperty(funcName)) { // Make tslint happy
+    // This if condition is never executed and actually only there for TSLint
+    /* istanbul ignore next */
+    if (!functions.hasOwnProperty(funcName)) {
         continue;
     }
     // We need to declare func here because funcName is a global and would not

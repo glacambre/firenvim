@@ -19,6 +19,7 @@ function deepCopy (obj) {
 const CopyWebPackFiles = [
   "ISSUE_TEMPLATE.md",
   "src/manifest.json",
+  "src/index.html",
   "src/NeovimFrame.html",
   "src/browserAction.html",
   "static/firenvim.svg",
@@ -31,6 +32,7 @@ const config = {
     background: "./src/background.ts",
     browserAction: "./src/browserAction.ts",
     content: "./src/content.ts",
+    index: "./src/frame.ts",
     nvimui: "./src/NeovimFrame.ts",
   },
   output: {
@@ -102,7 +104,7 @@ const chromeConfig = (config, env) => {
           }
           manifest.browser_action["default_icon"] = "firenvim128.png";
           if (env.endsWith("testing")) {
-            manifest.content_scripts[0].js.push("testing.js");
+            manifest.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self';"
           }
           content = JSON.stringify(manifest, undefined, 3);
         }
@@ -110,8 +112,7 @@ const chromeConfig = (config, env) => {
       }
     })).concat([16, 48, 128].map(n => ({
       from: "static/firenvim.svg",
-      to: chrome_target_dir,
-      transformPath: () => `firenvim${n}.png`,
+      to: () => path.join(chrome_target_dir, `firenvim${n}.png`),
       transform: (content) => sharp(content).resize(n, n).toBuffer(),
     })))}),
       new ProvidePlugin({ "browser": "webextension-polyfill" })
@@ -147,7 +148,7 @@ const firefoxConfig = (config, env) => {
               manifest.version = package_json.version;
               manifest.description = package_json.description;
               if (env.endsWith("testing")) {
-                manifest.content_scripts[0].js.push("testing.js");
+                manifest.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self';"
               }
               content = JSON.stringify(manifest, undefined, 3);
           }
@@ -208,12 +209,18 @@ const thunderbirdConfig = (config, env) => {
 module.exports = args => {
   let env = "";
   if (args instanceof Object) {
-    env = Object.keys(args)[0];
+    delete args.WEBPACK_BUNDLE;
+    delete args.WEBPACK_BUILD;
+    const keys = Object.keys(args);
+    if (keys.length > 0) {
+      env = keys[0];
+    }
   }
 
   if (env.endsWith("testing")) {
-    config.entry.testing = "./src/testing/content.ts";
-    config.entry.nvimui = "./src/testing/frame.ts";
+    config.entry.content = "./src/testing/content.ts";
+    config.entry.index = "./src/testing/frame.ts";
+    config.entry.background = "./src/testing/background.ts";
   }
 
   if (env.startsWith("chrome")) {

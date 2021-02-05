@@ -1,6 +1,6 @@
-import { neovim } from "./HTMLNeovim";
+import { neovim } from "./Neovim";
 import { page } from "./page/proxy";
-import { getCharSize, getGridSize, getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
+import { getGridId, getLogicalSize, getCurrentMode, computeGridDimensionsFor, getGridCoordinates } from "./render/RedrawCanvas";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { isChrome, toFileName } from "./utils/utils";
@@ -15,16 +15,14 @@ const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimIns
 export const isReady = new Promise((resolve, reject) => {
     window.addEventListener("load", async () => {
         try {
-            const host = document.getElementById("host") as HTMLPreElement;
-            const extCmdline = document.getElementById("ext_cmdline") as HTMLSpanElement;
-            const extMessages = document.getElementById("ext_messages") as HTMLSpanElement;
+            const canvas = document.getElementById("canvas") as HTMLCanvasElement;
             const keyHandler = document.getElementById("keyhandler");
             const [[url, selector, cursor, language], connectionData] =
                 await Promise.all([infoPromise, connectionPromise]);
-            const nvimPromise = neovim(host, extCmdline, extMessages, connectionData);
+            const nvimPromise = neovim(canvas, connectionData);
             const contentPromise = page.getElementContent();
 
-            const [cols, rows] = getGridSize(host);
+            const [cols, rows] = getLogicalSize();
 
             const nvim = await nvimPromise;
 
@@ -32,7 +30,7 @@ export const isReady = new Promise((resolve, reject) => {
             // info to be available when UIEnter is triggered
             const extInfo = browser.runtime.getManifest();
             const [major, minor, patch] = extInfo.version.split(".");
-            nvim.set_client_info(extInfo.name + Math.random(),
+            nvim.set_client_info(extInfo.name,
                 { major, minor, patch },
                 "ui",
                 {},
@@ -49,7 +47,7 @@ export const isReady = new Promise((resolve, reject) => {
 
             let resizeReqId = 0;
             browser.runtime.onMessage.addListener((request: any, sender: any, sendResponse: any) => {
-                if (request.funcName[0] === "sendKey") {
+                if (request.funcName[0] === "frame_sendKey") {
                     nvim.input(request.args.join(""));
                 } else if (request.funcName[0] === "resize" && request.args[0] > resizeReqId) {
                     const [id, width, height] = request.args;
@@ -63,11 +61,12 @@ export const isReady = new Promise((resolve, reject) => {
                     // different from rows but we can't because redraw notifications
                     // might happen without us actually calling ui_try_resize and then
                     // the sizes wouldn't be in sync anymore
-                    const [cellWidth, cellHeight] = getCharSize(host);
-                    const nCols = Math.floor(width / cellWidth);
-                    const nRows = Math.floor(height / cellHeight);
+                    const [nCols, nRows] = computeGridDimensionsFor(
+                        width * window.devicePixelRatio,
+                        height * window.devicePixelRatio
+                    );
                     nvim.ui_try_resize_grid(getGridId(), nCols, nRows);
-                    page.resizeEditor(nCols * cellWidth, nRows * cellHeight);
+                    page.resizeEditor(Math.floor(width / nCols) * nCols, Math.floor(height / nRows) * nRows);
                 }
             });
 
@@ -75,10 +74,13 @@ export const isReady = new Promise((resolve, reject) => {
             const filename = toFileName(url, selector, language);
             const content = await contentPromise;
             const [line, col] = cursor;
-            nvim.call_function("writefile", [content.split("\n"), filename])
+            const writeFilePromise = nvim.call_function("writefile", [content.split("\n"), filename])
                 .then(() => nvim.command(`noswapfile edit ${filename} `
                                          + `| call nvim_win_set_cursor(0, [${line}, ${col}])`));
 
+            // Can't get coverage for this as browsers don't let us reliably
+            // push data to the server on beforeunload.
+            /* istanbul ignore next */
             window.addEventListener("beforeunload", () => {
                 nvim.ui_detach();
                 nvim.command("qall!");
@@ -115,6 +117,18 @@ export const isReady = new Promise((resolve, reject) => {
 
             const ignoreKeys = settings.ignoreKeys;
             keyHandler.addEventListener("keydown", (evt) => {
+                // This is a workaround for osx where pressing non-alphanumeric
+                // characters like "@" requires pressing <A-a>, which results
+                // in the browser sending an <A-@> event, which we want to
+                // treat as a regular @.
+                // So if we're seeing an alt on a non-alphanumeric character,
+                // we just ignore it and let the input event handler do its
+                // magic. This can only be tested on OSX, as generating an
+                // <A-@> keydown event with selenium won't result in an input
+                // event.
+                // Since coverage reports are only retrieved on linux, we don't
+                // instrument this condition.
+                /* istanbul ignore next */
                 if (evt.altKey && settings.alt === "alphanum" && !/[a-zA-Z0-9]/.test(evt.key)) {
                     return;
                 }
@@ -145,7 +159,6 @@ export const isReady = new Promise((resolve, reject) => {
                         nvim.input(text);
                         evt.preventDefault();
                         evt.stopImmediatePropagation();
-                        rendererOnKeyPressed(text);
                     }
                 }
             });
@@ -156,7 +169,6 @@ export const isReady = new Promise((resolve, reject) => {
                 evt.stopImmediatePropagation();
                 evt.target.innerText = "";
                 evt.target.value = "";
-                rendererOnKeyPressed(evt.target.value);
             }
             keyHandler.addEventListener("input", (evt: any) => {
                 if (evt.isTrusted && !evt.isComposing) {
@@ -178,6 +190,9 @@ export const isReady = new Promise((resolve, reject) => {
             // true! This means that we need to add a chrome-specific event
             // listener on compositionend to do what happens on input events for
             // Firefox.
+            // Don't instrument this branch as coverage is only generated on
+            // Firefox.
+            /* istanbul ignore next */
             if (isChrome()) {
                 keyHandler.addEventListener("compositionend", (evt: any) => {
                     acceptInput(event);
@@ -190,30 +205,33 @@ export const isReady = new Promise((resolve, reject) => {
             });
             function onMouse(evt: MouseEvent, action: string) {
                 let button;
+                // Selenium can't generate wheel events yet :(
+                /* istanbul ignore next */
                 if (evt instanceof WheelEvent) {
                     button = "wheel";
                 } else {
-                    if (evt.button !== 0 && evt.button !== 2) {
+                    // Selenium can't generate mouse events with more buttons :(
+                    /* istanbul ignore next */
+                    if (evt.button > 2) {
                         // Neovim doesn't handle other mouse buttons for now
                         return;
                     }
-                    button = evt.button === 0 ? "left" : "right";
+                    button = ["left", "middle", "right"][evt.button];
                 }
                 evt.preventDefault();
                 evt.stopImmediatePropagation();
 
                 const modifiers = (evt.altKey ? "A" : "") +
-                    (evt.ctrlKey ? "V" : "") +
+                    (evt.ctrlKey ? "C" : "") +
                     (evt.metaKey ? "D" : "") +
                     (evt.shiftKey ? "S" : "");
-                const [cWidth, cHeight] = getCharSize(host);
+                const [x, y] = getGridCoordinates(evt.pageX, evt.pageY);
                 nvim.input_mouse(button,
                                  action,
                                  modifiers,
                                  getGridId(),
-                                 Math.floor(evt.pageY / cHeight),
-                                 Math.floor(evt.pageX / cWidth));
-
+                                 y,
+                                 x);
                 keyHandler.focus();
             }
             window.addEventListener("mousedown", e => {
@@ -222,6 +240,8 @@ export const isReady = new Promise((resolve, reject) => {
             window.addEventListener("mouseup", e => {
                 onMouse(e, "release");
             });
+            // Selenium doesn't let you simulate mouse wheel events :(
+            /* istanbul ignore next */
             window.addEventListener("wheel", evt => {
                 if (Math.abs(evt.deltaY) >= Math.abs(evt.deltaX)) {
                     onMouse(evt, evt.deltaY < 0 ? "up" : "down");
@@ -242,7 +262,12 @@ export const isReady = new Promise((resolve, reject) => {
             keyHandler.focus();
             setTimeout(() => {
                 keyHandler.focus();
-                resolve();
+                writeFilePromise.then(() => resolve());
+                // To hard to test (we'd need to find a way to make neovim fail
+                // to write the file, which requires too many os-dependent side
+                // effects), so don't instrument.
+                /* istanbul ignore next */
+                writeFilePromise.catch(() => reject());
             }, 10);
         } catch (e) {
             console.error(e);

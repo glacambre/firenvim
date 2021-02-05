@@ -1,7 +1,7 @@
-import { isChrome } from "./utils/utils";
+import { getConf } from "./utils/configuration";
+import { computeSelector, isChrome } from "./utils/utils";
 import { AbstractEditor } from "./editors/AbstractEditor";
 import { getEditor } from "./editors/editors";
-import { computeSelector } from "./utils/CSSUtils";
 
 export class FirenvimElement {
 
@@ -10,6 +10,16 @@ export class FirenvimElement {
     // underlying elements (be they simple textareas, CodeMirror elements or
     // other).
     private editor: AbstractEditor;
+    // focusInfo is used to keep track of focus listeners and timeouts created
+    // by FirenvimElement.focus(). FirenvimElement.focus() creates these
+    // listeners and timeouts in order to work around pages that try to grab
+    // the focus again after the FirenvimElement has been created or after the
+    // underlying element's content has changed.
+    private focusInfo = {
+        finalRefocusTimeouts: [] as any[],
+        refocusRefs: [] as any[],
+        refocusTimeouts: [] as any[],
+    };
     // frameId is the webextension id of the neovim frame. We use it to send
     // commands to the frame.
     private frameId: number;
@@ -27,7 +37,11 @@ export class FirenvimElement {
     // We use a mutation observer to detect whether the element is removed from
     // the page. When this happens, the FirenvimElement is removed from the
     // page.
-    private mutationObserver: MutationObserver;
+    private pageObserver: MutationObserver;
+    // We use a mutation observer to detect if the span is removed from the
+    // page by the page. When this happens, the span is re-inserted in the
+    // page.
+    private spanObserver: MutationObserver;
     // nvimify is the function that listens for focus events and creates
     // firenvim elements. We need it in order to be able to remove it as an
     // event listener from the element the user selected when the user wants to
@@ -79,6 +93,9 @@ export class FirenvimElement {
     // information requires evaluating code in the page's context.
     private bufferInfo = (Promise.resolve(["", "", [1, 1], undefined]) as
                           Promise<[string, string, [number, number], string]>);
+    // cursor: last known cursor position. Updated on getPageElementCursor and
+    // setPageElementCursor
+    private cursor = [1, 1] as [number, number];
 
 
     // elem is the element that received the focusEvent.
@@ -108,7 +125,16 @@ export class FirenvimElement {
     }
 
     attachToPage (fip: Promise<number>) {
-        this.frameIdPromise = fip.then((f: number) => this.frameId = f);
+        this.frameIdPromise = fip.then((f: number) => {
+            this.frameId = f;
+            // Once a frameId has been acquired, the FirenvimElement would die
+            // if its span was removed from the page. Thus there is no use in
+            // keeping its spanObserver around. It'd even cause issues as the
+            // spanObserver would attempt to re-insert a dead frame in the
+            // page.
+            this.spanObserver.disconnect();
+            return this.frameId;
+        });
 
         // We don't need the iframe to be appended to the page in order to
         // resize it because we're just using the corresponding
@@ -150,9 +176,43 @@ export class FirenvimElement {
         })(this));
         this.resizeObserver.observe(this.getElement(), { box: "border-box" });
 
-        this.iframe.src = (browser as any).extension.getURL("/NeovimFrame.html");
+        const renderer = getConf().renderer === "canvas" ? "/index.html" : "/NeovimFrame.html";
+        this.iframe.src = (browser as any).extension.getURL(renderer);
         this.span.attachShadow({ mode: "closed" }).appendChild(this.iframe);
-        this.getElement().ownerDocument.body.appendChild(this.span);
+
+        // So pages (e.g. Jira, Confluence) remove spans from the page as soon
+        // as they're inserted. We don't wan't that, so for the 5 seconds
+        // following the insertion, detect if the span is removed from the page
+        // by checking visibility changes and re-insert if needed.
+        let reinserts = 0;
+        this.spanObserver = new MutationObserver(
+            (self => (mutations : MutationRecord[], observer: MutationObserver) => {
+            const span = self.getSpan();
+            for (const mutation of mutations) {
+                for (const node of mutation.removedNodes) {
+                    if (node === span) {
+                        reinserts += 1;
+                        if (reinserts >= 10) {
+                            console.error("Firenvim is trying to create an iframe on this site but the page is constantly removing it. Consider disabling Firenvim on this website.");
+                            observer.disconnect();
+                        } else {
+                            setTimeout(() => self.getElement().ownerDocument.body.appendChild(span), reinserts * 100);
+                        }
+                        return;
+                    }
+                }
+            }
+        })(this));
+        this.spanObserver.observe(this.getElement().ownerDocument.body, { childList: true });
+
+        let parentElement = this.getElement().ownerDocument.body;
+        // We can't insert the frame in the body if the element we're going to
+        // replace the content of is the body, as replacing the content would
+        // destroy the frame.
+        if (parentElement === this.getElement()) {
+            parentElement = parentElement.parentElement;
+        }
+        parentElement.appendChild(this.span);
 
         this.focus();
 
@@ -174,7 +234,7 @@ export class FirenvimElement {
         // We want to remove the FirenvimElement from the page when the
         // corresponding element is removed. We do this by adding a
         // mutationObserver to its parent.
-        this.mutationObserver = new MutationObserver((self => (mutations: MutationRecord[]) => {
+        this.pageObserver = new MutationObserver((self => (mutations: MutationRecord[]) => {
             const elem = self.getElement();
             mutations.forEach(mutation => mutation.removedNodes.forEach(node => {
                 const walker = document.createTreeWalker(node, NodeFilter.SHOW_ALL);
@@ -185,18 +245,43 @@ export class FirenvimElement {
                 }
             }));
         })(this));
-        this.mutationObserver.observe(document.documentElement, {
+        this.pageObserver.observe(document.documentElement, {
             subtree: true,
             childList: true
         });
     }
 
+    clearFocusListeners () {
+        // When the user tries to `:w | call firenvim#focus_page()` in Neovim,
+        // we have a problem. `:w` results in a call to setPageElementContent,
+        // which calls FirenvimElement.focus(), because some pages try to grab
+        // focus when the content of the underlying element changes.
+        // FirenvimElement.focus() creates event listeners and timeouts to
+        // detect when the page tries to grab focus and bring it back to the
+        // FirenvimElement. But since `call firenvim#focus_page()` happens
+        // right after the `:w`, focus_page() triggers the event
+        // listeners/timeouts created by FirenvimElement.focus()!
+        // So we need a way to clear the timeouts and event listeners before
+        // performing focus_page, and that's what this function does.
+        this.focusInfo.finalRefocusTimeouts.forEach(t => clearTimeout(t));
+        this.focusInfo.refocusTimeouts.forEach(t => clearTimeout(t));
+        this.focusInfo.refocusRefs.forEach(f => {
+            this.iframe.removeEventListener("blur", f);
+            this.getElement().removeEventListener("focus", f);
+        });
+        this.focusInfo.finalRefocusTimeouts.length = 0;
+        this.focusInfo.refocusTimeouts.length = 0;
+        this.focusInfo.refocusRefs.length = 0;
+    }
+
     detachFromPage () {
+        this.clearFocusListeners();
         const elem = this.getElement();
         this.resizeObserver.unobserve(elem);
         this.intersectionObserver.unobserve(elem);
-        this.mutationObserver.disconnect();
-        this.span.parentNode.removeChild(this.span);
+        this.pageObserver.disconnect();
+        this.spanObserver.disconnect();
+        this.span.remove();
         this.onDetach(this.frameId);
     }
 
@@ -207,13 +292,19 @@ export class FirenvimElement {
         // actually stop refocusing the iframe a second after it is created.
         const self = this;
         function refocus() {
-            setTimeout(() => {
+            self.focusInfo.refocusTimeouts.push(setTimeout(() => {
                 // First, destroy current selection. Some websites use the
                 // selection to force-focus an element.
                 const sel = document.getSelection();
                 sel.removeAllRanges();
                 const range = document.createRange();
-                range.setStart(self.span, 0);
+                // There's a race condition in the testsuite on chrome that
+                // results in self.span not being in the document and errors
+                // being logged, so we check if self.span really is in its
+                // ownerDocument.
+                if (self.span.ownerDocument.contains(self.span)) {
+                    range.setStart(self.span, 0);
+                }
                 range.collapse(true);
                 sel.addRange(range);
                 // Then, attempt to "release" the focus from whatever element
@@ -224,22 +315,31 @@ export class FirenvimElement {
                     document.body.focus();
                 }
                 self.iframe.focus();
-            }, 0);
+            }, 0));
         }
+        self.focusInfo.refocusRefs.push(refocus);
         this.iframe.addEventListener("blur", refocus);
         this.getElement().addEventListener("focus", refocus);
-        setTimeout(() => {
+        self.focusInfo.finalRefocusTimeouts.push(setTimeout(() => {
             refocus();
             this.iframe.removeEventListener("blur", refocus);
             this.getElement().removeEventListener("focus", refocus);
-        }, 100);
+        }, 100));
         refocus();
     }
 
     focusOriginalElement (addListener: boolean) {
         (document.activeElement as any).blur();
         this.originalElement.removeEventListener("focus", this.nvimify);
+        const sel = document.getSelection();
+        sel.removeAllRanges();
+        const range = document.createRange();
+        if (this.originalElement.ownerDocument.contains(this.originalElement)) {
+            range.setStart(this.originalElement, 0);
+        }
+        range.collapse(true);
         this.originalElement.focus();
+        sel.addRange(range);
         if (addListener) {
             this.originalElement.addEventListener("focus", this.nvimify);
         }
@@ -257,12 +357,22 @@ export class FirenvimElement {
         return this.editor.getElement();
     }
 
+    getFrameId () {
+        return this.frameId;
+    }
+
     getIframe () {
         return this.iframe;
     }
 
     getPageElementContent () {
         return this.getEditor().getContent();
+    }
+
+    getPageElementCursor () {
+        const p = this.editor.getCursor().catch(() => [1, 1]) as Promise<[number, number]>;
+        p.then(c => this.cursor = c);
+        return p;
     }
 
     getSelector () {
@@ -286,14 +396,17 @@ export class FirenvimElement {
         this.bufferInfo = new Promise(async r => r([
             document.location.href,
             this.getSelector(),
-            await (this.editor.getCursor().catch(() => [1, 1])),
+            await this.getPageElementCursor(),
             await (this.editor.getLanguage().catch(() => undefined))
         ]));
     }
 
     pressKeys (keys: KeyboardEvent[]) {
+        const focused = this.isFocused();
         keys.forEach(ev => this.originalElement.dispatchEvent(ev));
-        this.focus();
+        if (focused) {
+            this.focus();
+        }
     }
 
     putEditorCloseToInputOrigin () {
@@ -398,7 +511,7 @@ export class FirenvimElement {
                 frameId: this.frameId,
                 message: {
                     args: [key],
-                    funcName: ["sendKey"],
+                    funcName: ["frame_sendKey"],
                 }
             },
             funcName: ["messageFrame"],
@@ -422,7 +535,13 @@ export class FirenvimElement {
     }
 
     setPageElementCursor (line: number, column: number) {
-        return this.editor.setCursor(line, column);
+        let p = Promise.resolve();
+        this.cursor[0] = line;
+        this.cursor[1] = column;
+        if (this.isFocused()) {
+            p = this.editor.setCursor(line, column);
+        }
+        return p;
     }
 
     show () {

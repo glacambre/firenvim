@@ -1,0 +1,33 @@
+<html oncontextmenu="return false;">
+    <head>
+        <meta charset="utf-8"/>
+        <style>
+            html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0px;
+                padding: 0px;
+                overflow: hidden;
+            }
+            #keyhandler {
+                height: 1px;
+                opacity: 0.01;
+                overflow: hidden;
+                outline: none;
+                border: none;
+                position: absolute;
+                margin: 0px;
+                padding: 0px;
+            }
+            #canvas {
+                position: absolute;
+                top: 0px;
+                margin: 0px;
+                padding: 0px;
+            }
+        </style>
+        <style id="mouse_cursor"></style>
+        <script type="application/javascript" src="index.js"></script>
+    </head>
+    <body oncontextmenu="return false;"><textarea id="keyhandler"></textarea><canvas id="canvas" oncontextmenu="return false;"></canvas></body>
+</html>

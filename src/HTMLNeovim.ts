@@ -1,5 +1,5 @@
-import { page } from "../page/proxy";
-import { onRedraw } from "../render/Redraw";
+import { page } from "./page/proxy";
+import { onRedraw } from "./render/Redraw";
 import { Stdin } from "./Stdin";
 import { Stdout } from "./Stdout";
 
@@ -50,7 +50,24 @@ export async function neovim(
             }
         }
     });
+
+    // hasFocus is used to keep track of whether the neovim frame has focus.
+    // This information is used in firenvim_bufwrite, to know whether the
+    // neovim frame should be focused again after a write.
+    // Note that it is important to have hasFocus live outside of the callback.
+    // The reason for that is the following sequence of events:
+    // - firenvim_bufwrite is received, hasFocus is set to true,
+    //   page.setElementContent is called asynchronously
+    // - firenvim_focus_page is called, page.focusPage() is called
+    //   asynchronously, hasFocus is set to false
+    // - page.setElementContent completes, hasFocus is checked to see if focus
+    //   should be grabbed or not
+    // If the state of hasFocus was lost between messages, we wouldn't know
+    // that firenvim_focus_page has been called and thus erroneously re-focus
+    // the frame.
+    let hasFocus: boolean;
     stdout.addListener("notification", async (name: string, args: any[]) => {
+        hasFocus = document.hasFocus();
         switch (name) {
             case "redraw":
                 if (args) {
@@ -58,11 +75,10 @@ export async function neovim(
                 }
                 break;
             case "firenvim_bufwrite":
-                const hasFocus = document.hasFocus();
                 const data = args[0] as { text: string[], cursor: [number, number] };
                 page.setElementContent(data.text.join("\n"))
                     .then(() => page.setElementCursor(...(data.cursor)))
-                    .then(() => { if (hasFocus && !document.hasFocus()) { window.focus(); } });
+                    .then(() => { if (hasFocus && !document.hasFocus()) window.focus(); });
                 break;
             case "firenvim_eval_js":
                 const result = await page.evalInPage(args[0]);
@@ -72,18 +88,22 @@ export async function neovim(
                 break;
             case "firenvim_focus_page":
                 page.focusPage();
+                hasFocus = false;
                 break;
             case "firenvim_focus_input":
                 page.focusInput();
+                hasFocus = false;
                 break;
             case "firenvim_hide_frame":
                 page.hideEditor();
+                hasFocus = false;
                 break;
             case "firenvim_press_keys":
                 page.pressKeys(args[0]);
                 break;
             case "firenvim_vimleave":
                 page.killEditor();
+                hasFocus = false;
                 break;
         }
     });

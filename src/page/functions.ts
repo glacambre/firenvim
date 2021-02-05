@@ -51,7 +51,14 @@ export function getActiveContentFunctions(global: IGlobalState) {
     return {
         forceNvimify: () => {
             let elem = document.activeElement;
-            if (!elem || elem === document.documentElement || elem === document.body) {
+            const isNull = elem === null || elem === undefined;
+            const pageNotEditable = document.documentElement.contentEditable !== "true";
+            const bodyNotEditable = (document.body.contentEditable === "false"
+                        || (document.body.contentEditable === "inherit"
+                            && document.documentElement.contentEditable !== "true"));
+            if (isNull
+                || (elem === document.documentElement && pageNotEditable)
+                || (elem === document.body && bodyNotEditable)) {
                 function isVisible(e: HTMLElement) {
                     const rect = e.getBoundingClientRect();
                     const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
@@ -94,7 +101,9 @@ export function getNeovimFrameFunctions(global: IGlobalState) {
             }
             _focusInput(global, firenvimElement, true);
         },
-        focusPage: () => {
+        focusPage: (frameId: number) => {
+            const firenvimElement = global.firenvimElems.get(frameId);
+            firenvimElement.clearFocusListeners();
             (document.activeElement as any).blur();
             document.documentElement.focus();
         },
@@ -113,9 +122,12 @@ export function getNeovimFrameFunctions(global: IGlobalState) {
         },
         killEditor: (frameId: number) => {
             const firenvim = global.firenvimElems.get(frameId);
+            const isFocused = firenvim.isFocused();
             firenvim.detachFromPage();
             const conf = getConf();
-            _focusInput(global, firenvim, conf.takeover !== "once");
+            if (isFocused) {
+                _focusInput(global, firenvim, conf.takeover !== "once");
+            }
             global.firenvimElems.delete(frameId);
         },
         pressKeys: (frameId: number, keys: string[]) => {
