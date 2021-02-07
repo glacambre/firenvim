@@ -46,7 +46,11 @@ export class TextareaEditor extends AbstractEditor {
     }
 
     getLanguage () {
-        return Promise.resolve(undefined);
+        if (getConf().content === "text") {
+            return Promise.resolve(undefined);
+        }
+
+        return Promise.resolve('html');
     }
 
     setContent (text: string) {
