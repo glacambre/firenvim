@@ -45,6 +45,9 @@ export class TinymceEditor extends AbstractEditor {
     }
 
     // TODO: this does not work
+    // I also tried using window.tinymce.activeEditor API, but the editor leaves in the parent window
+    // not the frame which is currently focused
+    //
     // The NVIM line & column make no sense as tinymce selector.
     // Instead restore the cursor to the previously set bookmark and remove the bookmark.
     setCursor (line: number, column: number) {
