@@ -391,9 +391,13 @@ ${backup}
         await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         const initVal = await input.getAttribute("value");
         expect(initVal).toMatch(/a+ba+/);
-        await driver.executeScript(`document.activeElement.blur();
+        await driver.executeScript(`arguments[0].blur();
                                     document.documentElement.focus();
-                                    document.body.focus();`);
+                                    document.body.focus();`, input);
+        await driver.sleep(500);
+        await driver.executeScript(`arguments[0].blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`, input);
         await writeVimrc(backup);
         await reloadNeovim(server, driver);
         [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
