@@ -22,10 +22,10 @@ export class TinymceEditor extends AbstractEditor {
     // The content will usually be a condensed HTML source of the rendered text.
     // However we can set a bookmark so that cursor position can be restored later.
     getCursor () {
-        var bookmark = document.createElement('span');
-        bookmark.className = 'firenvim_bookmark'
+        const bookmark = document.createElement('span');
+        bookmark.className = 'firenvim_bookmark';
 
-        var range = window.getSelection().getRangeAt(0);
+        const range = window.getSelection().getRangeAt(0);
         range.insertNode(bookmark);
 
         return Promise.resolve([1, 0] as [number, number]);
@@ -51,14 +51,12 @@ export class TinymceEditor extends AbstractEditor {
     // The NVIM line & column make no sense as tinymce selector.
     // Instead restore the cursor to the previously set bookmark and remove the bookmark.
     setCursor (line: number, column: number) {
-        debugger;
         return executeInPage(`(${/* istanbul ignore next */ () => {
-            debugger;
-            var bookmark = document.getElementsByClassName('firenvim_bookmark')[0];
-            var range = document.createRange ();
+            const bookmark = document.getElementsByClassName('firenvim_bookmark')[0];
+            const range = document.createRange ();
             range.selectNode(bookmark);
 
-            var selection = window.getSelection();
+            const selection = window.getSelection();
             selection.removeAllRanges();
             selection.addRange(range);
 
