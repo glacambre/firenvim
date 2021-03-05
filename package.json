@@ -12,7 +12,7 @@
     "imports-loader": "^2.0.0",
     "istanbul-lib-coverage": "^3.0.0",
     "jest": "25.5.4",
-    "monaco-editor": "^0.22.3",
+    "monaco-editor": "^0.23.0",
     "msgpack-lite": "0.1.26",
     "nyc": "^15.1.0",
     "selenium-webdriver": "4.0.0-beta.1",
