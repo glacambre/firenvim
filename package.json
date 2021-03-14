@@ -24,7 +24,7 @@
     "web-ext": "6.0.0",
     "web-ext-types": "3.2.1",
     "webextension-polyfill": "0.7.0",
-    "webpack": "5.24.3",
+    "webpack": "5.25.1",
     "webpack-cli": "4.5.0",
     "ws": "^7.4.4"
   },
