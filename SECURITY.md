@@ -37,9 +37,11 @@ A malicious page could try to send malicious messages to the frame with the [pos
 
 ### Malicious extensions
 
-A malicious extension can do everything a page can (and these attacks are mitigated in the same way). There's one more attack vector to consider:
+A malicious extension can do everything a page can (and these attacks are mitigated in the same way). There's two more attack vectors to consider:
 
 A malicious extension cannot start neovim unless its id matches Firenvim's. I have no idea what Mozilla does in order to prevent an extension from stealing another extension's id. I assume they check extension ids when publishing extensions on addons.mozilla.org. However, if this is the only protection in place, this would mean that you're not safe from this kind of attack if you install your extensions from somewhere else.
+
+Another attack a malicious extension could attempt is to use the webrequest extension API in order to intercept Firenvim's websocket connection request, inspect its content, cancel it and then connect to Neovim while pretending it is Firenvim. However, this cannot work as the webrequest extension API does not offer the ability to intercept requests from other extensions.
 
 ### Malicious actors on LAN
 
