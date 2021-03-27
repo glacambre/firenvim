@@ -19,7 +19,6 @@
     "sharp": "0.27.2",
     "ts-jest": "25.5.1",
     "ts-loader": "^8.0.18",
-    "tslint": "6.1.3",
     "typescript": "3.9.9",
     "web-ext": "6.0.0",
     "web-ext-types": "3.2.1",
@@ -50,7 +49,6 @@
     "tests": "npm run test-firefox && npm run test-chrome",
     "test-firefox": "webpack --env=firefox-testing && nyc instrument --in-place target/firefox && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest && jest firefox",
     "test-chrome": "webpack --env=chrome-testing && nyc instrument --in-place target/chrome && jest chrome",
-    "tslint": "tslint",
     "webpack": "webpack"
   },
   "jest": {

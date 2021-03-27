@@ -373,7 +373,7 @@ Object.assign(window, {
     updateSettings: () => updateSettings(),
 } as any);
 
-browser.runtime.onMessage.addListener(async (request: any, sender: any, sendResponse: any) => {
+browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendResponse: any) => {
     const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
     // Can't be tested as there's no way to force an incorrect content request.
     /* istanbul ignore next */

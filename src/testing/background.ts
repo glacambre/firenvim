@@ -1,4 +1,4 @@
-import { makeRequest, makeRequestHandler } from "./rpc";
+import { makeRequestHandler } from "./rpc";
 import * as background from "../background";
 
 // This console.log is mostly to force webpack to import background here

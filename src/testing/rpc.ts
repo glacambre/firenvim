@@ -20,11 +20,13 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
             // send requests to the coverage server for now.
             /* istanbul ignore next */
             case "resolve":
+                {
                 const r = requests.get(req.reqId);
                 if (r !== undefined) {
                     r(...req.args);
                 } else {
                     console.error("Received answer to unsent request!", req);
+                }
                 }
             break;
             case "getContext":
@@ -72,7 +74,7 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
                 });
                 break;
             case "eval":
-                Promise.resolve(eval(req.args[0])).catch(() => {}).then((result) => {
+                Promise.resolve(eval(req.args[0])).catch(() => undefined).then((result) => {
                     s.send(JSON.stringify({
                         args: [result],
                         funcName: ["resolve"],

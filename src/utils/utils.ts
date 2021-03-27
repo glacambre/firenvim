@@ -75,7 +75,7 @@ const transformations = {
             }
         }
     },
-    normal: ((img: Uint8ClampedArray) => (undefined as never)),
+    normal: ((_img: Uint8ClampedArray) => (undefined as never)),
     notification: (img: Uint8ClampedArray) => {
         for (let i = 0; i < img.length; i += 4) {
             // Turn transparent pixels yellow
@@ -92,11 +92,11 @@ export type IconKind = keyof typeof transformations;
 
 // Takes an icon kind and dimensions as parameter, draws that to a canvas and
 // returns a promise that will be resolved with the canvas' image data.
-export function getIconImageData(kind: IconKind, width: number = 32, height: number = 32) {
+export function getIconImageData(kind: IconKind, width = 32, height = 32) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     const img = new Image(width, height);
-    const result = new Promise((resolve) => img.addEventListener("load", (e) => {
+    const result = new Promise((resolve) => img.addEventListener("load", () => {
         ctx.drawImage(img, 0, 0, width, height);
         const id = ctx.getImageData(0, 0, width, height);
         transformations[kind](id.data);

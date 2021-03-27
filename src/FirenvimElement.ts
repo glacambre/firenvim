@@ -290,8 +290,7 @@ export class FirenvimElement {
         // to the page, so we need to refocus it each time it loses focus. But
         // the user might want to stop focusing the iframe at some point, so we
         // actually stop refocusing the iframe a second after it is created.
-        const self = this;
-        function refocus() {
+        const refocus = ((self) => () => {
             self.focusInfo.refocusTimeouts.push(setTimeout(() => {
                 // First, destroy current selection. Some websites use the
                 // selection to force-focus an element.
@@ -316,11 +315,11 @@ export class FirenvimElement {
                 }
                 self.iframe.focus();
             }, 0));
-        }
-        self.focusInfo.refocusRefs.push(refocus);
+        })(this);
+        this.focusInfo.refocusRefs.push(refocus);
         this.iframe.addEventListener("blur", refocus);
         this.getElement().addEventListener("focus", refocus);
-        self.focusInfo.finalRefocusTimeouts.push(setTimeout(() => {
+        this.focusInfo.finalRefocusTimeouts.push(setTimeout(() => {
             refocus();
             this.iframe.removeEventListener("blur", refocus);
             this.getElement().removeEventListener("focus", refocus);
@@ -393,12 +392,12 @@ export class FirenvimElement {
     }
 
     prepareBufferInfo () {
-        this.bufferInfo = new Promise(async r => r([
+        this.bufferInfo = (async () => [
             document.location.href,
             this.getSelector(),
             await this.getPageElementCursor(),
             await (this.editor.getLanguage().catch(() => undefined))
-        ]));
+        ])() as Promise<[string, string, [number, number], string]>;
     }
 
     pressKeys (keys: KeyboardEvent[]) {

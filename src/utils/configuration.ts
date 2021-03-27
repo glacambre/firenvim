@@ -85,7 +85,7 @@ export function getConfForUrl(url: string): ISiteConfig {
         throw new Error("Error: your settings are undefined. Try reloading the page. If this error persists, try the troubleshooting guide: https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md");
     }
     return Array.from(Object.entries(localSettings))
-        .filter(([pat, sel]) => (new RegExp(pat)).test(url))
+        .filter(([pat, _]) => (new RegExp(pat)).test(url))
         .sort((e1, e2) => (or1(e1[1].priority) - or1(e2[1].priority)))
         .reduce((acc, [_, cur]) => Object.assign(acc, cur), {} as ISiteConfig);
 }

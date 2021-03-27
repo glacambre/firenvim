@@ -66,7 +66,7 @@ export class Grid {
         this.height = height;
     }
 
-    public scroll(top: number, bot: number, left: number, right: number, rows: number, cols: number) {
+    public scroll(top: number, bot: number, left: number, right: number, rows: number, _cols: number) {
         if (rows > 0) {
             for (let i = top + 1; i < bot; ++i) {
                 const srcRow = this.rows[i];

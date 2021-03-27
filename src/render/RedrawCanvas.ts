@@ -12,7 +12,7 @@ function wipeGlyphCache() {
     glyphCache = {};
 }
 
-let metricsInvalidated: boolean = false;
+let metricsInvalidated = false;
 
 function invalidateMetrics() {
     metricsInvalidated = true;
@@ -473,13 +473,13 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
         const state = globalState;
         const createGrid = state.gridCharacters[id] === undefined;
         if (createGrid) {
-            state.gridCharacters[id] = new Array();
-            state.gridCharacters[id].push(new Array());
+            state.gridCharacters[id] = [];
+            state.gridCharacters[id].push([]);
             state.gridSizes[id] = { width: 0, height: 0 };
-            state.gridDamages[id] = new Array();
+            state.gridDamages[id] = [];
             state.gridDamagesCount[id] = 0;
-            state.gridHighlights[id] = new Array();
-            state.gridHighlights[id].push(new Array());
+            state.gridHighlights[id] = [];
+            state.gridHighlights[id].push([]);
             state.messagesPositions[id] = {
                 x: state.canvas.width,
                 y: state.canvas.height,
@@ -515,10 +515,10 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
     grid_scroll: (id: number,
                   top: number,
                   bot: number,
-                  left: number,
-                  right: number,
+                  _left: number,
+                  _right: number,
                   rows: number,
-                  cols: number) => {
+                  _cols: number) => {
         const dimensions = globalState.gridSizes[id];
         const charGrid = globalState.gridCharacters[id];
         const highGrid = globalState.gridHighlights[id];
