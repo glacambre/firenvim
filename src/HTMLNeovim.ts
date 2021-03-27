@@ -9,8 +9,6 @@ export async function neovim(
         extMessages: HTMLSpanElement,
         { port, password }: { port: number, password: number },
     ) {
-    let stdin: Stdin;
-    let stdout: Stdout;
     const functions: any = {};
     const requests = new Map<number, { resolve: any, reject: any }>();
 
@@ -22,8 +20,8 @@ export async function neovim(
     await (new Promise(resolve => socket.addEventListener("open", () => {
         resolve();
     })));
-    stdin = new Stdin(socket);
-    stdout = new Stdout(socket);
+    const stdin = new Stdin(socket);
+    const stdout = new Stdout(socket);
 
     let reqId = 0;
     const request = (api: string, args: any[]) => {
@@ -33,7 +31,7 @@ export async function neovim(
             stdin.write(reqId, api, args);
         });
     };
-    stdout.addListener("request", (id: any, name: any, args: any) => {
+    stdout.addListener("request", () => {
         return undefined;
     });
     stdout.addListener("response", (id: any, error: any, result: any) => {
@@ -75,15 +73,19 @@ export async function neovim(
                 }
                 break;
             case "firenvim_bufwrite":
+                {
                 const data = args[0] as { text: string[], cursor: [number, number] };
                 page.setElementContent(data.text.join("\n"))
-                    .then(() => page.setElementCursor(...(data.cursor)))
-                    .then(() => { if (hasFocus && !document.hasFocus()) window.focus(); });
+                .then(() => page.setElementCursor(...(data.cursor)))
+                .then(() => { if (hasFocus && !document.hasFocus()) window.focus(); });
+                }
                 break;
             case "firenvim_eval_js":
+                {
                 const result = await page.evalInPage(args[0]);
                 if (args[1]) {
                     request("nvim_call_function", [args[1], [JSON.stringify(result)]]);
+                }
                 }
                 break;
             case "firenvim_focus_page":

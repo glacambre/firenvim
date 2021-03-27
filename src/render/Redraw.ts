@@ -92,7 +92,7 @@ let cmdlineCursorPos = 0;
 
 let historyShown = false;
 let externalMessages: any;
-export function onKeyPressed(key: string) {
+export function onKeyPressed(_key: string) {
    if (historyShown) {
       externalMessages.style.display = "none";
       historyShown = false;
@@ -161,7 +161,7 @@ const redrawFuncs = {
          extCmdline.style.display = "none";
    },
    cmdline_pos: (_: any,
-                 [pos, level]: [number, number],
+                 [pos, _level]: [number, number],
                  ____: any,
                  extCmdline: HTMLPreElement) => {
          if (extCmdline.children[cmdlineCursorPos]) {
@@ -171,7 +171,7 @@ const redrawFuncs = {
          extCmdline.children[cmdlineCursorPos].className = "nvim_cursor";
    },
    cmdline_show: (_: any,
-                  [content, pos, firstc, prompt, indent, level]: any,
+                  [content, pos, firstc, _prompt, _indent, _level]: any,
                   ___: any,
                   extCmdline: HTMLPreElement) => {
          Array.from(extCmdline.childNodes).forEach(n => n.parentNode.removeChild(n));
@@ -198,7 +198,7 @@ const redrawFuncs = {
          extCmdline.style.left = ((window.innerWidth - rect.width) / 2) + "px";
    },
    default_colors_set: (elem: HTMLElement,
-                        [fg, bg, sp, _, __]: [number, number, number, number, number]) => {
+                        [fg, bg, _sp, _, __]: [number, number, number, number, number]) => {
          if (fg !== undefined && fg !== -1) {
             defaultColors.foreground = fg;
             highlights[0].foreground = toHexCss(defaultColors.foreground);
@@ -209,7 +209,7 @@ const redrawFuncs = {
          }
          nvimHighlightStyle.innerText = toCss(highlights);
    },
-   flush: (elem: HTMLElement) => nvimHighlightStyle.innerText = toCss(highlights),
+   flush: () => nvimHighlightStyle.innerText = toCss(highlights),
    grid_clear: (elem: HTMLElement, [id]: [number]) => {
       if (!matchesSelectedGrid(id)) {
          return;
@@ -297,7 +297,7 @@ const redrawFuncs = {
       elem.classList.add(modePrefix + modename);
       nvimCursorStyle.innerText = cursorStyles[modeid];
    },
-   mode_info_set: (elem: HTMLElement, [cursorStyleEnabled, modeInfo]: [boolean, any]) => {
+   mode_info_set: (elem: HTMLElement, [_, modeInfo]: [boolean, any]) => {
       modeInfo.forEach((info: any, idx: number) => {
          const shape = info.cursor_shape;
          let attr_id = info.attr_id;
@@ -354,12 +354,12 @@ const redrawFuncs = {
          historyShown = true;
    },
    msg_show: (_: any,
-              [kind, content, replaceLast]: [string, [number, string][], boolean],
+              [_kind, content, replaceLast]: [string, [number, string][], boolean],
               ___: any,
               ____: any,
               extMessages: HTMLSpanElement) => {
          const msg = content
-            .map(([attr, chars]: [number, string]) => chars)
+            .map(([_, chars]: [number, string]) => chars)
             .join("");
          if (replaceLast) {
             extMessages.innerText = msg;
@@ -377,12 +377,14 @@ const redrawFuncs = {
          switch (name) {
             case "guifont":
             case "guifontwide":
+                {
                if (value === "") {
                   break;
                }
                nvimGuifont.innerHTML = `* { ${guifontsToCSS(value)} }`;
                const [width, height] = getGridSize(elem);
                nvimFunctions.ui_try_resize_grid(getGridId(), width, height);
+               }
                break;
             case "linespace":
                nvimLinespace.innerText = `.nvim_row { border-bottom: ${value}px }`;

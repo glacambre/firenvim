@@ -46,6 +46,12 @@ export function getTabFunctions(global: IGlobalState) {
     };
 }
 
+function isVisible(e: HTMLElement) {
+    const rect = e.getBoundingClientRect();
+    const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+    return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+}
+
 // ActiveContent functions are functions only the active content script should react to
 export function getActiveContentFunctions(global: IGlobalState) {
     return {
@@ -59,11 +65,6 @@ export function getActiveContentFunctions(global: IGlobalState) {
             if (isNull
                 || (elem === document.documentElement && pageNotEditable)
                 || (elem === document.body && bodyNotEditable)) {
-                function isVisible(e: HTMLElement) {
-                    const rect = e.getBoundingClientRect();
-                    const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
-                    return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
-                }
                 elem = Array.from(document.getElementsByTagName("textarea"))
                     .find(isVisible);
                 if (!elem) {

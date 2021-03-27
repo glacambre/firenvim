@@ -1,9 +1,9 @@
-import { autofill } from "./autofill";
+import { autofill } from "./autofill";
 import { confReady, getConf } from "./utils/configuration";
 import { firenvimGlobal, activeFunctions } from "./common";
 
 if (document.location.href === "https://github.com/glacambre/firenvim/issues/new"
-   || document.location.protocol === "file:" && document.location.href.endsWith("github.html")) {
+    || document.location.protocol === "file:" && document.location.href.endsWith("github.html")) {
     addEventListener("load", autofill);
 }
 

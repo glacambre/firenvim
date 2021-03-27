@@ -7,7 +7,7 @@ export class CodeMirrorEditor extends AbstractEditor {
         let parent = e;
         for (let i = 0; i < 3; ++i) {
             if (parent !== undefined && parent !== null) {
-                if ((/(\A| )CodeMirror/gi).test(parent.className)) {
+                if ((/^(.* )?CodeMirror/gi).test(parent.className)) {
                     return true;
                 }
                 parent = parent.parentElement;

@@ -1,6 +1,6 @@
 import { neovim } from "./HTMLNeovim";
 import { page } from "./page/proxy";
-import { getCharSize, getGridSize, getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
+import { getCharSize, getGridSize, getGridId, getCurrentMode, onKeyPressed as rendererOnKeyPressed } from "./render/Redraw";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { isChrome, toFileName } from "./utils/utils";
@@ -48,7 +48,7 @@ export const isReady = new Promise((resolve, reject) => {
             });
 
             let resizeReqId = 0;
-            browser.runtime.onMessage.addListener((request: any, sender: any, sendResponse: any) => {
+            browser.runtime.onMessage.addListener((request: any, _sender: any, _sendResponse: any) => {
                 if (request.funcName[0] === "sendKey") {
                     nvim.input(request.args.join(""));
                 } else if (request.funcName[0] === "resize" && request.args[0] > resizeReqId) {
@@ -179,7 +179,7 @@ export const isReady = new Promise((resolve, reject) => {
             // listener on compositionend to do what happens on input events for
             // Firefox.
             if (isChrome()) {
-                keyHandler.addEventListener("compositionend", (evt: any) => {
+                keyHandler.addEventListener("compositionend", () => {
                     acceptInput(event);
                 });
             }

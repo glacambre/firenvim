@@ -24,7 +24,7 @@ export class Stdout {
         this.msgpackConfig.codec = msgpack.createCodec({ preset: true });
         Object
             .entries(types)
-            .forEach(([name, { id }]) =>
+            .forEach(([_, { id }]) =>
                      this
                         .msgpackConfig
                         .codec

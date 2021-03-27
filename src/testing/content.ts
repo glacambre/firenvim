@@ -4,8 +4,7 @@
 // necessary for testing reasons (we sometimes might create states that
 // "poison" firenvim and need to reset it).
 
-import { makeRequest, makeRequestHandler } from "./rpc";
-import { executeInPage } from "../utils/utils";
+import { makeRequestHandler } from "./rpc";
 import { listenersSetup } from "../content";
 
 listenersSetup.then(() => {

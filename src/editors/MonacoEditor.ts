@@ -30,7 +30,7 @@ export class MonacoEditor extends AbstractEditor {
     }
 
     getContent () {
-        return executeInPage(`(${/* istanbul ignore next */ (selec: string, str: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
             const elem = document.querySelector(selec) as any;
             const uri = elem.getAttribute("data-uri");
             const model = (window as any).monaco.editor.getModel(uri);
@@ -49,7 +49,7 @@ export class MonacoEditor extends AbstractEditor {
     }
 
     getLanguage () {
-        return executeInPage(`(${/* istanbul ignore next */ (selec: string, str: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
             const elem = document.querySelector(selec) as any;
             const uri = elem.getAttribute("data-uri");
             const model = (window as any).monaco.editor.getModel(uri);
@@ -68,7 +68,7 @@ export class MonacoEditor extends AbstractEditor {
 
     // It's impossible to set Monaco's cursor position:
     // https://github.com/Microsoft/monaco-editor/issues/258
-    setCursor (line: number, column: number) {
+    setCursor (_line: number, _column: number) {
         return Promise.resolve();
     }
 

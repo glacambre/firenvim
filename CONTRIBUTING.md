@@ -43,7 +43,7 @@ In Thunderbird, click the "hamburger menu" (the three horizontal bars) at the to
 
 ## Working on Firenvim
 
-`npm run build` is slow and performs lots of checks. In order to iterate faster, you can use `"$(npm bin)/webpack --env=firefox"` or `"$(npm bin)/webpack" --env=chrome` or `"$(npm bin)/webpack" --env=thunderbird` to build only for the target you care about and without tslint checks. Make sure you click the "reload" button in your browser/thunderbird every time you reload Firenvim.
+`npm run build` is slow and performs lots of checks. In order to iterate faster, you can use `"$(npm bin)/webpack --env=firefox"` or `"$(npm bin)/webpack" --env=chrome` or `"$(npm bin)/webpack" --env=thunderbird` to build only for the target you care about. Make sure you click the "reload" button in your browser/thunderbird every time you reload Firenvim.
 
 Firenvim's architecture is briefly described in [SECURITY.md](SECURITY.md). Firenvim is a webextension (it is a good idea to keep the [webextension documentation](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions) at hand if you're not familiar with webextension development). Webextensions are split in multiple processes. These processes communicate by sending messages to each other and have different entry points. Firenvim's entry points are:
 
