@@ -487,7 +487,7 @@ endfunction
 function! s:get_manifest_beginning(execute_nvim_path) abort
         return '{
                                 \ "name": "firenvim",
-                                \ "description": "Turn Firefox into a Neovim client.",
+                                \ "description": "Turn your browser into a Neovim GUI.",
                                 \ "path": "' . substitute(a:execute_nvim_path, '\', '\\\\', 'g') . '",
                                 \ "type": "stdio",
                                 \'
