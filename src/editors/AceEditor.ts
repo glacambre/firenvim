@@ -41,22 +41,22 @@ export class AceEditor extends AbstractEditor {
     }
 
     getContent () {
-        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
-            return this.getAce(selec).getValue();
-        }})(${JSON.stringify(computeSelector(this.elem))})`);
+        return executeInPage(`(${/* istanbul ignore next */ (getAce: Function, selec: string) => {
+            return getAce(selec).getValue();
+        }})(${this.getAce}, ${JSON.stringify(computeSelector(this.elem))})`);
     }
 
     getCursor () {
-        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (getAce: Function, selec: string) => {
             let position;
-            let ace = this.getAce(selec);
+            let ace = getAce(selec);
             if (ace.getCursorPosition !== undefined) {
                 position = ace.getCursorPosition();
             } else {
                 position = ace.selection.cursor;
             }
             return [position.row + 1, position.column];
-        }})(${JSON.stringify(computeSelector(this.elem))})`);
+        }})(${this.getAce}, ${JSON.stringify(computeSelector(this.elem))})`);
     }
 
     getElement () {
@@ -64,23 +64,23 @@ export class AceEditor extends AbstractEditor {
     }
 
     getLanguage () {
-        return executeInPage(`(${/* istanbul ignore next */ (selec: string) => {
-            let ace = this.getAce(selec);
+        return executeInPage(`(${/* istanbul ignore next */ (getAce: Function, selec: string) => {
+            let ace = getAce(selec);
             return ace.session.$modeId.split("/").slice(-1)[0];
-        }})(${JSON.stringify(computeSelector(this.elem))})`);
+        }})(${this.getAce}, ${JSON.stringify(computeSelector(this.elem))})`);
     }
 
     setContent (text: string) {
-        return executeInPage(`(${/* istanbul ignore next */ (selec: string, str: string) => {
-            return this.getAce(selec).setValue(str, 1);
-        }})(${JSON.stringify(computeSelector(this.elem))}, ${JSON.stringify(text)})`);
+        return executeInPage(`(${/* istanbul ignore next */ (getAce: Function, selec: string, str: string) => {
+            return getAce(selec).setValue(str, 1);
+        }})(${this.getAce}, ${JSON.stringify(computeSelector(this.elem))}, ${JSON.stringify(text)})`);
     }
 
     setCursor (line: number, column: number) {
-        return executeInPage(`(${/* istanbul ignore next */ (selec: string, l: number, c: number) => {
-            const selection = this.getAce(selec).getSelection();
+        return executeInPage(`(${/* istanbul ignore next */ (getAce: Function, selec: string, l: number, c: number) => {
+            const selection = getAce(selec).getSelection();
             return selection.moveCursorTo(l - 1, c, false);
-        }})(${JSON.stringify(computeSelector(this.elem))}, ${line}, ${column})`);
+        }})(${this.getAce}, ${JSON.stringify(computeSelector(this.elem))}, ${line}, ${column})`);
     }
 
 }
