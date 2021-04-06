@@ -64,7 +64,7 @@ Then, navigate to a page with a textarea (I really like `http://txti.es` for thi
 
 ## Make sure it's not your init.vim
 
-Clone the firenvim repository somewhere (e.g. `git clone https://git.sr.ht/~glacambre/firenvim /tmp/firenvim`) and edit the [firenvim script](#make-sure-the-firenvim-script-has-been-created) so that it doesn't load your init.vim but loads firenvim, like this:
+Clone the firenvim repository somewhere (e.g. `git clone https://github.com/glacambre/firenvim /tmp/firenvim`) and edit the [firenvim script](#make-sure-the-firenvim-script-has-been-created) so that it doesn't load your init.vim but loads firenvim, like this:
 
 ```diff
 -exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'
