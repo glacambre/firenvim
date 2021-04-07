@@ -28,7 +28,7 @@ export class AceEditor extends AbstractEditor {
         }
     }
 
-    getAce (selec: string) {
+    private getAce = (selec: string) => {
         const elem = document.querySelector(selec) as any;
         let win_ace = (window as any).ace;
         if (win_ace !== undefined) {
@@ -38,7 +38,7 @@ export class AceEditor extends AbstractEditor {
         } else {
             throw new Error("Couldn't find AceEditor instance");
         }
-    }
+    };
 
     getContent () {
         return executeInPage(`(${/* istanbul ignore next */ (getAce: any, selec: string) => {
