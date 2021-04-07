@@ -33,7 +33,7 @@ export class AceEditor extends AbstractEditor {
         const win_ace = (window as any).ace;
         if (win_ace !== undefined) {
             return win_ace.edit(elem);
-        } else if (elem.hasOwnProperty('aceEditor')) {
+        } else if (Object.prototype.hasOwnProperty.call(elem, 'aceEditor')) {
             return elem.aceEditor;
         } else {
             throw new Error("Couldn't find AceEditor instance");
