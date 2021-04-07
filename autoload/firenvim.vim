@@ -309,7 +309,9 @@ endfunction
 
 function! s:chrome_dev_config_exists() abort
         let l:p = [$HOME, '.config', 'google-chrome-unstable']
-        if !empty($XDG_CONFIG_HOME)
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'Google', 'Chrome Dev']
+        elseif !empty($XDG_CONFIG_HOME)
                 let l:p = [$XDG_CONFIG_HOME, 'google-chrome-unstable']
         end
         return isdirectory(s:build_path(l:p))
@@ -341,7 +343,7 @@ endfunction
 
 function! s:get_chrome_dev_manifest_dir_path() abort
         if has('mac')
-                throw 'No chrome dev on mac.'
+                return s:build_path([$HOME, 'Library', 'Application Support', 'Google', 'Chrome Dev', 'NativeMessagingHosts'])
         elseif has('win32') || s:is_wsl
                 throw 'No chrome dev on win32.'
         end
