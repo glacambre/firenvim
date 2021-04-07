@@ -30,7 +30,7 @@ export class AceEditor extends AbstractEditor {
 
     private getAce = (selec: string) => {
         const elem = document.querySelector(selec) as any;
-        let win_ace = (window as any).ace;
+        const win_ace = (window as any).ace;
         if (win_ace !== undefined) {
             return win_ace.edit(elem);
         } else if (elem.hasOwnProperty('aceEditor')) {
@@ -49,7 +49,7 @@ export class AceEditor extends AbstractEditor {
     getCursor () {
         return executeInPage(`(${/* istanbul ignore next */ (getAce: any, selec: string) => {
             let position;
-            let ace = getAce(selec);
+            const ace = getAce(selec);
             if (ace.getCursorPosition !== undefined) {
                 position = ace.getCursorPosition();
             } else {
@@ -65,7 +65,7 @@ export class AceEditor extends AbstractEditor {
 
     getLanguage () {
         return executeInPage(`(${/* istanbul ignore next */ (getAce: any, selec: string) => {
-            let ace = getAce(selec);
+            const ace = getAce(selec);
             return ace.session.$modeId.split("/").slice(-1)[0];
         }})(${this.getAce}, ${JSON.stringify(computeSelector(this.elem))})`);
     }
