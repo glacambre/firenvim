@@ -41,13 +41,13 @@ export class AceEditor extends AbstractEditor {
     }
 
     getContent () {
-        return executeInPage(`(${/* istanbul ignore next */ (getAce: Function, selec: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (getAce: any, selec: string) => {
             return getAce(selec).getValue();
         }})(${this.getAce}, ${JSON.stringify(computeSelector(this.elem))})`);
     }
 
     getCursor () {
-        return executeInPage(`(${/* istanbul ignore next */ (getAce: Function, selec: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (getAce: any, selec: string) => {
             let position;
             let ace = getAce(selec);
             if (ace.getCursorPosition !== undefined) {
@@ -64,20 +64,20 @@ export class AceEditor extends AbstractEditor {
     }
 
     getLanguage () {
-        return executeInPage(`(${/* istanbul ignore next */ (getAce: Function, selec: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (getAce: any, selec: string) => {
             let ace = getAce(selec);
             return ace.session.$modeId.split("/").slice(-1)[0];
         }})(${this.getAce}, ${JSON.stringify(computeSelector(this.elem))})`);
     }
 
     setContent (text: string) {
-        return executeInPage(`(${/* istanbul ignore next */ (getAce: Function, selec: string, str: string) => {
+        return executeInPage(`(${/* istanbul ignore next */ (getAce: any, selec: string, str: string) => {
             return getAce(selec).setValue(str, 1);
         }})(${this.getAce}, ${JSON.stringify(computeSelector(this.elem))}, ${JSON.stringify(text)})`);
     }
 
     setCursor (line: number, column: number) {
-        return executeInPage(`(${/* istanbul ignore next */ (getAce: Function, selec: string, l: number, c: number) => {
+        return executeInPage(`(${/* istanbul ignore next */ (getAce: any, selec: string, l: number, c: number) => {
             const selection = getAce(selec).getSelection();
             return selection.moveCursorTo(l - 1, c, false);
         }})(${this.getAce}, ${JSON.stringify(computeSelector(this.elem))}, ${line}, ${column})`);
