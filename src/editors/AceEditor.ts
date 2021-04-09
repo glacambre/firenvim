@@ -28,6 +28,9 @@ export class AceEditor extends AbstractEditor {
         }
     }
 
+    // This function will be stringified and inserted in page context so we
+    // can't instrument it.
+    /* istanbul ignore next */
     private getAce = (selec: string) => {
         const elem = document.querySelector(selec) as any;
         const win_ace = (window as any).ace;
