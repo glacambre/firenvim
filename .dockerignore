@@ -1,0 +1,15 @@
+# Exclude docker related files so that the docker layer cache won't be
+# invalidated when editing them because the build context changes.
+Dockerfile
+.dockerignore
+.git
+*.md
+!ISSUE_TEMPLATE.md
+
+# Copied from gitignore
+node_modules/
+npm-debug.log
+target/
+tests/pages/github.html
+.nyc_output
+failures.txt

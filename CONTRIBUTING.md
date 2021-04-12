@@ -4,13 +4,21 @@ Thanks a lot for thinking about contributing to Firenvim! Please do not hesitate
 
 ## Building Firenvim
 
-### Requirements
+### Using Docker
 
-Installing from source requires NodeJS, npm, and Neovim >= 0.4.
+Installing from source using docker requires docker 18.09 or higher for [BuildKit support](https://docs.docker.com/develop/develop-images/build_enhancements/). Older Docker versions will build the required files into the image, but will not copy them into the host.
 
-### Cross-browser steps
+```sh
+git clone https://github.com/glacambre/firenvim
+cd firenvim
+DOCKER_BUILDKIT=1 docker build . -t firenvim --output target
+```
 
-First, install Firenvim like a regular vim plugin (either by changing your runtime path manually or by [using your favourite plugin manager](README.md#installing)).
+### Without Docker
+
+Build without Docker requires NodeJS, npm, and Neovim >= 0.4.
+
+Then, install Firenvim like a regular vim plugin (either by changing your runtime path manually or by [using your favourite plugin manager](README.md#installing)).
 
 Then run the following commands:
 ```sh
