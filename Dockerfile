@@ -1,16 +1,9 @@
-FROM node:lts as build-stage
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+FROM node:lts-alpine AS build-stage
+SHELL ["/bin/sh", "-o", "pipefail", "-c"]
 
-# Install Neovim
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update -y && \
-    apt-get install --no-install-recommends -y neovim && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache neovim
 
-# Drop privileges and build firenvim
-RUN useradd --create-home --user-group user
-USER user
-COPY --chown=user:user . /firenvim
+COPY . /firenvim
 WORKDIR /firenvim
 RUN npm install
 RUN npm run build
