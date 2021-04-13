@@ -4,15 +4,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Install deps
 RUN apt-get update -y \
     && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get install --no-install-recommends -y wget=1.* \
+    && apt-get install --no-install-recommends -y curl \
     && rm -rf /var/lib/apt/lists/*
-# Download latest nvim stable Github release. See:
-# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
-RUN wget -O - --progress=dot:giga https://api.github.com/repos/neovim/neovim/releases/latest \
-    | grep 'browser_download_url.*nvim.appimage"' \
-    | cut -d : -f 2,3 \
-    | tr -d \" \
-    | wget --progress=dot:giga -i -
+RUN curl -LJO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
 RUN chmod +x nvim.appimage
 RUN ./nvim.appimage --appimage-extract
 RUN chmod -R a+rx /squashfs-root/
