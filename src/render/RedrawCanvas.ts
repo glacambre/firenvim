@@ -515,8 +515,8 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
     grid_scroll: (id: number,
                   top: number,
                   bot: number,
-                  _left: number,
-                  _right: number,
+                  left: number,
+                  right: number,
                   rows: number,
                   _cols: number) => {
         const dimensions = globalState.gridSizes[id];
@@ -531,7 +531,7 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
                 const dstChars = charGrid[y];
                 const srcHighs = highGrid[y + rows];
                 const dstHighs = highGrid[y];
-                for (let x = 0; x < dimensions.width; ++x) {
+                for (let x = left; x < right; ++x) {
                     dstChars[x] = srcChars[x];
                     dstHighs[x] = srcHighs[x];
                 }
@@ -543,7 +543,7 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
                 const dstChars = charGrid[y];
                 const srcHighs = highGrid[y + rows];
                 const dstHighs = highGrid[y];
-                for (let x = 0; x < dimensions.width; ++x) {
+                for (let x = left; x < right; ++x) {
                     dstChars[x] = srcChars[x];
                     dstHighs[x] = srcHighs[x];
                 }
