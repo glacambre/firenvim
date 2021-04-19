@@ -73,6 +73,10 @@ Clone the firenvim repository somewhere (e.g. `git clone https://github.com/glac
 
 Then, try reloading your config twice/focusing a textarea twice. If firenvim suddenly starts working, this might be a `$PATH` issue on your end. Revert the changes you just made and try the instructions in [this section](#make-sure-firenvims-path-is-the-same-as-neovims) in order to fix it.
 
+### Make sure firenvim can access your config files
+
+If your configs are not in `$HOME/.config/nvim` and the last step works with `-u NORC`, it could be that firenvim cannot access your config files. Try sourcing them (`:source [path to file]`) from inside firenvim. If this fails, move the configs into `$HOME/.config/nvim` and try sourcing them again.
+
 ## Make sure firenvim's $PATH is the same as neovim's
 
 Some operating systems (such as OSX) empty your browser's `$PATH`. This could be a problem if you want to use plugins that depend on other executables. In order to check if this is indeed happening, just run `echo $PATH` in your shell and `:!echo $PATH` in firenvim and compare the results. If they're different, this might be the culprit.
