@@ -139,6 +139,7 @@ type CommandLineState = {
 
 type Cursor = {
     currentGrid: number,
+    display: boolean,
     x: number,
     y: number,
     lastMove: DOMHighResTimeStamp,
@@ -196,6 +197,7 @@ const globalState: State = {
     },
     cursor: {
         currentGrid: 1,
+        display: true,
         x: 0,
         y: 0,
         lastMove: performance.now(),
@@ -373,8 +375,11 @@ function damageMessagesSpace (state: State) {
 }
 
 const handlers : { [key:string] : (...args: any[])=>void } = {
-    busy_start: () => { globalState.canvas.style.cursor = "wait"; },
-    busy_stop: () => { globalState.canvas.style.cursor = "auto"; },
+    busy_start: () => {
+        pushDamage(getGridId(), DamageKind.Cell, 1, 1, globalState.cursor.x, globalState.cursor.y);
+        globalState.cursor.display = false;
+    },
+    busy_stop: () => { globalState.cursor.display = true; },
     cmdline_hide: () => {
         globalState.commandLine.status = "hidden";
         damageCommandLineSpace(globalState);
@@ -962,7 +967,7 @@ function paint (_: DOMHighResTimeStamp) {
     // If the command line is shown, the cursor's in it
     if (state.commandLine.status === "shown") {
         paintCommandlineWindow(state);
-    } else {
+    } else if (state.cursor.display) {
         const cursor = state.cursor;
         if (cursor.currentGrid === gid) {
             // Missing: handling of cell-percentage
