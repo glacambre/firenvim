@@ -293,6 +293,22 @@ function! s:chrome_config_exists() abort
         return isdirectory(s:build_path(l:p))
 endfunction
 
+function! s:ungoogled_chromium_config_exists() abort
+        let l:p = [$HOME, '.config', 'ungoogled-chromium']
+        if has('mac')
+                " According to #1007, on macos, things work when using the
+                " regular chrome dir.
+                return v:false
+        elseif has('win32') || s:is_wsl
+                " Don't know what should be used here. Wait for somebody to
+                " complain.
+                return v:false
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'ungoogled-chromium']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
 function! s:edge_config_exists() abort
         let l:p = [$HOME, '.config', 'microsoft-edge']
         if has('mac')
@@ -327,6 +343,16 @@ function! s:get_chrome_manifest_dir_path() abort
                 return s:build_path([$XDG_CONFIG_HOME, 'google-chrome', 'NativeMessagingHosts'])
         end
         return s:build_path([$HOME, '.config', 'google-chrome', 'NativeMessagingHosts'])
+endfunction
+
+function! s:get_ungoogled_chromium_manifest_dir_path() abort
+        if has('mac') || has('win32') || s:is_wsl
+                throw "Ungoogled chromium isn't supported. Please open an issue to add support."
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'ungoogled-chromium', 'NativeMessagingHosts'])
+        end
+        return s:build_path([$HOME, '.config', 'ungoogled-chromium', 'NativeMessagingHosts'])
 endfunction
 
 function! s:get_edge_manifest_dir_path() abort
@@ -573,6 +599,12 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_dir_path': function('s:get_chrome_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \},
+                \'ungoogled-chromium': {
+                        \ 'has_config': s:ungoogled_chromium_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_ungoogled_chromium_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Chromium\NativeMessagingHosts\firenvim',
+                \},
                 \'vivaldi': {
                         \ 'has_config': s:vivaldi_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
@@ -582,9 +614,10 @@ function! s:get_browser_configuration() abort
         \}
         if $TESTING == 1
                 call remove(l:browsers, 'brave')
-                call remove(l:browsers, 'vivaldi')
-                call remove(l:browsers, 'opera')
                 call remove(l:browsers, 'chrome-dev')
+                call remove(l:browsers, 'opera')
+                call remove(l:browsers, 'ungoogled-chromium')
+                call remove(l:browsers, 'vivaldi')
         endif
         return l:browsers
 
