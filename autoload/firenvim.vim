@@ -168,6 +168,18 @@ function! firenvim#run() abort
         let l:chanid = stdioopen({ 'on_stdin': 'OnStdin' })
 endfunction
 
+" Wrapper function that executes funcname(...args) if a $DRY_RUN env variable
+" isn't defined and just echoes `funcname(...args)` if it is.
+function! s:maybe_execute(funcname, ...) abort
+        let l:result = ''
+        if !empty($DRY_RUN)
+                echo a:funcname . '(' . string(a:000)[1:-2] . ')'
+        else
+                let l:result = call(a:funcname, a:000)
+        end
+        return l:result
+endfunction
+
 " Returns the name of the script that should be executed by the browser.
 function! s:get_executable_name() abort
         if has('win32') || s:is_wsl
@@ -634,15 +646,15 @@ function! firenvim#install(...) abort
         " Write said script to said path
         let l:execute_nvim = s:get_executable_content(s:get_runtime_dir_path(), l:script_prolog)
 
-        call mkdir(l:data_dir, 'p', 0700)
+        call s:maybe_execute('mkdir', l:data_dir, 'p', 0700)
         if s:is_wsl
                 let l:execute_nvim_path = s:to_wsl_path(l:execute_nvim_path)
         endif
-        call writefile(split(l:execute_nvim, "\n"), l:execute_nvim_path)
+        call s:maybe_execute('writefile', split(l:execute_nvim, "\n"), l:execute_nvim_path)
         if s:is_wsl
                 let l:execute_nvim_path = s:to_windows_path(l:execute_nvim_path)
         endif
-        call setfperm(l:execute_nvim_path, 'rwx------')
+        call s:maybe_execute('setfperm', l:execute_nvim_path, 'rwx------')
 
         let l:browsers = s:get_browser_configuration()
 
@@ -667,9 +679,9 @@ function! firenvim#install(...) abort
                         let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim-' . l:name . '.json'])
                 endif
 
-                call mkdir(l:manifest_dir_path, 'p', 0700)
-                call writefile([l:manifest_content], l:manifest_path)
-                call setfperm(l:manifest_path, 'rw-------')
+                call s:maybe_execute('mkdir', l:manifest_dir_path, 'p', 0700)
+                call s:maybe_execute('writefile', [l:manifest_content], l:manifest_path)
+                call s:maybe_execute('setfperm', l:manifest_path, 'rw-------')
 
                 echo 'Installed native manifest for ' . l:name . '.'
 
@@ -681,9 +693,9 @@ function! firenvim#install(...) abort
                                                 \ l:manifest_path)
                         let l:ps1_path = s:build_path([l:manifest_dir_path, l:name . '.ps1'])
                         echo 'Creating registry key for ' . l:name . '. This may take a while. Script: ' . l:ps1_path
-                        call writefile(split(l:ps1_content, "\n"), l:ps1_path)
-                        call setfperm(l:ps1_path, 'rwx------')
-                        let o = system(['powershell.exe', '-Command', '-'], readfile(l:ps1_path))
+                        call s:maybe_execute('writefile', split(l:ps1_content, "\n"), l:ps1_path)
+                        call s:maybe_execute('setfperm', l:ps1_path, 'rwx------')
+                        let o = s:maybe_execute('system', ['powershell.exe', '-Command', '-'], readfile(l:ps1_path))
                         if v:shell_error
                           echo o
                         endif
