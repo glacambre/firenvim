@@ -225,11 +225,9 @@ export function languageToExtensions(language: string) {
 // Make tslint happy
 const fontFamily = "font-family";
 
-// Parses a guifont declaration as described in `:h E244`
-// defaults: default value for each of.
 // Can't be tested e2e :/
 /* istanbul ignore next */
-export function parseGuifont(guifont: string, defaults: any) {
+export function parseSingleGuifont(guifont: string, defaults: any) {
     const options = guifont.split(":");
     const result = Object.assign({}, defaults);
     if (/^[a-zA-Z0-9]+$/.test(options[0])) {
@@ -263,6 +261,15 @@ export function parseGuifont(guifont: string, defaults: any) {
             }
             return acc;
         }, result as any);
+};
+
+// Parses a guifont declaration as described in `:h E244`
+// defaults: default value for each of.
+// Can't be tested e2e :/
+/* istanbul ignore next */
+export function parseGuifont(guifont: string, defaults: any) {
+    const fonts = guifont.split(",").reverse();
+    return fonts.reduce((acc, cur) => parseSingleGuifont(cur, acc), defaults);
 }
 
 // Computes a unique selector for its argument.
