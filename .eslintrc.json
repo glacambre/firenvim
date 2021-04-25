@@ -21,11 +21,13 @@
         "@typescript-eslint"
     ],
     "rules": {
-        "no-unused-vars": "off",
-        "no-inner-declarations": "off",
-        "prefer-spread": "off",
+        "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-extra-semi": "off",
         "no-async-promise-executor": "off",
         "no-constant-condition": ["error", { "checkLoops": false }],
-        "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+        "no-inner-declarations": "off",
+        "no-unused-vars": "off",
+        "prefer-spread": "off"
     }
 }
