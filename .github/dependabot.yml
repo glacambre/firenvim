@@ -1,0 +1,31 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: monthly
+    timezone: Africa/Abidjan
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+  ignore:
+  - dependency-name: "@types/jest"
+    versions:
+    - 26.0.21
+  - dependency-name: webpack
+    versions:
+    - 5.18.0
+    - 5.22.0
+    - 5.23.0
+    - 5.24.4
+    - 5.25.0
+    - 5.25.1
+    - 5.26.0
+    - 5.26.1
+    - 5.26.2
+    - 5.26.3
+  - dependency-name: "@types/node"
+    versions:
+    - 14.14.23
+    - 14.14.29
+    - 14.14.34
+    - 14.14.35
