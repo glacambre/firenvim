@@ -5,7 +5,7 @@
     "@types/msgpack-lite": "0.1.7",
     "@types/node": "15.0.1",
     "@types/selenium-webdriver": "4.0.12",
-    "@types/ws": "^7.4.0",
+    "@types/ws": "^7.4.2",
     "ace-builds": "^1.4.12",
     "codemirror": "^5.59.4",
     "copy-webpack-plugin": "8.1.1",
