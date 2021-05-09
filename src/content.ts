@@ -105,6 +105,6 @@ export const listenersSetup = new Promise(resolve => {
         if (conf.selector !== undefined && conf.selector !== "") {
             setupListeners(conf.selector);
         }
-        resolve();
+        resolve(undefined);
     });
 });
