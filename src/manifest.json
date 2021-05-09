@@ -43,5 +43,5 @@
    "name": "Firenvim",
    "permissions": [ "nativeMessaging", "storage", "tabs" ],
    "version": "replaced_at_compile_time",
-   "web_accessible_resources": [ "index.html", "NeovimFrame.html", "ISSUE_TEMPLATE.md" ]
+   "web_accessible_resources": [ "index.html", "ISSUE_TEMPLATE.md" ]
 }

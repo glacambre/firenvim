@@ -1,6 +1,6 @@
-import { page } from "../page/proxy";
-import { parseGuifont, toHexCss } from "../utils/utils";
-import { NvimMode } from "../utils/configuration";
+import { page } from "./page/proxy";
+import { parseGuifont, toHexCss } from "./utils/utils";
+import { NvimMode } from "./utils/configuration";
 
 let functions: any;
 export function setFunctions(fns: any) {

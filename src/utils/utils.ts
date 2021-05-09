@@ -1,18 +1,31 @@
-let curHost = "firefox";
+let curHost : string;
 
 // Can't get coverage for thunderbird.
 /* istanbul ignore next */
 if ((browser as any).composeScripts !== undefined || document.location.href === "about:blank?compose") {
     curHost = "thunderbird";
 // Chrome doesn't have a "browser" object, instead it uses "chrome".
-} else if (window.browser === undefined) {
+} else if (window.location.protocol === "moz-extension:") {
+    curHost = "firefox";
+} else if (window.location.protocol === "chrome-extension:") {
     curHost = "chrome";
 }
 
+// Only usable in background script!
 export function isChrome() {
+    // Can't cover error condition
+    /* istanbul ignore next */
+    if (curHost === undefined) {
+        throw Error("Used isChrome in content script!");
+    }
     return curHost === "chrome";
 }
 export function isThunderbird() {
+    // Can't cover error condition
+    /* istanbul ignore next */
+    if (curHost === undefined) {
+        throw Error("Used isThunderbird in content script!");
+    }
     return curHost === "thunderbird";
 }
 

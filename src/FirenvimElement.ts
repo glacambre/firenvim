@@ -1,5 +1,4 @@
-import { getConf } from "./utils/configuration";
-import { computeSelector, isChrome } from "./utils/utils";
+import { computeSelector } from "./utils/utils";
 import { AbstractEditor } from "./editors/AbstractEditor";
 import { getEditor } from "./editors/editors";
 
@@ -176,8 +175,7 @@ export class FirenvimElement {
         })(this));
         this.resizeObserver.observe(this.getElement(), { box: "border-box" });
 
-        const renderer = getConf().renderer === "canvas" ? "/index.html" : "/NeovimFrame.html";
-        this.iframe.src = (browser as any).extension.getURL(renderer);
+        this.iframe.src = (browser as any).extension.getURL("/index.html");
         this.span.attachShadow({ mode: "closed" }).appendChild(this.iframe);
 
         // So pages (e.g. Jira, Confluence) remove spans from the page as soon
@@ -306,13 +304,6 @@ export class FirenvimElement {
                 }
                 range.collapse(true);
                 sel.addRange(range);
-                // Then, attempt to "release" the focus from whatever element
-                // is currently focused. This doesn't work on Chrome.
-                if (!isChrome()) {
-                    window.focus();
-                    document.documentElement.focus();
-                    document.body.focus();
-                }
                 self.iframe.focus();
             }, 0));
         })(this);
