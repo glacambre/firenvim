@@ -1,5 +1,5 @@
 import { page } from "./page/proxy";
-import * as CanvasRenderer from "./render/RedrawCanvas";
+import * as CanvasRenderer from "./renderer";
 import { Stdin } from "./Stdin";
 import { Stdout } from "./Stdout";
 

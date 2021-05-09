@@ -1,6 +1,6 @@
 import { neovim } from "./Neovim";
 import { page } from "./page/proxy";
-import { getGridId, getLogicalSize, getCurrentMode, computeGridDimensionsFor, getGridCoordinates } from "./render/RedrawCanvas";
+import { getGridId, getLogicalSize, getCurrentMode, computeGridDimensionsFor, getGridCoordinates } from "./renderer";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { isChrome, toFileName } from "./utils/utils";
