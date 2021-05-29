@@ -83,7 +83,7 @@ Reading and writing the content of "writable" elements requires interacting with
 
 ### Neovim Frame process
 
-Neovim Frame process are created for each "writable" element the user wants to interact with. The role of the Neovim Frame process is to connect to the Neovim server started by the background process. This is done with a websocket. Once the connection has been made, the Neovim Frame process forwards keypresses to the Neovim server and displays the resulting screen updates. Handling keypresses is performed in `src/frame.ts`, updating the screen is performed by the files in `src/render/`.
+Neovim Frame process are created for each "writable" element the user wants to interact with. The role of the Neovim Frame process is to connect to the Neovim server started by the background process. This is done with a websocket. Once the connection has been made, the Neovim Frame process forwards keypresses to the Neovim server and displays the resulting screen updates. Handling keypresses is performed in `src/frame.ts`, updating the screen is performed by `src/renderer.ts`.
 The Neovim Frame process creates a `BufWrite` autocommand to detect when the buffer is written to the disk. When this happens, it sends a request to the Content or Compose process and asks it to update the content of the "writable" element.
 
 ### Browser Action process
