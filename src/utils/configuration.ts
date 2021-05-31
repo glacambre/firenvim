@@ -37,6 +37,7 @@ export interface IConfig {
         "<CS-t>": "default" | "noop",
         "<CS-w>": "default" | "noop",
         ignoreKeys: { [key in NvimMode]: string[] },
+        cmdlineTimeout: number,
     };
     localSettings: { [key: string]: ISiteConfig };
 }

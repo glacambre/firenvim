@@ -1,6 +1,6 @@
 import { page } from "./page/proxy";
 import { parseGuifont, toHexCss } from "./utils/utils";
-import { NvimMode } from "./utils/configuration";
+import { NvimMode, confReady, getGlobalConf } from "./utils/configuration";
 
 let functions: any;
 export function setFunctions(fns: any) {
@@ -143,6 +143,7 @@ type Cursor = {
     x: number,
     y: number,
     lastMove: DOMHighResTimeStamp,
+    movedSinceLastMessage: boolean,
 };
 
 type Mode = {
@@ -174,6 +175,7 @@ type State = {
     gridHighlights: number[][][],
     gridSizes: GridDimensions[],
     highlights: HighlightInfo[],
+    lastMessage: DOMHighResTimeStamp,
     linespace: number,
     messages: Message[],
     messagesPositions: MessagesPosition[],
@@ -201,6 +203,7 @@ const globalState: State = {
         x: 0,
         y: 0,
         lastMove: performance.now(),
+        movedSinceLastMessage: false,
     },
     gridCharacters: [],
     gridDamages: [],
@@ -208,6 +211,7 @@ const globalState: State = {
     gridHighlights: [],
     gridSizes: [],
     highlights: [newHighlight(defaultBackground, defaultForeground)],
+    lastMessage: performance.now(),
     linespace: 0,
     messages: [],
     messagesPositions: [],
@@ -450,6 +454,7 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
         cursor.x = column;
         cursor.y = row;
         cursor.lastMove = performance.now();
+        cursor.movedSinceLastMessage = true;
     },
     grid_line: (id: number, row: number, col: number, changes:  any[]) => {
         const charGrid = globalState.gridCharacters[id];
@@ -604,6 +609,8 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
             globalState.messages.length = 0;
         }
         globalState.messages.push(content);
+        globalState.lastMessage = performance.now();
+        globalState.cursor.movedSinceLastMessage = false;
     },
     msg_showcmd: (content: Message) => {
         damageMessagesSpace(globalState);
@@ -1040,6 +1047,9 @@ function paint (_: DOMHighResTimeStamp) {
     state.gridDamagesCount[gid] = 0;
 }
 
+let cmdlineTimeout = 3000;
+confReady.then(() => cmdlineTimeout = getGlobalConf().cmdlineTimeout);
+
 export function onRedraw(events: any[]) {
     for (let i = 0; i < events.length; ++i) {
         const event = events[i];
@@ -1051,5 +1061,8 @@ export function onRedraw(events: any[]) {
         } else {
             // console.error(`${event[0]} is not implemented.`);
         }
+    }
+    if (performance.now() - globalState.lastMessage > cmdlineTimeout && globalState.cursor.movedSinceLastMessage) {
+        handlers["msg_clear"]();
     }
 }
