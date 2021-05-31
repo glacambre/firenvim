@@ -281,6 +281,19 @@ au TextChanged * ++nested call Delay_My_Write()
 au TextChangedI * ++nested call Delay_My_Write()
 ```
 
+### Configuring message timeout
+
+Due to space constraints, the external command line covers part of the buffer. This can be a problem as sometimes neovim will send a message that tells Firenvim to draw the command line, and then never send the message to tell Firenvim to stop displaying it. In order to work around this problem, a "cmdlineTimeout" configuration option has been implemented, which makes Firenvim hide the external command line after the cursor has moved and some amount of milliseconds have passed:
+
+```vim
+let g:firenvim_config = {
+    \ 'globalSettings': {
+        \ 'cmdlineTimeout': 3000,
+    \ }
+\ }
+```
+
+
 ## Drawbacks
 
 Some keybindings, such as `<C-n>`, `<C-t>` and `<C-w>` are not overridable through usual means. This means that you have to tell your browser to let Firenvim override them by using [the shortcuts menu in `about://addons`](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) on Firefox and `chrome://extensions/shortcuts` in Chrome.

@@ -180,6 +180,8 @@ function applySettings(settings: any) {
     makeDefaults(settings.globalSettings, "<CS-w>", "default");
     // #717: allow passing keys to the browser
     makeDefaults(settings.globalSettings, "ignoreKeys", {});
+    // #1050: cursor sometimes covered by command line
+    makeDefaults(settings.globalSettings, "cmdlineTimeout", 3000);
 
     // "alt": "all" | "alphanum"
     // #202: Only register alt key on alphanums to let swedish osx users type
