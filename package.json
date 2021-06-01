@@ -7,7 +7,7 @@
     "@types/selenium-webdriver": "4.0.13",
     "@types/ws": "^7.4.2",
     "ace-builds": "^1.4.12",
-    "codemirror": "^5.61.0",
+    "codemirror": "^5.61.1",
     "copy-webpack-plugin": "8.1.1",
     "imports-loader": "^3.0.0",
     "istanbul-lib-coverage": "^3.0.0",
