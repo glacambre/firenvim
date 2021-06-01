@@ -9,7 +9,7 @@
     "ace-builds": "^1.4.12",
     "codemirror": "^5.61.0",
     "copy-webpack-plugin": "8.1.1",
-    "imports-loader": "^2.0.0",
+    "imports-loader": "^3.0.0",
     "istanbul-lib-coverage": "^3.0.0",
     "jest": "26.6.3",
     "monaco-editor": "^0.23.0",
