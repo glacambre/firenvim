@@ -18,7 +18,7 @@ for (funcName in functions) {
     // We need to declare func here because funcName is a global and would not
     // be captured in the closure otherwise
     const func = funcName;
-    page[func] = ((...arr: any[]) => {
+    (page[func] as any) = ((...arr: any[]) => {
         return browser.runtime.sendMessage({
             args: {
                 args: [(window as any).frameId].concat(arr),
