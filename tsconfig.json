@@ -3,7 +3,7 @@
     "moduleResolution": "Node",
     "noImplicitAny": true,
     "sourceMap": true,
-    "target": "ESNext",
+    "target": "ES2020",
     "typeRoots": ["node_modules/@types", "node_modules/web-ext-types/"],
     "alwaysStrict": true
   },

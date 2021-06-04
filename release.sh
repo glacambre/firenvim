@@ -93,6 +93,9 @@ npm run test-chrome
 # now we need a release build
 npm run build
 
+# lint firefox add-on to make sure we'll be able to publish it
+"$(npm bin)/addons-linter" target/xpi/firefox-latest.xpi
+
 # Add finishing touches to chrome manifest
 sed 's/"key":\s*"[^"]*",//' -i target/chrome/manifest.json
 

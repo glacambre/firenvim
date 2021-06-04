@@ -140,7 +140,7 @@ const firefoxConfig = (config, env) => {
               manifest.browser_specific_settings = {
                 "gecko": {
                   "id": "firenvim@lacamb.re",
-                  "strict_min_version": "69.0"
+                  "strict_min_version": "89.0"
                 }
               };
               manifest.version = package_json.version;
