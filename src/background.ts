@@ -402,6 +402,10 @@ updateIcon();
 /* istanbul ignore next */
 if (!isThunderbird()) {
     browser.commands.onCommand.addListener(acceptCommand);
+    browser.runtime.onMessageExternal.addListener(async (request: any, sender: any, _sendResponse: any) => {
+        const resp = await acceptCommand(request.command);
+        _sendResponse(resp);
+    });
 }
 
 async function updateIfPossible() {
