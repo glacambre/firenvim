@@ -243,13 +243,15 @@ There is also a function named `firenvim#hide_frame()` which will temporarily hi
 nnoremap <C-z> :call firenvim#hide_frame()<CR>
 ```
 
-A function named `firenvim#press_keys()` will allow you to send key events to the underlying input field by taking a list of vim-like keys (e.g. `a`, `<CR>`, `<Space>`…) as argument. Note that this only "triggers" an event, it does not add text to the input field. It can be useful with chat apps, if used like this:
+A function named `firenvim#press_keys()` will allow you to send key events to the underlying input field by taking a list of vim-like keys (e.g. `a`, `<CR>`, `<Space>`…) as argument. Note that this only "triggers" an event, it does not add text to the input field. For example if you'd like firenvim to send `<CR>` to the webpage when you press `<CR>` in the editor, you can use the following mapping which is useful with chat apps:
 
 ```vim
 au BufEnter riot.im_* inoremap <CR> <Esc>:w<CR>:call firenvim#press_keys("<LT>CR>")<CR>ggdGa
 ```
 
-Known Issues: some chat apps do not react to firenvim#press_keys (e.g. Slack).
+Note that our goal is to make the mapping type `firenvim#press_keys("<CR>")` in vim's command prompt and then execute it. Since we want the keys `<CR>` to be typed and not <kbd>Enter</kbd> to be pressed, we can't use `<CR>` because it would be interpreted by `inoremap`. Hence we use `<LT>CR>` in order to type the keys `<CR>`. Similarly, if you want to type the keys `<C-CR>` you'd use `<LT>C-CR>`.
+
+Known Issues: some websites do not react to `firenvim#press_keys` (e.g. Slack).
 
 ### Automatically syncing changes to the page
 
