@@ -188,6 +188,8 @@ export function languageToExtensions(language: string) {
         case "html":             return "html";
         case "htmlembedded":     return "html";
         case "htmlmixed":        return "html";
+        case "ipython":          return "py";
+        case "ipythonfm":        return "md";
         case "java":             return "java";
         case "javascript":       return "js";
         case "jinja2":           return "jinja";
