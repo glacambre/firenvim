@@ -5,7 +5,7 @@
     "@types/msgpack-lite": "0.1.7",
     "@types/node": "15.12.5",
     "@types/selenium-webdriver": "4.0.14",
-    "@types/ws": "^7.4.4",
+    "@types/ws": "^7.4.6",
     "ace-builds": "^1.4.12",
     "addons-linter": "^3.9.0",
     "codemirror": "^5.61.1",
