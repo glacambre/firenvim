@@ -1,10 +1,10 @@
-let curHost : string;
+let curHost: string;
 
 // Can't get coverage for thunderbird.
 /* istanbul ignore next */
 if ((browser as any).composeScripts !== undefined || document.location.href === "about:blank?compose") {
     curHost = "thunderbird";
-// Chrome doesn't have a "browser" object, instead it uses "chrome".
+    // Chrome doesn't have a "browser" object, instead it uses "chrome".
 } else if (window.location.protocol === "moz-extension:") {
     curHost = "firefox";
 } else if (window.location.protocol === "chrome-extension:") {
@@ -52,13 +52,13 @@ export function executeInPage(code: string): Promise<any> {
                 }));
             }
         })(${JSON.stringify(eventId)})`;
-        window.addEventListener(eventId, ({ detail }: any) => {
+        window.addEventListener(eventId, ({detail}: any) => {
             script.parentNode.removeChild(script);
             if (detail.success) {
                 return resolve(detail.result);
             }
             return reject(detail.reason);
-        }, { once: true });
+        }, {once: true});
         document.head.appendChild(script);
     });
 }
@@ -119,24 +119,47 @@ export function getIconImageData(kind: IconKind, width = 32, height = 32) {
     return result;
 }
 
-// Given a url and a selector, tries to compute a name that will be unique,
-// short and readable for the user.
-export function toFileName(url: string, id: string, language: string) {
+export function genName(url: string, id: string, language: string) {
+    console.log("url: " + url);
+    console.log("id: " + id);
+    console.log("lang: " + language);
     let parsedURL;
     try {
         parsedURL = new URL(url);
     } catch (e) {
         // Only happens with thunderbird, where we can't get coverage
         /* istanbul ignore next */
-        parsedURL = { hostname: 'thunderbird', pathname: 'mail' };
+        parsedURL = {hostname: 'thunderbird', pathname: 'mail'};
     }
     const shortId = id.replace(/:nth-of-type/g, "");
+    console.log("shortId: " + shortId);
     const toAlphaNum = (str: string) => (str.match(/[a-zA-Z0-9]+/g) || [])
         .join("-")
         .slice(-32);
+    console.log("toAlphaNum: " + toAlphaNum);
     const ext = languageToExtensions(language);
+    console.log("ext: " + ext);
     return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(shortId)}.${ext}`;
 }
+
+// Given a url and a selector, tries to compute a name that will be unique,
+// short and readable for the user.
+export async function toFileName(url: string, id: string, language: string): Promise<string> {
+    let key = genName(url, id, language)
+    return browser.storage.local.get(key).then((r) => {
+        if (r != null && r != undefined && r[`${key}`] != undefined) {
+            let out: {file: string} = r[`${key}`] as {file: string}
+            console.log(out.file);
+            return out.file
+        } else {
+            console.log(key);
+            browser.storage.local.set({[`${key}`]: {file: key}});
+            return key;
+        }
+    })
+}
+
+(window as any).toFileName = toFileName;
 
 // Given a language name, returns a filename extension. Can return undefined.
 export function languageToExtensions(language: string) {
@@ -146,38 +169,38 @@ export function languageToExtensions(language: string) {
     const lang = language.toLowerCase();
     /* istanbul ignore next */
     switch (lang) {
-        case "apl":              return "apl";
-        case "brainfuck":        return "bf";
-        case "c":                return "c";
-        case "c#":               return "cs";
-        case "c++":              return "cpp";
-        case "ceylon":           return "ceylon";
-        case "clike":            return "c";
-        case "clojure":          return "clj";
-        case "cmake":            return ".cmake";
-        case "cobol":            return "cbl";
-        case "coffeescript":     return "coffee";
-        case "commonlisp":      return "lisp";
-        case "crystal":          return "cr";
-        case "css":              return "css";
-        case "cython":           return "py";
-        case "d":                return "d";
-        case "dart":             return "dart";
-        case "diff":             return "diff";
-        case "dockerfile":       return "dockerfile";
-        case "dtd":              return "dtd";
-        case "dylan":            return "dylan";
+        case "apl": return "apl";
+        case "brainfuck": return "bf";
+        case "c": return "c";
+        case "c#": return "cs";
+        case "c++": return "cpp";
+        case "ceylon": return "ceylon";
+        case "clike": return "c";
+        case "clojure": return "clj";
+        case "cmake": return ".cmake";
+        case "cobol": return "cbl";
+        case "coffeescript": return "coffee";
+        case "commonlisp": return "lisp";
+        case "crystal": return "cr";
+        case "css": return "css";
+        case "cython": return "py";
+        case "d": return "d";
+        case "dart": return "dart";
+        case "diff": return "diff";
+        case "dockerfile": return "dockerfile";
+        case "dtd": return "dtd";
+        case "dylan": return "dylan";
         // Eiffel was there first but elixir seems more likely
         // case "eiffel":           return "e";
-        case "elixir":           return "e";
-        case "elm":              return "elm";
-        case "erlang":           return "erl";
-        case "f#":               return "fs";
-        case "factor":           return "factor";
-        case "forth":            return "fth";
-        case "fortran":          return "f90";
-        case "gas":              return "asm";
-        case "go":               return "go";
+        case "elixir": return "e";
+        case "elm": return "elm";
+        case "erlang": return "erl";
+        case "f#": return "fs";
+        case "factor": return "factor";
+        case "forth": return "fth";
+        case "fortran": return "f90";
+        case "gas": return "asm";
+        case "go": return "go";
         // GFM: CodeMirror's github-flavored markdown
         case "gfm":              return "md";
         case "groovy":           return "groovy";
@@ -254,28 +277,28 @@ export function parseSingleGuifont(guifont: string, defaults: any) {
         result[fontFamily] += `, ${defaults[fontFamily]}`;
     }
     return options.slice(1).reduce((acc, option) => {
-            switch (option[0]) {
-                case "h":
-                    acc["font-size"] = `${option.slice(1)}pt`;
-                    break;
-                case "b":
-                    acc["font-weight"] = "bold";
-                    break;
-                case "i":
-                    acc["font-style"] = "italic";
-                    break;
-                case "u":
-                    acc["text-decoration"] = "underline";
-                    break;
-                case "s":
-                    acc["text-decoration"] = "line-through";
-                    break;
-                case "w": // Can't set font width. Would have to adjust cell width.
-                case "c": // Can't set character set
-                    break;
-            }
-            return acc;
-        }, result as any);
+        switch (option[0]) {
+            case "h":
+                acc["font-size"] = `${option.slice(1)}pt`;
+                break;
+            case "b":
+                acc["font-weight"] = "bold";
+                break;
+            case "i":
+                acc["font-style"] = "italic";
+                break;
+            case "u":
+                acc["text-decoration"] = "underline";
+                break;
+            case "s":
+                acc["text-decoration"] = "line-through";
+                break;
+            case "w": // Can't set font width. Would have to adjust cell width.
+            case "c": // Can't set character set
+                break;
+        }
+        return acc;
+    }, result as any);
 };
 
 // Parses a guifont declaration as described in `:h E244`
@@ -298,7 +321,7 @@ export function computeSelector(element: HTMLElement) {
             }
         }
         // If we reached the top of the document
-        if (!e.parentElement) { return "HTML"; }
+        if (!e.parentElement) {return "HTML";}
         // Compute the position of the element
         const index =
             Array.from(e.parentElement.children)
