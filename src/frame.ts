@@ -3,7 +3,7 @@ import { page } from "./page/proxy";
 import { getGridId, getLogicalSize, getCurrentMode, computeGridDimensionsFor, getGridCoordinates } from "./renderer";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
-import { isChrome, toFileName } from "./utils/utils";
+import { isChrome, toFileName, genName } from "./utils/utils";
 
 const frameIdPromise = browser
     .runtime
@@ -12,6 +12,26 @@ const frameIdPromise = browser
 const infoPromise = frameIdPromise.then(() => page.getEditorInfo());
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
 
+(window as any).renameFile = renameFile;
+export async function renameFile(name:string) {
+    const [[url, selector, _, language]] =
+        await Promise.all([infoPromise, connectionPromise]);
+    const key = genName(url, selector, language);
+    return browser.storage.local.get(key).then((r) => {
+        if (r != null && r != undefined && r[`${key}`] != undefined) {
+            console.log(key);
+            console.log("renaming to " + name);
+            browser.storage.local.set({[`${key}`]: {file: name}});
+            return name;
+        } else {
+            // console.log(key);
+            // browser.storage.local.set({[`${key}`]: {file: name}});
+            console.log("no file at key: " + key);
+            return key;
+        }
+    })
+}
+
 export const isReady = new Promise((resolve, reject) => {
     window.addEventListener("load", async () => {
         try {
@@ -19,6 +39,7 @@ export const isReady = new Promise((resolve, reject) => {
             const keyHandler = document.getElementById("keyhandler");
             const [[url, selector, cursor, language], connectionData] =
                 await Promise.all([infoPromise, connectionPromise]);
+
             const nvimPromise = neovim(canvas, connectionData);
             const contentPromise = page.getElementContent();
 
@@ -39,6 +60,8 @@ export const isReady = new Promise((resolve, reject) => {
 
             await confReady;
             const settings = getGlobalConf();
+            console.log("cols: " + cols);
+            console.log("rows: " + rows);
             nvim.ui_attach(cols, rows, {
                 ext_linegrid: true,
                 ext_messages: getConfForUrl(url).cmdline === "firenvim",
@@ -71,7 +94,7 @@ export const isReady = new Promise((resolve, reject) => {
             });
 
             // Create file, set its content to the textarea's, write it
-            const filename = toFileName(url, selector, language);
+            const filename = await toFileName(url, selector, language);
             const content = await contentPromise;
             const [line, col] = cursor;
             const writeFilePromise = nvim.call_function("writefile", [content.split("\n"), filename])
