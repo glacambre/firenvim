@@ -31,6 +31,15 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
         ```vim
         call dein#add('glacambre/firenvim', { 'hook_post_update': { _ -> firenvim#install(0) } })
         ```
+        
+    * [packer](https://github.com/wbthomason/packer.nvim)
+
+        ```lua
+        use {
+            'glacambre/firenvim',
+            run = function() vim.fn['firenvim#install'](0) end 
+        }
+        ```
 
     * [minpac](https://github.com/k-takata/minpac)
 
