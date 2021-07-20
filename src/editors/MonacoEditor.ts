@@ -23,7 +23,7 @@ export class MonacoEditor extends AbstractEditor {
         // Find the monaco element that holds the data
         let parent = this.elem.parentElement;
         while (!(this.elem.className.match(/monaco-editor/gi)
-                 && this.elem.getAttribute("data-uri").match("inmemory://|gitlab:"))) {
+                 && this.elem.getAttribute("data-uri").match("file://|inmemory://|gitlab:"))) {
             this.elem = parent;
             parent = parent.parentElement;
         }
