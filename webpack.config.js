@@ -17,7 +17,7 @@ function deepCopy (obj) {
 };
 
 const CopyWebPackFiles = [
-  "ISSUE_TEMPLATE.md",
+  ".github/ISSUE_TEMPLATE.md",
   "src/manifest.json",
   "src/index.html",
   "src/browserAction.html",
