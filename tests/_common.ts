@@ -915,7 +915,7 @@ export const testDisappearing = retryTest(withLocalPage("disappearing.html", asy
 
 export const testGithubAutofill = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         // Prepare page, which has to contain issue template
-        const template_content = fs.readFileSync(path.join(process.cwd(), "ISSUE_TEMPLATE.md")).toString();
+        const template_content = fs.readFileSync(path.join(process.cwd(), ".github/ISSUE_TEMPLATE.md")).toString();
         const simple_content = fs.readFileSync(path.join(pagesDir, "simple.html")).toString();
         const github_content = simple_content.replace(
                 /<textarea[^>]+><\/textarea>/,
