@@ -1,7 +1,7 @@
 import { FirenvimElement } from "./FirenvimElement";
 import { autofill } from "./autofill";
 import { confReady, getConf } from "./utils/configuration";
-import { getNeovimFrameFunctions, getActiveContentFunctions, getTabFunctions } from "./page/functions";
+import { getNeovimFrameFunctions, getActiveContentFunctions, getTabFunctions } from "./page";
 
 if (document.location.href === "https://github.com/glacambre/firenvim/issues/new"
     || document.location.protocol === "file:" && document.location.href.endsWith("github.html")) {

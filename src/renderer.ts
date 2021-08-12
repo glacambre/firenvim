@@ -1,6 +1,11 @@
-import { page } from "./page/proxy";
+import { PageType } from "./page";
 import { parseGuifont, toHexCss } from "./utils/utils";
 import { NvimMode, confReady, getGlobalConf } from "./utils/configuration";
+
+let page: any;
+export function setPage(p: PageType) {
+    page = p;
+}
 
 let functions: any;
 export function setFunctions(fns: any) {

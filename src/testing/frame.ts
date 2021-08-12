@@ -3,7 +3,6 @@
 // receive events by connecting to the coverage server through a websocket.
 // Once connected, it can decide to push coverage information
 import { makeRequest, makeRequestHandler } from "./rpc";
-import { page } from "../page/proxy";
 
 // Of course we have to ignore the case where
 // coverage data doesn't exist.
@@ -16,20 +15,24 @@ function createSocket(): Promise<WebSocket> {
     return new Promise(resolve => socket.addEventListener("open", () => resolve(socket)));
 }
 
-page.killEditor = (f => async () => {
-    if (socket === undefined) {
-        // socket is undefined if isReady failed - this happens with the buggy
-        // vimrc testcase. We still want coverage data when this happens so we
-        // create the socket and push cov data immediately
-        socket = await createSocket();
-    }
-    await makeRequest(socket, "pushCoverage", [JSON.stringify(coverageData)]);
-    // Ignoring this return because it's reached but after cov info has been
-    // sent.
-    /* istanbul ignore next */
-    return f();
-})(page.killEditor);
-
 import { isReady } from "../frame";
+import { PageType } from "../page";
 
-isReady.then(createSocket);
+isReady.then((page: PageType) => {
+    page.killEditor = (f => async () => {
+        if (socket === undefined) {
+            // socket is undefined if isReady failed - this happens with the buggy
+            // vimrc testcase. We still want coverage data when this happens so we
+            // create the socket and push cov data immediately
+            socket = await createSocket();
+        }
+        await makeRequest(socket, "pushCoverage", [JSON.stringify(coverageData)]);
+        // Ignoring this return because it's reached but after cov info has been
+        // sent.
+        /* istanbul ignore next */
+        return f();
+    })(page.killEditor);
+
+    return createSocket();
+});
+

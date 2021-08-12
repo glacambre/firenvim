@@ -1,15 +1,17 @@
-import { page } from "./page/proxy";
+import { PageType } from "./page"
 import * as CanvasRenderer from "./renderer";
 import { Stdin } from "./Stdin";
 import { Stdout } from "./Stdout";
 
 export async function neovim(
+        page: PageType,
         canvas: HTMLCanvasElement,
-        { port, password }: { port: number, password: number },
+        { port, password }: { port: number, password: string },
     ) {
     const functions: any = {};
     const requests = new Map<number, { resolve: any, reject: any }>();
 
+    CanvasRenderer.setPage(page);
     CanvasRenderer.setFunctions(functions);
     CanvasRenderer.setCanvas(canvas);
 
