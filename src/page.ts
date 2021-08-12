@@ -1,7 +1,7 @@
-import { getConf } from "../utils/configuration";
-import { keysToEvents } from "../utils/keys";
-import { FirenvimElement } from "../FirenvimElement";
-import { executeInPage } from "../utils/utils";
+import { getConf } from "./utils/configuration";
+import { keysToEvents } from "./utils/keys";
+import { FirenvimElement } from "./FirenvimElement";
+import { executeInPage } from "./utils/utils";
 
 interface IGlobalState {
     disabled: boolean | Promise<boolean>;
@@ -147,3 +147,17 @@ export function getNeovimFrameFunctions(global: IGlobalState) {
         },
     };
 }
+
+// We don't need to give real values to getFunctions since we're only trying to
+// get the name of functions that exist in the page.
+export const pageFunctions = getNeovimFrameFunctions({} as any);
+
+type ft = typeof pageFunctions;
+
+// The proxy automatically appends the frameId to the request, so we hide that from users
+type ArgumentsType<T> = T extends (x: any, ...args: infer U) => any ? U: never;
+type Promisify<T> = T extends Promise<any> ? T : Promise<T>;
+
+export type PageType = {
+    [k in keyof ft]: (...args: ArgumentsType<ft[k]>) => Promisify<ReturnType<ft[k]>>
+};
