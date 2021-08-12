@@ -1,6 +1,7 @@
+import { getConf } from "./utils/configuration"
 import { computeSelector } from "./utils/utils";
-import { AbstractEditor } from "./editors/AbstractEditor";
-import { getEditor } from "./editors/editors";
+import { AbstractEditor } from "editor-adapter/AbstractEditor";
+import { getEditor } from "editor-adapter";
 
 export class FirenvimElement {
 
@@ -107,7 +108,9 @@ export class FirenvimElement {
         this.originalElement = elem;
         this.nvimify = listener;
         this.onDetach = onDetach;
-        this.editor = getEditor(elem);
+        this.editor = getEditor(elem, {
+            preferHTML: getConf().content == "html"
+        });
 
         this.span = elem
             .ownerDocument
