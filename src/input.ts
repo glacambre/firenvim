@@ -13,49 +13,35 @@ export function getInputSetupFunction(
 ) {
     return async () => {
         try {
-            console.log("16");
             const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-            console.log("18");
             const keyHandler = document.getElementById("keyhandler");
-            console.log("20");
             const [[url, selector, cursor, language], connectionData] =
                 await Promise.all([page.getEditorInfo(), connectionPromise]);
-            console.log("23");
             const nvimPromise = neovim(page, canvas, connectionData);
-            console.log("25");
             const contentPromise = page.getElementContent();
-            console.log("27");
 
             const [cols, rows] = getLogicalSize();
-            console.log("30");
 
             const nvim = await nvimPromise;
-            console.log("33");
 
             // We need to set client info before running ui_attach because we want this
             // info to be available when UIEnter is triggered
             const extInfo = browser.runtime.getManifest();
-            console.log("38");
             const [major, minor, patch] = extInfo.version.split(".");
-            console.log("40");
             nvim.set_client_info(extInfo.name,
                 { major, minor, patch },
                 "ui",
                 {},
                 {},
             );
-            console.log("47");
 
             await confReady;
-            console.log("50");
             const settings = getGlobalConf();
-            console.log("52");
             nvim.ui_attach(cols, rows, {
                 ext_linegrid: true,
                 ext_messages: getConfForUrl(url).cmdline === "firenvim",
                 rgb: true,
             });
-            console.log("58");
 
             let resizeReqId = 0;
             browser.runtime.onMessage.addListener((request: any, _sender: any, _sendResponse: any) => {
