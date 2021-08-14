@@ -518,8 +518,14 @@ function! s:get_executable_content(data_dir, prolog) abort
                                 \ 'mkdir -p ' . a:data_dir . "\n" .
                                 \ 'chmod 700 ' . a:data_dir . "\n" .
                                 \ 'cd ' . a:data_dir . "\n" .
-                                \ "unset NVIM_LISTEN_ADDRESS\n" .
                                 \ 'export PATH="$PATH:' . $PATH . "\"\n" .
+                                \ "unset NVIM_LISTEN_ADDRESS\n" .
+                                \ 'if [ -n "$VIM" ] && [ ! -d "$VIM" ]; then' . "\n" .
+                                \ "  unset VIM\n" .
+                                \ "fi\n" .
+                                \ 'if [ -n "$VIMRUNTIME" ] && [ ! -d "$VIMRUNTIME" ]; then' . "\n" .
+                                \ "  unset VIMRUNTIME\n" .
+                                \ "fi\n" .
                                 \ a:prolog . "\n" .
                                 \ "exec '" . s:get_progpath() . "' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'\n"
 endfunction
