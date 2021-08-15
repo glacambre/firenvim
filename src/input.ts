@@ -4,6 +4,101 @@ import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
 import { isChrome, toFileName } from "./utils/utils";
 import { PageType } from "./page";
+import { List } from "./list";
+
+function getEventGenerator (keyHandler: HTMLElement, settings: ReturnType<typeof getGlobalConf>): () => Promise<string> {
+    const list = new List<string>();
+
+    // Add listener for keydown events, which will figure out if special keys
+    // are being pressed.
+    const ignoreKeys = settings.ignoreKeys;
+    keyHandler.addEventListener("keydown", (evt) => {
+        // This is a workaround for osx where pressing non-alphanumeric
+        // characters like "@" requires pressing <A-a>, which results
+        // in the browser sending an <A-@> event, which we want to
+        // treat as a regular @.
+        // So if we're seeing an alt on a non-alphanumeric character,
+        // we just ignore it and let the input event handler do its
+        // magic. This can only be tested on OSX, as generating an
+        // <A-@> keydown event with selenium won't result in an input
+        // event.
+        // Since coverage reports are only retrieved on linux, we don't
+        // instrument this condition.
+        /* istanbul ignore next */
+        if (evt.altKey && settings.alt === "alphanum" && !/[a-zA-Z0-9]/.test(evt.key)) {
+            return;
+        }
+        // Note: order of this array is important, we need to check OS before checking meta
+        const specialKeys = [["Alt", "A"], ["Control", "C"], ["OS", "D"], ["Meta", "D"]];
+        // The event has to be trusted and either have a modifier or a non-literal representation
+        if (evt.isTrusted
+            && (nonLiteralKeys[evt.key] !== undefined
+                || specialKeys.find(([mod, _]: [string, string]) =>
+                                    evt.key !== mod && (evt as any).getModifierState(mod)))) {
+                    const text = specialKeys.concat([["Shift", "S"]])
+                    .reduce((key: string, [attr, mod]: [string, string]) => {
+                        if ((evt as any).getModifierState(attr)) {
+                            return addModifier(mod, key);
+                        }
+                        return key;
+                    }, translateKey(evt.key));
+
+                    const currentMode = getCurrentMode();
+                    let keys : string[] = [];
+                    if (ignoreKeys[currentMode] !== undefined) {
+                        keys = ignoreKeys[currentMode].slice();
+                    }
+                    if (ignoreKeys.all !== undefined) {
+                        keys.push.apply(keys, ignoreKeys.all);
+                    }
+                    if (!keys.includes(text)) {
+                        list.push(text);
+                        evt.preventDefault();
+                        evt.stopImmediatePropagation();
+                    }
+                }
+    });
+
+
+    // Add listener for input events, which will handle regular characters
+    function acceptInput (evt: InputEvent | CompositionEvent) {
+        const t = evt.target as HTMLTextAreaElement;
+        list.push(t.value);
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+        t.innerText = "";
+        t.value = "";
+    }
+    keyHandler.addEventListener("input", (evt: any) => {
+        if (evt.isTrusted && !evt.isComposing) {
+            acceptInput(evt);
+        }
+    });
+    // On Firefox, Pinyin input method for a single chinese character will
+    // result in the following sequence of events:
+    // - compositionstart
+    // - input (character)
+    // - compositionend
+    // - input (result)
+    // But on Chrome, we'll get this order:
+    // - compositionstart
+    // - input (character)
+    // - input (result)
+    // - compositionend
+    // So Chrome's input event will still have its isComposing flag set to
+    // true! This means that we need to add a chrome-specific event
+    // listener on compositionend to do what happens on input events for
+    // Firefox.
+    // Don't instrument this branch as coverage is only generated on
+    // Firefox.
+    /* istanbul ignore next */
+    if (isChrome()) {
+        keyHandler.addEventListener("compositionend", (event) => {
+            acceptInput(event);
+        });
+    }
+    return () => list.pop();
+}
 
 export async function setupInput(
     page: PageType,
@@ -110,89 +205,12 @@ export async function setupInput(
                         au VimLeave * ${cleanup}
                     augroup END`).split("\n").map(command => ["nvim_command", [command]]));
 
-        const ignoreKeys = settings.ignoreKeys;
-        keyHandler.addEventListener("keydown", (evt) => {
-            // This is a workaround for osx where pressing non-alphanumeric
-            // characters like "@" requires pressing <A-a>, which results
-            // in the browser sending an <A-@> event, which we want to
-            // treat as a regular @.
-            // So if we're seeing an alt on a non-alphanumeric character,
-            // we just ignore it and let the input event handler do its
-            // magic. This can only be tested on OSX, as generating an
-            // <A-@> keydown event with selenium won't result in an input
-            // event.
-            // Since coverage reports are only retrieved on linux, we don't
-            // instrument this condition.
-            /* istanbul ignore next */
-            if (evt.altKey && settings.alt === "alphanum" && !/[a-zA-Z0-9]/.test(evt.key)) {
-                return;
-            }
-            // Note: order of this array is important, we need to check OS before checking meta
-            const specialKeys = [["Alt", "A"], ["Control", "C"], ["OS", "D"], ["Meta", "D"]];
-            // The event has to be trusted and either have a modifier or a non-literal representation
-            if (evt.isTrusted
-                && (nonLiteralKeys[evt.key] !== undefined
-                    || specialKeys.find(([mod, _]: [string, string]) =>
-                                        evt.key !== mod && (evt as any).getModifierState(mod)))) {
-                const text = specialKeys.concat([["Shift", "S"]])
-                    .reduce((key: string, [attr, mod]: [string, string]) => {
-                        if ((evt as any).getModifierState(attr)) {
-                            return addModifier(mod, key);
-                        }
-                        return key;
-                    }, translateKey(evt.key));
-
-                const currentMode = getCurrentMode();
-                let keys : string[] = [];
-                if (ignoreKeys[currentMode] !== undefined) {
-                    keys = ignoreKeys[currentMode].slice();
-                }
-                if (ignoreKeys.all !== undefined) {
-                    keys.push.apply(keys, ignoreKeys.all);
-                }
-                if (!keys.includes(text)) {
-                    nvim.input(text);
-                    evt.preventDefault();
-                    evt.stopImmediatePropagation();
-                }
-            }
-        });
-
-        function acceptInput (evt: any) {
-            nvim.input(evt.target.value);
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
-            evt.target.innerText = "";
-            evt.target.value = "";
+        const nextEvent = getEventGenerator(keyHandler, settings);
+        function onNextEvent(t: string) {
+            nvim.input(t);
+            nextEvent().then(onNextEvent);
         }
-        keyHandler.addEventListener("input", (evt: any) => {
-            if (evt.isTrusted && !evt.isComposing) {
-                acceptInput(evt);
-            }
-        });
-        // On Firefox, Pinyin input method for a single chinese character will
-        // result in the following sequence of events:
-        // - compositionstart
-        // - input (character)
-        // - compositionend
-        // - input (result)
-        // But on Chrome, we'll get this order:
-        // - compositionstart
-        // - input (character)
-        // - input (result)
-        // - compositionend
-        // So Chrome's input event will still have its isComposing flag set to
-        // true! This means that we need to add a chrome-specific event
-        // listener on compositionend to do what happens on input events for
-        // Firefox.
-        // Don't instrument this branch as coverage is only generated on
-        // Firefox.
-        /* istanbul ignore next */
-        if (isChrome()) {
-            keyHandler.addEventListener("compositionend", (event) => {
-                acceptInput(event);
-            });
-        }
+        nextEvent().then(onNextEvent);
 
         window.addEventListener("mousemove", (evt: MouseEvent) => {
             keyHandler.style.left = `${evt.clientX}px`;
