@@ -3,6 +3,10 @@ import { keysToEvents } from "./utils/keys";
 import { FirenvimElement } from "./FirenvimElement";
 import { executeInPage } from "./utils/utils";
 
+// This module is loaded in both the browser's content script, the browser's
+// frame script and thunderbird's compose script.
+// As such, it should not have any side effects.
+
 interface IGlobalState {
     disabled: boolean | Promise<boolean>;
     lastFocusedContentScript: number;
@@ -10,6 +14,10 @@ interface IGlobalState {
     frameIdResolve: (_: number) => void;
     nvimify: (evt: FocusEvent) => void;
 }
+
+/////////////////////////////////////////////
+// Functions running in the content script //
+/////////////////////////////////////////////
 
 function _focusInput(global: IGlobalState, firenvim: FirenvimElement, addListener: boolean) {
     if (addListener) {
@@ -148,6 +156,11 @@ export function getNeovimFrameFunctions(global: IGlobalState) {
     };
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// Definition of a proxy type that lets the frame script transparently call //
+// the content script's functions                                           //
+//////////////////////////////////////////////////////////////////////////////
+
 // We don't need to give real values to getFunctions since we're only trying to
 // get the name of functions that exist in the page.
 export const pageFunctions = getNeovimFrameFunctions({} as any);
@@ -160,4 +173,25 @@ type Promisify<T> = T extends Promise<any> ? T : Promise<T>;
 
 export type PageType = {
     [k in keyof ft]: (...args: ArgumentsType<ft[k]>) => Promisify<ReturnType<ft[k]>>
+};
+
+export function getPageProxy (frameId: number) {
+    const page = {} as PageType;
+
+    let funcName: keyof PageType;
+    for (funcName in pageFunctions) {
+        // We need to declare func here because funcName is a global and would not
+        // be captured in the closure otherwise
+        const func = funcName;
+        (page[func] as any) = ((...arr: any[]) => {
+            return browser.runtime.sendMessage({
+                args: {
+                    args: [frameId].concat(arr),
+                    funcName: [func],
+                },
+                funcName: ["messagePage"],
+            });
+        });
+    }
+    return page;
 };
