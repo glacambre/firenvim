@@ -95,12 +95,15 @@ jobs:
           video.webm
           failures.txt
         retention-days: 2
+    - name: Process Coverage Report (Coverage only)
+      if: matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
+      run: npm run nyc -- report --reporter=json-summary --report-dir=coverage
     - name: Coverage results upload (master only)
       uses: actions/upload-artifact@v2
       if: github.ref == 'refs/heads/master' && matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
       with:
         name: master-branch-coverage
-        path: .nyc_output/
+        path: coverage/
     - name: Coverage results download (PR only)
       uses: actions/download-artifact@v2
       if: github.base_ref != 'refs/heads/master' && matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
