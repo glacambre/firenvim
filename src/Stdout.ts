@@ -1,23 +1,20 @@
 import * as msgpack from "msgpack-lite";
+import { EventEmitter } from "./EventEmitter";
 
-export class Stdout {
-    private listeners = new Map<string, ((...args: any[]) => any)[]>();
-    private messageNames = new Map([[0, "request"], [1, "response"], [2, "notification"]]);
+type MessageKind = "request" | "response" | "notification";
+type RequestHandler = (id: number, name: string, args: any[]) => void;
+type ResponseHandler = (id: number, error: any, result: any) => void;
+type NotificationHandler = (name: string, args: any[]) => void;
+type MessageHandler = RequestHandler | ResponseHandler | NotificationHandler;
+export class Stdout extends EventEmitter<MessageKind, MessageHandler>{
+    private messageNames = new Map<number, MessageKind>([[0, "request"], [1, "response"], [2, "notification"]]);
     // Holds previously-received, incomplete and unprocessed messages
     private prev = new Uint8Array(0);
     private msgpackConfig = {} as msgpack.DecoderOptions;
 
     constructor(private socket: WebSocket) {
+        super();
         this.socket.addEventListener("message", this.onMessage.bind(this));
-    }
-
-    public addListener(kind: string, listener: (...args: any[]) => any) {
-        let arr = this.listeners.get(kind);
-        if (!arr) {
-            arr = [];
-            this.listeners.set(kind, arr);
-        }
-        arr.push(listener);
     }
 
     public setTypes(types: {[key: string]: { id: number }}) {
@@ -48,17 +45,12 @@ export class Stdout {
             data = data.slice(encoded.byteLength);
             const [kind, reqId, data1, data2] = decoded;
             const name = this.messageNames.get(kind);
+            /* istanbul ignore else */
             if (name) {
-                const handlers = this.listeners.get(name);
-                if (handlers !== undefined) {
-                    for (const handler of handlers) {
-                        handler(reqId, data1, data2);
-                    }
-                }
+                this.emit(name, reqId, data1, data2);
             } else {
                 // Can't be tested because this would mean messages that break
                 // the msgpack-rpc spec, so coverage impossible to get.
-                /* istanbul ignore next */
                 console.error(`Unhandled message kind ${name}`);
             }
         }

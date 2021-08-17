@@ -35,10 +35,10 @@ export async function neovim(
             stdin.write(reqId, api, args);
         });
     };
-    stdout.addListener("request", (_id: any, _name: any, _args: any) => {
-        return undefined;
+    stdout.on("request", (id: number, name: any, args: any) => {
+        console.warn("firenvim: unhandled request from neovim", id, name, args);
     });
-    stdout.addListener("response", (id: any, error: any, result: any) => {
+    stdout.on("response", (id: any, error: any, result: any) => {
         const r = requests.get(id);
         if (!r) {
             // This can't happen and yet it sometimes does, possibly due to a firefox bug
@@ -54,7 +54,7 @@ export async function neovim(
     });
 
     let lastLostFocus = performance.now();
-    stdout.addListener("notification", async (name: string, args: any[]) => {
+    stdout.on("notification", async (name: string, args: any[]) => {
         if (name === "redraw" && args) {
             CanvasRenderer.onRedraw(args);
             return;
