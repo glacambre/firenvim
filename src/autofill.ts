@@ -20,10 +20,15 @@ export async function autofill() {
     });
     const issueTemplatePromise = fetch(browser.runtime.getURL("ISSUE_TEMPLATE.md")).then(p => p.text());
     const browserString = navigator.userAgent.match(/(firefox|chrom)[^ ]+/gi);
-    let name = "";
-    let version = "";
+    let name;
+    let version;
+    // Can't be tested, as coverage is only recorded on firefox
+    /* istabul ignore else */
     if (browserString) {
         [ name, version ] = browserString[0].split("/");
+    } else {
+        name = "unknown";
+        version = "unknwon";
     }
     const vendor = navigator.vendor || "";
     const textarea = document.getElementById("issue_body") as any;
