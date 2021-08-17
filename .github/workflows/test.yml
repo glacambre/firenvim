@@ -96,19 +96,7 @@ jobs:
           failures.txt
         retention-days: 2
     - name: Process Coverage Report (Coverage only)
+      uses: glacambre/action-compare-coverage@v0.0.1
       if: matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
-      run: npm run nyc -- report --reporter=json-summary --report-dir=coverage
-    - name: Coverage results upload (master only)
-      uses: actions/upload-artifact@v2
-      if: github.ref == 'refs/heads/master' && matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
       with:
-        name: master-branch-coverage
-        path: coverage/
-    - name: Coverage results download (PR only)
-      uses: actions/download-artifact@v2
-      if: github.base_ref != 'refs/heads/master' && matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
-      with:
-        name: master-branch-coverage
-    - name: Coverage results download (PR only)
-      if: github.base_ref != 'refs/heads/master' && matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
-      run: ls -lah
+        github_token: ${{secrets.GITHUB_TOKEN}}
