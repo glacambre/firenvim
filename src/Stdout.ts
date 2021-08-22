@@ -45,7 +45,6 @@ export class Stdout extends EventEmitter<MessageKind, MessageHandler>{
             data = data.slice(encoded.byteLength);
             const [kind, reqId, data1, data2] = decoded;
             const name = this.messageNames.get(kind);
-            /* istanbul ignore else */
             if (name) {
                 this.emit(name, reqId, data1, data2);
             } else {

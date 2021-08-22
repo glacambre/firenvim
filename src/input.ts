@@ -123,7 +123,6 @@ export async function setupInput(
             // event.
             // Since coverage reports are only retrieved on linux, we don't
             // instrument this condition.
-            /* istanbul ignore next */
             if (evt.altKey && settings.alt === "alphanum" && !/[a-zA-Z0-9]/.test(evt.key)) {
                 return;
             }
