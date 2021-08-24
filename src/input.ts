@@ -70,7 +70,7 @@ export async function setupInput(
         const content = await contentPromise;
         const [line, col] = cursor;
         const writeFilePromise = nvim.call_function("writefile", [content.split("\n"), filename])
-            .then(() => nvim.command(`noswapfile edit ${filename} `
+            .then(() => nvim.command(`edit ${filename} `
                                      + `| call nvim_win_set_cursor(0, [${line}, ${col}])`));
 
         // Can't get coverage for this as browsers don't let us reliably
