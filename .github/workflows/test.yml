@@ -72,6 +72,9 @@ jobs:
     - name: Test (Linux)
       timeout-minutes: 10
       if: matrix.os == 'ubuntu'
+      # Multiple attempts to increase FPS to 60 have been made: use libx264,
+      # using raw output... Nothing worked. Spending more effort on this will
+      # only result in suffering and wasted time.
       run: xvfb-run --auto-servernum -s "-screen 0 920x690x24" sh -c '(sleep 3 && ffmpeg -loglevel error -t 240 -an -video_size 920x690 -framerate 30 -f x11grab -i $DISPLAY video.webm) & npm run jest -- ${{ matrix.browser }}'
     - name: Test (MacOS)
       if: matrix.os == 'macos'
