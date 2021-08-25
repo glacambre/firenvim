@@ -96,7 +96,7 @@ jobs:
           failures.txt
         retention-days: 2
     - name: Process Coverage Report (Coverage only)
-      uses: glacambre/action-compare-coverage@v0.0.1
+      uses: glacambre/action-compare-coverage@v1.0.0
       if: matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
