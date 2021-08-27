@@ -1088,6 +1088,8 @@ export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async
                 return driver.wait(async () => (await getTabCount() !== tabCount), WAIT_DELAY, err);
         }
 
+        const originalHandle = (await driver.getAllWindowHandles())[0];
+
         // <C-n> creates a new window
         let windowCount = await getWindowCount();
         await server.browserShortcut("<C-n>");
@@ -1095,12 +1097,25 @@ export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async
         let newWindowCount = await getWindowCount();
         expect(newWindowCount).toBe(windowCount + 1);
 
+        // Get handle to new window and switch to it
+        let handles = new Set(await driver.getAllWindowHandles());
+        handles.delete(originalHandle);
+        const newWindow = handles.values().next().value;
+        await driver.switchTo().window(newWindow);
+
         // <C-t> crates a new tab
         let tabCount = await getTabCount();
         await server.browserShortcut("<C-t>");
         await tabCountChange(tabCount, "<C-t> did not change the number of tabs");
         let newTabCount = await getTabCount();
         expect(newTabCount).toBe(tabCount + 1);
+
+        // Get handle to new tab and switch to it
+        handles = new Set(await driver.getAllWindowHandles());
+        handles.delete(originalHandle);
+        handles.delete(newWindow);
+        const newTab = handles.values().next().value;
+        await driver.switchTo().window(newTab);
 
         // <C-w> closes the new tab
         tabCount = await getTabCount();
@@ -1117,14 +1132,25 @@ export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async
         newWindowCount = await getWindowCount();
         expect(newWindowCount).toBe(windowCount + 1);
 
+        // Get handle to new incognito window and switch to it
+        handles = new Set(await driver.getAllWindowHandles());
+        handles.delete(originalHandle);
+        handles.delete(newWindow);
+        const incognito = handles.values().next().value;
+        await driver.switchTo().window(incognito);
+
         // <CS-w> closes the current window
         windowCount = await getWindowCount();
         await server.browserShortcut("<CS-w>");
         await windowCountChange(windowCount, "<CS-w> did not close any window the first time");
-        await server.browserShortcut("<CS-w>");
-        await windowCountChange(windowCount - 1, "<CS-w> did not close any window the second time");
         newWindowCount = await getWindowCount();
-        expect(newWindowCount).toBe(windowCount - 2);
+        expect(newWindowCount).toBe(windowCount - 1);
+
+        // incognito window has been closed, go back to the new window, close
+        // it, go back to original window
+        await driver.switchTo().window(newWindow);
+        await driver.close();
+        await driver.switchTo().window(originalHandle);
 
         // Now don't fall back to browser behavior
         const vimrcContent = await readVimrc();
