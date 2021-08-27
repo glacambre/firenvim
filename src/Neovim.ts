@@ -11,10 +11,12 @@ export async function neovim(
     const functions: any = {};
     const requests = new Map<number, { resolve: any, reject: any }>();
 
-    CanvasRenderer.setPage(page);
     CanvasRenderer.setCanvas(canvas);
-    CanvasRenderer.events.on("resize", ({grid, width, height}) => {
+    CanvasRenderer.events.on("resize", ({grid, width, height}: any) => {
         (functions as any).ui_try_resize_grid(grid, width, height);
+    });
+    CanvasRenderer.events.on("frameResize", ({width, height}) => {
+        page.resizeEditor(width, height);
     });
 
     let prevNotificationPromise = Promise.resolve();
