@@ -1,16 +1,12 @@
-import { PageType } from "./page";
 import { parseGuifont, toHexCss } from "./utils/utils";
 import { NvimMode, confReady, getGlobalConf } from "./utils/configuration";
 import { EventEmitter } from "./EventEmitter";
 
 type ResizeEvent = {grid: number, width: number, height: number};
-type ResizeEventHandler = (e: ResizeEvent) => void;
-export const events = new EventEmitter<"resize", ResizeEventHandler>();
-
-let page: any;
-export function setPage(p: PageType) {
-    page = p;
-}
+type FrameResizeEvent = {width: number, height: number}
+type ResizeEventHandler = (e: ResizeEvent | FrameResizeEvent) => void;
+type EventKind = "resize" | "frameResize";
+export const events = new EventEmitter<EventKind, ResizeEventHandler>();
 
 let glyphCache : any = {};
 function wipeGlyphCache() {
@@ -883,7 +879,7 @@ function paint (_: DOMHighResTimeStamp) {
             case DamageKind.Resize: {
                 const pixelWidth = damage.w * charWidth / window.devicePixelRatio;
                 const pixelHeight = damage.h * charHeight / window.devicePixelRatio;
-                page.resizeEditor(pixelWidth, pixelHeight);
+                events.emit("frameResize", { width: pixelWidth, height: pixelHeight });
                 setCanvasDimensions(canvas, pixelWidth, pixelHeight);
                 // Note: changing width and height resets font, so we have to
                 // set it again. Who thought this was a good idea???
