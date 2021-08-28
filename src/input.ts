@@ -1,17 +1,17 @@
 import { neovim } from "./Neovim";
-import { getGridId, getLogicalSize, getCurrentMode, computeGridDimensionsFor, getGridCoordinates } from "./renderer";
-import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
-import { confReady, getConfForUrl, getGlobalConf } from "./utils/configuration";
-import { isChrome, toFileName } from "./utils/utils";
+import { getGridId, getLogicalSize, computeGridDimensionsFor, getGridCoordinates, events as rendererEvents } from "./renderer";
+import { confReady, getConfForUrl, NvimMode } from "./utils/configuration";
+import { toFileName } from "./utils/utils";
 import { PageType } from "./page";
+import { EventEmitter } from "./EventEmitter";
 
 export async function setupInput(
     page: PageType,
+    inputEmitter: EventEmitter<"input", (s: string) => void>,
     connectionPromise: Promise<{ port: number, password: string }>,
 ) {
     try {
         const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-        const keyHandler = document.getElementById("keyhandler");
         const [[url, selector, cursor, language], connectionData] =
             await Promise.all([page.getEditorInfo(), connectionPromise]);
         const nvimPromise = neovim(page, canvas, connectionData);
@@ -20,6 +20,9 @@ export async function setupInput(
         const [cols, rows] = getLogicalSize();
 
         const nvim = await nvimPromise;
+
+        inputEmitter.on("input", (s: string) => nvim.input(s));
+        rendererEvents.on("modeChange", (s: NvimMode) => (inputEmitter as any).setMode(s));
 
         // We need to set client info before running ui_attach because we want this
         // info to be available when UIEnter is triggered
@@ -33,7 +36,6 @@ export async function setupInput(
         );
 
         await confReady;
-        const settings = getGlobalConf();
         nvim.ui_attach(cols, rows, {
             ext_linegrid: true,
             ext_messages: getConfForUrl(url).cmdline === "firenvim",
@@ -49,8 +51,8 @@ export async function setupInput(
                 resizeReqId = id;
                 // We need to put the keyHandler at the origin in order to avoid
                 // issues when it slips out of the viewport
-                keyHandler.style.left = `0px`;
-                keyHandler.style.top = `0px`;
+                (inputEmitter as any).keyHandler.style.left = `0px`;
+                (inputEmitter as any).keyHandler.style.top = `0px`;
                 // It's tempting to try to optimize this by only calling
                 // ui_try_resize when nCols is different from cols and nRows is
                 // different from rows but we can't because redraw notifications
@@ -110,93 +112,9 @@ export async function setupInput(
                         au VimLeave * ${cleanup}
                     augroup END`).split("\n").map(command => ["nvim_command", [command]]));
 
-        const ignoreKeys = settings.ignoreKeys;
-        keyHandler.addEventListener("keydown", (evt) => {
-            // This is a workaround for osx where pressing non-alphanumeric
-            // characters like "@" requires pressing <A-a>, which results
-            // in the browser sending an <A-@> event, which we want to
-            // treat as a regular @.
-            // So if we're seeing an alt on a non-alphanumeric character,
-            // we just ignore it and let the input event handler do its
-            // magic. This can only be tested on OSX, as generating an
-            // <A-@> keydown event with selenium won't result in an input
-            // event.
-            // Since coverage reports are only retrieved on linux, we don't
-            // instrument this condition.
-            /* istanbul ignore next */
-            if (evt.altKey && settings.alt === "alphanum" && !/[a-zA-Z0-9]/.test(evt.key)) {
-                return;
-            }
-            // Note: order of this array is important, we need to check OS before checking meta
-            const specialKeys = [["Alt", "A"], ["Control", "C"], ["OS", "D"], ["Meta", "D"]];
-            // The event has to be trusted and either have a modifier or a non-literal representation
-            if (evt.isTrusted
-                && (nonLiteralKeys[evt.key] !== undefined
-                    || specialKeys.find(([mod, _]: [string, string]) =>
-                                        evt.key !== mod && (evt as any).getModifierState(mod)))) {
-                const text = specialKeys.concat([["Shift", "S"]])
-                    .reduce((key: string, [attr, mod]: [string, string]) => {
-                        if ((evt as any).getModifierState(attr)) {
-                            return addModifier(mod, key);
-                        }
-                        return key;
-                    }, translateKey(evt.key));
-
-                const currentMode = getCurrentMode();
-                let keys : string[] = [];
-                if (ignoreKeys[currentMode] !== undefined) {
-                    keys = ignoreKeys[currentMode].slice();
-                }
-                if (ignoreKeys.all !== undefined) {
-                    keys.push.apply(keys, ignoreKeys.all);
-                }
-                if (!keys.includes(text)) {
-                    nvim.input(text);
-                    evt.preventDefault();
-                    evt.stopImmediatePropagation();
-                }
-            }
-        });
-
-        function acceptInput (evt: any) {
-            nvim.input(evt.target.value);
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
-            evt.target.innerText = "";
-            evt.target.value = "";
-        }
-        keyHandler.addEventListener("input", (evt: any) => {
-            if (evt.isTrusted && !evt.isComposing) {
-                acceptInput(evt);
-            }
-        });
-        // On Firefox, Pinyin input method for a single chinese character will
-        // result in the following sequence of events:
-        // - compositionstart
-        // - input (character)
-        // - compositionend
-        // - input (result)
-        // But on Chrome, we'll get this order:
-        // - compositionstart
-        // - input (character)
-        // - input (result)
-        // - compositionend
-        // So Chrome's input event will still have its isComposing flag set to
-        // true! This means that we need to add a chrome-specific event
-        // listener on compositionend to do what happens on input events for
-        // Firefox.
-        // Don't instrument this branch as coverage is only generated on
-        // Firefox.
-        /* istanbul ignore next */
-        if (isChrome()) {
-            keyHandler.addEventListener("compositionend", (event) => {
-                acceptInput(event);
-            });
-        }
-
         window.addEventListener("mousemove", (evt: MouseEvent) => {
-            keyHandler.style.left = `${evt.clientX}px`;
-            keyHandler.style.top = `${evt.clientY}px`;
+            (inputEmitter as any).keyHandler.style.left = `${evt.clientX}px`;
+            (inputEmitter as any).keyHandler.style.top = `${evt.clientY}px`;
         });
         function onMouse(evt: MouseEvent, action: string) {
             let button;
@@ -227,7 +145,7 @@ export async function setupInput(
                              getGridId(),
                              y,
                              x);
-            keyHandler.focus();
+            (inputEmitter as any).keyHandler.focus();
         }
         window.addEventListener("mousedown", e => {
             onMouse(e, "press");
@@ -247,16 +165,16 @@ export async function setupInput(
         // Let users know when they focus/unfocus the frame
         window.addEventListener("focus", () => {
             document.documentElement.style.opacity = "1";
-            keyHandler.focus();
+            (inputEmitter as any).keyHandler.focus();
             nvim.command("doautocmd FocusGained");
         });
         window.addEventListener("blur", () => {
             document.documentElement.style.opacity = "0.5";
             nvim.command("doautocmd FocusLost");
         });
-        keyHandler.focus();
+        (inputEmitter as any).keyHandler.focus();
         return new Promise ((resolve, reject) => setTimeout(() => {
-            keyHandler.focus();
+            (inputEmitter as any).keyHandler.focus();
             writeFilePromise.then(() => resolve(page));
             // To hard to test (we'd need to find a way to make neovim fail
             // to write the file, which requires too many os-dependent side
