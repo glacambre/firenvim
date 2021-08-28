@@ -4,8 +4,9 @@ import { EventEmitter } from "./EventEmitter";
 
 type ResizeEvent = {grid: number, width: number, height: number};
 type FrameResizeEvent = {width: number, height: number}
-type ResizeEventHandler = (e: ResizeEvent | FrameResizeEvent) => void;
-type EventKind = "resize" | "frameResize";
+type ModeChangeEvent = NvimMode;
+type ResizeEventHandler = (e: ResizeEvent | FrameResizeEvent | ModeChangeEvent) => void;
+type EventKind = "resize" | "frameResize" | "modeChange";
 export const events = new EventEmitter<EventKind, ResizeEventHandler>();
 
 let glyphCache : any = {};
@@ -332,11 +333,6 @@ export function getGridId() {
     return 1;
 }
 
-export function getCurrentMode() {
-    const mode = globalState.mode;
-    return mode.modeInfo[mode.current].name;
-}
-
 function getCommandLineRect (state: State) {
     const [width, height] = getGlyphInfo(state);
     return {
@@ -580,6 +576,7 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
     },
     mode_change: (_: string, modeIdx: number) => {
         globalState.mode.current = modeIdx;
+        events.emit("modeChange", globalState.mode.modeInfo[modeIdx].name);
         if (globalState.mode.styleEnabled) {
             const cursor = globalState.cursor;
             pushDamage(getGridId(), DamageKind.Cell, 1, 1, cursor.x, cursor.y);

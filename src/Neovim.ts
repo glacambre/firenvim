@@ -15,7 +15,7 @@ export async function neovim(
     CanvasRenderer.events.on("resize", ({grid, width, height}: any) => {
         (functions as any).ui_try_resize_grid(grid, width, height);
     });
-    CanvasRenderer.events.on("frameResize", ({width, height}) => {
+    CanvasRenderer.events.on("frameResize", ({width, height}: any) => {
         page.resizeEditor(width, height);
     });
 
