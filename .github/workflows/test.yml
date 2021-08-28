@@ -1,18 +1,17 @@
 name: Test
 
 on:
-  push:
-    branches:
-    - master
-  pull_request:
-    branches:
-    - '*'
+  workflow_run:
+    workflows: ["Eslint"]
+    types:
+      - completed
 
 env:
   TESTING: 1
 
 jobs:
   test:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       matrix:
