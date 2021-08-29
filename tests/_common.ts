@@ -1312,6 +1312,38 @@ target.value = "";
         expect(await input.getAttribute("value")).toBe("i");
 }));
 
+export const testFilenameSettings = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const vimrcContent = await readVimrc();
+        await writeVimrc(`
+let g:firenvim_config = {
+        \\ 'localSettings': {
+                \\ '.*': {
+                        \\ 'filename': 'hello_world_{timestamp}.txt',
+                \\ }
+        \\ }
+\\ }
+${vimrcContent}
+                `);
+        await reloadNeovim(server, driver);
+        const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await driver.actions()
+                .keyDown("i")
+                .keyUp("i")
+                .keyDown(webdriver.Key.CONTROL)
+                .keyDown("r")
+                .keyUp("r")
+                .keyUp(webdriver.Key.CONTROL)
+                .perform();
+        await sendKeys(driver, ["=expand('%')"]
+                       .concat(webdriver.Key.ENTER)
+                       .concat(webdriver.Key.ESCAPE)
+                       .concat(":wq!".split(""))
+                       .concat(webdriver.Key.ENTER))
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
+        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
+        expect(await input.getAttribute("value")).toMatch("hello_world_2");
+}));
+
 export async function killDriver(server: any, driver: webdriver.WebDriver) {
         try {
                 await driver.close()

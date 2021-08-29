@@ -121,8 +121,8 @@ export function getIconImageData(kind: IconKind, width = 32, height = 32) {
 
 // Given a url and a selector, tries to compute a name that will be unique,
 // short and readable for the user.
-export function toFileName(url: string, id: string, language: string) {
-    let parsedURL;
+export function toFileName(formatString: string, url: string, id: string, language: string) {
+    let parsedURL: { hostname: string, pathname: string };
     try {
         parsedURL = new URL(url);
     } catch (e) {
@@ -130,12 +130,32 @@ export function toFileName(url: string, id: string, language: string) {
         /* istanbul ignore next */
         parsedURL = { hostname: 'thunderbird', pathname: 'mail' };
     }
-    const shortId = id.replace(/:nth-of-type/g, "");
-    const toAlphaNum = (str: string) => (str.match(/[a-zA-Z0-9]+/g) || [])
-        .join("-")
-        .slice(-32);
-    const ext = languageToExtensions(language);
-    return `${parsedURL.hostname}_${toAlphaNum(parsedURL.pathname)}_${toAlphaNum(shortId)}.${ext}`;
+
+    const sanitize = (s: string) => (s.match(/[a-zA-Z0-9]+/g) || []).join("-");
+
+    const expand = (pattern: string) => {
+        const noBrackets = pattern.slice(1, -1);
+        const [symbol, length] = noBrackets.split("%");
+        let value = "";
+        switch (symbol) {
+            case "hostname": value = parsedURL.hostname; break;
+            case "pathname": value = sanitize(parsedURL.pathname); break;
+            case "selector": value = sanitize(id.replace(/:nth-of-type/g, "")); break;
+            case "timestamp": value = sanitize((new Date()).toISOString()); break;
+            case "extension": value = languageToExtensions(language); break;
+            default: console.error(`Unrecognized filename pattern: ${pattern}`);
+        }
+        return value.slice(-length);
+    };
+
+    let result = formatString;
+    const matches = formatString.match(/{[^}]*}/g);
+    if (matches !== null) {
+        for (const match of matches.filter(s => s !== undefined)) {
+            result = result.replace(match, expand(match));
+        }
+    }
+    return result;
 }
 
 // Given a language name, returns a filename extension. Can return undefined.

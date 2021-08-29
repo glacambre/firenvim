@@ -31,7 +31,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
         ```vim
         call dein#add('glacambre/firenvim', { 'hook_post_update': { _ -> firenvim#install(0) } })
         ```
-        
+
     * [packer](https://github.com/wbthomason/packer.nvim)
 
         ```lua
@@ -304,6 +304,20 @@ let g:firenvim_config = {
 \ }
 ```
 
+### Configuring the filename
+
+It is possible to configure the name of the file used by Firenvim with the `filename` localSetting. This setting is a format string where each element in curly braces will be replaced with a value and where the maxium length can be specified with a percentage. Possible format elements are `hostname` (= the domain name of the website), `pathname` (= the path of the page), `selector` (= the CSS selector of the text area), `timestamp` (= the current date) and `extension` (the language extension when using Firenvim on a code editor or `txt` otherwise). For example:
+
+```vim
+let g:firenvim_config = {
+    \ 'localSettings': {
+        \ '.*': {,
+            \ 'filename': '/tmp/{hostname}_{pathname%10}.{extension}',
+    \ }
+\ }
+```
+
+Will result in Firenvim using `/tmp/github.com_issues-new.txt` on Github's new issue page. The default value of this setting is `{hostname%32}_{pathname%32}_{selector%32}_{timestamp%32}.{extension}`.
 
 ## Drawbacks
 

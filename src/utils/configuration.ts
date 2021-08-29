@@ -25,6 +25,7 @@ export interface ISiteConfig {
     renderer: "html" | "canvas";
     selector: string;
     takeover: "always" | "once" | "empty" | "nonempty" | "never";
+    filename: string;
 }
 
 export type GlobalSettings = {

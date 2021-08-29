@@ -22,6 +22,7 @@ import {
  testDisappearing,
  testDynamicTextareas,
  testEvalJs,
+ testFilenameSettings,
  testFocusGainedLost,
  testForceNvimify,
  testGithubAutofill,
@@ -134,6 +135,7 @@ describe("Firefox", () => {
 
         t("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
         t("Github autofill", testGithubAutofill);
+        t("Setting filenames", testFilenameSettings);
         t("Force nvimify", testForceNvimify);
         t("Input focused after frame", testInputFocusedAfterLeave);
         t("FocusInput", testFocusInput);
