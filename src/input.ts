@@ -3,15 +3,15 @@ import { getGridId, getLogicalSize, computeGridDimensionsFor, getGridCoordinates
 import { confReady, getConfForUrl, NvimMode } from "./utils/configuration";
 import { toFileName } from "./utils/utils";
 import { PageType } from "./page";
-import { EventEmitter } from "./EventEmitter";
+import { KeyHandler } from "./KeyHandler";
 
 export async function setupInput(
     page: PageType,
-    inputEmitter: EventEmitter<"input", (s: string) => void>,
+    canvas: HTMLCanvasElement,
+    keyHandler: KeyHandler,
     connectionPromise: Promise<{ port: number, password: string }>,
 ) {
     try {
-        const canvas = document.getElementById("canvas") as HTMLCanvasElement;
         const [[url, selector, cursor, language], connectionData] =
             await Promise.all([page.getEditorInfo(), connectionPromise]);
         const nvimPromise = neovim(page, canvas, connectionData);
@@ -21,8 +21,8 @@ export async function setupInput(
 
         const nvim = await nvimPromise;
 
-        inputEmitter.on("input", (s: string) => nvim.input(s));
-        rendererEvents.on("modeChange", (s: NvimMode) => (inputEmitter as any).setMode(s));
+        keyHandler.on("input", (s: string) => nvim.input(s));
+        rendererEvents.on("modeChange", (s: NvimMode) => keyHandler.setMode(s));
 
         // We need to set client info before running ui_attach because we want this
         // info to be available when UIEnter is triggered
@@ -51,8 +51,7 @@ export async function setupInput(
                 resizeReqId = id;
                 // We need to put the keyHandler at the origin in order to avoid
                 // issues when it slips out of the viewport
-                (inputEmitter as any).keyHandler.style.left = `0px`;
-                (inputEmitter as any).keyHandler.style.top = `0px`;
+                keyHandler.moveTo(0, 0);
                 // It's tempting to try to optimize this by only calling
                 // ui_try_resize when nCols is different from cols and nRows is
                 // different from rows but we can't because redraw notifications
@@ -113,8 +112,7 @@ export async function setupInput(
                     augroup END`).split("\n").map(command => ["nvim_command", [command]]));
 
         window.addEventListener("mousemove", (evt: MouseEvent) => {
-            (inputEmitter as any).keyHandler.style.left = `${evt.clientX}px`;
-            (inputEmitter as any).keyHandler.style.top = `${evt.clientY}px`;
+            keyHandler.moveTo(evt.clientX, evt.clientY);
         });
         function onMouse(evt: MouseEvent, action: string) {
             let button;
@@ -145,7 +143,7 @@ export async function setupInput(
                              getGridId(),
                              y,
                              x);
-            (inputEmitter as any).keyHandler.focus();
+            keyHandler.focus();
         }
         window.addEventListener("mousedown", e => {
             onMouse(e, "press");
@@ -165,16 +163,16 @@ export async function setupInput(
         // Let users know when they focus/unfocus the frame
         window.addEventListener("focus", () => {
             document.documentElement.style.opacity = "1";
-            (inputEmitter as any).keyHandler.focus();
+            keyHandler.focus();
             nvim.command("doautocmd FocusGained");
         });
         window.addEventListener("blur", () => {
             document.documentElement.style.opacity = "0.5";
             nvim.command("doautocmd FocusLost");
         });
-        (inputEmitter as any).keyHandler.focus();
+        keyHandler.focus();
         return new Promise ((resolve, reject) => setTimeout(() => {
-            (inputEmitter as any).keyHandler.focus();
+            keyHandler.focus();
             writeFilePromise.then(() => resolve(page));
             // To hard to test (we'd need to find a way to make neovim fail
             // to write the file, which requires too many os-dependent side

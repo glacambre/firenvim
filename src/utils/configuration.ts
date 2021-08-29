@@ -27,18 +27,20 @@ export interface ISiteConfig {
     takeover: "always" | "once" | "empty" | "nonempty" | "never";
 }
 
+export type GlobalSettings = {
+  alt: "alphanum" | "all",
+  "<C-n>": "default" | "noop",
+  "<C-t>": "default" | "noop",
+  "<C-w>": "default" | "noop",
+  "<CS-n>": "default" | "noop",
+  "<CS-t>": "default" | "noop",
+  "<CS-w>": "default" | "noop",
+  ignoreKeys: { [key in NvimMode]: string[] },
+  cmdlineTimeout: number,
+}
+
 export interface IConfig {
-    globalSettings: {
-        alt: "alphanum" | "all",
-        "<C-n>": "default" | "noop",
-        "<C-t>": "default" | "noop",
-        "<C-w>": "default" | "noop",
-        "<CS-n>": "default" | "noop",
-        "<CS-t>": "default" | "noop",
-        "<CS-w>": "default" | "noop",
-        ignoreKeys: { [key in NvimMode]: string[] },
-        cmdlineTimeout: number,
-    };
+    globalSettings: GlobalSettings;
     localSettings: { [key: string]: ISiteConfig };
 }
 
