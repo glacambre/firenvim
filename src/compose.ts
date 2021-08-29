@@ -54,6 +54,11 @@ class ThunderbirdKeyHandler extends KeydownHandler {
             }
         });
     }
+
+    focus() {
+        window.focus();
+        document.documentElement.focus();
+    }
 }
 
 confReady.then(async () => {
