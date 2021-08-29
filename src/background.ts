@@ -207,6 +207,7 @@ function applySettings(settings: any) {
         // "takeover": "always" | "once" | "empty" | "nonempty" | "never"
         // #265: On "once", don't automatically bring back after :q'ing it
         takeover: "always",
+        filename: "{hostname%32}_{pathname%32}_{selector%32}_{timestamp%32}.{extension}",
     });
     makeDefaultLocalSetting(settings, "about:blank\\?compose", {
         cmdline: "firenvim",
@@ -215,6 +216,7 @@ function applySettings(settings: any) {
         renderer: "canvas",
         selector: 'body',
         takeover: "always",
+        filename: "mail.eml",
     });
     return browser.storage.local.set(settings);
 }

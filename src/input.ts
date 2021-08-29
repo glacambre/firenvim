@@ -36,9 +36,10 @@ export async function setupInput(
         );
 
         await confReady;
+        const urlSettings = getConfForUrl(url);
         nvim.ui_attach(cols, rows, {
             ext_linegrid: true,
-            ext_messages: getConfForUrl(url).cmdline === "firenvim",
+            ext_messages: urlSettings.cmdline === "firenvim",
             rgb: true,
         });
 
@@ -67,7 +68,7 @@ export async function setupInput(
         });
 
         // Create file, set its content to the textarea's, write it
-        const filename = toFileName(url, selector, language);
+        const filename = toFileName(urlSettings.filename, url, selector, language);
         const content = await contentPromise;
         const [line, col] = cursor;
         const writeFilePromise = nvim.call_function("writefile", [content.split("\n"), filename])
