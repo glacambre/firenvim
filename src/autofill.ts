@@ -23,7 +23,7 @@ export async function autofill() {
     let name;
     let version;
     // Can't be tested, as coverage is only recorded on firefox
-    /* istabul ignore else */
+    /* istanbul ignore else */
     if (browserString) {
         [ name, version ] = browserString[0].split("/");
     } else {
