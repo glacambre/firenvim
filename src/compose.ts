@@ -1,6 +1,7 @@
 import { KeydownHandler } from "./KeyHandler";
 import { confReady, getGlobalConf, GlobalSettings } from "./utils/configuration";
 import { setupInput } from "./input";
+import { PageEventEmitter } from "./page";
 
 function print (...args: any[]) {
     return browser.runtime.sendMessage({
@@ -26,19 +27,27 @@ document.documentElement.appendChild(canvas);
 
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
 
-const page = {
-    evalInPage: (js: string) => eval(js),
-    focusInput: print,
-    focusPage: print,
-    getEditorInfo: () => Promise.resolve(["", "", [1, 1], undefined]),
-    getElementContent: () => Promise.resolve(document.body.innerText),
-    hideEditor: print,
-    killEditor: print,
-    pressKeys: print,
-    resizeEditor: print,
-    setElementContent: (s: string) => { document.body.innerText = s },
-    setElementCursor: print,
-};
+class ThunderbirdPageEventEmitter extends PageEventEmitter {
+    private resizeCount = 0;
+    constructor() {
+        super();
+        window.addEventListener("resize", (() => {
+            this.resizeCount += 1;
+            this.emit("resize", [this.resizeCount, window.innerWidth, window.innerHeight]);
+        }).bind(this));
+    }
+    async evalInPage(js: string) { return eval(js) }
+    async focusInput(...args: any[]) { print(...args) }
+    async focusPage(...args: any[]) { print(...args) }
+    async getEditorInfo() { return ["", "", [1, 1], undefined] as [string, string, [number, number], string] }
+    async getElementContent() { return document.body.innerText }
+    async hideEditor(...args: any[]) { print(...args) }
+    async killEditor(...args: any[]) { print(...args) }
+    async pressKeys(...args: any[]) { print(...args) }
+    async resizeEditor(...args: any[]) { print(...args) }
+    async setElementContent(s: string) { document.body.innerText = s }
+    async setElementCursor(...args: any[]) { print(...args) }
+}
 
 class ThunderbirdKeyHandler extends KeydownHandler {
     constructor(settings: GlobalSettings) {
@@ -63,7 +72,7 @@ class ThunderbirdKeyHandler extends KeydownHandler {
 
 confReady.then(async () => {
     setupInput(
-        page as any,
+        new ThunderbirdPageEventEmitter(),
         canvas,
         new ThunderbirdKeyHandler(getGlobalConf()),
         connectionPromise);
