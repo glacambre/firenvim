@@ -1,7 +1,8 @@
-import { getConf } from "./utils/configuration";
-import { keysToEvents } from "./utils/keys";
+import { EventEmitter    } from "./EventEmitter";
 import { FirenvimElement } from "./FirenvimElement";
-import { executeInPage } from "./utils/utils";
+import { executeInPage   } from "./utils/utils";
+import { getConf         } from "./utils/configuration";
+import { keysToEvents    } from "./utils/keys";
 
 // This module is loaded in both the browser's content script, the browser's
 // frame script and thunderbird's compose script.
@@ -160,30 +161,45 @@ export function getNeovimFrameFunctions(global: IGlobalState) {
 // Definition of a proxy type that lets the frame script transparently call //
 // the content script's functions                                           //
 //////////////////////////////////////////////////////////////////////////////
-
-// We don't need to give real values to getFunctions since we're only trying to
-// get the name of functions that exist in the page.
-export const pageFunctions = getNeovimFrameFunctions({} as any);
-
-type ft = typeof pageFunctions;
+;
 
 // The proxy automatically appends the frameId to the request, so we hide that from users
 type ArgumentsType<T> = T extends (x: any, ...args: infer U) => any ? U: never;
 type Promisify<T> = T extends Promise<any> ? T : Promise<T>;
 
-export type PageType = {
-    [k in keyof ft]: (...args: ArgumentsType<ft[k]>) => Promisify<ReturnType<ft[k]>>
+type ft = ReturnType<typeof getNeovimFrameFunctions>
+
+type PageEvents = "resize" | "frame_sendKey";
+type PageHandlers = (args: any[]) => void;
+class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
+    constructor() {
+        super();
+        browser.runtime.onMessage.addListener((request: any, _sender: any, _sendResponse: any) => {
+            switch (request.funcName[0]) {
+                case "frame_sendKey":
+                case "resize":
+                    this.emit(request.funcName[0], request.args);
+                    break;
+                default:
+                    console.error("Unhandled page request:", request);
+            }
+        });
+    }
+}
+
+export type PageType = PageEventEmitter & {
+    [k in keyof ft]: (...args: ArgumentsType<ft[k]>) => Promisify<ReturnType<ft[k]>>;
 };
 
 export function getPageProxy (frameId: number) {
-    const page = {} as PageType;
+    const page = new PageEventEmitter();
 
     let funcName: keyof PageType;
-    for (funcName in pageFunctions) {
+    for (funcName in getNeovimFrameFunctions({} as any)) {
         // We need to declare func here because funcName is a global and would not
         // be captured in the closure otherwise
         const func = funcName;
-        (page[func] as any) = ((...arr: any[]) => {
+        (page as any)[func] = ((...arr: any[]) => {
             return browser.runtime.sendMessage({
                 args: {
                     args: [frameId].concat(arr),
@@ -193,5 +209,5 @@ export function getPageProxy (frameId: number) {
             });
         });
     }
-    return page;
+    return page as PageType;
 };

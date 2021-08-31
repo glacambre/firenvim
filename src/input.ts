@@ -44,11 +44,8 @@ export async function setupInput(
         });
 
         let resizeReqId = 0;
-        browser.runtime.onMessage.addListener((request: any, _sender: any, _sendResponse: any) => {
-            if (request.funcName[0] === "frame_sendKey") {
-                nvim.input(request.args.join(""));
-            } else if (request.funcName[0] === "resize" && request.args[0] > resizeReqId) {
-                const [id, width, height] = request.args;
+        page.on("resize", ([id, width, height]: [number, number, number]) => {
+            if (id > resizeReqId) {
                 resizeReqId = id;
                 // We need to put the keyHandler at the origin in order to avoid
                 // issues when it slips out of the viewport
@@ -66,6 +63,7 @@ export async function setupInput(
                 page.resizeEditor(Math.floor(width / nCols) * nCols, Math.floor(height / nRows) * nRows);
             }
         });
+        page.on("frame_sendKey", (args) => nvim.input(args.join("")));
 
         // Create file, set its content to the textarea's, write it
         const filename = toFileName(urlSettings.filename, url, selector, language);
