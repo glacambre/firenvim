@@ -171,7 +171,7 @@ type ft = ReturnType<typeof getNeovimFrameFunctions>
 
 type PageEvents = "resize" | "frame_sendKey";
 type PageHandlers = (args: any[]) => void;
-class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
+export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
     constructor() {
         super();
         browser.runtime.onMessage.addListener((request: any, _sender: any, _sendResponse: any) => {
