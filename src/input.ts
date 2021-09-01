@@ -90,23 +90,30 @@ export async function setupInput(
         window.addEventListener("focus", setCurrentChan);
         window.addEventListener("click", setCurrentChan);
 
-        const augroupName = `FirenvimAugroupChan${chan}`;
+        // Ask for notifications when user writes/leaves firenvim
+        const rpcnotify = `call rpcnotify(${chan}, 'firenvim_bufwrite', `
+                                + `{`
+                                    + `'text': nvim_buf_get_lines(0, 0, -1, 0),`
+                                    + `'cursor': nvim_win_get_cursor(0)`
+                                + `})`;
+        let autocmd;
+        if (urlSettings.sync === "write") {
+            autocmd = `autocmd BufWrite ${filename} ${rpcnotify}`;
+        } else {
+            autocmd = `autocmd TextChanged ${filename} ${rpcnotify}
+                autocmd TextChangedI ${filename} ${rpcnotify}
+                autocmd TextChangedP ${filename} ${rpcnotify}`;
+        }
         // Cleanup means:
         // - notify frontend that we're shutting down
         // - delete file
         // - remove own augroup
         const cleanup = `call rpcnotify(${chan}, 'firenvim_vimleave') | `
                     + `call delete('${filename}')`;
-        // Ask for notifications when user writes/leaves firenvim
-        nvim.call_atomic((`augroup ${augroupName}
+
+        nvim.call_atomic((`augroup FirenvimAugroupChan${chan}
                         au!
-                        autocmd BufWrite ${filename} `
-                            + `call rpcnotify(${chan}, `
-                                + `'firenvim_bufwrite', `
-                                + `{`
-                                    + `'text': nvim_buf_get_lines(0, 0, -1, 0),`
-                                    + `'cursor': nvim_win_get_cursor(0),`
-                                + `})
+                        ${autocmd}
                         au VimLeave * ${cleanup}
                     augroup END`).split("\n").map(command => ["nvim_command", [command]]));
 
