@@ -39,7 +39,7 @@ class ThunderbirdPageEventEmitter extends PageEventEmitter {
     async evalInPage(js: string) { return eval(js) }
     async focusInput(...args: any[]) { print(...args) }
     async focusPage(...args: any[]) { print(...args) }
-    async getEditorInfo() { return ["", "", [1, 1], undefined] as [string, string, [number, number], string] }
+    async getEditorInfo() { return [document.location.href, "", [1, 1], undefined] as [string, string, [number, number], string] }
     async getElementContent() { return document.body.innerText }
     async hideEditor(...args: any[]) { print(...args) }
     async killEditor(...args: any[]) { print(...args) }
