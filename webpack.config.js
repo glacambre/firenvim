@@ -180,7 +180,7 @@ const thunderbirdConfig = (config, env) => {
               manifest.browser_specific_settings = {
                 "gecko": {
                   "id": "firenvim@lacamb.re",
-                  "strict_min_version": "93.0a1"
+                  "strict_min_version": "92.0"
                 }
               };
               manifest.version = package_json.version;
