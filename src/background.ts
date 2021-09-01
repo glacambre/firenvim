@@ -216,7 +216,7 @@ function applySettings(settings: any) {
         renderer: "canvas",
         selector: 'body',
         takeover: "always",
-        filename: "mail.eml",
+        filename: "mail_{timestamp%32}.eml",
     });
     return browser.storage.local.set(settings);
 }
