@@ -41,6 +41,7 @@ import {
  testPressKeys,
  testResize,
  testSetCursor,
+ testSyncSetting,
  testUnfocusedKillEditor,
  testUpdates,
  testUntrustedInput,
@@ -162,6 +163,7 @@ describe("Chrome", () => {
 
         t("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
         t("Github autofill", testGithubAutofill);
+        t("Autosync", testSyncSetting);
         t("Setting filenames", testFilenameSettings);
         t("Force nvimify", testForceNvimify);
         t("Input focused after frame", testInputFocusedAfterLeave);

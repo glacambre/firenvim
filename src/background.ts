@@ -204,6 +204,7 @@ function applySettings(settings: any) {
         priority: 0,
         renderer: "canvas",
         selector: 'textarea:not([readonly]), div[role="textbox"]',
+        sync: "write",
         // "takeover": "always" | "once" | "empty" | "nonempty" | "never"
         // #265: On "once", don't automatically bring back after :q'ing it
         takeover: "always",
@@ -215,6 +216,7 @@ function applySettings(settings: any) {
         priority: 1,
         renderer: "canvas",
         selector: 'body',
+        sync: "change",
         takeover: "always",
         filename: "mail_{timestamp%32}.eml",
     });
