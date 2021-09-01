@@ -22,7 +22,7 @@
     "ts-jest": "27.0.4",
     "ts-loader": "^9.2.3",
     "typescript": "4.4.2",
-    "web-ext": "6.2.0",
+    "web-ext": "6.3.0",
     "web-ext-types": "3.2.1",
     "webextension-polyfill": "0.8.0",
     "webpack": "5.47.1",
