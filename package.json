@@ -3,7 +3,7 @@
   "dependencies": {
     "@types/jest": "26.0.23",
     "@types/msgpack-lite": "0.1.7",
-    "@types/node": "15.12.5",
+    "@types/node": "16.7.10",
     "@types/selenium-webdriver": "4.0.15",
     "@types/ws": "^7.4.7",
     "ace-builds": "^1.4.12",
