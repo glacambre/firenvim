@@ -37,16 +37,20 @@ class ThunderbirdPageEventEmitter extends PageEventEmitter {
         }).bind(this));
     }
     async evalInPage(js: string) { return eval(js) }
-    async focusInput(...args: any[]) { print(...args) }
-    async focusPage(...args: any[]) { print(...args) }
+    async focusInput() { return Promise.resolve(); }
+    async focusPage() { return Promise.resolve(); }
     async getEditorInfo() { return [document.location.href, "", [1, 1], undefined] as [string, string, [number, number], string] }
     async getElementContent() { return document.body.innerText }
-    async hideEditor(...args: any[]) { print(...args) }
-    async killEditor(...args: any[]) { print(...args) }
-    async pressKeys(...args: any[]) { print(...args) }
-    async resizeEditor(...args: any[]) { print(...args) }
+    async hideEditor() { return Promise.resolve(); }
+    async killEditor() { return Promise.resolve(); }
+    async pressKeys(_: any[]) { return Promise.resolve(); }
+    async resizeEditor(_: number, __: number) {
+        // Don't do anything, resizing is fully controlled by resizing the
+        // compose window
+        return Promise.resolve();
+    }
     async setElementContent(s: string) { document.body.innerText = s }
-    async setElementCursor(...args: any[]) { print(...args) }
+    async setElementCursor(_: number, __: number) { return Promise.resolve(); }
 }
 
 class ThunderbirdKeyHandler extends KeydownHandler {
