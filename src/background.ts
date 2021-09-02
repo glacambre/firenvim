@@ -375,6 +375,9 @@ Object.assign(window, {
         return sender.frameId;
     },
     setTabValue: (sender: any, args: any) => setTabValue(sender.tab.id, args[0], args[1]),
+    thunderbirdSend: (sender: any) => {
+        return (browser as any).compose.sendMessage(sender.tab.id, { mode: 'default' });
+    },
     toggleDisabled: () => toggleDisabled(),
     updateSettings: () => updateSettings(),
 } as any);
