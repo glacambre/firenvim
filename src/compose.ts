@@ -42,7 +42,11 @@ class ThunderbirdPageEventEmitter extends PageEventEmitter {
     async getEditorInfo() { return [document.location.href, "", [1, 1], undefined] as [string, string, [number, number], string] }
     async getElementContent() { return document.body.innerText }
     async hideEditor() { return Promise.resolve(); }
-    async killEditor() { return Promise.resolve(); }
+    async killEditor() {
+        return browser.runtime.sendMessage({
+            funcName: ["closeOwnTab"]
+        });
+    }
     async pressKeys(_: any[]) { return Promise.resolve(); }
     async resizeEditor(_: number, __: number) {
         // Don't do anything, resizing is fully controlled by resizing the
