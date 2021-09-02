@@ -16,13 +16,18 @@ function deepCopy (obj) {
   return result;
 };
 
-const CopyWebPackFiles = [
+const browserFiles = [
   ".github/ISSUE_TEMPLATE.md",
   "src/manifest.json",
   "src/index.html",
   "src/browserAction.html",
   "static/firenvim.svg",
 ]
+
+const thunderbirdFiles = [
+  "src/manifest.json",
+  "static/firenvim.svg",
+];
 
 const config = {
   mode: "development",
@@ -86,7 +91,7 @@ const chromeConfig = (config, env) => {
     output: {
       path: chrome_target_dir,
     },
-    plugins: [new CopyWebPackPlugin({ patterns: CopyWebPackFiles.map(file => ({
+    plugins: [new CopyWebPackPlugin({ patterns: browserFiles.map(file => ({
       from: file,
       to: chrome_target_dir,
       transform: (content, src) => {
@@ -130,7 +135,7 @@ const firefoxConfig = (config, env) => {
       path: firefox_target_dir,
     },
     plugins: [new CopyWebPackPlugin({
-      patterns: CopyWebPackFiles.map(file => ({
+      patterns: browserFiles.map(file => ({
         from: file,
         to: firefox_target_dir,
         transform: (content, src) => {
@@ -170,7 +175,7 @@ const thunderbirdConfig = (config, env) => {
       path: thunderbird_target_dir,
     },
     plugins: [new CopyWebPackPlugin({
-      patterns: CopyWebPackFiles.map(file => ({
+      patterns: thunderbirdFiles.map(file => ({
         from: file,
         to: thunderbird_target_dir,
         transform: (content, src) => {
@@ -188,7 +193,9 @@ const thunderbirdConfig = (config, env) => {
               delete manifest.browser_action;
               delete manifest.commands;
               delete manifest.content_scripts;
+              delete manifest.web_accessible_resources;
               manifest.permissions.push("compose");
+              manifest.permissions.push("compose.send");
               content = JSON.stringify(manifest, undefined, 3);
           }
           return content;
