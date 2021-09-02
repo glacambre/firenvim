@@ -57,6 +57,11 @@ function! firenvim#press_keys(...) abort
         call rpcnotify(firenvim#get_chan(), 'firenvim_press_keys', l:keys)
 endfunction
 
+" Asks the browser extension to hide the firenvim frame
+function! firenvim#thunderbird_send() abort
+        call rpcnotify(firenvim#get_chan(), 'firenvim_thunderbird_send', { 'text': nvim_buf_get_lines(0, 0, -1, 0) })
+endfunction
+
 " Turns a wsl path (forward slashes) into a windows one (backslashes)
 function! s:to_windows_path(path) abort
         if a:path[0] !=# '/'
