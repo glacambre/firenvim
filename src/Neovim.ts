@@ -109,7 +109,7 @@ export async function neovim(
                     lastLostFocus = performance.now();
                     return page.killEditor();
                 case "firenvim_thunderbird_send":
-                    return page.setElementContent(args[0].text).then(() => {
+                    return page.setElementContent(args[0].text.join("\n")).then(() => {
                         return browser.runtime.sendMessage({
                             args: [],
                             funcName: ["thunderbirdSend"],
