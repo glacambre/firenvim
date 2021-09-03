@@ -13,6 +13,18 @@ function print (...args: any[]) {
 window.console.log = print;
 window.console.error = print;
 
+// Move email content to holder element. This allows writing content without
+// destroying the canvas. Another solution would be to append the canvas to the
+// documentElement rather than the body but thunderbird doesn't let us remove
+// documentElement children from the compose.onBeforeSend listener.
+const bodyChildren = Array.from(document.body.childNodes);
+const content = document.createElement("span");
+content.id = "firenvim-content";
+document.body.appendChild(content);
+for (const child of bodyChildren) {
+    content.append(child);
+};
+
 const rects = document.documentElement.getClientRects();
 
 const canvas = document.createElement("canvas");
@@ -23,7 +35,7 @@ canvas.height = rects[0].height;
 canvas.style.position = "absolute";
 canvas.style.top = "0px";
 canvas.style.left = "0px";
-document.documentElement.appendChild(canvas);
+document.body.appendChild(canvas);
 
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
 
@@ -40,7 +52,7 @@ class ThunderbirdPageEventEmitter extends PageEventEmitter {
     async focusInput() { return Promise.resolve(); }
     async focusPage() { return Promise.resolve(); }
     async getEditorInfo() { return [document.location.href, "", [1, 1], undefined] as [string, string, [number, number], string] }
-    async getElementContent() { return document.body.innerText }
+    async getElementContent() { return content.innerText }
     async hideEditor() { return Promise.resolve(); }
     async killEditor() {
         return browser.runtime.sendMessage({
@@ -53,7 +65,7 @@ class ThunderbirdPageEventEmitter extends PageEventEmitter {
         // compose window
         return Promise.resolve();
     }
-    async setElementContent(s: string) { document.body.innerText = s }
+    async setElementContent(s: string) { content.innerText = s }
     async setElementCursor(_: number, __: number) { return Promise.resolve(); }
 }
 

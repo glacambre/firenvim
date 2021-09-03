@@ -442,6 +442,28 @@ browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
 // Can't test on the bird of thunder
 /* istanbul ignore next */
 if (isThunderbird()) {
+    (browser as any).compose.onBeforeSend.addListener((_: any, details: any) => {
+        // No need to remove the canvas when working with plaintext,
+        // thunderbird will do that for us.
+        if (details.isPlainText) {
+            return;
+        }
+        // Parse document
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(details.body, "text/html");
+        // Remove canvas
+        doc.getElementById("canvas").remove();
+        // Move content back to its rightful place
+        const content = doc.getElementById("firenvim-content");
+        const children = Array.from(content.childNodes);
+        for (const child of children) {
+            doc.body.append(child);
+        }
+        // Remove firenvim content holder
+        content.remove();
+        // All set
+        return { cancel: false, details: { body: doc.documentElement.outerHTML } };
+    });
     // In thunderbird, register the script to be loaded in the compose window
     (browser as any).composeScripts.register({
         js: [{file: "compose.js"}],
