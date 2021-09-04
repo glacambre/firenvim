@@ -264,15 +264,32 @@ Known Issues: some websites do not react to `firenvim#press_keys` (e.g. Slack).
 
 ### Automatically syncing changes to the page
 
-By default, Firenvim only writes when you use `:w`. You can use the `sync` setting to automatically synchronize changes with the underlying textarea. Possible values are `change` (synchronize on each change made to the buffer) and `write` (synchronize each time the buffer is written).
+Since Firenvim simply uses the BufWrite event in order to detect when it needs to write neovim's buffers to the page, Firenvim can be made to automatically synchronize all changes like this:
 
 ```vim
-let g:firenvim_config = {
-    \ 'localSettings': {
-        \ '.*': {
-          \ 'sync': 'change',
-    \ }
-\ }
+au TextChanged * ++nested write
+au TextChangedI * ++nested write
+```
+
+Depending on how large the edited buffer is, this could be a little slow. This more sophisticated approach will throttle writes:
+
+```vim
+let g:dont_write = v:false
+function! My_Write(timer) abort
+	let g:dont_write = v:false
+	write
+endfunction
+
+function! Delay_My_Write() abort
+	if g:dont_write
+		return
+	end
+	let g:dont_write = v:true
+	call timer_start(10000, 'My_Write')
+endfunction
+
+au TextChanged * ++nested call Delay_My_Write()
+au TextChangedI * ++nested call Delay_My_Write()
 ```
 
 ### Configuring message timeout

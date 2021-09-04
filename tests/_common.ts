@@ -1344,29 +1344,6 @@ ${vimrcContent}
         expect(await input.getAttribute("value")).toMatch("hello_world_2");
 }));
 
-export const testSyncSetting = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
-        const vimrcContent = await readVimrc();
-        await writeVimrc(`
-let g:firenvim_config = {
-        \\ 'localSettings': {
-                \\ '.*': {
-                        \\ 'sync': 'change',
-                \\ }
-        \\ }
-\\ }
-${vimrcContent}
-                `);
-        await reloadNeovim(server, driver);
-        const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
-        await sendKeys(driver, ["iAutosync works"]
-                       .concat(webdriver.Key.ESCAPE)
-                       .concat(":wq!".split(""))
-                       .concat(webdriver.Key.ENTER))
-        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
-        await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
-        expect(await input.getAttribute("value")).toBe("Autosync works");
-}));
-
 export async function killDriver(server: any, driver: webdriver.WebDriver) {
         try {
                 await driver.close()

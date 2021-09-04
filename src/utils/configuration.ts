@@ -24,7 +24,6 @@ export interface ISiteConfig {
     priority: number;
     renderer: "html" | "canvas";
     selector: string;
-    sync: "write" | "change";
     takeover: "always" | "once" | "empty" | "nonempty" | "never";
     filename: string;
 }
