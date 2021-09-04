@@ -350,14 +350,6 @@ export class FirenvimElement {
         return this.editor.getElement();
     }
 
-    getFrameId () {
-        return this.frameId;
-    }
-
-    getIframe () {
-        return this.iframe;
-    }
-
     getPageElementContent () {
         return this.getEditor().getContent();
     }
