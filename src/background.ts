@@ -356,6 +356,7 @@ Object.assign(window, {
     },
     getNvimPluginVersion: () => nvimPluginVersion,
     getOwnFrameId: (sender: any) => sender.frameId,
+    getOwnComposeDetails: (sender: any) => (browser as any).compose.getComposeDetails(sender.tab.id),
     getTab: (sender: any) => sender.tab,
     getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
     getTabValueFor: (_: any, args: any) => getTabValue(args[0], args[1]),
@@ -440,27 +441,54 @@ browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
 // Can't test on the bird of thunder
 /* istanbul ignore next */
 if (isThunderbird()) {
-    (browser as any).compose.onBeforeSend.addListener((_: any, details: any) => {
+    (browser as any).compose.onBeforeSend.addListener(async (tab: any, details: any) => {
+        const lines = (await browser.tabs.sendMessage(tab.id, { args: [], funcName: ["get_buf_content"] })) as string[];
         // No need to remove the canvas when working with plaintext,
         // thunderbird will do that for us.
         if (details.isPlainText) {
-            return;
+            return { cancel: false, details: { plainTextBody: lines.join("\n") } };
         }
-        // Parse document
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(details.body, "text/html");
-        // Remove canvas
-        doc.getElementById("canvas").remove();
-        // Move content back to its rightful place
-        const content = doc.getElementById("firenvim-content");
-        const children = Array.from(content.childNodes);
-        for (const child of children) {
-            doc.body.append(child);
+
+        const doc = document.createElement("html");
+        const bod = document.createElement("body");
+        doc.appendChild(bod);
+
+        // Turn `>` into appropriate blockquote elements.
+        let previousQuoteLevel = 0;
+        let parent : HTMLElement = bod;
+        for (const l of lines) {
+            let currentQuoteLevel = 0;
+
+            // Count number of ">" symbols
+            let i = 0;
+            while (l[i] === " " || l[i] === ">") {
+                if (l[i] === ">") {
+                    currentQuoteLevel += 1;
+                }
+                i += 1;
+            }
+
+            const line = l.slice(i);
+
+            if (currentQuoteLevel > previousQuoteLevel) {
+                for (let i = previousQuoteLevel; i < currentQuoteLevel; ++i) {
+                    const block = document.createElement("blockquote");
+                    block.setAttribute("type", "cite");
+                    parent.appendChild(block);
+                    parent = block;
+                }
+            } else if (currentQuoteLevel < previousQuoteLevel) {
+                for (let i = previousQuoteLevel; i > currentQuoteLevel; --i) {
+                    parent = parent.parentElement;
+                }
+            }
+
+            parent.appendChild(document.createTextNode(line));
+            parent.appendChild(document.createElement("br"));
+
+            previousQuoteLevel = currentQuoteLevel;
         }
-        // Remove firenvim content holder
-        content.remove();
-        // All set
-        return { cancel: false, details: { body: doc.documentElement.outerHTML } };
+        return { cancel: false, details: { body: doc.outerHTML } };
     });
     // In thunderbird, register the script to be loaded in the compose window
     (browser as any).composeScripts.register({

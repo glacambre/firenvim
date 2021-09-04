@@ -169,7 +169,7 @@ type Promisify<T> = T extends Promise<any> ? T : Promise<T>;
 
 type ft = ReturnType<typeof getNeovimFrameFunctions>
 
-type PageEvents = "resize" | "frame_sendKey";
+type PageEvents = "resize" | "frame_sendKey" | "get_buf_content";
 type PageHandlers = (args: any[]) => void;
 export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
     constructor() {
@@ -180,6 +180,8 @@ export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
                 case "resize":
                     this.emit(request.funcName[0], request.args);
                     break;
+                case "get_buf_content":
+                    return new Promise(resolve => this.emit(request.funcName[0], resolve));
                 default:
                     console.error("Unhandled page request:", request);
             }

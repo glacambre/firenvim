@@ -64,6 +64,7 @@ export async function setupInput(
             }
         });
         page.on("frame_sendKey", (args) => nvim.input(args.join("")));
+        page.on("get_buf_content", (r: any) => r(nvim.buf_get_lines(0, 0, -1, 0)));
 
         // Create file, set its content to the textarea's, write it
         const filename = toFileName(urlSettings.filename, url, selector, language);
