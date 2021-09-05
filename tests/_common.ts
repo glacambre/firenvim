@@ -46,7 +46,7 @@ export async function getNewestFileIn(directory: string) {
         return ((stats.sort((stat1: any, stat2: any) => stat2.mtime - stat1.mtime)[0] || {}) as any).path;
 }
 
-function sendKeys(driver: webdriver.WebDriver, keys: any[]) {
+export function sendKeys(driver: webdriver.WebDriver, keys: any[]) {
         return keys.reduce((prom, key) => prom
                 .then((action: any) => action.pause(5).sendKeys(key))
                 , Promise.resolve(driver.actions()))

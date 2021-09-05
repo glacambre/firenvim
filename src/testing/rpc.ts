@@ -15,85 +15,86 @@ export function makeRequest(socket: any, func: string, args?: any[]): any {
 export function makeRequestHandler(s: any, context: string, coverageData: any) {
     return async (m: any) => {
         const req = JSON.parse(m.data);
-        switch(req.funcName[0]) {
-            // Ignoring the resolve case because the browser has no reason to
-            // send requests to the coverage server for now.
-            /* istanbul ignore next */
-            case "resolve": {
-                const r = requests.get(req.reqId);
-                if (r !== undefined) {
-                    r(...req.args);
-                } else {
-                    console.error("Received answer to unsent request!", req);
-                }
-            }
-            break;
-            case "getContext":
-                s.send(JSON.stringify({
-                    args: [context],
-                    funcName: ["resolve"],
-                    reqId: req.reqId,
-                }));
-                break;
-            case "getCoverageData":
-                s.send(JSON.stringify({
-                    args: [JSON.stringify(coverageData)],
-                    funcName: ["resolve"],
-                    reqId: req.reqId,
-                }));
-                // Ignoring this break because it's tested but cov data is sent
-                // before.
+        try {
+            switch(req.funcName[0]) {
+                // Ignoring the resolve case because the browser has no reason to
+                // send requests to the coverage server for now.
                 /* istanbul ignore next */
-                break;
-            case "updateSettings":
-                (window as any).updateSettings().finally(() => {
-                    s.send(JSON.stringify({
-                        args: [],
-                        funcName: ["resolve"],
-                        reqId: req.reqId,
-                    }));
-                });
-                break;
-            case "tryUpdate":
-                (window as any).updateIfPossible().finally(() => {
-                    s.send(JSON.stringify({
-                        args: [],
-                        funcName: ["resolve"],
-                        reqId: req.reqId,
-                    }));
-                });
-                break;
-            case "acceptCommand":
-                (window as any).acceptCommand(...req.args).finally(() => {
-                    s.send(JSON.stringify({
-                        args: [],
-                        funcName: ["resolve"],
-                        reqId: req.reqId,
-                    }));
-                });
-                break;
-            case "eval":
-                try {
-                    s.send(JSON.stringify({
-                        args: [await eval(req.args[0])],
-                        funcName: ["resolve"],
-                        reqId: req.reqId,
-                    }));
-                } catch (e) {
-                    s.send(JSON.stringify({
-                        args: [{
-                            message: e.message,
-                            cause: req.args[0],
-                            name: e.name,
-                            fileName: e.fileName,
-                            lineNumber: e.lineNumber,
-                            columnNumber: e.columnNumber,
-                            stack: e.stack,
-                        }],
-                        funcName: ["reject"],
-                        reqId: req.reqId,
-                    }));
+                case "resolve": {
+                    const r = requests.get(req.reqId);
+                    if (r !== undefined) {
+                        r(...req.args);
+                    } else {
+                        console.error("Received answer to unsent request!", req);
+                    }
                 }
+                break;
+                case "getContext":
+                    s.send(JSON.stringify({
+                        args: [context],
+                        funcName: ["resolve"],
+                        reqId: req.reqId,
+                    }));
+                    break;
+                case "getCoverageData":
+                    s.send(JSON.stringify({
+                        args: [JSON.stringify(coverageData)],
+                        funcName: ["resolve"],
+                        reqId: req.reqId,
+                    }));
+                    // Ignoring this break because it's tested but cov data is sent
+                    // before.
+                    /* istanbul ignore next */
+                    break;
+                case "updateSettings":
+                    (window as any).updateSettings().finally(() => {
+                        s.send(JSON.stringify({
+                            args: [],
+                            funcName: ["resolve"],
+                            reqId: req.reqId,
+                        }));
+                    });
+                    break;
+                case "tryUpdate":
+                    (window as any).updateIfPossible().finally(() => {
+                        s.send(JSON.stringify({
+                            args: [],
+                            funcName: ["resolve"],
+                            reqId: req.reqId,
+                        }));
+                    });
+                    break;
+                case "acceptCommand":
+                    (window as any).acceptCommand(...req.args).finally(() => {
+                        s.send(JSON.stringify({
+                            args: [],
+                            funcName: ["resolve"],
+                            reqId: req.reqId,
+                        }));
+                    });
+                    break;
+                case "eval":
+                        s.send(JSON.stringify({
+                            args: [await eval(req.args[0])],
+                            funcName: ["resolve"],
+                            reqId: req.reqId,
+                        }));
+            }
+        } catch (e) {
+            console.error(e);
+            s.send(JSON.stringify({
+                args: [{
+                    message: e.message,
+                    cause: req.args[0],
+                    name: e.name,
+                    fileName: e.fileName,
+                    lineNumber: e.lineNumber,
+                    columnNumber: e.columnNumber,
+                    stack: e.stack,
+                }],
+                funcName: ["reject"],
+                reqId: req.reqId,
+            }));
         }
     };
 }

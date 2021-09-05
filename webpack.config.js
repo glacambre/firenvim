@@ -170,6 +170,9 @@ const firefoxConfig = (config, env) => {
 
 const thunderbirdConfig = (config, env) => {
   config.entry.compose = "./src/compose.ts";
+  if (env.endsWith("testing")) {
+    config.entry.compose = "./src/testing/compose.ts";
+  }
   const result = Object.assign(deepCopy(config), {
     output: {
       path: thunderbird_target_dir,
@@ -196,6 +199,10 @@ const thunderbirdConfig = (config, env) => {
               delete manifest.web_accessible_resources;
               manifest.permissions.push("compose");
               manifest.permissions.push("compose.send");
+              if (env.endsWith("testing")) {
+                manifest.permissions.push("messagesRead");
+                manifest.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self';"
+              }
               content = JSON.stringify(manifest, undefined, 3);
           }
           return content;

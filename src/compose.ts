@@ -116,14 +116,14 @@ class ThunderbirdKeyHandler extends KeydownHandler {
     }
 }
 
-confReady.then(async () => {
+export const isReady = confReady.then(async () => {
     const keyHandler = new ThunderbirdKeyHandler(getGlobalConf());
     const page = new ThunderbirdPageEventEmitter();
     page.on("pause_keyhandler", () => {
         keyHandler.stop();
         setTimeout(() => keyHandler.start(), 1000);
     });
-    setupInput(
+    return setupInput(
         page,
         canvas,
         keyHandler,

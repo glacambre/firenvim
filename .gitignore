@@ -1,6 +1,7 @@
 node_modules/
 npm-debug.log
 target/
+thunderbird_profile/
 tests/pages/github.html
 .nyc_output
 failures.txt

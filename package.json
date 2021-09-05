@@ -47,10 +47,12 @@
     "install_manifests": "nvim --headless -u NORC -i NONE -n -c \":set rtp+=.\" -c \"call firenvim#install(1)\" -c \"quit\"",
     "jest": "jest",
     "nyc": "nyc",
-    "pack": "web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest",
-    "tests": "npm run test-firefox && npm run test-chrome",
-    "test-firefox": "webpack --env=firefox-testing && nyc instrument --in-place target/firefox && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest && jest firefox",
+    "pack-firefox": "web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest",
+    "pack-thunderbird": "web-ext build --source-dir target/thunderbird --artifacts-dir target/xpi --overwrite-dest",
+    "tests": "npm run test-firefox && npm run test-chrome && npm run test-thunderbird",
+    "test-firefox": "webpack --env=firefox-testing && nyc instrument --in-place target/firefox && npm run pack-firefox && jest firefox",
     "test-chrome": "webpack --env=chrome-testing && nyc instrument --in-place target/chrome && jest chrome",
+    "test-thunderbird": "webpack --env=thunderbird-testing && nyc instrument --in-place target/thunderbird && npm run pack-thunderbird && jest thunderbird",
     "webpack": "webpack"
   },
   "jest": {

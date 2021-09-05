@@ -25,7 +25,48 @@ jobs:
     - name: Run ESlint
       run: '"$(npm bin)/eslint" "./**/*.ts"'
     - name: Run addons-linter
-      run: 'npm run build && npm run pack && "$(npm bin)/addons-linter" target/xpi/firefox-latest.xpi' 
+      run: 'npm run build && npm run pack-firefox && "$(npm bin)/addons-linter" target/xpi/firefox-latest.xpi' 
+
+  thunderbird:
+    needs: tslint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Install ffmpeg
+      run: sudo apt update -y && sudo apt install -y ffmpeg
+    - name: Install thunderbird
+      run: |
+        curl -L 'https://download.mozilla.org/?product=thunderbird-93.0b1-SSL&os=linux64&lang=en-US' -o thunderbird.tar.bz2
+        tar --directory "$HOME" -xvf thunderbird.tar.bz2
+        "$HOME/thunderbird/thunderbird" --version
+        echo "$HOME/thunderbird" >> $GITHUB_PATH
+    - name: Install Neovim
+      uses: rhysd/action-setup-vim@v1
+      with:
+        neovim: true
+        version: 'stable'
+    - name: Install dependencies
+      run: npm ci
+    - name: Build Firenvim
+      timeout-minutes: 1
+      run: npm run webpack -- --env=thunderbird-testing
+    - name: Pack Firenvim
+      run: npm run pack-thunderbird
+    - name: Test
+      timeout-minutes: 10
+      run: xvfb-run --auto-servernum -s "-screen 0 920x690x24" sh -c '(sleep 3 && ffmpeg -loglevel error -t 240 -an -video_size 920x690 -framerate 30 -f x11grab -i $DISPLAY video.webm) & npm run jest -- thunderbird'
+    - name: Artifact upload (failure only)
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: ubuntu-thunderbird-stable
+        path: |
+          video.webm
+          failures.txt
+        retention-days: 2
 
   test:
     needs: tslint
@@ -83,7 +124,7 @@ jobs:
       run: npm run nyc -- instrument --in-place target/${{ matrix.browser }}
     - name: Pack Firenvim (Firefox)
       if: matrix.browser == 'firefox'
-      run: npm run pack
+      run: npm run pack-firefox
     - name: Install Manifest
       run: npm run install_manifests
     - name: Test (Linux)

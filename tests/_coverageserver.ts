@@ -89,7 +89,7 @@ export function getNextConnection () {
 
 // Returns a function that returns a promise that resolves once an object with
 // an attribute named kind and whose value matches X is returned.
-function getNextXConnection (X: "content" | "frame" | "background") {
+function getNextXConnection (X: "content" | "frame" | "compose" | "background") {
         return function () {
                 return new Promise(async (resolve) => {
                         let isX: boolean;
@@ -110,6 +110,7 @@ export const getNextBackgroundConnection = () => {
         return backgroundSocket;
 };
 export const getNextFrameConnection = getNextXConnection("frame");
+export const getNextComposeConnection = getNextXConnection("compose");
 export const getNextContentConnection = getNextXConnection("content");
 
 const covMap = istanbul.createCoverageMap({});
