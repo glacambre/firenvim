@@ -13,21 +13,20 @@ export function makeRequest(socket: any, func: string, args?: any[]): any {
 }
 
 export function makeRequestHandler(s: any, context: string, coverageData: any) {
-    return (m: any) => {
+    return async (m: any) => {
         const req = JSON.parse(m.data);
         switch(req.funcName[0]) {
             // Ignoring the resolve case because the browser has no reason to
             // send requests to the coverage server for now.
             /* istanbul ignore next */
-            case "resolve":
-                {
+            case "resolve": {
                 const r = requests.get(req.reqId);
                 if (r !== undefined) {
                     r(...req.args);
                 } else {
                     console.error("Received answer to unsent request!", req);
                 }
-                }
+            }
             break;
             case "getContext":
                 s.send(JSON.stringify({
@@ -74,13 +73,27 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
                 });
                 break;
             case "eval":
-                Promise.resolve(eval(req.args[0])).catch(() => undefined).then((result) => {
+                try {
                     s.send(JSON.stringify({
-                        args: [result],
+                        args: [await eval(req.args[0])],
                         funcName: ["resolve"],
                         reqId: req.reqId,
                     }));
-                });
+                } catch (e) {
+                    s.send(JSON.stringify({
+                        args: [{
+                            message: e.message,
+                            cause: req.args[0],
+                            name: e.name,
+                            fileName: e.fileName,
+                            lineNumber: e.lineNumber,
+                            columnNumber: e.columnNumber,
+                            stack: e.stack,
+                        }],
+                        funcName: ["reject"],
+                        reqId: req.reqId,
+                    }));
+                }
         }
     };
 }

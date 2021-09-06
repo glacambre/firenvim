@@ -6,12 +6,12 @@ import * as istanbul from "istanbul-lib-coverage";
 const requests = new Map();
 
 function makeRequest(socket: any, func: string, args?: any[]): any {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
                 let reqId = Math.random();
                 while (requests.get(reqId) !== undefined) {
                         reqId = Math.random();
                 }
-                requests.set(reqId, resolve);
+                requests.set(reqId, [resolve, reject]);
                 socket.send(JSON.stringify({ reqId, funcName: [func], args }));
         });
 }
@@ -20,13 +20,36 @@ function makeRequestHandler(s: any) {
         return function (m: any) {
                 const req = JSON.parse(m.toString());
                 switch(req.funcName[0]) {
-                        case "resolve":
-                                const r = requests.get(req.reqId);
+                        case "resolve": {
+                                const [r, _] = requests.get(req.reqId);
                                 if (r !== undefined) {
                                         r(...req.args);
                                 } else {
                                         console.error("Received answer to unsent request!", req);
                                 }
+                        }
+                        break;
+                        case "reject": {
+                                const [_, r] = requests.get(req.reqId);
+                                if (r !== undefined) {
+                                        const err = req.args[0];
+                                        const e: any = new Error();
+                                        if (err.fileName) {
+                                                e.message = `${err.fileName}:`
+                                                        + `${err.lineNumber}:`
+                                                        + `${err.columnNumber}: `
+                                                        + err.message;
+                                        } else {
+                                                e.message = err.message;
+                                        }
+                                        e.message += ` (${err.cause})`;
+                                        e.name = err.name;
+                                        // e.stack = err.stack;
+                                        r(e);
+                                } else {
+                                        console.error("Received rejection to unsent request!", req);
+                                }
+                        };
                         break;
                         case "pushCoverage":
                                 saveCoverageData(req.args[0]);
