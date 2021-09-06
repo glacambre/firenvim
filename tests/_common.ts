@@ -83,10 +83,8 @@ type testFunction = (s: string, server: any, driver: webdriver.WebDriver) => Pro
 
 function withLocalPage(page: string, f: testFunction): testFunction {
         return async function (title, server, driver) {
-                await server.backgroundEval(`Promise.all(
-                        browser.windows.getAll()
-                                .then(a => a.slice(1).map(w => browser.windows.remove(w.id)))
-                )`);
+                await server.backgroundEval(`browser.windows.getAll()
+                                .then(a => Promise.all(a.slice(1).map(w => browser.windows.remove(w.id))))`);
                 const contentSocket = await loadLocalPage(server, driver, page, title);
                 try {
                         return await f(title, server, driver);
