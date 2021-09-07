@@ -13,8 +13,8 @@ function print (...args: any[]) {
 window.console.log = print;
 window.console.error = print;
 
+// Make canvas size of window
 const rects = document.documentElement.getClientRects();
-
 const canvas = document.createElement("canvas");
 canvas.id = "canvas";
 canvas.oncontextmenu = () => false;
@@ -24,6 +24,10 @@ canvas.style.position = "absolute";
 canvas.style.top = "0px";
 canvas.style.left = "0px";
 document.body.appendChild(canvas);
+
+// Remove scrollbars when body content is longer than window
+document.documentElement.style.overflow = "hidden";
+document.body.style.overflow = "hidden";
 
 const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
 
