@@ -169,13 +169,14 @@ type Promisify<T> = T extends Promise<any> ? T : Promise<T>;
 
 type ft = ReturnType<typeof getNeovimFrameFunctions>
 
-type PageEvents = "resize" | "frame_sendKey" | "get_buf_content";
+type PageEvents = "resize" | "frame_sendKey" | "get_buf_content" | "pause_keyhandler";
 type PageHandlers = (args: any[]) => void;
 export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
     constructor() {
         super();
         browser.runtime.onMessage.addListener((request: any, _sender: any, _sendResponse: any) => {
             switch (request.funcName[0]) {
+                case "pause_keyhandler":
                 case "frame_sendKey":
                 case "resize":
                     this.emit(request.funcName[0], request.args);

@@ -108,18 +108,30 @@ class ThunderbirdPageEventEmitter extends PageEventEmitter {
 }
 
 class ThunderbirdKeyHandler extends KeydownHandler {
+    private enabled: boolean;
     constructor(settings: GlobalSettings) {
         super(document.documentElement, settings);
+        this.start();
         const acceptInput = ((evt: any) => {
-            this.emit("input", evt.data);
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
+            if (this.enabled) {
+                this.emit("input", evt.data);
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+            }
         }).bind(this);
         document.documentElement.addEventListener("beforeinput", (evt: any) => {
             if (evt.isTrusted && !evt.isComposing) {
                 acceptInput(evt);
             }
         });
+    }
+
+    start() {
+        this.enabled = true;
+    }
+
+    stop() {
+        this.enabled = false;
     }
 
     focus() {
@@ -129,9 +141,15 @@ class ThunderbirdKeyHandler extends KeydownHandler {
 }
 
 confReady.then(async () => {
+    const keyHandler = new ThunderbirdKeyHandler(getGlobalConf());
+    const page = new ThunderbirdPageEventEmitter();
+    page.on("pause_keyhandler", () => {
+        keyHandler.stop();
+        setTimeout(() => keyHandler.start(), 1000);
+    });
     setupInput(
-        new ThunderbirdPageEventEmitter(),
+        page,
         canvas,
-        new ThunderbirdKeyHandler(getGlobalConf()),
+        keyHandler,
         connectionPromise);
 });
