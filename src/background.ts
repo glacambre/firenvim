@@ -446,6 +446,14 @@ if (isThunderbird()) {
         // No need to remove the canvas when working with plaintext,
         // thunderbird will do that for us.
         if (details.isPlainText) {
+            // Firenvim has to cancel the beforeinput event on the compose
+            // window's documentElement in order to prevent the canvas from
+            // being destroyed. However, thunderbird has a bug where cancelling
+            // this event will prevent onBeforeSend from setting the compose
+            // window's content when editing plaintext emails.
+            // We work around this by telling the compose script to temporarily
+            // stop cancelling events.
+            await browser.tabs.sendMessage(tab.id, { args: [], funcName: ["pause_keyhandler"] });
             return { cancel: false, details: { plainTextBody: lines.join("\n") } };
         }
 
