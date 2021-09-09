@@ -20,7 +20,7 @@ canvas.id = "canvas";
 canvas.oncontextmenu = () => false;
 canvas.width = rects[0].width;
 canvas.height = rects[0].height;
-canvas.style.position = "absolute";
+canvas.style.position = "fixed";
 canvas.style.top = "0px";
 canvas.style.left = "0px";
 document.body.appendChild(canvas);
