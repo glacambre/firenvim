@@ -62,46 +62,10 @@ class ThunderbirdPageEventEmitter extends PageEventEmitter {
             return details.plainTextBody;
         }
 
-        const nodeToString = (quote: string, n: Node) => {
-            switch (n.nodeType) {
-                case Node.ELEMENT_NODE:
-                    return elementToString(quote, (n as Element));
-                case Node.TEXT_NODE: {
-                    const s = n.textContent.trim();
-                    if (s.length > 0) {
-                        if (quote !== "") {
-                            quote = quote + " ";
-                        }
-                        return quote + s + "\n";
-                    }
-                    return s;
-                }
-            }
-        };
-        const elementToString = (quote: string, n: Element) => {
-            if (n.tagName === "BR") {
-                return "";
-            }
-
-            let quotes = quote;
-            if (n.tagName === "BLOCKQUOTE") {
-                    quotes = quotes + ">";
-            }
-
-            let result = "";
-            for (const c of Array.from(n.childNodes)) {
-                const s = nodeToString(quotes, c);
-                if (s !== "") {
-                    result += s;
-                }
-            }
-
-            if (n.tagName === "BLOCKQUOTE") {
-                result += quote + "\n";
-            }
-            return result;
-        }
-        return elementToString("", document.body);
+        return "HTML composition mode not supported due to extension "
+            + "restrictions. Switch to plaintext editing (Account Settings "
+            + "> Composition & Addressing > Untick `Compose messages in HTML "
+            + "Format`)";
     }
     async hideEditor() { return Promise.resolve(); }
     async killEditor() {
