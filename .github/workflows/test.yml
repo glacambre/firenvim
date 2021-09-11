@@ -68,39 +68,54 @@ jobs:
         choco install firefox-dev --pre
         echo "C:\Program Files\Firefox Dev Edition" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
     - name: Install Neovim
+      id: neovim
       uses: rhysd/action-setup-vim@v1
+      continue-on-error: true
       with:
         neovim: true
         version: ${{ matrix.neovim }}
+    - name: Fail if Neovim not installed
+      uses: actions/github-script@v4
+      with:
+        script: |
+          return github.request('PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}', {
+            owner: context.repo.owner,
+            repo: context.repo.owner,
+            check_run_id: context.runId,
+            conclusion: "neutral",
+          })
     - name: Install NPM dependencies
+      if: steps.neovim.outputs.executable != ''
       timeout-minutes: 5
       run: npm ci
     - name: Build Firenvim
+      if: steps.neovim.outputs.executable != ''
       timeout-minutes: 1
       run: npm run webpack -- --env=${{ matrix.browser }}-testing
     - name: Instrument Firenvim (Linux/Firefox/Stable only)
-      if: matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
+      if: steps.neovim.outputs.executable != '' && matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
       run: npm run nyc -- instrument --in-place target/${{ matrix.browser }}
     - name: Pack Firenvim (Firefox)
-      if: matrix.browser == 'firefox'
+      if: steps.neovim.outputs.executable != '' && matrix.browser == 'firefox'
       run: npm run pack
     - name: Install Manifest
+      if: steps.neovim.outputs.executable != ''
       run: npm run install_manifests
     - name: Test (Linux)
       timeout-minutes: 10
-      if: matrix.os == 'ubuntu'
+      if: steps.neovim.outputs.executable != '' && matrix.os == 'ubuntu'
       # Multiple attempts to increase FPS to 60 have been made: use libx264,
       # using raw output... Nothing worked. Spending more effort on this will
       # only result in suffering and wasted time.
       run: xvfb-run --auto-servernum -s "-screen 0 920x690x24" sh -c '(sleep 3 && ffmpeg -loglevel error -t 240 -an -video_size 920x690 -framerate 30 -f x11grab -i $DISPLAY video.webm) & npm run jest -- ${{ matrix.browser }}'
     - name: Test (MacOS)
-      if: matrix.os == 'macos'
+      if: steps.neovim.outputs.executable != '' && matrix.os == 'macos'
       timeout-minutes: 10
       run: |
         ffmpeg -loglevel warning -t 240 -framerate 30 -f avfoundation -i "0:0" video.webm &
         exit_code=0 && npm run jest -- ${{ matrix.browser }} || exit_code=$? && sleep 20 && exit $exit_code
     - name: Test (Windows)
-      if: matrix.os == 'windows'
+      if: steps.neovim.outputs.executable != '' && matrix.os == 'windows'
       timeout-minutes: 10
       run: |
         Start-Job { ffmpeg -loglevel warning -t 240 -framerate 30 -f gdigrab -i desktop D:\a\firenvim\firenvim\video.webm }
@@ -117,6 +132,6 @@ jobs:
         retention-days: 2
     - name: Process Coverage Report (Coverage only)
       uses: glacambre/action-compare-coverage@master
-      if: matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
+      if: steps.neovim.outputs.executable != '' && matrix.os == 'ubuntu' && matrix.browser == 'firefox' && matrix.neovim == 'stable'
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
