@@ -79,11 +79,11 @@ The Content process and the Compose process perform the same tasks. They are cre
 - Detecting when the "writable" element disappears or is resized, to hide or resize the Neovim Frame.
 - Writing the content of the Neovim Frame back to the "writable" element.
 
-Reading and writing the content of "writable" elements requires interacting with different kinds of editors (CodeMirror, Ace, Monaco, Textareas, contenteditable...). In order to make this easier, an interface named "AbstractEditor" has been created and is used by various implementations. All these implementations are located in `src/editors`.
+Reading and writing the content of "writable" elements requires interacting with different kinds of editors (CodeMirror, Ace, Monaco, Textareas, contenteditable...). This is handled by the [editor-adapter](https://github.com/glacambre/editor-adapter) library I created.
 
 ### Neovim Frame process
 
-Neovim Frame process are created for each "writable" element the user wants to interact with. The role of the Neovim Frame process is to connect to the Neovim server started by the background process. This is done with a websocket. Once the connection has been made, the Neovim Frame process forwards keypresses to the Neovim server and displays the resulting screen updates. Handling keypresses is performed in `src/frame.ts`, updating the screen is performed by `src/renderer.ts`.
+Neovim Frame process are created for each "writable" element the user wants to interact with. The role of the Neovim Frame process is to connect to the Neovim server started by the background process. This is done with a websocket. Once the connection has been made, the Neovim Frame process forwards keypresses to the Neovim server and displays the resulting screen updates. Handling keypresses is performed in `src/input.ts` by relying on the KeyHandler instantiated in either `src/frame.ts` or `src/compose.ts`. Updating the screen is performed by `src/renderer.ts`.
 The Neovim Frame process creates a `BufWrite` autocommand to detect when the buffer is written to the disk. When this happens, it sends a request to the Content or Compose process and asks it to update the content of the "writable" element.
 
 ### Browser Action process
