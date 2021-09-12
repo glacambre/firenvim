@@ -1,0 +1,9 @@
+name: 'Mark neutral'
+description: 'Mark job as neutral'
+inputs:
+  github_token:
+    description: 'Github token'
+    required: 'true'
+runs:
+  using: 'node12'
+  main: 'main.js'

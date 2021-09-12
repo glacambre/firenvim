@@ -8,24 +8,12 @@ on:
     branches:
     - '*'
 
-env:
-  TESTING: 1
-
 jobs:
   test:
-
-    runs-on: ${{ matrix.os }}-latest
-
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@master
-    - name: Install Neovim
-      id: neovim
-      uses: rhysd/action-setup-vim@v1
-      continue-on-error: true
-      with:
-        neovim: true
-        version: ${{ matrix.neovim }}
     - name: Fail if Neovim not installed
       uses: ./.github/actions/mark-neutral
       with:
