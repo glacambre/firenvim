@@ -14,12 +14,9 @@ window.console.log = print;
 window.console.error = print;
 
 // Make canvas size of window
-const rects = document.documentElement.getClientRects();
 const canvas = document.createElement("canvas");
 canvas.id = "canvas";
 canvas.oncontextmenu = () => false;
-canvas.width = rects[0].width;
-canvas.height = rects[0].height;
 canvas.style.position = "fixed";
 canvas.style.top = "0px";
 canvas.style.left = "0px";
@@ -47,10 +44,14 @@ class ThunderbirdPageEventEmitter extends PageEventEmitter {
     private resizeCount = 0;
     constructor() {
         super();
-        window.addEventListener("resize", (() => {
+        const onResize = (() => {
             this.resizeCount += 1;
             this.emit("resize", [this.resizeCount, window.innerWidth, window.innerHeight]);
-        }).bind(this));
+        }).bind(this)
+        window.addEventListener("resize", onResize);
+        // We need to trigger a resize on startup because for some reason the
+        // window might be 1px wide when the compose script is created.
+        setTimeout(onResize, 100);
     }
     async evalInPage(js: string) { return eval(js) }
     async focusInput() { return Promise.resolve(); }

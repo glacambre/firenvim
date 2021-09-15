@@ -37,11 +37,14 @@ export async function setupInput(
 
         await confReady;
         const urlSettings = getConfForUrl(url);
-        nvim.ui_attach(cols, rows, {
-            ext_linegrid: true,
-            ext_messages: urlSettings.cmdline === "firenvim",
-            rgb: true,
-        });
+        nvim.ui_attach(
+            cols < 1 ? 1 : cols,
+            rows < 1 ? 1 : rows,
+            {
+                ext_linegrid: true,
+                ext_messages: urlSettings.cmdline === "firenvim",
+                rgb: true,
+        }).catch(console.log);
 
         let resizeReqId = 0;
         page.on("resize", ([id, width, height]: [number, number, number]) => {
