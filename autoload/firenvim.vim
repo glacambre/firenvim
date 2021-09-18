@@ -132,8 +132,15 @@ function! firenvim#run() abort
                 let l:lenstr = luaeval('string.char(bit.band(' . l:len . ', 255))'
                                         \. '.. string.char(bit.band(bit.rshift(' . l:len . ', 8), 255))'
                                         \. '.. string.char(bit.band(bit.rshift(' . l:len . ', 16), 255))'
-                                        \. '.. string.char(bit.band(bit.rshift(' . l:len . ', 24), 255))')['_VAL']
-                call chansend(a:id, [join(l:lenstr) . a:data])
+                                        \. '.. string.char(bit.band(bit.rshift(' . l:len . ', 24), 255))')
+                " https://github.com/neovim/neovim/pull/15211
+                " Neovim 0.6 breaking change.
+                try
+                        call chansend(a:id, [join(l:lenstr['_VAL']) . a:data])
+                catch
+                        call chansend(a:id, l:lenstr)
+                        call chansend(a:id, a:data)
+                endtry
         endfunction
         let s:accumulated_data = ''
         function! OnStdin(id, data, event) abort
