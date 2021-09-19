@@ -169,6 +169,8 @@ const firefoxConfig = (config, env) => {
 }
 
 const thunderbirdConfig = (config, env) => {
+  delete config.entry.content;
+  delete config.entry.index;
   config.entry.compose = "./src/compose.ts";
   const result = Object.assign(deepCopy(config), {
     output: {
