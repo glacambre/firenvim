@@ -122,6 +122,7 @@ git tag "v$newVersion"
 
 git push
 git push --tags
+gh release create "$newVersion" target/chrome.zip target/xpi/firefox-latest.xpi target/xpi/thunderbird-latest.xpi --notes ""
 
 firefox --private-window 'https://chrome.google.com/webstore/devconsole/g06704558984641971849/egpjdkipkomnmjhjmdamaniclmdlobbo/edit?hl=en'
 sleep 1
