@@ -10,7 +10,7 @@
     "addons-linter": "^3.13.0",
     "codemirror": "^5.62.3",
     "copy-webpack-plugin": "9.0.1",
-    "editor-adapter": "^0.0.2",
+    "editor-adapter": "^0.0.3",
     "imports-loader": "^3.0.0",
     "istanbul-lib-coverage": "^3.0.0",
     "jest": "27.0.6",
