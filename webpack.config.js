@@ -29,6 +29,11 @@ const thunderbirdFiles = [
   "static/firenvim.svg",
 ];
 
+const qutebrowserFiles = [
+  "src/index.html",
+  "src/firenvim",
+];
+
 const config = {
   mode: "development",
 
@@ -85,6 +90,7 @@ const package_json = JSON.parse(require("fs").readFileSync(path.join(__dirname, 
 const chrome_target_dir = path.join(__dirname, "target", "chrome")
 const firefox_target_dir = path.join(__dirname, "target", "firefox")
 const thunderbird_target_dir = path.join(__dirname, "target", "thunderbird")
+const qutebrowser_target_dir = path.join(__dirname, "target", "qutebrowser")
 
 const chromeConfig = (config, env) => {
   const result = Object.assign(deepCopy(config), {
@@ -213,6 +219,36 @@ const thunderbirdConfig = (config, env) => {
   return result;
 }
 
+const qutebrowserConfig = (config, env) => {
+  delete config.entry.background;
+  delete config.entry.content;
+  delete config.entry.index;
+  delete config.entry.browserAction;
+  config.entry.firenvim = "./src/qutebrowser.ts";
+  console.log(config)
+  const result = Object.assign(deepCopy(config), {
+    output: {
+      path: qutebrowser_target_dir,
+    },
+    plugins: [new CopyWebPackPlugin({
+      patterns: qutebrowserFiles.map(file => ({
+        from: file,
+        to: qutebrowser_target_dir,
+        transform: (content, src) => {
+          console.log(src);
+          return content;
+        }
+      }))
+    })]
+  });
+  try {
+    fs.rmdirSync(result.output.path, { recursive: true })
+  } catch (e) {
+    console.log(`Could not delete output dir (${e.message})`);
+  }
+  return result;
+}
+
 module.exports = args => {
   let env = "";
   if (args instanceof Object) {
@@ -236,7 +272,14 @@ module.exports = args => {
     return [firefoxConfig(config, env)];
   } else if (env.startsWith("thunderbird")) {
     return [thunderbirdConfig(config, env)];
+  } else if (env.startsWith("qutebrowser")) {
+    return [qutebrowserConfig(config, env)];
   }
-  return [chromeConfig(config, env), firefoxConfig(config, env), thunderbirdConfig(config, env)];
+  return [
+    chromeConfig(config, env),
+    firefoxConfig(config, env),
+    thunderbirdConfig(config, env),
+    qutebrowserConfig(config, env),
+  ];
 }
 

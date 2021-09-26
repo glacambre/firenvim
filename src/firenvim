@@ -1,0 +1,45 @@
+#!/bin/python3
+
+import json
+import os
+import random
+import re
+import subprocess
+
+xdg_data_home = os.environ.get("XDG_DATA_HOME", os.path.join(os.environ["HOME"], ".local", "share"))
+userscripts_dir = os.path.join(xdg_data_home, "qutebrowser", "userscripts")
+def dir(name):
+    return os.path.join(userscripts_dir, name)
+
+password = random.getrandbits(64)
+
+# Start firenvim script, send password, get port
+firenvim = subprocess.Popen(["/home/me/.local/share/firenvim/firenvim"], stdout = subprocess.PIPE, stdin = subprocess.PIPE, stderr = subprocess.PIPE)
+request = 'abcde{"newInstance":true,"password":"' + str(password) + '"}'
+firenvim.stdin.write(bytes(request, 'utf-8'))
+outs, errs = firenvim.communicate()
+result = json.loads(outs[4:])
+
+with open(dir("firenvim.js"), "rb") as f:
+    js = re.sub(rb'Promise.resolve({ port: .*, password: ".*" });',
+                bytes('Promise.resolve({ port: %s, password: "%s" });' % (result["port"], password), 'utf-8'),
+                f.read())
+
+with open(dir("index.html"), "rb") as f:
+    html = f.read()
+    script_tag = html.find(b'<script type="application/javascript" src="index.js">')
+    script_tag_end = html[script_tag:].find(b'</script>')
+    html = html[0:script_tag] + b'<script>\n' + js + b'\n</script>' + html[script_tag_end:]
+    with open("/tmp/blah", "wb") as f2:
+        f2.write(html)
+
+with open(dir("index.js"), "wb") as f:
+    f.write(b'const iframe = document.createElement("iframe");\n')
+    f.write(b'const blob = new Blob([new Uint8Array([')
+    f.write(bytes(''.join([str(c) + "," for c in html]), 'utf-8'))
+    f.write(b']).buffer], {type: "text/html; charset=utf-8"});\n')
+    f.write(b'iframe.src = URL.createObjectURL(blob);\n')
+    f.write(b'document.documentElement.appendChild(iframe);\n')
+
+with open(os.environ["QUTE_FIFO"], "w") as f:
+    f.write("jseval --file %s" % dir("index.js"))
