@@ -6,7 +6,7 @@ import { Stdout } from "./Stdout";
 export async function neovim(
         page: PageType,
         canvas: HTMLCanvasElement,
-        { port, password }: { port: number, password: string },
+        { port, password }: { port: number | string, password: string },
     ) {
     const functions: any = {};
     const requests = new Map<number, { resolve: any, reject: any }>();

@@ -169,8 +169,8 @@ type Promisify<T> = T extends Promise<any> ? T : Promise<T>;
 
 type ft = ReturnType<typeof getNeovimFrameFunctions>
 
-type PageEvents = "resize" | "frame_sendKey" | "get_buf_content" | "pause_keyhandler";
-type PageHandlers = (args: any[]) => void;
+export type PageEvents = "resize" | "frame_sendKey" | "get_buf_content" | "pause_keyhandler";
+export type PageHandlers = (args: any[]) => void;
 export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
     constructor() {
         super();

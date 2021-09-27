@@ -9,7 +9,7 @@ export async function setupInput(
     page: PageType,
     canvas: HTMLCanvasElement,
     keyHandler: KeyHandler,
-    connectionPromise: Promise<{ port: number, password: string }>,
+    connectionPromise: Promise<{ port: number | string, password: string }>,
 ) {
     try {
         const [[url, selector, cursor, language], connectionData] =

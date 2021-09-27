@@ -46,21 +46,60 @@ export interface IConfig {
 }
 
 let conf: IConfig = undefined as IConfig;
+export let confReady : Promise<boolean>;
 
-export const confReady = new Promise(resolve => {
+if ((window as any).browser === undefined) {
+  conf = {
+    globalSettings: {
+      alt: "all",
+      "<C-n>": "noop",
+      "<C-t>": "noop",
+      "<C-w>": "noop",
+      "<CS-n>": "noop",
+      "<CS-t>": "noop",
+      "<CS-w>": "noop",
+      ignoreKeys: {
+        "all": [],
+        "normal": [],
+        "visual": [],
+        "insert": [],
+        "replace": [],
+        "cmdline_normal": [],
+        "cmdline_insert": [],
+        "cmdline_replace": [],
+        "operator": [],
+        "visual_select": [],
+        "cmdline_hover": [],
+        "statusline_hover": [],
+        "statusline_drag": [],
+        "vsep_hover": [],
+        "vsep_drag": [],
+        "more": [],
+        "more_lastline": [],
+        "showmatch": [],
+      },
+      cmdlineTimeout: 3000,
+    },
+    localSettings: {
+    }
+  };
+  confReady = Promise.resolve(true);
+} else {
+  confReady = new Promise(resolve => {
     browser.storage.local.get().then((obj: any) => {
-        conf = obj;
-        resolve(true);
+      conf = obj;
+      resolve(true);
     });
-});
+  });
 
-browser.storage.onChanged.addListener((changes: any) => {
-    Object
-        .entries(changes)
-        .forEach(([key, value]: [keyof IConfig, any]) => confReady.then(() => {
-            conf[key] = value.newValue;
-        }));
-});
+  browser.storage.onChanged.addListener((changes: any) => {
+      Object
+          .entries(changes)
+          .forEach(([key, value]: [keyof IConfig, any]) => confReady.then(() => {
+              conf[key] = value.newValue;
+          }));
+  });
+}
 
 export function getGlobalConf() {
     // Can't be tested for

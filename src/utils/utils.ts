@@ -2,7 +2,9 @@ let curHost : string;
 
 // Can't get coverage for thunderbird.
 /* istanbul ignore next */
-if ((browser as any).composeScripts !== undefined || document.location.href === "about:blank?compose") {
+if ((window as any).browser === undefined) {
+    curHost = "qutebrowser";
+} else if ((browser as any).composeScripts !== undefined || document.location.href === "about:blank?compose") {
     curHost = "thunderbird";
 // Chrome doesn't have a "browser" object, instead it uses "chrome".
 } else if (window.location.protocol === "moz-extension:") {

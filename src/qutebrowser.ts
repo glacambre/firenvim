@@ -1,14 +1,15 @@
-import { PageEventEmitter } from "./page";
+import { EventEmitter } from "./EventEmitter";
+import { PageEvents, PageHandlers } from "./page";
 import { KeydownHandler } from "./KeyHandler";
 import { setupInput } from "./input";
 
-const connectionPromise = Promise.resolve({ port: 12345, password: "password" });
+const connectionPromise = Promise.resolve({ port: "QUTEBROWSER_PORT", password: "QUTEBROWSER_PASSWORD" });
 const pageLoaded = new Promise((resolve, reject) => {
     window.addEventListener("load", resolve);
     setTimeout(reject, 10000)
 });
 
-class QutePageEventEmitter extends PageEventEmitter {
+class QutePageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
     private resizeCount = 0;
     constructor() {
         super();
