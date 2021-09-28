@@ -224,7 +224,8 @@ const qutebrowserConfig = (config, env) => {
   delete config.entry.content;
   delete config.entry.index;
   delete config.entry.browserAction;
-  config.entry.firenvim = "./src/qutebrowser.ts";
+  config.entry.content = "./src/qutebrowser.ts";
+  config.entry.frame = "./src/qutebrowser-frame.ts";
   console.log(config)
   const result = Object.assign(deepCopy(config), {
     output: {

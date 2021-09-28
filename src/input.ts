@@ -26,7 +26,12 @@ export async function setupInput(
 
         // We need to set client info before running ui_attach because we want this
         // info to be available when UIEnter is triggered
-        const extInfo = browser.runtime.getManifest();
+        let extInfo;
+        if ((window as any).browser === undefined) {
+            extInfo = { name: "firenvim for qutebrowser", version: "0.0.0" };
+        } else {
+            extInfo = browser.runtime.getManifest();
+        }
         const [major, minor, patch] = extInfo.version.split(".");
         nvim.set_client_info(extInfo.name,
             { major, minor, patch },
