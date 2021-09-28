@@ -20,22 +20,27 @@ firenvim.stdin.write(bytes(request, 'utf-8'))
 out = b"";
 while not out.endswith(b"}"):
     out += firenvim.stdout.read(1)
+# Skipping first 4 bytes, which represent the length of the json string
 result = json.loads(out[4:])
 
+# Get the javascript that will run in the frame, insert port and password
+# frame.js is src/qutebrowser-frame.ts
 with open(dir("frame.js"), "rb") as f:
     framejs = f.read().replace(
         b'Promise.resolve({ port: "QUTEBROWSER_PORT", password: "QUTEBROWSER_PASSWORD" });',
         bytes('Promise.resolve({ port: %s, password: "%s" });' % (result["port"], password), 'utf-8'),
     )
 
+# Get the HTML of the frame, inline the frame's JS
+# index.html is src/index.html
 with open(dir("index.html"), "rb") as f:
     html = f.read()
     script_tag = html.find(b'<script type="application/javascript" src="index.js">')
     script_tag_end = html[script_tag:].find(b'</script>')
     html = html[0:script_tag] + b'<script>\n' + framejs + b'\n</script>' + html[script_tag_end:]
-    with open("/tmp/blah", "wb") as f2:
-        f2.write(html)
 
+# Translate HTML to its Uint8Array, insert it in the script that will be executed by qutebrowser
+# content.js is src/qutebrowser.ts
 with open(dir("content.js"), "rb") as f:
     uint8_array = bytes(''.join([str(c) + "," for c in html]), 'utf-8')
     contentjs = f.read().replace(
@@ -43,9 +48,11 @@ with open(dir("content.js"), "rb") as f:
         b"(new Uint8Array([" + uint8_array + b"])).buffer"
     )
 
+# Write script to file
 with open(dir("index.js"), "wb") as f:
     f.write(contentjs)
 
+# Execute file
 with open(os.environ["QUTE_FIFO"], "w") as f:
     f.write("jseval --file %s" % dir("index.js"))
 
