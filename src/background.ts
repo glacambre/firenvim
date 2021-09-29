@@ -14,7 +14,7 @@
  * The background process mostly acts as a slave for the browserAction and
  * content scripts. It rarely acts on its own.
  */
-import { applySettingsToDefaults, getGlobalConf, ISiteConfig } from "./utils/configuration";
+import { applySettingsToDefaults, getGlobalConf } from "./utils/configuration";
 import { getIconImageData, IconKind, isThunderbird } from "./utils/utils";
 
 export let preloadedInstance: Promise<any>;
@@ -143,7 +143,7 @@ async function checkVersion(nvimVersion: string) {
 
 // Function called in order to fill out default settings. Called from updateSettings.
 function applySettings(settings: any) {
-    return browser.storage.local.set(applySettingsToDefaults(os, settings));
+    return browser.storage.local.set(applySettingsToDefaults(os, settings) as any);
 }
 
 function updateSettings() {

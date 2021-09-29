@@ -45,7 +45,7 @@ export interface IConfig {
     localSettings: { [key: string]: ISiteConfig };
 }
 
-export function applySettingsToDefaults(os: string, settings: any) {
+export function applySettingsToDefaults(os: string, settings: any): IConfig {
     function makeDefaults(obj: { [key: string]: any }, name: string, value: any) {
         if (obj[name] === undefined) {
             obj[name] = value;

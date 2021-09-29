@@ -1,12 +1,24 @@
+// This is the frame script used by qutebrowser.
+// Flow of what happens:
+// - The file is read by qutebrowser's firenvim python userscript
+// - Port, password and auth token are inserted in the script
+// - Script is inlined in the HTML file
+// - HTML file is turned into an uint8array and written to the file used in
+//   qutebrowser's `:jseval`
+// - The qutebrowser content script (qutebrowser.ts) is evaluated by
+//   qutebrowser, the uint8array is turned into a blob and used as the content
+//   of an iframe. This executes the current file.
 import { EventEmitter } from "./EventEmitter";
 import { PageEvents, PageHandlers } from "./page";
 import { KeydownHandler } from "./KeyHandler";
 import { setupInput } from "./input";
 import { applySettingsToDefaults } from "./utils/configuration";
 
-// QUTEBROWSER_PORT and QUTEBROWSER_PASSWORD will be replaced through
-// string-substitutions when the user runs `spawn --userscript firenvim`
+// QUTEBROWSER_PORT, QUTEBROWSER_PASSWORD and QUTEBROWSER_AUTH_TOKEN will be
+// replaced through string-substitutions when the user runs `spawn --userscript
+// firenvim`
 const connectionPromise = Promise.resolve({ port: "QUTEBROWSER_PORT", password: "QUTEBROWSER_PASSWORD" });
+const authToken = "QUTEBROWSER_AUTH_TOKEN";
 
 // Tiny promise to allow blocking until page is loaded
 const pageLoaded = new Promise((resolve, reject) => {
@@ -26,7 +38,9 @@ function request(data: object) {
     const reqId = Math.random();
     return new Promise((resolve) => {
         function once(e: MessageEvent<any>) {
-            if (e.source !== window.parent || e.data.token !== (window as any).authToken) {
+            if (authToken === `QUTEBROWSER${'_'}AUTH${'_'}TOKEN`
+                || e.source !== window.parent
+                || e.data.token !== authToken) {
                 return
             }
             if (e.data.funcName === "resolve" && e.data.reqId === reqId) {
@@ -90,7 +104,7 @@ class QutePageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
 class QuteKeyHandler extends KeydownHandler {
 
     constructor(private keyHandler: HTMLElement) {
-        super(keyHandler, applySettingsToDefaults("", {}));
+        super(keyHandler, applySettingsToDefaults("", {}).globalSettings);
 
         const acceptInput = ((evt: any) => {
             this.emit("input", evt.target.value);

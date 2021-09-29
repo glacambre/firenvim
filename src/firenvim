@@ -12,6 +12,7 @@ def dir(name):
     return os.path.join(userscripts_dir, name)
 
 password = random.getrandbits(64)
+authToken = bytes("%s" % random.getrandbits(64), 'utf-8')
 
 # Start firenvim script, send password, get port
 firenvim = subprocess.Popen(["/home/me/.local/share/firenvim/firenvim"], bufsize = 0, stdout = subprocess.PIPE, stdin = subprocess.PIPE, stderr = subprocess.PIPE)
@@ -29,7 +30,7 @@ with open(dir("frame.js"), "rb") as f:
     framejs = f.read().replace(
         b'Promise.resolve({ port: "QUTEBROWSER_PORT", password: "QUTEBROWSER_PASSWORD" });',
         bytes('Promise.resolve({ port: %s, password: "%s" });' % (result["port"], password), 'utf-8'),
-    )
+    ).replace(b"QUTEBROWSER_AUTH_TOKEN", authToken)
 
 # Get the HTML of the frame, inline the frame's JS
 # index.html is src/index.html
@@ -43,7 +44,7 @@ with open(dir("index.html"), "rb") as f:
 # content.js is src/qutebrowser.ts
 with open(dir("content.js"), "rb") as f:
     uint8_array = bytes(''.join([str(c) + "," for c in html]), 'utf-8')
-    contentjs = f.read().replace(
+    contentjs = f.read().replace(b"QUTEBROWSER_AUTH_TOKEN", authToken).replace(
         b"/* QUTEBROWSER_PAGE */",
         b"(new Uint8Array([" + uint8_array + b"])).buffer"
     )
@@ -54,6 +55,7 @@ with open(dir("index.js"), "wb") as f:
 
 # Execute file
 with open(os.environ["QUTE_FIFO"], "w") as f:
-    f.write("jseval --file %s" % dir("index.js"))
+    f.write("jseval --file %s\n" % dir("index.js"))
+    f.write("mode-enter passthrough")
 
 firenvim.wait()

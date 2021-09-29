@@ -1,22 +1,31 @@
+// This is the script that gets executed by qutebrowser's :jseval.
+// It runs in a context separate from the page.
+
 import { computeSelector } from "./utils/utils";
 import { getEditor } from "editor-adapter";
 
+// Create iframe, append it to shadowroot of span, span will be inserted in
+// page once its src has been set
+const span = document.createElement("span");
 const iframe = document.createElement("iframe");
+span.attachShadow({ mode: "closed" }).appendChild(iframe);
 
-// Create auth token
-const random = new Uint32Array(8);
-window.crypto.getRandomValues(random);
-const token = Array.from(random).join("");
+const authToken = "QUTEBROWSER_AUTH_TOKEN";
 
 // Get abstracteditor for focused element
 const editor = getEditor(document.activeElement as HTMLElement, {});
 
+// A function to reply to requests from the frame.
 function reply(e: MessageEvent<any>, rep: any) {
+    if (authToken === `QUTEBROWSER${'_'}AUTH${'_'}TOKEN`) {
+        console.error("token substitution didn't happen");
+        throw new Error("token substitution didn't happen");
+    }
     e.source.postMessage({
         "funcName": "resolve",
         "args": [rep],
         "reqId": e.data.reqId,
-        "token": token,
+        "token": authToken,
     }, "*" as WindowPostMessageOptions);
 }
 
@@ -61,11 +70,22 @@ window.addEventListener("message", async (e) => {
 });
 
 editor.getContent().then(content => {
-    // Create script tag out of token for insertion in frame HTML.
-    // The reason we do this rather than use postMessage is that we can't trust
-    // any postMessage without the token.
-    const tag = `<script>window.authToken = "${token}"</script>`;
-    const blob = new Blob([tag, /* QUTEBROWSER_PAGE */], {type: "text/html; charset=utf-8"});
+    // QUTEBROWSER_PAGE will be replaced with the content of index.html by the
+    // firenvim python script ran by qutebrowser
+    const blob = new Blob([/* QUTEBROWSER_PAGE */], {type: "text/html; charset=utf-8"});
     iframe.src = URL.createObjectURL(blob);
-    document.documentElement.appendChild(iframe);
+    document.documentElement.appendChild(span);
+    const rect = editor.getElement().getBoundingClientRect();
+    iframe.width = rect.width + "px";
+    iframe.height = rect.height + "px";
+    iframe.style.border = "0px";
+    iframe.style.boxShadow = "0px 0px 1px 1px black";
+    iframe.style.height = `${rect.height}px`;
+    iframe.style.left = `${rect.left + window.scrollX}px`;
+    iframe.style.margin = "0px";
+    iframe.style.padding = "0px";
+    iframe.style.position = "absolute";
+    iframe.style.top = `${rect.top + window.scrollY}px`;
+    iframe.style.width = `${rect.width}px`;
+    iframe.style.zIndex = "2139999995";
 });
