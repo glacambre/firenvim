@@ -99,17 +99,8 @@ endif
 Alternatively, you can detect when Firenvim connects to Neovim by using the `UIEnter` autocmd event:
 
 ```vim
-function! s:IsFirenvimActive(event) abort
-  if !exists('*nvim_get_chan_info')
-    return 0
-  endif
-  let l:ui = nvim_get_chan_info(a:event.chan)
-  return has_key(l:ui, 'client') && has_key(l:ui.client, 'name') &&
-      \ l:ui.client.name =~? 'Firenvim'
-endfunction
-
 function! OnUIEnter(event) abort
-  if s:IsFirenvimActive(a:event)
+  if 'Firenvim' ==# get(get(nvim_get_chan_info(a:event.chan), 'client', {}), 'name', '')
     set laststatus=0
   endif
 endfunction
