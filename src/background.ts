@@ -14,7 +14,7 @@
  * The background process mostly acts as a slave for the browserAction and
  * content scripts. It rarely acts on its own.
  */
-import { getGlobalConf, ISiteConfig } from "./utils/configuration";
+import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
 import { getIconImageData, IconKind, isThunderbird } from "./utils/utils";
 
 export let preloadedInstance: Promise<any>;
@@ -143,82 +143,7 @@ async function checkVersion(nvimVersion: string) {
 
 // Function called in order to fill out default settings. Called from updateSettings.
 function applySettings(settings: any) {
-    function makeDefaults(obj: { [key: string]: any }, name: string, value: any) {
-        if (obj[name] === undefined) {
-            obj[name] = value;
-        }
-    }
-    function makeDefaultLocalSetting(sett: { localSettings: { [key: string]: any } },
-                                     site: string,
-                                     obj: ISiteConfig) {
-        makeDefaults(sett.localSettings, site, {});
-        for (const key of (Object.keys(obj) as (keyof typeof obj)[])) {
-            makeDefaults(sett.localSettings[site], key, obj[key]);
-        }
-    }
-    if (settings === undefined) {
-        settings = {};
-    }
-
-    makeDefaults(settings, "globalSettings", {});
-    // "<KEY>": "default" | "noop"
-    // #103: When using the browser's command API to allow sending `<C-w>` to
-    // firenvim, whether the default action should be performed if no neovim
-    // frame is focused.
-    makeDefaults(settings.globalSettings, "<C-n>", "default");
-    makeDefaults(settings.globalSettings, "<C-t>", "default");
-    makeDefaults(settings.globalSettings, "<C-w>", "default");
-    // Note: <CS-*> are currently disabled because of
-    // https://github.com/neovim/neovim/issues/12037
-    // Note: <CS-n> doesn't match the default behavior on firefox because this
-    // would require the sessions API. Instead, Firefox's behavior matches
-    // Chrome's.
-    makeDefaults(settings.globalSettings, "<CS-n>", "default");
-    // Note: <CS-t> is there for completeness sake's but can't be emulated in
-    // Chrome and Firefox because this would require the sessions API.
-    makeDefaults(settings.globalSettings, "<CS-t>", "default");
-    makeDefaults(settings.globalSettings, "<CS-w>", "default");
-    // #717: allow passing keys to the browser
-    makeDefaults(settings.globalSettings, "ignoreKeys", {});
-    // #1050: cursor sometimes covered by command line
-    makeDefaults(settings.globalSettings, "cmdlineTimeout", 3000);
-
-    // "alt": "all" | "alphanum"
-    // #202: Only register alt key on alphanums to let swedish osx users type
-    //       special chars
-    // Only tested on OSX, where we don't pull coverage reports, so don't
-    // instrument function.
-    /* istanbul ignore next */
-    if (os === "mac") {
-        makeDefaults(settings.globalSettings, "alt", "alphanum");
-    } else {
-        makeDefaults(settings.globalSettings, "alt", "all");
-    }
-
-    makeDefaults(settings, "localSettings", {});
-    makeDefaultLocalSetting(settings, ".*", {
-        // "cmdline": "neovim" | "firenvim"
-        // #168: Use an external commandline to preserve space
-        cmdline: "firenvim",
-        content: "text",
-        priority: 0,
-        renderer: "canvas",
-        selector: 'textarea:not([readonly]), div[role="textbox"]',
-        // "takeover": "always" | "once" | "empty" | "nonempty" | "never"
-        // #265: On "once", don't automatically bring back after :q'ing it
-        takeover: "always",
-        filename: "{hostname%32}_{pathname%32}_{selector%32}_{timestamp%32}.{extension}",
-    });
-    makeDefaultLocalSetting(settings, "about:blank\\?compose", {
-        cmdline: "firenvim",
-        content: "text",
-        priority: 1,
-        renderer: "canvas",
-        selector: 'body',
-        takeover: "always",
-        filename: "mail_{timestamp%32}.eml",
-    });
-    return browser.storage.local.set(settings);
+    return browser.storage.local.set(mergeWithDefaults(os, settings) as any);
 }
 
 function updateSettings() {
