@@ -108,7 +108,15 @@ function! s:get_windows_env_path(env) abort
                 if l:env[0] ==# '$'
                         let l:env = '%' . l:env[1:-1] . '%'
                 endif
-                let l:cmd_output = system(['cmd.exe', '/c', 'echo', l:env])
+                try
+                        let l:cmd_output = system(['cmd.exe', '/c', 'echo', l:env])
+                catch /E475:.*cmd.exe' is not executable/
+                        try
+                                let l:cmd_output = system(['/mnt/c/Windows/System32/cmd.exe', '/c', 'echo', l:env])
+                        catch /E475:.*cmd.exe' is not executable/
+                                throw 'Error: Firenvim could not find cmd.exe from WSL on your system. Please report this issue.'
+                        endtry
+                endtry
                 return cmd_output[match(l:cmd_output, 'C:\\'):-3]
         endif
         throw 'Used get_windows_env_path on non-windows platform!'
@@ -746,7 +754,29 @@ function! firenvim#install(...) abort
                         echo 'Creating registry key for ' . l:name . '. This may take a while. Script: ' . l:ps1_path
                         call s:maybe_execute('writefile', split(l:ps1_content, "\n"), l:ps1_path)
                         call s:maybe_execute('setfperm', l:ps1_path, 'rwx------')
-                        let o = s:maybe_execute('system', ['powershell.exe', '-Command', '-'], readfile(l:ps1_path))
+                        try
+                                let o = s:maybe_execute('system', ['powershell.exe', '-Command', '-'], readfile(l:ps1_path))
+                        catch /powershell.exe' is not executable/
+                                let l:failure = v:true
+                                let l:msg = 'Error: Firenvim could not find powershell.exe'
+                                " If the failure happened on wsl, try to use
+                                " an absolute path
+                                if s:is_wsl
+                                        let l:msg += ' from WSL'
+                                        try
+                                                let o = s:maybe_execute('system', ['/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe', '-Command', '-'], readfile(l:ps1_path))
+                                                let l:failure = v:false
+                                        catch /powershell.exe' is not executable/
+                                                let l:failure = v:true
+                                        endtry
+                                endif
+                                let l:msg += ' on your system. Please report this issue.'
+                                if l:failure
+                                        echomsg 'Note: created ' . l:ps1_path . " . You may try to run it manually by right-clicking from your file browser to complete Firenvim's installation."
+                                        throw l:msg
+                                endif
+                        endtry
+
                         if v:shell_error
                           echo o
                         endif
