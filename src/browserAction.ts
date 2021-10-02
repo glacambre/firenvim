@@ -42,6 +42,9 @@ addEventListener("DOMContentLoaded", () => {
         browser.runtime.sendMessage( { funcName: ["toggleDisabled"] })
             .then(updateDisableButton);
     });
+    document.getElementById("troubleshooting").addEventListener("click", () => {
+        browser.runtime.sendMessage( { funcName: ["openTroubleshootingGuide"] });
+    })
     displayErrorsAndWarnings();
     updateDisableButton();
 });
