@@ -304,6 +304,7 @@ Object.assign(window, {
     },
     toggleDisabled: () => toggleDisabled(),
     updateSettings: () => updateSettings(),
+    openTroubleshootingGuide: () => browser.tabs.create({ active: true, url: "https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md" }),
 } as any);
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendResponse: any) => {
