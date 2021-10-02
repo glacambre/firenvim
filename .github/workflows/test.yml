@@ -68,7 +68,7 @@ jobs:
         choco install firefox-dev --pre
         echo "C:\Program Files\Firefox Dev Edition" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
     - name: Install Neovim
-      uses: rhysd/action-setup-vim@v1
+      uses: rhysd/action-setup-vim@v1.2.8
       with:
         neovim: true
         version: ${{ matrix.neovim }}
