@@ -21,7 +21,7 @@
     "sharp": "0.29.1",
     "ts-jest": "27.0.4",
     "ts-loader": "^9.2.6",
-    "typescript": "4.4.2",
+    "typescript": "4.4.3",
     "web-ext": "6.3.0",
     "web-ext-types": "3.2.1",
     "webextension-polyfill": "0.8.0",
