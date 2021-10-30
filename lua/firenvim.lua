@@ -68,8 +68,7 @@ local function connection_handler(server, sock, token)
                                         current_payload = ""
                                 end
                         elseif decoded_frame.opcode == websocket.opcodes.ping then
-                                -- TODO: implement websocket.pong_frame
-                                -- sock:write(websocket.pong_frame(decoded_frame))
+                                sock:write(websocket.pong_frame(decoded_frame))
                                 return
                         elseif decoded_frame.opcode == websocket.opcodes.close then
                                 sock:write(websocket.close_frame(decoded_frame))
