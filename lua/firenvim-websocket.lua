@@ -137,6 +137,14 @@ local function encode_frame(data)
         return  header .. len .. data
 end
 
+local function pong_frame(decoded_frame)
+        -- 137: 10001010
+        -- Fin: 1
+        -- RSV{1,2,3}: 0
+        -- Opcode: 0xA (pong)
+        return string.char(138) .. decoded_frame.payload_length .. decoded_frame.payload_data
+end
+
 local function close_frame()
         local frame = encode_frame("")
         return string.char(136) .. string.sub(frame, 2)
@@ -149,4 +157,5 @@ return {
         encode_frame = encode_frame,
         opcodes = opcodes,
         parse_headers = parse_headers,
+        pong_frame = pong_frame,
 }
