@@ -329,7 +329,7 @@ browser.windows.onFocusChanged.addListener(async (windowId: number) => {
 
 updateIcon();
 
-// browser.commmands doesn't exist in thunderbird. Else branch can't be covered
+// browser.commands doesn't exist in thunderbird. Else branch can't be covered
 // so don't instrument the if.
 /* istanbul ignore next */
 if (!isThunderbird()) {

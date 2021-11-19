@@ -171,7 +171,7 @@ describe("Chrome", () => {
         t("Large buffers", testLargeBuffers);
         t("Modifiers work", testModifiers);
         t("Config priorities", testConfigPriorities);
-        t("Add-on udpates", testUpdates);
+        t("Add-on updates", testUpdates);
         t("CodeMirror", testCodemirror);
         t("Contenteditable", testContentEditable);
         t("Input resize", testInputResizes);

@@ -66,7 +66,7 @@ Firenvim's architecture is briefly described in [SECURITY.md](SECURITY.md). Fire
 The background process is started on browser startup and takes care of several tasks:
 
 - Starting the Neovim server and loading the settings from your init.vim.
-- Handling browser shortcuts such as `<C-w>`, `<C-n>` or `<C-t>` that cannot be overriden by the Neovim Frame process.
+- Handling browser shortcuts such as `<C-w>`, `<C-n>` or `<C-t>` that cannot be overridden by the Neovim Frame process.
 - Logging errors and sending them to the browserAction. 
 - Forwarding messages from the Neovim Frame process to the content process and vice versa.
 
@@ -92,6 +92,6 @@ The browser action process corresponds to the small Firenvim button next to the 
 
 ## Testing your changes
 
-The CI tests changes automatically, so running tests on your machine is not required. If you do want to test Firenvim on your machine, you will need to install either Geckodriver (firefox) or Chromedriver (Chrome & Chromium). Once that is done, run `npm run test-firefox` or `npm run test-chrome`. This will build the add-on in testing mode, load it in a browser and run a few tests to make sure nothing is particularily broken.
+The CI tests changes automatically, so running tests on your machine is not required. If you do want to test Firenvim on your machine, you will need to install either Geckodriver (firefox) or Chromedriver (Chrome & Chromium). Once that is done, run `npm run test-firefox` or `npm run test-chrome`. This will build the add-on in testing mode, load it in a browser and run a few tests to make sure nothing is particularly broken.
 
 Writing new tests is currently rather complicated, so feel free to let me handle that if you don't want to deal with it.

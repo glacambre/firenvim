@@ -75,7 +75,7 @@ type HighlightInfo = {
 // the grids are represented as arrays and thus have a .length attribute, but
 // it's not: storing grid size in a separate datastructure allows us to never
 // have to shrink arrays, and to not need allocations if enlarging an array
-// that has been shrinked.
+// that has been shrunk.
 type GridDimensions = {
     width: number,
     height: number,
@@ -667,7 +667,7 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
     },
 };
 
-// keep track of wheter a frame is already being scheduled or not. This avoids
+// keep track of whether a frame is already being scheduled or not. This avoids
 // asking for multiple frames where we'd paint the same thing anyway.
 let frameScheduled = false;
 function scheduleFrame() {
