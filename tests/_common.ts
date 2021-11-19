@@ -294,7 +294,7 @@ export const testDynamicTextareas = retryTest(withLocalPage("dynamic.html", asyn
         );
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
         const txtarea = await driver.wait(Until.elementLocated(By.css("body > textarea")), WAIT_DELAY, "body > textarea not found");
-        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""), WAIT_DELAY, "Input alue did not change");
+        await driver.wait(async () => (await txtarea.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         expect(await txtarea.getAttribute("value")).toMatch("Test");
 }));
 
@@ -403,7 +403,7 @@ ${backup}
                 .concat(webdriver.Key.ESCAPE)
                 .concat(":wq!".split(""))
                 .concat(webdriver.Key.ENTER));
-        // We don't test for a specific value because size is dependant on browser config
+        // We don't test for a specific value because size is dependent on browser config
         await driver.wait(async () => (await input.getAttribute("value") !== initVal), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("value")).toMatch(/a*ba+ba*/);
 }));
@@ -572,7 +572,7 @@ ${backup}
                 `);
         await reloadNeovim(server, driver);
         let [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
-        // Makign sure that whitespace == empty
+        // Making sure that whitespace == empty
         await sendKeys(driver, "i".split("")
             .concat(webdriver.Key.ENTER)
             .concat(webdriver.Key.ENTER)
@@ -690,7 +690,7 @@ export const testInputResizes = retryTest(withLocalPage("resize.html", async (te
                        .concat(webdriver.Key.ESCAPE)
                        .concat(":wq!".split(""))
                        .concat(webdriver.Key.ENTER));
-        // We don't test for a specific value because size is dependant on browser config
+        // We don't test for a specific value because size is dependent on browser config
         await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("value")).toMatch(/a*ba+ba*/);
 }));
@@ -1123,7 +1123,7 @@ export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async
         expect(newTabCount).toBe(tabCount - 1);
 
         // <CS-n> creates a new incognito window. This is chrome behavior but
-        // we can't emulate firefox because it requires an additonal permission
+        // we can't emulate firefox because it requires an additional permission
         windowCount = await getWindowCount();
         await server.browserShortcut("<CS-n>");
         await windowCountChange(windowCount, "<CS-n> did not change the number of windows");

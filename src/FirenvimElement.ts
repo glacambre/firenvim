@@ -182,7 +182,7 @@ export class FirenvimElement {
         this.span.attachShadow({ mode: "closed" }).appendChild(this.iframe);
 
         // So pages (e.g. Jira, Confluence) remove spans from the page as soon
-        // as they're inserted. We don't wan't that, so for the 5 seconds
+        // as they're inserted. We don't want that, so for the 5 seconds
         // following the insertion, detect if the span is removed from the page
         // by checking visibility changes and re-insert if needed.
         let reinserts = 0;

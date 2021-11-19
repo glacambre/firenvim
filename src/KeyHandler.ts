@@ -2,7 +2,7 @@ import { EventEmitter } from "./EventEmitter";
 import { GlobalSettings, NvimMode } from "./utils/configuration";
 import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
 
-// KeyHandler is the interface expecte by getInput
+// KeyHandler is the interface expected by getInput
 export interface KeyHandler extends EventEmitter<"input", (s: string) => void> {
     setMode: (m: NvimMode) => void,
     focus: () => void,

@@ -28,7 +28,7 @@ export async function autofill() {
         [ name, version ] = browserString[0].split("/");
     } else {
         name = "unknown";
-        version = "unknwon";
+        version = "unknown";
     }
     const vendor = navigator.vendor || "";
     const textarea = document.getElementById("issue_body") as any;

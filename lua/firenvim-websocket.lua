@@ -43,7 +43,7 @@ end
 
 -- The server's opening handshake is described here: https://tools.ietf.org/html/rfc6455#section-4.2.2
 local function accept_connection(headers)
-        return "HTTP/1.1 101 Swithing Protocols\n" ..
+        return "HTTP/1.1 101 Switching Protocols\n" ..
         "Connection: Upgrade\r\n" ..
         "Sec-WebSocket-Accept: " .. compute_key(headers["Sec-WebSocket-Key"]) .. "\r\n" ..
         "Upgrade: websocket\r\n" ..
