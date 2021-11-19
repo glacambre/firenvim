@@ -953,7 +953,8 @@ function paint (_: DOMHighResTimeStamp) {
                             if (pixelX >= 0
                                 && pixelY >= 0
                                 && (pixelX + width < canvas.width)
-                                && (pixelY + charHeight < canvas.height)) {
+                                && (pixelY + charHeight < canvas.height)
+                                && width > 0 && charHeight > 0) {
                                 glyphCache[id] = context.getImageData(
                                     pixelX,
                                     pixelY,
