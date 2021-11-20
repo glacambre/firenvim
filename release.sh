@@ -77,8 +77,7 @@ echo "Updating firenvim from v$oldVersion to v$newVersion."
 sed -i "s/\"version\": \"$oldVersion\"/\"version\": \"$newVersion\"/" package.json
 
 # Then, do manual update/editing
-npm install
-npm audit fix
+npm ci
 
 # Make sure none of the files have changed, except for package-lock.json
 if [ "$(git diff --name-only | grep -v "package\(-lock\)\?.json")" != "" ] ; then
