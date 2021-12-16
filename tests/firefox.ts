@@ -14,7 +14,7 @@ import {
  killDriver,
  reloadNeovim,
  testAce,
- testBrowserShortcuts,
+ // testBrowserShortcuts,
  testFrameBrowserShortcuts,
  testCodemirror,
  testContentEditable,
@@ -158,7 +158,7 @@ describe("Firefox", () => {
         t("Monaco editor", testMonaco);
         t("Span removed", testDisappearing);
         t("Ignoring keys", testIgnoreKeys);
-        t("Browser shortcuts", testBrowserShortcuts);
+        // t("Browser shortcuts", testBrowserShortcuts); // TODO: re-enable me
         t("Frame browser shortcuts", (...args) => neovimVersion >= 0.5
                 ? testFrameBrowserShortcuts(...args)
                 : undefined
