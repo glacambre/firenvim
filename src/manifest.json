@@ -41,6 +41,9 @@
    },
    "manifest_version": 2,
    "name": "Firenvim",
+   "options_ui": {
+      "page": "options.html"
+   },
    "permissions": [ "nativeMessaging", "storage", "tabs" ],
    "version": "replaced_at_compile_time",
    "web_accessible_resources": [ "index.html", "ISSUE_TEMPLATE.md" ]
