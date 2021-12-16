@@ -19,6 +19,7 @@ function deepCopy (obj) {
 const browserFiles = [
   ".github/ISSUE_TEMPLATE.md",
   "src/manifest.json",
+  "src/options.html",
   "src/index.html",
   "src/browserAction.html",
   "static/firenvim.svg",
