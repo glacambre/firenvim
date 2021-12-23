@@ -138,15 +138,11 @@ local function encode_frame(data)
 end
 
 local function pong_frame(decoded_frame)
-        -- 138: 10001010
+        -- 137: 10001010
         -- Fin: 1
         -- RSV{1,2,3}: 0
         -- Opcode: 0xA (pong)
-        local payload = ""
-        if decoded_frame.payload_data ~= nil then
-                payload = decoded_frame.payload_data
-        end
-        return string.char(138) .. decoded_frame.payload_length .. payload
+        return string.char(138) .. decoded_frame.payload_length .. decoded_frame.payload_data
 end
 
 local function close_frame()
