@@ -440,6 +440,24 @@ export const testFocusInput = retryTest(withLocalPage("simple.html", async (test
         await server.pullCoverageData(frameSocket);
 }));
 
+const focusNextPrevTest = async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await sendKeys(driver, ":call firenvim#focus_next()".split("")
+                .concat(webdriver.Key.ENTER));
+        await driver.wait(async () => "" !== (await driver.switchTo().activeElement().getAttribute("id")), WAIT_DELAY, "focus_next did not change focused element");
+        expect(await driver.switchTo().activeElement().getAttribute("id")).toBe("after");
+        await driver.executeScript(`arguments[0].focus();`, input);
+        await driver.wait(async () => "after" !== (await driver.switchTo().activeElement().getAttribute("id")), WAIT_DELAY, "Page focus did not change");
+        await sendKeys(driver, ":call firenvim#focus_prev()".split("")
+                .concat(webdriver.Key.ENTER));
+        await driver.wait(async () => "" !== (await driver.switchTo().activeElement().getAttribute("id")), WAIT_DELAY, "focus_prev did not change focused element");
+        expect(await driver.switchTo().activeElement().getAttribute("id")).toBe("before");
+        await server.pullCoverageData(frameSocket);
+}
+
+export const testFocusNextPrev1 = retryTest(withLocalPage("focusnext.html", focusNextPrevTest));
+export const testFocusNextPrev2 = retryTest(withLocalPage("focusnext2.html", focusNextPrevTest));
+
 export const testEvalJs = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         const backup = await readVimrc();
         await writeVimrc(`

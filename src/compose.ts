@@ -56,6 +56,8 @@ class ThunderbirdPageEventEmitter extends PageEventEmitter {
     async evalInPage(js: string) { return eval(js) }
     async focusInput() { return Promise.resolve(); }
     async focusPage() { return Promise.resolve(); }
+    async focusNext() { return Promise.resolve(); }
+    async focusPrev() { return Promise.resolve(); }
     async getEditorInfo() { return [document.location.href, "", [1, 1], undefined] as [string, string, [number, number], string] }
     async getElementContent() {
         const details = await browser.runtime.sendMessage({ funcName: ["getOwnComposeDetails"], args: [] });

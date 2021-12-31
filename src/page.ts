@@ -99,6 +99,90 @@ export function getActiveContentFunctions(global: IGlobalState) {
     };
 }
 
+function focusElementBeforeOrAfter(global: IGlobalState, frameId: number, i: 1 | -1) {
+    let firenvimElement;
+    if (frameId === undefined) {
+        firenvimElement = getFocusedElement(global.firenvimElems);
+    } else {
+        firenvimElement = global.firenvimElems.get(frameId);
+    }
+    const originalElement = firenvimElement.getOriginalElement();
+
+    const tabindex = (e: Element) => ((x => isNaN(x) ? 0 : x)(parseInt(e.getAttribute("tabindex"))));
+    const focusables = Array.from(document.querySelectorAll("input, select, textarea, button, object, [tabindex], [href]"))
+        .filter(e => e.getAttribute("tabindex") !== "-1")
+        .sort((e1, e2) => tabindex(e1) - tabindex(e2));
+
+    let index = focusables.indexOf(originalElement);
+    let elem: Element;
+    if (index === -1) {
+        // originalElement isn't in the list of focusables, so we have to
+        // figure out what the closest element is. We do this by iterating over
+        // all elements of the dom, accepting only originalElement and the
+        // elements that are focusable. Once we find originalElement, we select
+        // either the previous or next element depending on the value of i.
+        const treeWalker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_ELEMENT,
+            {
+                acceptNode: n => ((n === originalElement || focusables.indexOf((n as Element)) !== -1)
+                    ? NodeFilter.FILTER_ACCEPT
+                    : NodeFilter.FILTER_REJECT)
+            },
+        );
+        const firstNode = treeWalker.currentNode as Element;
+        let cur = firstNode;
+        let prev;
+        while (cur && cur !== originalElement) {
+            prev = cur;
+            cur = treeWalker.nextNode() as Element;
+        }
+        if (i > 0) {
+            elem = treeWalker.nextNode() as Element;
+        } else {
+            elem = prev;
+        }
+        // Sanity check, can't be exercised
+        /* istanbul ignore next */
+        if (!elem) {
+            elem = firstNode;
+        }
+    } else {
+        elem = focusables[(index + i + focusables.length) % focusables.length];
+    }
+
+    index = focusables.indexOf(elem);
+    // Sanity check, can't be exercised
+    /* istanbul ignore next */
+    if (index === -1) {
+        throw "Oh my, something went wrong!";
+    }
+
+    // Now that we know we have an element that is in the focusable element
+    // list, iterate over the list to find one that is visible.
+    let startedAt;
+    let style = getComputedStyle(elem);
+    while (startedAt !== index && (style.visibility !== "visible" || style.display === "none")) {
+        if (startedAt === undefined) {
+            startedAt = index;
+        }
+        index = (index + i + focusables.length) % focusables.length;
+        elem = focusables[index];
+        style = getComputedStyle(elem);
+    }
+
+    (document.activeElement as any).blur();
+    const sel = document.getSelection();
+    sel.removeAllRanges();
+    const range = document.createRange();
+    if (elem.ownerDocument.contains(elem)) {
+        range.setStart(elem, 0);
+    }
+    range.collapse(true);
+    (elem as HTMLElement).focus();
+    sel.addRange(range);
+}
+
 export function getNeovimFrameFunctions(global: IGlobalState) {
     return {
         evalInPage: (_: number, js: string) => executeInPage(js),
@@ -116,6 +200,12 @@ export function getNeovimFrameFunctions(global: IGlobalState) {
             firenvimElement.clearFocusListeners();
             (document.activeElement as any).blur();
             document.documentElement.focus();
+        },
+        focusNext: (frameId: number) => {
+            focusElementBeforeOrAfter(global, frameId, 1);
+        },
+        focusPrev: (frameId: number) => {
+            focusElementBeforeOrAfter(global, frameId, -1);
         },
         getEditorInfo: (frameId: number) => global
             .firenvimElems

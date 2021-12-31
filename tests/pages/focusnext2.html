@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en" id="html">
+        <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>2: focus_next()/focus_prev()</title>
+<style>
+*:focused {
+        background: green;
+}
+</style>
+        </head>
+        <body id="body">
+                <a id="before" href="simple.html">before</a>
+                <a id="invisible" href="simple.html" style="display: none">invisible</a>
+                <textarea id="content-input" rows="20" cols="80" tabindex="-1"></textarea>
+                <a id="nope" href="simple.html" tabindex="-1">nope</a>
+                <a id="after" href="simple.html">after</a>
+        </body>
+</html>

@@ -100,6 +100,12 @@ export async function neovim(
                 case "firenvim_focus_input":
                     lastLostFocus = performance.now();
                     return page.focusInput();
+                case "firenvim_focus_next":
+                    lastLostFocus = performance.now();
+                    return page.focusNext();
+                case "firenvim_focus_prev":
+                    lastLostFocus = performance.now();
+                    return page.focusPrev();
                 case "firenvim_hide_frame":
                     lastLostFocus = performance.now();
                     return page.hideEditor();
