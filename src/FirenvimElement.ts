@@ -115,6 +115,11 @@ export class FirenvimElement {
         this.span = elem
             .ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "span");
+        // Make non-focusable, as otherwise <Tab> and <S-Tab> in the page would
+        // focus the iframe at the end of the page instead of focusing the
+        // browser's UI. The only way to <Tab>-focus the frame is to
+        // <Tab>-focus the corresponding input element.
+        this.span.setAttribute("tabindex", "-1");
         this.iframe = elem
             .ownerDocument
             .createElementNS("http://www.w3.org/1999/xhtml", "iframe") as HTMLIFrameElement;
@@ -358,6 +363,10 @@ export class FirenvimElement {
         const p = this.editor.getCursor().catch(() => [1, 1]) as Promise<[number, number]>;
         p.then(c => this.cursor = c);
         return p;
+    }
+
+    getOriginalElement () {
+        return this.originalElement;
     }
 
     getSelector () {

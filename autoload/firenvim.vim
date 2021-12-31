@@ -33,6 +33,18 @@ function! firenvim#focus_page() abort
         call rpcnotify(firenvim#get_chan(), 'firenvim_focus_page')
 endfunction
 
+" Asks the browser extension to release focus from the frame and focus the
+" next page element, matching the behavior of pressing `<Tab>` in the page.
+function! firenvim#focus_next() abort
+        call rpcnotify(firenvim#get_chan(), 'firenvim_focus_next')
+endfunction
+
+" Asks the browser extension to release focus from the frame and focus the
+" next page element, matching the behavior of pressing `<Tab>` in the page.
+function! firenvim#focus_prev() abort
+        call rpcnotify(firenvim#get_chan(), 'firenvim_focus_prev')
+endfunction
+
 " Asks the browser extension to hide the firenvim frame
 function! firenvim#hide_frame() abort
         call rpcnotify(firenvim#get_chan(), 'firenvim_hide_frame')

@@ -22,6 +22,8 @@ import {
  testEvalJs,
  testFilenameSettings,
  testFocusGainedLost,
+ testFocusNextPrev1,
+ testFocusNextPrev2,
  testForceNvimify,
  testGithubAutofill,
  testGStartedByFirenvim,
@@ -166,6 +168,8 @@ describe("Chrome", () => {
         t("Force nvimify", testForceNvimify);
         t("Input focused after frame", testInputFocusedAfterLeave);
         t("FocusInput", testFocusInput);
+        t("FocusNextPrev1", testFocusNextPrev1);
+        t("FocusNextPrev2", testFocusNextPrev2);
         t("Dynamically created elements", testDynamicTextareas);
         t("Dynamically created nested elements", testNestedDynamicTextareas);
         t("Large buffers", testLargeBuffers);
