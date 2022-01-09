@@ -33,6 +33,19 @@ export function isThunderbird() {
 // embedding a script element that runs the piece of code and emits its result
 // as an event.
 export function executeInPage(code: string): Promise<any> {
+    // On firefox, use an API that allows circumventing some CSP restrictions
+    // Use wrappedJSObject to detect availability of said API
+    // DON'T use window.eval on other plateforms - it doesn't have the
+    // semantics we need!
+    if ((window as any).wrappedJSObject) {
+        return new Promise((resolve, reject) => {
+            try {
+                resolve(window.eval(code));
+            } catch (e) {
+                reject(e);
+            }
+        });
+    }
     return new Promise((resolve, reject) => {
         const script = document.createElement("script");
         const eventId = (new URL(browser.runtime.getURL(""))).hostname + Math.random();
