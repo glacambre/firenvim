@@ -273,6 +273,12 @@ export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
                     break;
                 case "get_buf_content":
                     return new Promise(resolve => this.emit(request.funcName[0], resolve));
+                case "evalInPage":
+                case "resizeEditor":
+                case "getElementContent":
+                case "getEditorInfo":
+                    // handled by frame function handler
+                    break;
                 default:
                     console.error("Unhandled page request:", request);
             }
