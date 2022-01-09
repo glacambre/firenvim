@@ -16,9 +16,9 @@ DOCKER_BUILDKIT=1 docker build . -t firenvim --output target
 
 ### Without Docker
 
-Build without Docker requires NodeJS, npm, and Neovim >= 0.4.
+Building without Docker requires NodeJS, npm, and Neovim >= 0.4.
 
-Then, install Firenvim like a regular vim plugin (either by changing your runtime path manually or by [using your favourite plugin manager](README.md#installing)).
+Install Firenvim like a regular vim plugin (either by changing your runtime path manually or by [using your favourite plugin manager](README.md#installing)).
 
 Then run the following commands:
 ```sh
