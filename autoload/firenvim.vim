@@ -535,7 +535,7 @@ endfunction
 
 function! s:capture_env_var(var) abort
         let l:value = eval('$' . a:var)
-        if l:value == ''
+        if l:value ==? ''
                 return ''
         endif
         return 'if [ ! -n "$' . a:var . '" ]; then' . "\n" .
