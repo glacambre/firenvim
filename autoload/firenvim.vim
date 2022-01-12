@@ -533,6 +533,17 @@ function! s:get_progpath() abort
         return l:result
 endfunction
 
+function! s:capture_env_var(var) abort
+        let l:value = eval('$' . a:var)
+        if l:value == ''
+                return ''
+        endif
+        return 'if [ ! -n "$' . a:var . '" ]; then' . "\n" .
+              \'  ' . a:var . "='" . l:value . "'\n" .
+              \'  export ' . a:var . "\n" .
+              \"fi\n"
+endfunction
+
 function! s:get_executable_content(data_dir, prolog) abort
         if has('win32') || s:is_wsl
                 let l:wsl_prefix = ''
@@ -558,6 +569,13 @@ function! s:get_executable_content(data_dir, prolog) abort
                                 \ 'if [ -n "$VIMRUNTIME" ] && [ ! -d "$VIMRUNTIME" ]; then' . "\n" .
                                 \ "  unset VIMRUNTIME\n" .
                                 \ "fi\n" .
+                                \ s:capture_env_var('XDG_DATA_HOME') .
+                                \ s:capture_env_var('XDG_CONFIG_HOME') .
+                                \ s:capture_env_var('XDG_STATE_HOME') .
+                                \ s:capture_env_var('XDG_DATA_DIRS') .
+                                \ s:capture_env_var('XDG_CONFIG_DIRS') .
+                                \ s:capture_env_var('XDG_CACHE_HOME') .
+                                \ s:capture_env_var('XDG_RUNTIME_DIR') .
                                 \ a:prolog . "\n" .
                                 \ "exec '" . s:get_progpath() . "' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'\n"
 endfunction
