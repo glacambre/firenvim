@@ -321,7 +321,7 @@ export function reloadNeovim(server: any, driver: webdriver.WebDriver) {
         return server.updateSettings();
 }
 
-export const testVimrcFailure = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+export const testBrokenVimrc = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         // Check case where the vimrc doesn't load the neovim plugin
         await writeVimrc("");
         await reloadNeovim(server, driver);
@@ -370,6 +370,31 @@ export const testVimrcFailure = retryTest(withLocalPage("simple.html", async (te
                 // The firenvim frame should disappear after a second
                 await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
         }
+}));
+
+export const testErrmsgVimrc = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
+        const backup = await readVimrc();
+        // change to echoerr once https://github.com/neovim/neovim/pull/17199 is merged
+        await writeVimrc(`
+echom 'Fail'
+${backup}
+                `);
+        await reloadNeovim(server, driver);
+
+        let [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await sendKeys(driver, [webdriver.Key.ESCAPE]
+                       .concat(":wq!".split(""))
+                       .concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale.");
+        await driver.executeScript(`document.activeElement.blur();
+                                    document.documentElement.focus();
+                                    document.body.focus();`);
+        await reloadNeovim(server, driver);
+        [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
+        await sendKeys(driver, [webdriver.Key.ESCAPE]
+                .concat(":wq!".split(""))
+                .concat(webdriver.Key.ENTER));
+        await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not go stale the second time.");
 }));
 
 export const testGuifont = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
