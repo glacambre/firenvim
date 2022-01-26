@@ -52,7 +52,8 @@ import {
  testUnfocusedKillEditor,
  testUntrustedInput,
  testUpdates,
- testVimrcFailure,
+ testBrokenVimrc,
+ testErrmsgVimrc,
  testWorksInFrame,
 } from "./_common"
 import { setupVimrc, resetVimrc } from "./_vimrc";
@@ -176,7 +177,10 @@ describe("Firefox", () => {
         t("EvalJS", testEvalJs);
         t("Takeover: empty", testTakeoverEmpty);
         t("Toggling firenvim", testToggleFirenvim);
-        t("Buggy Vimrc", testVimrcFailure, 60000);
+        t("Buggy Vimrc", testBrokenVimrc, 60000);
+        if (neovimVersion > 0.7) {
+                t("Vimrc emits error messages", testErrmsgVimrc);
+        }
         t("Mouse", testMouse);
         t("Untrusted input", testUntrustedInput);
         if (process.platform === "linux") {

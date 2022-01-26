@@ -140,6 +140,13 @@ async function checkVersion(nvimVersion: string) {
     }
     updateIcon();
 }
+function warnUnexpectedMessages(messages: string[]) {
+    if (messages === undefined || !Array.isArray(messages) || messages.length < 1) {
+        return;
+    }
+    warning = messages.join("\n");
+    updateIcon();
+}
 
 // Function called in order to fill out default settings. Called from updateSettings.
 function applySettings(settings: any) {
@@ -168,6 +175,7 @@ function createNewInstance() {
             (nvim as any).replied = true;
             clearTimeout(errorTimeout);
             checkVersion(resp.version);
+            warnUnexpectedMessages(resp.messages);
             applySettings(resp.settings).finally(() => {
                 resolve({
                     kill: () => nvim.disconnect(),
