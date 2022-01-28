@@ -286,6 +286,7 @@ export function parseSingleGuifont(guifont: string, defaults: any) {
     if (defaults[fontFamily]) {
         result[fontFamily] += `, ${defaults[fontFamily]}`;
     }
+    result[fontFamily] = result[fontFamily].replaceAll('_', ' '); // :h E245
     return options.slice(1).reduce((acc, option) => {
             switch (option[0]) {
                 case "h":
