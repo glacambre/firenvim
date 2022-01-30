@@ -264,17 +264,17 @@ au TextChangedI * ++nested write
 Depending on how large the edited buffer is, this could be a little slow. This more sophisticated approach will throttle writes:
 
 ```vim
-let g:dont_write = v:false
+let g:timer_started = v:false
 function! My_Write(timer) abort
-	let g:dont_write = v:false
+	let g:timer_started = v:false
 	write
 endfunction
 
 function! Delay_My_Write() abort
-	if g:dont_write
+	if g:timer_started
 		return
 	end
-	let g:dont_write = v:true
+	let g:timer_started = v:true
 	call timer_start(10000, 'My_Write')
 endfunction
 
