@@ -292,6 +292,21 @@ function! s:get_firefox_manifest_dir_path() abort
         return s:build_path([$HOME, '.mozilla', 'native-messaging-hosts'])
 endfunction
 
+function! s:librewolf_config_exists() abort
+        let l:p = [$HOME, '.librewolf']
+        if has('win32') || s:is_wsl
+                let l:p = [s:get_windows_env_path('%USERPROFILE%'), '.librewolf']
+        endif
+        return isdirectory(s:build_path(l:p))
+endfunction
+
+function! s:get_librewolf_manifest_dir_path() abort
+        if has('win32') || s:is_wsl
+                return s:get_data_dir_path()
+        end
+        return s:build_path([$HOME, '.librewolf', 'native-messaging-hosts'])
+endfunction
+
 function! s:brave_config_exists() abort
         let l:p = [$HOME, '.config', 'BraveSoftware']
         if has('mac')
@@ -682,6 +697,12 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_dir_path': function('s:get_firefox_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim',
                 \},
+                \'librewolf': {
+                        \ 'has_config': s:librewolf_config_exists(),
+                        \ 'manifest_content': function('s:get_firefox_manifest'),
+                        \ 'manifest_dir_path': function('s:get_librewolf_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\LibreWolf\NativeMessagingHosts\firenvim',
+                \},
                 \'opera': {
                         \ 'has_config': s:opera_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
@@ -702,6 +723,7 @@ function! s:get_browser_configuration() abort
                 \}
         \}
         if $TESTING == 1
+                call remove(l:browsers, 'librewolf')
                 call remove(l:browsers, 'brave')
                 call remove(l:browsers, 'chrome-dev')
                 call remove(l:browsers, 'opera')
