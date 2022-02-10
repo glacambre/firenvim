@@ -85,6 +85,7 @@ describe("Chrome", () => {
                 // Disabling the GPU is required on windows
                 const options = (new (require("selenium-webdriver/chrome").Options)())
                         .addArguments("--disable-gpu")
+                        .addArguments("--disable-features=ChromeWhatsNewUI")
                         .addArguments(`--load-extension=${path.join(extensionDir, "chrome")}`);
 
                 // Won't work until this wontfix is fixed:
