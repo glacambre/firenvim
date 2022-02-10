@@ -47,7 +47,12 @@ function getTabValue(tabid: tabId, item: keyof tabStorage) {
 async function updateIcon(tabid?: number) {
     let name: IconKind = "normal";
     if (tabid === undefined) {
-        tabid = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
+        const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
+        if (tab === undefined) {
+            console.warn("Current tab is undefined - failing to updateIcon()");
+            return;
+        }
+        tabid = tab.id;
     }
     if (getTabValue(tabid, "disabled") === true) {
         name = "disabled";
@@ -197,7 +202,12 @@ function createNewInstance() {
 preloadedInstance = createNewInstance();
 
 async function toggleDisabled() {
-    const tabid = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
+    const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
+    if (tab === undefined) {
+        console.warn("Current tab is undefined - failing to toggleDisabled()");
+        return;
+    }
+    const tabid = tab.id;
     const disabled = !getTabValue(tabid, "disabled");
     setTabValue(tabid, "disabled", disabled);
     updateIcon(tabid);
