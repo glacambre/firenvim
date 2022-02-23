@@ -51,6 +51,10 @@ export function mergeWithDefaults(os: string, settings: any): IConfig {
     function makeDefaults(obj: { [key: string]: any }, name: string, value: any) {
         if (obj[name] === undefined) {
             obj[name] = value;
+        } else if (typeof obj[name] !== typeof value
+                   || Array.isArray(obj[name]) !== Array.isArray(value)) {
+            console.warn(`User config entry ${name} does not match expected type. Overriding.`);
+            obj[name] = value;
         }
     }
     function makeDefaultLocalSetting(sett: { localSettings: { [key: string]: any } },
