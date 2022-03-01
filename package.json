@@ -1,7 +1,7 @@
 {
   "author": "glacambre",
   "dependencies": {
-    "@types/jest": "27.0.2",
+    "@types/jest": "27.4.1",
     "@types/msgpack-lite": "0.1.8",
     "@types/node": "16.10.2",
     "@types/selenium-webdriver": "4.0.15",
