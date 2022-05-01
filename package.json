@@ -17,7 +17,7 @@
     "monaco-editor": "^0.28.1",
     "msgpack-lite": "0.1.26",
     "nyc": "^15.1.0",
-    "selenium-webdriver": "4.0.0-beta.3",
+    "selenium-webdriver": "4.1.2",
     "sharp": "0.29.2",
     "ts-jest": "27.0.7",
     "ts-loader": "^9.2.6",
