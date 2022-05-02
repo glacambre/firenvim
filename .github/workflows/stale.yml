@@ -15,3 +15,4 @@ jobs:
           stale-pr-message: ''
           close-issue-message: 'Closing this issue because it has been awaiting a response from its author for more than a month. Please provide the requested information and this issue will be re-opened.'
           only-issue-labels: 'blocked,awaiting-author'
+          only-pr-labels: 'Stale'
