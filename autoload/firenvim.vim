@@ -530,6 +530,7 @@ function! s:get_progpath() abort
                         \ 'pattern': '^/nix/store/',
                         \ 'constant_paths': [
                                 \ expand('$HOME/.nix-profile/bin/nvim'),
+                                \ expand('/etc/profiles/per-user/$USER/bin/nvim'),
                                 \ '/run/current-system/sw/bin/nvim'
                         \ ]
                 \ }
