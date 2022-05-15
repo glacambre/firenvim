@@ -87,7 +87,7 @@ jobs:
     - name: Install Manifest
       run: npm run install_manifests
     - name: Test (Linux)
-      timeout-minutes: 10
+      timeout-minutes: 15
       if: matrix.os == 'ubuntu'
       # Multiple attempts to increase FPS to 60 have been made: use libx264,
       # using raw output... Nothing worked. Spending more effort on this will
@@ -95,13 +95,13 @@ jobs:
       run: xvfb-run --auto-servernum -s "-screen 0 920x690x24" sh -c '(sleep 3 && ffmpeg -loglevel error -t 240 -an -video_size 920x690 -framerate 30 -f x11grab -i $DISPLAY video.webm) & npm run jest -- ${{ matrix.browser }}'
     - name: Test (MacOS)
       if: matrix.os == 'macos'
-      timeout-minutes: 10
+      timeout-minutes: 15
       run: |
         ffmpeg -loglevel warning -t 240 -framerate 30 -f avfoundation -i "0:0" video.webm &
         exit_code=0 && npm run jest -- ${{ matrix.browser }} || exit_code=$? && sleep 20 && exit $exit_code
     - name: Test (Windows)
       if: matrix.os == 'windows'
-      timeout-minutes: 10
+      timeout-minutes: 15
       run: |
         Start-Job { ffmpeg -loglevel warning -t 240 -framerate 30 -f gdigrab -i desktop D:\a\firenvim\firenvim\video.webm }
         npm run jest -- ${{ matrix.browser }}
