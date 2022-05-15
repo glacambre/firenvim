@@ -12,7 +12,11 @@ end
 
 local function connection_handler(server, sock, token)
         local pipe = vim.loop.new_pipe(false)
-        vim.loop.pipe_connect(pipe, os.getenv("NVIM_LISTEN_ADDRESS"), function(err)
+        local self_addr = vim.v.servername
+        if self_addr == nil then
+                self_addr = os.getenv("NVIM_LISTEN_ADDRESS")
+        end
+        vim.loop.pipe_connect(pipe, self_addr, function(err)
                 assert(not err, err)
         end)
 
