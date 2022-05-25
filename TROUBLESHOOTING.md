@@ -62,17 +62,6 @@ In your browser, open the background console. This requires the following steps:
 
 Then, navigate to a page with a textarea (I really like `http://txti.es` for this). Open the content console (`<CS-I>` on both firefox and chrome/ium). If you're using firefox, also open and clear the Browser Console (`<CS-J>`). Then, click on the textarea. This should result in messages being printed in the console. If it doesn't, try clicking on the Firenvim icon next to the urlbar. If no messages are logged there either, try clicking on the `Reload settings` button.
 
-## Make sure it's not your init.vim
-
-Clone the firenvim repository somewhere (e.g. `git clone https://github.com/glacambre/firenvim /tmp/firenvim`) and edit the [firenvim script](#make-sure-the-firenvim-script-has-been-created) so that it doesn't load your init.vim but loads firenvim, like this:
-
-```diff
--exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'
-+exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()' -u NORC --cmd 'set rtp+=/tmp/firenvim'
-```
-
-Then, try reloading your config twice/focusing a textarea twice. If firenvim suddenly starts working, this might be a `$PATH` issue on your end. Revert the changes you just made and try the instructions in [this section](#make-sure-firenvims-path-is-the-same-as-neovims) in order to fix it.
-
 ### Make sure firenvim can access your config files
 
 If your configs are not in `$HOME/.config/nvim` and the last step works with `-u NORC`, it could be that firenvim cannot access your config files. Try sourcing them (`:source [path to file]`) from inside firenvim. If this fails, move the configs into `$HOME/.config/nvim` and try sourcing them again.
@@ -95,6 +84,6 @@ You can't use `echo` or `echom` in your init.vim before Firenvim has been loaded
 - Use `echoerr` instead and redirect Neovim's stderr to a file on your disk in the [firenvim script](#make-sure-the-firenvim-script-has-been-created) like this:
 
 ```diff
--exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'
-+exec '/usr/bin/nvim' --headless --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()' 2>>/tmp/firenvim_errors
+-exec '/usr/bin/nvim' --headless --cmd "let g:firenvim_i=[]|let g:firenvim_o=[]|let g:Firenvim_oi={i,d,e->add(g:firenvim_i,d)}|let g:Firenvim_oo={t->add(g:firenvim_o,t)}|let g:firenvim_c=stdioopen({'on_stdin':{i,d,e->g:Firenvim_oi(i,d,e)},'on_print':{t->g:Firenvim_oo(t)}})" --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'
++exec '/usr/bin/nvim' --headless --cmd "let g:firenvim_i=[]|let g:firenvim_o=[]|let g:Firenvim_oi={i,d,e->add(g:firenvim_i,d)}|let g:Firenvim_oo={t->add(g:firenvim_o,t)}|let g:firenvim_c=stdioopen({'on_stdin':{i,d,e->g:Firenvim_oi(i,d,e)},'on_print':{t->g:Firenvim_oo(t)}})" --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()' 2>>/tmp/stderr | tee -a /tmp/stdout
 ```
