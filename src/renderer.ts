@@ -48,7 +48,8 @@ export function setCanvas (cvs: HTMLCanvasElement) {
     setCanvasDimensions(state.canvas,
                         window.innerWidth,
                         window.innerHeight);
-    defaultFontSize = window.getComputedStyle(state.canvas).fontSize;
+    const canvasDefaultFontSize = window.getComputedStyle(state.canvas).fontSize;
+    defaultFontSize = `calc(${window.devicePixelRatio} * ${canvasDefaultFontSize})`;
     defaultFontString = makeFontString(defaultFontSize, defaultFontFamily);
     state.context = state.canvas.getContext("2d", { "alpha": false });
     setFontString(state, defaultFontString);
