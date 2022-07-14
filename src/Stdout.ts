@@ -24,7 +24,6 @@ export class Stdout extends EventEmitter<MessageKind, MessageHandler>{
     }
 
     public setTypes(types: {[key: string]: { id: number }}) {
-        this.msgpackConfig.codec = msgpack.createCodec({ preset: true });
         Object
             .entries(types)
             .forEach(([_, { id }]) =>
