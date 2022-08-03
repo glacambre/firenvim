@@ -108,7 +108,7 @@ export async function setupInput(
                             + `call rpcnotify(${chan}, `
                                 + `'firenvim_bufwrite', `
                                 + `{`
-                                    + `'text': nvim_buf_get_lines(0, 0, -1, 0),`
+                                    + `'text': FirenvimWrite,`
                                     + `'cursor': nvim_win_get_cursor(0),`
                                 + `})
                         au VimLeave * ${cleanup}
