@@ -95,30 +95,28 @@ npm run build
 # lint firefox add-on to make sure we'll be able to publish it
 "$(npm bin)/addons-linter" target/xpi/firefox-latest.xpi
 
-# Add finishing touches to chrome manifest
-sed 's/"key":\s*"[^"]*",//' -i target/chrome/manifest.json
-
-# Generate bundles that need to be uploaded to chrome/firefox stores
-rm -f target/chrome.zip
-zip --junk-paths target/chrome.zip target/chrome/*
-source_files="$(echo ./* | sed s@./node_modules@@ | sed s@./target@@)"
-rm -f target/firenvim-firefox-sources.tar.gz
-tar -cvzf target/firenvim-firefox-sources.tar.gz $source_files
-rm -f target/firenvim-thunderbird-sources.tar.gr
-tar -cvzf target/firenvim-thunderbird-sources.tar.gz $source_files
-
 # Prepare commit message
 COMMIT_TEMPLATE="/tmp/firenvim_release_message"
 echo "package.json: bump version $oldVersion -> $newVersion" > "$COMMIT_TEMPLATE"
 echo "" >> "$COMMIT_TEMPLATE"
 git log --pretty=oneline --abbrev-commit --invert-grep --grep='dependabot' "v$oldVersion..HEAD" >> "$COMMIT_TEMPLATE"
 
-# Everything went fine, we can commit our changes, tag them, push them
+# Everything went fine, we can commit our changes
 git add package.json package-lock.json
 git commit -t "$COMMIT_TEMPLATE"
 git tag --delete "v$newVersion" 2>/dev/null || true
 git tag "v$newVersion" 
 
+# Add finishing touches to chrome manifest
+sed 's/"key":\s*"[^"]*",//' -i target/chrome/manifest.json
+
+# Generate bundles that need to be uploaded to chrome/firefox stores
+rm -f target/chrome.zip
+zip --junk-paths target/chrome.zip target/chrome/*
+git archive "$newVersion" > target/firenvim-firefox-sources.tar.gz
+git archive "$newVersion" > target/firenvim-thunderbird-sources.tar.gz
+
+# Everythign went fine, we can push
 git push
 git push --tags
 gh release create "$newVersion" target/chrome.zip target/xpi/firefox-latest.xpi target/xpi/thunderbird-latest.xpi --notes ""
