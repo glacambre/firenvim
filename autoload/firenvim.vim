@@ -758,10 +758,16 @@ let s:is_wsl = v:false
 " a:2: A prologue that should be inserted in the shell/batch script and
 "      executed before neovim is ran.
 function! firenvim#install(...) abort
-        if !has('nvim-0.4.0')
-                echoerr 'Error: nvim version >= 0.4.0 required. Aborting.'
+        if !has('nvim-0.6.0')
+                echoerr 'Error: nvim version >= 0.6.0 required. Aborting.'
                 return
         endif
+        try
+                lua require("bit")
+        catch
+                echoerr 'Error: Lua package "bit" unavailable. Install it or switch to LuaJIT.'
+                return
+        endtry
 
         let l:force_install = 0
         let l:script_prolog = ''

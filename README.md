@@ -14,11 +14,9 @@ Just click on any textarea and it will be immediately replaced by an instance of
 
 Before installing anything please read [SECURITY.md](SECURITY.md) and make sure you're okay with everything mentioned. In the event you think of a way to compromise Firenvim, please send me an email (you can find my address in my commits).
 
-1. Make sure you are using [Neovim][nvim] 0.4.0 or later. This plugin will not work with vanilla [VIM][vim] or [Vimr][vimr]. Also make sure that your browser hasn't been installed with Snap or Flatpak - these are sandboxed and thus won't work.
+1. Make sure you are using [Neovim][nvim] 0.6.0 or later. This plugin will not work with vanilla [VIM][vim] or [Vimr][vimr]. Also make sure that your browser hasn't been installed with Snap or Flatpak - these prevent Firenvim from starting Neovim.
 
-2. Check if the luabitop package is available by running `:lua bit.band(1,1)` in Neovim. If this throws an error, you will need to install it.
-
-3. Install Firenvim as a VIM plugin as you would any other, then run the built-in post-install script.
+2. Install Firenvim as a VIM plugin as you would any other, then run the built-in post-install script.
 
     * [vim-plug](https://github.com/junegunn/vim-plug)
 
@@ -58,7 +56,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
         $ nvim --headless "+call firenvim#install(0) | q"
         ```
 
-4. Finally, install the Firenvim addon for your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
+3. Finally, install the Firenvim addon for your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
 
 If you would rather build and install Firenvim from source, check [CONTRIBUTING.md](CONTRIBUTING.md).
 
