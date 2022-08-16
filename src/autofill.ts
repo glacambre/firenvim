@@ -1,5 +1,9 @@
 
 export async function autofill() {
+    const textarea = document.getElementById("issue_body") as any;
+    if (!textarea) {
+        return;
+    }
     const platInfoPromise = browser.runtime.sendMessage({
         args: {
             args: [],
@@ -31,7 +35,6 @@ export async function autofill() {
         version = "unknown";
     }
     const vendor = navigator.vendor || "";
-    const textarea = document.getElementById("issue_body") as any;
     const [
         platInfo,
         manifest,
@@ -40,7 +43,7 @@ export async function autofill() {
     ] = await Promise.all([platInfoPromise, manifestPromise, nvimPluginPromise, issueTemplatePromise]);
     // Can't happen, but doesn't cost much to handle!
     /* istanbul ignore next */
-    if (!textarea || textarea.value.replace(/\r/g, "") !== issueTemplate.replace(/\r/g, "")) {
+    if (textarea.value.replace(/\r/g, "") !== issueTemplate.replace(/\r/g, "")) {
         return;
     }
     textarea.value = issueTemplate
