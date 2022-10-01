@@ -7,7 +7,7 @@
     "@types/selenium-webdriver": "4.0.15",
     "@types/ws": "^8.2.0",
     "ace-builds": "^1.4.13",
-    "addons-linter": "^4.2.0",
+    "addons-linter": "^5.16.0",
     "codemirror": "^5.63.1",
     "copy-webpack-plugin": "9.0.1",
     "editor-adapter": "^0.0.3",
