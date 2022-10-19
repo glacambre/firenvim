@@ -415,6 +415,19 @@ function! s:get_chrome_manifest_dir_path() abort
         return s:build_path([$HOME, '.config', 'google-chrome', 'NativeMessagingHosts'])
 endfunction
 
+function! s:get_vivaldi_manifest_dir_path() abort
+        if has('mac')
+                return s:get_chrome_manifest_dir_path()
+        elseif has('win32') || s:is_wsl
+                return s:get_chrome_manifest_dir_path()
+        end
+        " https://github.com/glacambre/firenvim/issues/1433
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'vivaldi', 'NativeMessagingHosts'])
+        end
+        return s:build_path([$HOME, '.config', 'vivaldi', 'NativeMessagingHosts'])
+endfunction
+
 function! s:get_ungoogled_chromium_manifest_dir_path() abort
         if has('mac') || has('win32') || s:is_wsl
                 throw "Ungoogled chromium isn't supported. Please open an issue to add support."
@@ -719,7 +732,7 @@ function! s:get_browser_configuration() abort
                 \'vivaldi': {
                         \ 'has_config': s:vivaldi_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
-                        \ 'manifest_dir_path': function('s:get_chrome_manifest_dir_path'),
+                        \ 'manifest_dir_path': function('s:get_vivaldi_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \}
         \}
