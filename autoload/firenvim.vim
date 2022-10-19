@@ -614,7 +614,16 @@ function! s:get_executable_content(data_dir, prolog) abort
                                 \ s:capture_env_var('XDG_CACHE_HOME') .
                                 \ s:capture_env_var('XDG_RUNTIME_DIR') .
                                 \ a:prolog . "\n" .
-                                \ "exec '" . s:get_progpath() . "' --headless " . l:stdioopen . " --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'\n"
+                                \ "exec '" . s:get_progpath() .
+                                  \ "' --headless " . l:stdioopen .
+                                  \ " --cmd 'let g:started_by_firenvim = v:true' " .
+                                  \ "-c 'try|" .
+                                      \ 'call firenvim#run()|' .
+                                    \ 'catch|' .
+                                      \ "call chansend(g:firenvim_c,[\"f\\n\\n\\n\"..json_encode({\"messages\":[\"Your plugin manager did not load the Firenvim plugin for neovim.\"]+g:firenvim_o,\"version\":\"0.0.0\"})])|" .
+                                      \ "call chansend(2,[\"Firenvim not in rtp:\"..&rtp])|" .
+                                      \ 'qall!' .
+                                  \ "|endtry'\n"
 endfunction
 
 function! s:get_manifest_beginning(execute_nvim_path) abort
