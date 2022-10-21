@@ -9,6 +9,10 @@ if ((browser as any).composeScripts !== undefined || document.location.href === 
     curHost = "firefox";
 } else if (window.location.protocol === "chrome-extension:") {
     curHost = "chrome";
+} else if ((window as any).InstallTrigger === undefined) {
+    curHost = "chrome";
+} else {
+    curHost = "firefox";
 }
 
 // Only usable in background script!
