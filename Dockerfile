@@ -1,4 +1,4 @@
-FROM node:lts-alpine AS build-stage
+FROM node:18-alpine AS build-stage
 SHELL ["/bin/sh", "-o", "pipefail", "-c"]
 
 RUN apk add --no-cache neovim
