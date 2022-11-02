@@ -117,11 +117,6 @@ export async function neovim(
                 case "firenvim_vimleave":
                     lastLostFocus = performance.now();
                     return page.killEditor();
-                case "firenvim_thunderbird_send":
-                    return browser.runtime.sendMessage({
-                        args: [],
-                        funcName: ["thunderbirdSend"],
-                    });
             }
         });
     });

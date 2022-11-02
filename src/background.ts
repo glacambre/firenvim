@@ -15,7 +15,7 @@
  * content scripts. It rarely acts on its own.
  */
 import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
-import { getIconImageData, IconKind, isThunderbird } from "./utils/utils";
+import { getIconImageData, IconKind } from "./utils/utils";
 
 export let preloadedInstance: Promise<any>;
 
@@ -60,11 +60,6 @@ async function updateIcon(tabid?: number) {
         name = "error";
     } else if (warning !== "") {
         name = "notification";
-    }
-    // Can't test on the bird of thunder
-    /* istanbul ignore next */
-    if (isThunderbird()) {
-        return Promise.resolve();
     }
     return getIconImageData(name).then((imageData: any) => browser.browserAction.setIcon({ imageData }));
 }
@@ -299,7 +294,6 @@ Object.assign(window, {
     },
     getNvimPluginVersion: () => nvimPluginVersion,
     getOwnFrameId: (sender: any) => sender.frameId,
-    getOwnComposeDetails: (sender: any) => (browser as any).compose.getComposeDetails(sender.tab.id),
     getTab: (sender: any) => sender.tab,
     getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
     getTabValueFor: (_: any, args: any) => getTabValue(args[0], args[1]),
@@ -317,9 +311,6 @@ Object.assign(window, {
         return sender.frameId;
     },
     setTabValue: (sender: any, args: any) => setTabValue(sender.tab.id, args[0], args[1]),
-    thunderbirdSend: (sender: any) => {
-        return (browser as any).compose.sendMessage(sender.tab.id, { mode: 'default' });
-    },
     toggleDisabled: () => toggleDisabled(),
     updateSettings: () => updateSettings(),
     openTroubleshootingGuide: () => browser.tabs.create({ active: true, url: "https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md" }),
@@ -347,16 +338,11 @@ browser.windows.onFocusChanged.addListener(async (windowId: number) => {
 
 updateIcon();
 
-// browser.commands doesn't exist in thunderbird. Else branch can't be covered
-// so don't instrument the if.
-/* istanbul ignore next */
-if (!isThunderbird()) {
-    browser.commands.onCommand.addListener(acceptCommand);
-    browser.runtime.onMessageExternal.addListener(async (request: any, sender: any, _sendResponse: any) => {
-        const resp = await acceptCommand(request.command);
-        _sendResponse(resp);
-    });
-}
+browser.commands.onCommand.addListener(acceptCommand);
+browser.runtime.onMessageExternal.addListener(async (request: any, sender: any, _sendResponse: any) => {
+    const resp = await acceptCommand(request.command);
+    _sendResponse(resp);
+});
 
 async function updateIfPossible() {
     const tabs = await browser.tabs.query({});
@@ -381,69 +367,3 @@ async function updateIfPossible() {
 }
 (window as any).updateIfPossible = updateIfPossible;
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
-
-// Can't test on the bird of thunder
-/* istanbul ignore next */
-if (isThunderbird()) {
-    (browser as any).compose.onBeforeSend.addListener(async (tab: any, details: any) => {
-        const lines = (await browser.tabs.sendMessage(tab.id, { args: [], funcName: ["get_buf_content"] })) as string[];
-        // No need to remove the canvas when working with plaintext,
-        // thunderbird will do that for us.
-        if (details.isPlainText) {
-            // Firenvim has to cancel the beforeinput event on the compose
-            // window's documentElement in order to prevent the canvas from
-            // being destroyed. However, thunderbird has a bug where cancelling
-            // this event will prevent onBeforeSend from setting the compose
-            // window's content when editing plaintext emails.
-            // We work around this by telling the compose script to temporarily
-            // stop cancelling events.
-            await browser.tabs.sendMessage(tab.id, { args: [], funcName: ["pause_keyhandler"] });
-            return { cancel: false, details: { plainTextBody: lines.join("\n") } };
-        }
-
-        const doc = document.createElement("html");
-        const bod = document.createElement("body");
-        doc.appendChild(bod);
-
-        // Turn `>` into appropriate blockquote elements.
-        let previousQuoteLevel = 0;
-        let parent : HTMLElement = bod;
-        for (const l of lines) {
-            let currentQuoteLevel = 0;
-
-            // Count number of ">" symbols
-            let i = 0;
-            while (l[i] === " " || l[i] === ">") {
-                if (l[i] === ">") {
-                    currentQuoteLevel += 1;
-                }
-                i += 1;
-            }
-
-            const line = l.slice(i);
-
-            if (currentQuoteLevel > previousQuoteLevel) {
-                for (let i = previousQuoteLevel; i < currentQuoteLevel; ++i) {
-                    const block = document.createElement("blockquote");
-                    block.setAttribute("type", "cite");
-                    parent.appendChild(block);
-                    parent = block;
-                }
-            } else if (currentQuoteLevel < previousQuoteLevel) {
-                for (let i = previousQuoteLevel; i > currentQuoteLevel; --i) {
-                    parent = parent.parentElement;
-                }
-            }
-
-            parent.appendChild(document.createTextNode(line));
-            parent.appendChild(document.createElement("br"));
-
-            previousQuoteLevel = currentQuoteLevel;
-        }
-        return { cancel: false, details: { body: doc.outerHTML } };
-    });
-    // In thunderbird, register the script to be loaded in the compose window
-    (browser as any).composeScripts.register({
-        js: [{file: "compose.js"}],
-    });
-}
