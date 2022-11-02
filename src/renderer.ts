@@ -684,6 +684,9 @@ function scheduleFrame() {
 }
 
 function paintMessages(state: State) {
+    if (settings.cmdline === "none") {
+        return;
+    }
     const ctx = state.context;
     const gId = getGridId();
     const messagesPosition = state.messagesPositions[gId];
