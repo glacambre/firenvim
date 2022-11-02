@@ -15,7 +15,7 @@ type KeydownEmittingObject = {
 };
 
 // This class implements the keydown logic that deals with modifiers and is
-// shared across both browsers and thunderbird
+// shared across both browsers
 export class KeydownHandler extends EventEmitter<"input", (s: string) => void> implements KeyHandler {
     private currentMode : NvimMode;
     constructor(private elem: KeydownEmittingObject, settings: GlobalSettings) {

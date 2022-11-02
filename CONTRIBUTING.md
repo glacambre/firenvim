@@ -29,7 +29,7 @@ npm run build
 npm run install_manifests
 ```
 
-These commands should create four directories: `target/chrome`, `target/firefox`, `target/thunderbird` and `target/xpi`.
+These commands should create three directories: `target/chrome`, `target/firefox` and `target/xpi`.
 
 ## Installing the addon
 
@@ -45,19 +45,14 @@ To install Firenvim in regular mode, go to `about:addons`, click on the cog icon
 
 To install Firenvim in dev mode, go to `about:debugging`, click "Load Temporary Add-On" and select `target/firefox/manifest.json`.
 
-### Thunderbird
-
-In Thunderbird, click the "hamburger menu" (the three horizontal bars) at the top right corner of the screen. Select "Addons", this should open the Add-ons Manager. Once there, click on the cog icon. If you want to install Firenvim in regular mode, select "Install Add-On From File" and choose `target/xpi/thunderbird-latest.xpi`. To install Firenvim in dev mode, select "Debug Add-On", then "Load Temporary Add-On" and choose `target/thunderbird/manifest.json`.
-
 ## Working on Firenvim
 
-`npm run build` is slow and performs lots of checks. In order to iterate faster, you can use `"$(npm bin)/webpack --env=firefox"` or `"$(npm bin)/webpack" --env=chrome` or `"$(npm bin)/webpack" --env=thunderbird` to build only for the target you care about. Make sure you click the "reload" button in your browser/thunderbird every time you reload Firenvim.
+`npm run build` is slow and performs lots of checks. In order to iterate faster, you can use `"$(npm bin)/webpack --env=firefox"` or `"$(npm bin)/webpack" --env=chrome` to build only for the target you care about. Make sure you click the "reload" button in your browser every time you reload Firenvim.
 
 Firenvim's architecture is briefly described in [SECURITY.md](SECURITY.md). Firenvim is a webextension (it is a good idea to keep the [webextension documentation](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions) at hand if you're not familiar with webextension development). Webextensions are split in multiple processes. These processes communicate by sending messages to each other and have different entry points. Firenvim's entry points are:
 
 - src/background.ts: Entry point of the background process.
 - src/content.ts: Entry point of the content process (firefox & chrome only).
-- src/compose.ts: Entry point of the compose window process (thunderbird only).
 - src/frame.ts: Entry point of the Neovim Frame process.
 - src/browserAction.ts: Entry point of the browser action process.
 
@@ -70,9 +65,9 @@ The background process is started on browser startup and takes care of several t
 - Logging errors and sending them to the browserAction. 
 - Forwarding messages from the Neovim Frame process to the content process and vice versa.
 
-### Content & Compose process
+### Content
 
-The Content process and the Compose process perform the same tasks. They are created for each new tab/compose window. The tasks they perform are:
+A Content process is created for each new tab. The tasks it performs are:
 
 - Creating event listeners to detect when the user tries to interact with a "writable" element to then spawn a Neovim Frame process.
 - Retrieving the content of said element and sending it to the Neovim Frame process.
@@ -83,8 +78,8 @@ Reading and writing the content of "writable" elements requires interacting with
 
 ### Neovim Frame process
 
-Neovim Frame process are created for each "writable" element the user wants to interact with. The role of the Neovim Frame process is to connect to the Neovim server started by the background process. This is done with a websocket. Once the connection has been made, the Neovim Frame process forwards keypresses to the Neovim server and displays the resulting screen updates. Handling keypresses is performed in `src/input.ts` by relying on the KeyHandler instantiated in either `src/frame.ts` or `src/compose.ts`. Updating the screen is performed by `src/renderer.ts`.
-The Neovim Frame process creates a `BufWrite` autocommand to detect when the buffer is written to the disk. When this happens, it sends a request to the Content or Compose process and asks it to update the content of the "writable" element.
+Neovim Frame process are created for each "writable" element the user wants to interact with. The role of the Neovim Frame process is to connect to the Neovim server started by the background process. This is done with a websocket. Once the connection has been made, the Neovim Frame process forwards keypresses to the Neovim server and displays the resulting screen updates. Handling keypresses is performed in `src/input.ts` by relying on the KeyHandler instantiated in `src/frame.ts`. Updating the screen is performed by `src/renderer.ts`.
+The Neovim Frame process creates a `BufWrite` autocommand to detect when the buffer is written to the disk. When this happens, it sends a request to the Content process and asks it to update the content of the "writable" element.
 
 ### Browser Action process
 

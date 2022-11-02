@@ -114,15 +114,12 @@ sed 's/"key":\s*"[^"]*",//' -i target/chrome/manifest.json
 rm -f target/chrome.zip
 zip --junk-paths target/chrome.zip target/chrome/*
 git archive "$newVersion" > target/firenvim-firefox-sources.tar.gz
-git archive "$newVersion" > target/firenvim-thunderbird-sources.tar.gz
 
 # Everythign went fine, we can push
 git push
 git push --tags
-gh release create "$newVersion" target/chrome.zip target/xpi/firefox-latest.xpi target/xpi/thunderbird-latest.xpi --notes ""
+gh release create "$newVersion" target/chrome.zip target/xpi/firefox-latest.xpi
 
 firefox --private-window 'https://chrome.google.com/webstore/devconsole/g06704558984641971849/egpjdkipkomnmjhjmdamaniclmdlobbo/edit?hl=en'
 sleep 1
 firefox --private-window 'https://addons.mozilla.org/en-US/developers/addon/firenvim/versions/submit/'
-sleep 1
-firefox --private-window 'https://addons.thunderbird.net/en-US/developers/addon/firenvim/versions/submit/'

@@ -118,15 +118,6 @@ export function mergeWithDefaults(os: string, settings: any): IConfig {
         takeover: "always",
         filename: "{hostname%32}_{pathname%32}_{selector%32}_{timestamp%32}.{extension}",
     });
-    makeDefaultLocalSetting(settings, "about:blank\\?compose", {
-        cmdline: "firenvim",
-        content: "text",
-        priority: 1,
-        renderer: "canvas",
-        selector: 'body',
-        takeover: "always",
-        filename: "mail_{timestamp%32}.eml",
-    });
     return settings;
 }
 
