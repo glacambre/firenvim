@@ -14,7 +14,9 @@ export async function setupInput(
     try {
         const [[url, selector, cursor, language], connectionData] =
             await Promise.all([page.getEditorInfo(), connectionPromise]);
-        const nvimPromise = neovim(page, canvas, connectionData);
+        await confReady;
+        const urlSettings = getConfForUrl(url);
+        const nvimPromise = neovim(page, urlSettings, canvas, connectionData);
         const contentPromise = page.getElementContent();
 
         const [cols, rows] = getLogicalSize();
@@ -35,14 +37,12 @@ export async function setupInput(
             {},
         );
 
-        await confReady;
-        const urlSettings = getConfForUrl(url);
         nvim.ui_attach(
             cols < 1 ? 1 : cols,
             rows < 1 ? 1 : rows,
             {
                 ext_linegrid: true,
-                ext_messages: urlSettings.cmdline === "firenvim",
+                ext_messages: urlSettings.cmdline !== "neovim",
                 rgb: true,
         }).catch(console.log);
 

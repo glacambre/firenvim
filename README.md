@@ -172,12 +172,13 @@ Firenvim has a setting named `takeover` that can be set to `always`, `empty`, `n
 let fc['.*'] = { 'takeover': 'always' }
 ```
 
-### Using the external command line
+### Choosing a command line
 
-You can chose between neovim's built-in command line and firenvim's command line by setting the localSetting named `cmdline` to either `neovim` or `firenvim`, e.g.:
+You can chose between neovim's built-in command line, firenvim's command line and no command line at all by setting the localSetting named `cmdline` to either `neovim`, `firenvim` or `none`, e.g.:
 ```vim
 let fc['.*'] = { 'cmdline' : 'firenvim' }
 ```
+Choosing `none` does not make sense unless you have alternative way to display the command line such as [noice.nvim](https://github.com/folke/noice.nvim).
 
 ### Editing HTML directly
 
