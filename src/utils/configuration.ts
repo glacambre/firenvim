@@ -19,7 +19,7 @@ export type NvimMode = "all"
   | "showmatch";
 
 export interface ISiteConfig {
-    cmdline: "neovim" | "firenvim";
+    cmdline: "neovim" | "firenvim" | "none";
     content: "html" | "text";
     priority: number;
     renderer: "html" | "canvas";
