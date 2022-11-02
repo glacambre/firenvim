@@ -1,24 +1,11 @@
 import { EventEmitter } from "./EventEmitter";
 import { GlobalSettings, NvimMode } from "./utils/configuration";
-import { addModifier, nonLiteralKeys, translateKey } from "./utils/keys";
+import { nonLiteralKeys, addModifier, translateKey } from "./utils/keys";
+import { isChrome } from "./utils/utils";
 
-// KeyHandler is the interface expected by getInput
-export interface KeyHandler extends EventEmitter<"input", (s: string) => void> {
-    setMode: (m: NvimMode) => void,
-    focus: () => void,
-    moveTo: (x: number, y: number) => void,
-}
-
-type KeydownEmittingObject = {
-    addEventListener: (s: "keydown", h: ((e: KeyboardEvent) => void)) => void,
-    focus: () => void
-};
-
-// This class implements the keydown logic that deals with modifiers and is
-// shared across both browsers
-export class KeydownHandler extends EventEmitter<"input", (s: string) => void> implements KeyHandler {
+export class KeyHandler extends EventEmitter<"input", (s: string) => void> {
     private currentMode : NvimMode;
-    constructor(private elem: KeydownEmittingObject, settings: GlobalSettings) {
+    constructor(private elem: HTMLElement, settings: GlobalSettings) {
         super();
         const ignoreKeys = settings.ignoreKeys;
         this.elem.addEventListener("keydown", (evt) => {
@@ -66,17 +53,56 @@ export class KeydownHandler extends EventEmitter<"input", (s: string) => void> i
                 }
             }
         })
+
+        const acceptInput = ((evt: any) => {
+            this.emit("input", evt.target.value);
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+        }).bind(this);
+
+        this.elem.addEventListener("input", (evt: any) => {
+            if (evt.isTrusted && !evt.isComposing) {
+                acceptInput(evt);
+                evt.target.innerText = "";
+                evt.target.value = "";
+            }
+        });
+
+        // On Firefox, Pinyin input method for a single chinese character will
+        // result in the following sequence of events:
+        // - compositionstart
+        // - input (character)
+        // - compositionend
+        // - input (result)
+        // But on Chrome, we'll get this order:
+        // - compositionstart
+        // - input (character)
+        // - input (result)
+        // - compositionend
+        // So Chrome's input event will still have its isComposing flag set to
+        // true! This means that we need to add a chrome-specific event
+        // listener on compositionend to do what happens on input events for
+        // Firefox.
+        // Don't instrument this branch as coverage is only generated on
+        // Firefox.
+        /* istanbul ignore next */
+        if (isChrome()) {
+            this.elem.addEventListener("compositionend", (e: CompositionEvent) => {
+                acceptInput(e);
+            });
+        }
     }
 
     focus() {
         this.elem.focus();
     }
 
-    moveTo(_: number, __: number) {
-        // Don't do nuthin
+    moveTo(x: number, y: number) {
+        this.elem.style.left = `${x}px`;
+        this.elem.style.top = `${y}px`;
     }
 
     setMode(s: NvimMode) {
         this.currentMode = s;
     }
-};
+}
