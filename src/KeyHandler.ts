@@ -58,13 +58,13 @@ export class KeyHandler extends EventEmitter<"input", (s: string) => void> {
             this.emit("input", evt.target.value);
             evt.preventDefault();
             evt.stopImmediatePropagation();
+            evt.target.innerText = "";
+            evt.target.value = "";
         }).bind(this);
 
         this.elem.addEventListener("input", (evt: any) => {
             if (evt.isTrusted && !evt.isComposing) {
                 acceptInput(evt);
-                evt.target.innerText = "";
-                evt.target.value = "";
             }
         });
 
