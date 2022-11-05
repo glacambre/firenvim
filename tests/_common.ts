@@ -147,14 +147,6 @@ export const testModifiers = retryTest(withLocalPage("simple.html", async (_: st
                 .keyDown("v")
                 .keyUp("v")
                 .keyUp(webdriver.Key.CONTROL)
-                .keyDown(webdriver.Key.COMMAND)
-                .keyDown("i")
-                .keyUp("i")
-                .keyUp(webdriver.Key.COMMAND)
-                .keyDown(webdriver.Key.CONTROL)
-                .keyDown("v")
-                .keyUp("v")
-                .keyUp(webdriver.Key.CONTROL)
                 .keyUp(webdriver.Key.COMMAND)
                 .keyDown(webdriver.Key.SHIFT)
                 .keyDown(webdriver.Key.ARROW_LEFT)
@@ -177,7 +169,7 @@ export const testModifiers = retryTest(withLocalPage("simple.html", async (_: st
                        .concat(webdriver.Key.ENTER))
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
         await driver.wait(async () => (await input.getAttribute("value") !== ""), WAIT_DELAY, "Input value did not change");
-        expect(await input.getAttribute("value")).toBe("	<M-i><D-i><S-Left><C-S-CR>\n");
+        expect(await input.getAttribute("value")).toBe("	<M-i><S-Left><C-S-CR>\n");
 }));
 
 export const testUnfocusedKillEditor = retryTest(withLocalPage("simple.html", async (_: string, server: any, driver: webdriver.WebDriver) => {
