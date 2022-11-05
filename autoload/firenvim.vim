@@ -590,6 +590,14 @@ function! s:get_executable_content(data_dir, prolog) abort
                                         \"let g:firenvim_c=stdioopen({'on_stdin':{i,d,e->g:Firenvim_oi(i,d,e)},'on_print':{t->g:Firenvim_oo(t)}})".
                                         \'"'
         endif
+	if s:is_wsl
+		" Get path of firenvim script on the linux side, execute that
+		" from the windows batch script
+		let s:is_wsl = v:false
+		let l:script_path = s:get_firenvim_script_path()
+		let s:is_wsl = v:true
+		return "@echo off\r\nwsl \"" . l:script_path . '"'
+	endif
         if has('win32') || s:is_wsl
                 let l:wsl_prefix = ''
                 if s:is_wsl
@@ -752,6 +760,10 @@ function! s:get_browser_configuration() abort
 
 endfunction
 
+function! s:get_firenvim_script_path() abort
+	return s:build_path([s:get_data_dir_path(), s:get_executable_name()])
+endfunction
+
 " At first, is_wsl is set to false, even on WSL. This lets us install firenvim
 " on the wsl side, in case people want to use a wsl browser.
 " Then, we set is_wsl to true if we're on wsl and launch firenvim#install
@@ -795,14 +807,10 @@ function! firenvim#install(...) abort
                 endif
         endif
 
-        " Decide where the script responsible for starting neovim should be
-        let l:data_dir = s:get_data_dir_path()
-        let l:execute_nvim_path = s:build_path([l:data_dir, s:get_executable_name()])
-
-        " Write said script to said path
+        let l:execute_nvim_path = s:get_firenvim_script_path()
         let l:execute_nvim = s:get_executable_content(s:get_runtime_dir_path(), l:script_prolog)
 
-        call s:maybe_execute('mkdir', l:data_dir, 'p', 0700)
+        call s:maybe_execute('mkdir', s:get_data_dir_path(), 'p', 0700)
         if s:is_wsl
                 let l:execute_nvim_path = s:to_wsl_path(l:execute_nvim_path)
         endif
