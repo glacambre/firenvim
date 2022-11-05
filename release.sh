@@ -113,7 +113,8 @@ sed 's/"key":\s*"[^"]*",//' -i target/chrome/manifest.json
 # Generate bundles that need to be uploaded to chrome/firefox stores
 rm -f target/chrome.zip
 zip --junk-paths target/chrome.zip target/chrome/*
-git archive "v$newVersion" > target/firenvim-firefox-sources.tar.gz
+git archive "v$newVersion" > target/firenvim-firefox-sources.tar
+gzip target/firenvim-firefox-sources.tar
 
 # Everythign went fine, we can push
 git push
