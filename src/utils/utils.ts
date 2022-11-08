@@ -1,14 +1,14 @@
 let curHost : string;
 
-// Can't get coverage for thunderbird.
-/* istanbul ignore next */
-if ((browser as any).composeScripts !== undefined || document.location.href === "about:blank?compose") {
-    curHost = "thunderbird";
 // Chrome doesn't have a "browser" object, instead it uses "chrome".
-} else if (window.location.protocol === "moz-extension:") {
+if (window.location.protocol === "moz-extension:") {
     curHost = "firefox";
 } else if (window.location.protocol === "chrome-extension:") {
     curHost = "chrome";
+} else if ((window as any).InstallTrigger === undefined) {
+    curHost = "chrome";
+} else {
+    curHost = "firefox";
 }
 
 // Only usable in background script!
@@ -19,14 +19,6 @@ export function isChrome() {
         throw Error("Used isChrome in content script!");
     }
     return curHost === "chrome";
-}
-export function isThunderbird() {
-    // Can't cover error condition
-    /* istanbul ignore next */
-    if (curHost === undefined) {
-        throw Error("Used isThunderbird in content script!");
-    }
-    return curHost === "thunderbird";
 }
 
 // Runs CODE in the page's context by setting up a custom event listener,
@@ -135,14 +127,7 @@ export function getIconImageData(kind: IconKind, width = 32, height = 32) {
 // Given a url and a selector, tries to compute a name that will be unique,
 // short and readable for the user.
 export function toFileName(formatString: string, url: string, id: string, language: string) {
-    let parsedURL: { hostname: string, pathname: string };
-    try {
-        parsedURL = new URL(url);
-    } catch (e) {
-        // Only happens with thunderbird, where we can't get coverage
-        /* istanbul ignore next */
-        parsedURL = { hostname: 'thunderbird', pathname: 'mail' };
-    }
+    const parsedURL = new URL(url);
 
     const sanitize = (s: string) => (s.match(/[a-zA-Z0-9]+/g) || []).join("-");
 

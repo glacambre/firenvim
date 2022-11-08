@@ -2,15 +2,18 @@ import { PageType } from "./page"
 import * as CanvasRenderer from "./renderer";
 import { Stdin } from "./Stdin";
 import { Stdout } from "./Stdout";
+import { ISiteConfig } from "./utils/configuration";
 
 export async function neovim(
         page: PageType,
+        settings: ISiteConfig,
         canvas: HTMLCanvasElement,
         { port, password }: { port: number, password: string },
     ) {
     const functions: any = {};
     const requests = new Map<number, { resolve: any, reject: any }>();
 
+    CanvasRenderer.setSettings(settings);
     CanvasRenderer.setCanvas(canvas);
     CanvasRenderer.events.on("resize", ({grid, width, height}: any) => {
         (functions as any).ui_try_resize_grid(grid, width, height);
@@ -114,11 +117,6 @@ export async function neovim(
                 case "firenvim_vimleave":
                     lastLostFocus = performance.now();
                     return page.killEditor();
-                case "firenvim_thunderbird_send":
-                    return browser.runtime.sendMessage({
-                        args: [],
-                        funcName: ["thunderbirdSend"],
-                    });
             }
         });
     });

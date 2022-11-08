@@ -19,7 +19,7 @@ export type NvimMode = "all"
   | "showmatch";
 
 export interface ISiteConfig {
-    cmdline: "neovim" | "firenvim";
+    cmdline: "neovim" | "firenvim" | "none";
     content: "html" | "text";
     priority: number;
     renderer: "html" | "canvas";
@@ -117,15 +117,6 @@ export function mergeWithDefaults(os: string, settings: any): IConfig {
         // #265: On "once", don't automatically bring back after :q'ing it
         takeover: "always",
         filename: "{hostname%32}_{pathname%32}_{selector%32}_{timestamp%32}.{extension}",
-    });
-    makeDefaultLocalSetting(settings, "about:blank\\?compose", {
-        cmdline: "firenvim",
-        content: "text",
-        priority: 1,
-        renderer: "canvas",
-        selector: 'body',
-        takeover: "always",
-        filename: "mail_{timestamp%32}.eml",
     });
     return settings;
 }

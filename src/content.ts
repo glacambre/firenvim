@@ -3,9 +3,24 @@ import { autofill } from "./autofill";
 import { confReady, getConf } from "./utils/configuration";
 import { getNeovimFrameFunctions, getActiveContentFunctions, getTabFunctions } from "./page";
 
-if (document.location.href === "https://github.com/glacambre/firenvim/issues/new"
+if (document.location.href.startsWith("https://github.com/")
     || document.location.protocol === "file:" && document.location.href.endsWith("github.html")) {
     addEventListener("load", autofill);
+    let lastUrl = location.href; 
+    // We have to use a MutationObserver to trigger autofill because Github
+    // uses "progressive enhancement" and thus doesn't always trigger a load
+    // event. But we can't always rely on the MutationObserver without the load
+    // event because the MutationObserver won't be triggered on hard page
+    // reloads!
+    new MutationObserver(() => {
+      const url = location.href;
+      if (url !== lastUrl) {
+        lastUrl = url;
+        if (lastUrl === "https://github.com/glacambre/firenvim/issues/new") {
+            autofill();
+        }
+      }
+    }).observe(document, {subtree: true, childList: true});
 }
 
 // Promise used to implement a locking mechanism preventing concurrent creation

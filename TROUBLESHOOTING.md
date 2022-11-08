@@ -81,9 +81,4 @@ Note that this sets your `$PATH` in stone and that in order to update it you'll 
 
 You can't use `echo` or `echom` in your init.vim before Firenvim has been loaded and initialized. If you need to debug your init.vim, you could try one of these two apparoaches:
 - Append the messages you would normally `echom` to a list which you will only display after the `UiEnter` autocommand has been triggered.
-- Use `echoerr` instead and redirect Neovim's stderr to a file on your disk in the [firenvim script](#make-sure-the-firenvim-script-has-been-created) like this:
-
-```diff
--exec '/usr/bin/nvim' --headless --cmd "let g:firenvim_i=[]|let g:firenvim_o=[]|let g:Firenvim_oi={i,d,e->add(g:firenvim_i,d)}|let g:Firenvim_oo={t->add(g:firenvim_o,t)}|let g:firenvim_c=stdioopen({'on_stdin':{i,d,e->g:Firenvim_oi(i,d,e)},'on_print':{t->g:Firenvim_oo(t)}})" --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()'
-+exec '/usr/bin/nvim' --headless --cmd "let g:firenvim_i=[]|let g:firenvim_o=[]|let g:Firenvim_oi={i,d,e->add(g:firenvim_i,d)}|let g:Firenvim_oo={t->add(g:firenvim_o,t)}|let g:firenvim_c=stdioopen({'on_stdin':{i,d,e->g:Firenvim_oi(i,d,e)},'on_print':{t->g:Firenvim_oo(t)}})" --cmd 'let g:started_by_firenvim = v:true' -c 'call firenvim#run()' 2>>/tmp/stderr | tee -a /tmp/stdout
-```
+- Use `echoerr` instead and redirect Neovim's stderr to a file on your disk in the [firenvim script](#make-sure-the-firenvim-script-has-been-created) by appending `2>>/tmp/stderr | tee -a /tmp/stdout` at the end of the `exec` line.

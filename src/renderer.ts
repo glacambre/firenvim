@@ -1,5 +1,5 @@
 import { parseGuifont, toHexCss } from "./utils/utils";
-import { NvimMode, confReady, getGlobalConf } from "./utils/configuration";
+import { NvimMode, confReady, getGlobalConf, ISiteConfig } from "./utils/configuration";
 import { EventEmitter } from "./EventEmitter";
 
 type ResizeEvent = {grid: number, width: number, height: number};
@@ -53,6 +53,11 @@ export function setCanvas (cvs: HTMLCanvasElement) {
     defaultFontString = makeFontString(defaultFontSize, defaultFontFamily);
     state.context = state.canvas.getContext("2d", { "alpha": false });
     setFontString(state, defaultFontString);
+}
+
+let settings: ISiteConfig;
+export function setSettings (s: ISiteConfig) {
+    settings = s
 }
 
 // We first define highlight information.
@@ -679,6 +684,9 @@ function scheduleFrame() {
 }
 
 function paintMessages(state: State) {
+    if (settings.cmdline === "none") {
+        return;
+    }
     const ctx = state.context;
     const gId = getGridId();
     const messagesPosition = state.messagesPositions[gId];
@@ -740,6 +748,9 @@ function paintMessages(state: State) {
 }
 
 function paintCommandlineWindow(state: State) {
+    if (settings.cmdline === "none") {
+        return;
+    }
     const ctx = state.context;
     const [charWidth, charHeight, baseline] = getGlyphInfo(state);
     const commandLine = state.commandLine;

@@ -25,11 +25,6 @@ const browserFiles = [
   "static/firenvim.svg",
 ]
 
-const thunderbirdFiles = [
-  "src/manifest.json",
-  "static/firenvim.svg",
-];
-
 const config = {
   mode: "development",
 
@@ -85,7 +80,6 @@ const package_json = JSON.parse(require("fs").readFileSync(path.join(__dirname, 
 
 const chrome_target_dir = path.join(__dirname, "target", "chrome")
 const firefox_target_dir = path.join(__dirname, "target", "firefox")
-const thunderbird_target_dir = path.join(__dirname, "target", "thunderbird")
 
 const chromeConfig = (config, env) => {
   const result = Object.assign(deepCopy(config), {
@@ -169,51 +163,6 @@ const firefoxConfig = (config, env) => {
   return result;
 }
 
-const thunderbirdConfig = (config, env) => {
-  delete config.entry.content;
-  delete config.entry.index;
-  config.entry.compose = "./src/compose.ts";
-  const result = Object.assign(deepCopy(config), {
-    output: {
-      path: thunderbird_target_dir,
-    },
-    plugins: [new CopyWebPackPlugin({
-      patterns: thunderbirdFiles.map(file => ({
-        from: file,
-        to: thunderbird_target_dir,
-        transform: (content, src) => {
-          switch(path.basename(src)) {
-            case "manifest.json":
-              const manifest = JSON.parse(content.toString());
-              manifest.browser_specific_settings = {
-                "gecko": {
-                  "id": "firenvim@lacamb.re",
-                  "strict_min_version": "92.0"
-                }
-              };
-              manifest.version = package_json.version;
-              manifest.description = "Turn thunderbird into a Neovim GUI.";
-              delete manifest.browser_action;
-              delete manifest.commands;
-              delete manifest.content_scripts;
-              delete manifest.web_accessible_resources;
-              manifest.permissions.push("compose");
-              manifest.permissions.push("compose.send");
-              content = JSON.stringify(manifest, undefined, 3);
-          }
-          return content;
-        }
-      }))
-    })]
-  });
-  try {
-    fs.rmdirSync(result.output.path, { recursive: true })
-  } catch (e) {
-    console.log(`Could not delete output dir (${e.message})`);
-  }
-  return result;
-}
-
 module.exports = args => {
   let env = "";
   if (args instanceof Object) {
@@ -235,9 +184,7 @@ module.exports = args => {
     return [chromeConfig(config, env)];
   } else if (env.startsWith("firefox")) {
     return [firefoxConfig(config, env)];
-  } else if (env.startsWith("thunderbird")) {
-    return [thunderbirdConfig(config, env)];
   }
-  return [chromeConfig(config, env), firefoxConfig(config, env), thunderbirdConfig(config, env)];
+  return [chromeConfig(config, env), firefoxConfig(config, env)];
 }
 

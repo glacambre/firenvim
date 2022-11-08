@@ -4,8 +4,8 @@ import { executeInPage   } from "./utils/utils";
 import { getConf         } from "./utils/configuration";
 import { keysToEvents    } from "./utils/keys";
 
-// This module is loaded in both the browser's content script, the browser's
-// frame script and thunderbird's compose script.
+// This module is loaded in both the browser's content script and the browser's
+// frame script.
 // As such, it should not have any side effects.
 
 interface IGlobalState {

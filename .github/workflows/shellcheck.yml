@@ -1,0 +1,22 @@
+name: Shellcheck
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - '*'
+
+jobs:
+  shellcheck:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Run Shellcheck
+      run: find . -iname "*.sh" -exec shellcheck "{}" "+"
