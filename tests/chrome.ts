@@ -59,7 +59,6 @@ import * as coverageServer  from "./_coverageserver";
 
 describe("Chrome", () => {
 
-        let nonHeadlessTest = () => env["HEADLESS"] ? test.skip : test;
         let driver: any = undefined;
         let server: any = coverageServer;
         let background: any = undefined;
