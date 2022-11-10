@@ -308,6 +308,25 @@ let g:firenvim_config = {
 
 Will result in Firenvim using `/tmp/github.com_issues-new.txt` on Github's new issue page. The default value of this setting is `{hostname%32}_{pathname%32}_{selector%32}_{timestamp%32}.{extension}`.
 
+### Using init.lua
+
+The Firenvim configuration object can be set using a Lua table. For example:
+
+```lua
+vim.g.firenvim_config = {
+  globalSettings = { alt = "all", },
+  localSettings = {
+    [".*"] = {
+      cmdline = "neovim",
+      content = "text",
+      priority = 0,
+      selector = "textarea",
+      takeover = "always",
+    },
+  }
+}
+```
+
 ## Drawbacks
 
 Some keybindings, such as `<C-n>`, `<C-t>` and `<C-w>` are not overridable through usual means. This means that you have to tell your browser to let Firenvim override them by using [the shortcuts menu in `about://addons`](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) on Firefox and `chrome://extensions/shortcuts` in Chrome.
