@@ -83,6 +83,13 @@ function! s:to_wsl_path(path) abort
         if a:path[0] ==# '/'
                 return a:path
         endif
+        if executable('wslpath')
+                try
+                        " 0:-2 because we need to remove the \r\n
+                        return system(['wslpath', '-a', '-u', a:path])[0:-2]
+                catch
+                endtry
+        endif
         let l:path_components = split(a:path, '\\')
         return join(['/mnt', tolower(path_components[0][0:-2])] + l:path_components[1:-1], '/')
 endfunction
