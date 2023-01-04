@@ -643,8 +643,8 @@ function! s:get_executable_content(data_dir, prolog) abort
                                   \ "-c 'try|" .
                                       \ 'call firenvim#run()|' .
                                     \ 'catch|' .
-                                      \ "call chansend(g:firenvim_c,[\"f\\n\\n\\n\"..json_encode({\"messages\":[\"Your plugin manager did not load the Firenvim plugin for neovim.\"]+g:firenvim_o,\"version\":\"0.0.0\"})])|" .
-                                      \ "call chansend(2,[\"Firenvim not in rtp:\"..&rtp])|" .
+                                      \ "call chansend(g:firenvim_c,[\"f\\n\\n\\n\"..json_encode({\"messages\":[\"Your plugin manager did not load the Firenvim plugin for neovim.\"],\"version\":\"0.0.0\"})])|" .
+                                      \ "call chansend(2,[\"Firenvim not in rtp:\"..&rtp]+g:firenvim_o)|" .
                                       \ 'qall!' .
                                   \ "|endtry'\n"
 endfunction
