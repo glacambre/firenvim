@@ -144,6 +144,18 @@ endfunction
 " - Write the security token + tcp port number to stdout()
 " - Take care of forwarding messages received on the TCP port to neovim
 function! firenvim#run() abort
+        if !exists('g:firenvim_o')
+                let g:firenvim_o=[]
+        endif
+        " g:Firenvim_oo so far only added on_print messages to g:Firenvim_o,
+        " so that messages emitted before firenvim is loaded could be caught.
+        " When firenvim#run() is called, we know Firenvim has been properly
+        " loaded by the user's plugin manager, and so we can redefine it to
+        " send messages to stderr
+        let g:Firenvim_oo={t->chansend(2,[string(t)]+add(g:firenvim_o,t))}
+        if len(g:firenvim_o) > 0
+                call chansend(2,string(g:firenvim_o))
+        endif
         " Write messages to stdout according to the format expected by
         " Firefox's native messaging protocol
         function! WriteStdout(id, data) abort
