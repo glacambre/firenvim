@@ -908,6 +908,10 @@ function! firenvim#install(...) abort
                         call firenvim#install(l:force_install, l:script_prolog)
                 endif
         endif
+
+        if luaeval('lvim~=nil')
+                echo 'WARNING: Lunarvim is not supported. Do not open issues if you use Lunarvim.'
+        endif
 endfunction
 
 " Removes files created by Firenvim during its installation process
