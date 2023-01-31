@@ -39,6 +39,18 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
         }
         ```
 
+    * [lazy](https://github.com/folke/lazy.nvim)
+
+        ```lua
+        {
+            'glacambre/firenvim',
+            build = function() vim.fn['firenvim#install'](0) end,
+
+            -- Lazy load firenvim
+            -- Explanation: https://github.com/folke/lazy.nvim/discussions/463#discussioncomment-4819297
+            cond = not not vim.g.started_by_firenvim
+        }
+
     * [minpac](https://github.com/k-takata/minpac)
 
         ```vim
