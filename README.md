@@ -68,7 +68,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
         $ nvim --headless "+call firenvim#install(0) | q"
         ```
 
-2. Finally, install the Firenvim addon for your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
+3. Finally, install the Firenvim addon for your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
 
 If you would rather build and install Firenvim from source, check [CONTRIBUTING.md](CONTRIBUTING.md).
 
