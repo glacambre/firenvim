@@ -109,7 +109,7 @@ function retryTest(f: testFunction): testFunction {
                                 result = await f(s, server, driver);
                         } catch (e) {
                                 failures += 1;
-                                failureLog += `\n\n===== ${s} attempt ${failures} =====\n`
+                                failureLog += `\n\n===== ${s} attempt ${failures} =====\n`;
                                 failureLog += e.stack.toString();
                                 failureLog += e.toString();
                                 failureLog += `\n== VimrcAfter ==:\n${readVimrc()}\n`;
@@ -470,7 +470,7 @@ const focusNextPrevTest = async (testTitle: string, server: any, driver: webdriv
         await driver.wait(async () => "" !== (await driver.switchTo().activeElement().getAttribute("id")), WAIT_DELAY, "focus_prev did not change focused element");
         expect(await driver.switchTo().activeElement().getAttribute("id")).toBe("before");
         await server.pullCoverageData(frameSocket);
-}
+};
 
 export const testFocusNextPrev1 = retryTest(withLocalPage("focusnext.html", focusNextPrevTest));
 export const testFocusNextPrev2 = retryTest(withLocalPage("focusnext2.html", focusNextPrevTest));
@@ -506,7 +506,7 @@ ${backup}`);
         await driver.wait(async () => (await input.getAttribute("value")) !== "", WAIT_DELAY, "Input value did not change");
         const value = await input.getAttribute("value");
         expect(value).toBe("Eval Works!");
-        await sendKeys(driver, `:call firenvim#eval_js("(()=>{throw new Error()})()", "OnResult")`.split("").concat([webdriver.Key.ENTER]))
+        await sendKeys(driver, `:call firenvim#eval_js("(()=>{throw new Error()})()", "OnResult")`.split("").concat([webdriver.Key.ENTER]));
         await driver.wait(async () => (await input.getAttribute("value")) !== value, WAIT_DELAY, "Input value did not change the second time");
         expect(await input.getAttribute("value")).toBe("{}");
         await server.pullCoverageData(frameSocket);
@@ -530,7 +530,7 @@ export const testPressKeys = retryTest(withLocalPage("chat.html", async (testTit
         await sendKeys(driver, ":call firenvim#press_keys('<Space>')".split("")
                 .concat(webdriver.Key.ENTER));
         await driver.wait(async () => ((await input.getAttribute("value")) !== value), WAIT_DELAY, "Input value did not change");
-        expect(await input.getAttribute("value")).toBe("<C-Enter> pressed!<C-A> pressed!b pressed!Space pressed!")
+        expect(await input.getAttribute("value")).toBe("<C-Enter> pressed!<C-A> pressed!b pressed!Space pressed!");
         await server.pullCoverageData(frameSocket);
 }));
 
@@ -886,7 +886,7 @@ ${vimrcContent}`);
         await sendKeys(driver, ":%s/b>/i>/g".split("")
                        .concat(webdriver.Key.ENTER)
                        .concat(":wq".split(""))
-                       .concat(webdriver.Key.ENTER))
+                       .concat(webdriver.Key.ENTER));
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
         await driver.wait(async () => (await input.getAttribute("innerHTML") !== innerHTML), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("innerText")).toBe(innerText);
@@ -919,7 +919,7 @@ ${vimrcContent}`);
         const [input, span] = await createFirenvimFor(server, driver, By.id("content-input"));
         const innerText = await input.getAttribute("innerText");
         const innerHTML = await input.getAttribute("innerHTML");
-        await sendKeys(driver, ":wq".split("").concat(webdriver.Key.ENTER))
+        await sendKeys(driver, ":wq".split("").concat(webdriver.Key.ENTER));
         await driver.wait(Until.stalenessOf(span), WAIT_DELAY, "Firenvim span did not disappear");
         await driver.wait(async () => (await input.getAttribute("innerHTML") !== innerHTML), WAIT_DELAY, "Input value did not change");
         expect(await input.getAttribute("innerText")).toBe(innerText);

@@ -2,7 +2,6 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const process = require("process");
-const spawn = require("child_process").spawn;
 
 let init_vim: string;
 
@@ -11,7 +10,6 @@ export function setupVimrc() {
         process.env.XDG_CONFIG_HOME = path.join(base_dir, "config");
         process.env.XDG_DATA_HOME = path.join(base_dir, "data");
         const nvim_conf_dir = path.join(process.env.XDG_CONFIG_HOME, "nvim");
-        const nvim_data_dir = path.join(process.env.XDG_DATA_HOME, "nvim");
         try {
                 fs.mkdirSync(nvim_conf_dir, { recursive: true });
                 fs.mkdirSync(nvim_conf_dir, { recursive: true });

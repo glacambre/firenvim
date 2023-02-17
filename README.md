@@ -1,4 +1,4 @@
-# Firenvim  [![Build & Test](https://github.com/glacambre/firenvim/workflows/Test/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Test) [![Total alerts](https://img.shields.io/lgtm/alerts/g/glacambre/firenvim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/glacambre/firenvim/alerts/) [![Vint](https://github.com/glacambre/firenvim/workflows/Vint/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Vint) [![Luacheck](https://github.com/glacambre/firenvim/workflows/Luacheck/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Luacheck) [![Matrix](https://img.shields.io/matrix/firenvim:matrix.org)](https://app.element.io/#/room/#firenvim:matrix.org) [![Wiki](https://img.shields.io/badge/wiki-open-brightgreen)](https://github.com/glacambre/firenvim/wiki)
+# Firenvim  [![Build & Test](https://github.com/glacambre/firenvim/workflows/Test/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Test) [![Vint](https://github.com/glacambre/firenvim/workflows/Vint/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Vint) [![Luacheck](https://github.com/glacambre/firenvim/workflows/Luacheck/badge.svg)](https://github.com/glacambre/firenvim/actions?workflow=Luacheck) [![Matrix](https://img.shields.io/matrix/firenvim:matrix.org)](https://app.element.io/#/room/#firenvim:matrix.org) [![Wiki](https://img.shields.io/badge/wiki-open-brightgreen)](https://github.com/glacambre/firenvim/wiki)
 
 Turn your browser¹ into a Neovim client (demos: [justinmk 🇺🇸](https://www.youtube.com/watch?v=suvh0yFfIB8), [Sean Feng 🇨🇳](https://www.youtube.com/watch?v=dNQJONKnJrg)).
 
@@ -38,6 +38,18 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
             run = function() vim.fn['firenvim#install'](0) end 
         }
         ```
+
+    * [lazy](https://github.com/folke/lazy.nvim)
+
+        ```lua
+        {
+            'glacambre/firenvim',
+            build = function() vim.fn['firenvim#install'](0) end,
+
+            -- Lazy load firenvim
+            -- Explanation: https://github.com/folke/lazy.nvim/discussions/463#discussioncomment-4819297
+            cond = not not vim.g.started_by_firenvim
+        }
 
     * [minpac](https://github.com/k-takata/minpac)
 
@@ -82,6 +94,8 @@ You can configure the keybinding to manually trigger Firenvim (`<C-e>` by defaul
 Temporarily disabling (and re-enabling) Firenvim in a tab can be done either by clicking on the Firenvim button next to the urlbar or by configuring a browser shortcut (see the previous section to find out how browser shortcuts can be configured).
 
 ### Building a Firenvim-specific config
+
+**New**: With Neovim nightly builds from 2023/02/17 or more recent, you can use [$NVIM_APPNAME](https://neovim.io/doc/user/starting.html#$NVIM_APPNAME) to define a completely separate firenvim config. In order to do that, make sure "NVIM_APPNAME" is appropriately set when you run firenvim#install().
 
 When it starts Neovim, Firenvim sets the variable `g:started_by_firenvim` which you can check to run different code in your init.vim. For example:
 
