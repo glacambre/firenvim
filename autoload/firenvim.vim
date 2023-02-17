@@ -636,6 +636,7 @@ function! s:get_executable_content(data_dir, prolog) abort
                                 \ s:capture_env_var('XDG_CONFIG_DIRS') .
                                 \ s:capture_env_var('XDG_CACHE_HOME') .
                                 \ s:capture_env_var('XDG_RUNTIME_DIR') .
+                                \ s:capture_env_var('NVIM_APPNAME') .
                                 \ a:prolog . "\n" .
                                 \ "exec '" . s:get_progpath() .
                                   \ "' --headless " . l:stdioopen .

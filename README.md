@@ -95,6 +95,8 @@ Temporarily disabling (and re-enabling) Firenvim in a tab can be done either by 
 
 ### Building a Firenvim-specific config
 
+**New**: With Neovim nightly builds from 2023/02/17 or more recent, you can use [$NVIM_APPNAME](https://neovim.io/doc/user/starting.html#$NVIM_APPNAME) to define a completely separate firenvim config. In order to do that, make sure "NVIM_APPNAME" is appropriately set when you run firenvim#install().
+
 When it starts Neovim, Firenvim sets the variable `g:started_by_firenvim` which you can check to run different code in your init.vim. For example:
 
 ```vim
