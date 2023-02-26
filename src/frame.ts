@@ -24,10 +24,11 @@ export const isReady = browser
                 await Promise.all([page.getEditorInfo(), connectionPromise]);
             await confReady;
             const urlSettings = getConfForUrl(url);
+            const canvas = document.getElementById("canvas") as HTMLCanvasElement;
             const nvimPromise = neovim(
                 page,
                 urlSettings,
-                document.getElementById("canvas") as HTMLCanvasElement,
+                canvas,
                 connectionData);
             const contentPromise = page.getElementContent();
 
@@ -126,10 +127,23 @@ export const isReady = browser
                             au VimLeave * ${cleanup}
                         augroup END`).split("\n").map(command => ["nvim_command", [command]]));
 
+            let mouseEnabled = true;
+            rendererEvents.on("mouseOn", () => {
+                canvas.oncontextmenu = () => false;
+                mouseEnabled = true;
+            });
+            rendererEvents.on("mouseOff", () => {
+                delete canvas.oncontextmenu;
+                mouseEnabled = false;
+            });
             window.addEventListener("mousemove", (evt: MouseEvent) => {
                 keyHandler.moveTo(evt.clientX, evt.clientY);
             });
             function onMouse(evt: MouseEvent, action: string) {
+                if (!mouseEnabled) {
+                    keyHandler.focus();
+                    return;
+                }
                 let button;
                 // Selenium can't generate wheel events yet :(
                 /* istanbul ignore next */
