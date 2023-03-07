@@ -116,7 +116,7 @@ zip --junk-paths target/chrome.zip target/chrome/*
 git archive "v$newVersion" > target/firenvim-firefox-sources.tar
 gzip target/firenvim-firefox-sources.tar
 
-# Everythign went fine, we can push
+# Everything went fine, we can push
 git push
 git push --tags
 gh release create "$newVersion" target/chrome.zip target/xpi/firefox-latest.xpi

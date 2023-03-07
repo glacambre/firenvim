@@ -11,7 +11,7 @@ call firenvim#install(0)
 
 - If this results in `Installed native matifest for ${browser}` being printed, the firenvim plugin is correctly installed in neovim and you can move on to the next troubleshooting step.
 
-- If this results in `No config detected for ${browser}` and `${browser}` is the browser you want to use firenvim with, this might be because your browser configuration files are in a non-standard directory. If this is the case, you will need to either create a symbolic link from your browser configuration directory to the expected one ([firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Manifest_location), [chrome](https://developer.chrome.com/apps/nativeMessaging#native-messaging-host-location)), or force-install Firenvim with `call firenvim#install(1)` and copy the contents of the defaut browser configuration directory ([firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Manifest_location), [chrome](https://developer.chrome.com/apps/nativeMessaging#native-messaging-host-location)) to your custom one.
+- If this results in `No config detected for ${browser}` and `${browser}` is the browser you want to use firenvim with, this might be because your browser configuration files are in a non-standard directory. If this is the case, you will need to either create a symbolic link from your browser configuration directory to the expected one ([firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Manifest_location), [chrome](https://developer.chrome.com/apps/nativeMessaging#native-messaging-host-location)), or force-install Firenvim with `call firenvim#install(1)` and copy the contents of the default browser configuration directory ([firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Manifest_location), [chrome](https://developer.chrome.com/apps/nativeMessaging#native-messaging-host-location)) to your custom one.
 
 - If this results in `Unknown function: firenvim#install` being printed, then firenvim is not correctly installed in neovim and this is likely a configuration error from your side. Check your configuration again.
 
@@ -57,7 +57,7 @@ In your browser, open the background console. This requires the following steps:
     * Go to `chrome://extensions`
     * Enable Developer mode (the button is in the top right corner)
     * Find firenvim.
-    * Click on the `backround page` link.
+    * Click on the `background page` link.
     * If the console already contains messages, empty by pressing `<C-l>`.
 
 Then, navigate to a page with a textarea (I really like `http://txti.es` for this). Open the content console (`<CS-I>` on both firefox and chrome/ium). If you're using firefox, also open and clear the Browser Console (`<CS-J>`). Then, click on the textarea. This should result in messages being printed in the console. If it doesn't, try clicking on the Firenvim icon next to the urlbar. If no messages are logged there either, try clicking on the `Reload settings` button.
