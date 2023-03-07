@@ -21,7 +21,7 @@ call firenvim#install(0)
 
 Running `call firenvim#install(0)` should have created a shell or batch script in `$XDG_DATA_HOME/firenvim` (on linux/osx, this usually is `$HOME/.local/share/firenvim`, on windows it's `%APPDATA%\firenvim`). Make sure that the script exists and that it is executable. Try running it in a shell, like this:
 ```sh
-echo 'abcde{}' | $XDG_DATA_HOME/firenvim/firenvim
+echo 'abcde{}' | ${XDG_DATA_HOME:-${HOME}/.local/share}/firenvim/firenvim
 ```
 This should print a json object the content of which is the current version of the firenvim neovim plugin. If it doesn't, please open a new github issue.
 
