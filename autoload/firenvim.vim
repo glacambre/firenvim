@@ -590,6 +590,7 @@ function! s:get_executable_content(data_dir, prolog) abort
         let l:stdioopen = ''
         if api_info().version.major > 0 || api_info().version.minor > 6
                 let l:stdioopen = '--cmd "' .
+                                        \"let g:firenvim_config={'globalSettings':{},'localSettings':{'.*':{}}}|" .
                                         \'let g:firenvim_i=[]|' .
                                         \'let g:firenvim_o=[]|' .
                                         \'let g:Firenvim_oi={i,d,e->add(g:firenvim_i,d)}|' .
