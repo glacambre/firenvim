@@ -597,14 +597,14 @@ function! s:get_executable_content(data_dir, prolog) abort
                                         \"let g:firenvim_c=stdioopen({'on_stdin':{i,d,e->g:Firenvim_oi(i,d,e)},'on_print':{t->g:Firenvim_oo(t)}})".
                                         \'"'
         endif
-	if s:is_wsl
-		" Get path of firenvim script on the linux side, execute that
-		" from the windows batch script
-		let s:is_wsl = v:false
-		let l:script_path = s:get_firenvim_script_path()
-		let s:is_wsl = v:true
-		return "@echo off\r\nwsl \"" . l:script_path . '"'
-	endif
+        if s:is_wsl
+                " Get path of firenvim script on the linux side, execute that
+                " from the windows batch script
+                let s:is_wsl = v:false
+                let l:script_path = s:get_firenvim_script_path()
+                let s:is_wsl = v:true
+                return "@echo off\r\nwsl \"" . l:script_path . '"'
+        endif
         if has('win32') || s:is_wsl
                 let l:wsl_prefix = ''
                 if s:is_wsl
