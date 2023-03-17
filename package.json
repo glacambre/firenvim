@@ -9,7 +9,7 @@
     "ace-builds": "^1.4.13",
     "addons-linter": "^5.20.0",
     "codemirror": "^5.63.1",
-    "copy-webpack-plugin": "9.0.1",
+    "copy-webpack-plugin": "11.0.0",
     "editor-adapter": "^0.0.5",
     "imports-loader": "^3.1.1",
     "istanbul-lib-coverage": "^3.2.0",
