@@ -76,7 +76,7 @@ describe("Firefox", () => {
 
                 const coverage_dir = path.join(process.cwd(), ".nyc_output");
                 try {
-                        fs.rmdirSync(coverage_dir, { recursive: true });
+                        fs.rmSync(coverage_dir, { recursive: true });
                 } catch (e) {}
                 fs.mkdirSync(coverage_dir, { recursive: true });
 
