@@ -201,44 +201,45 @@ browser.runtime.onMessage.addListener(async (request: { funcName: string[], args
     throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
 });
 
+function onScroll(cont: boolean) {
+    window.requestAnimationFrame(() => {
+        const posChanged = Array.from(firenvimGlobal.firenvimElems.entries())
+        .map(([_, elem]) => elem.putEditorCloseToInputOrigin())
+        .find(changed => changed.posChanged);
+        if (posChanged) {
+            // As long as one editor changes position, try to resize
+            onScroll(true);
+        } else if (cont) {
+            // No editor has moved, but this might be because the website
+            // implements some kind of smooth scrolling that doesn't make
+            // the textarea move immediately. In order to deal with these
+            // cases, schedule a last redraw in a few milliseconds
+            setTimeout(() => onScroll(false), 100);
+        }
+    });
+}
+
+function doScroll() {
+    return onScroll(true);
+}
+
+function addNvimListener(elem: Element) {
+    elem.removeEventListener("focus", firenvimGlobal.nvimify);
+    elem.addEventListener("focus", firenvimGlobal.nvimify);
+    let parent = elem.parentElement;
+    while (parent) {
+        parent.removeEventListener("scroll", doScroll);
+        parent.addEventListener("scroll", doScroll);
+        parent = parent.parentElement;
+    }
+}
 
 function setupListeners(selector: string) {
-    function onScroll(cont: boolean) {
-        window.requestAnimationFrame(() => {
-            const posChanged = Array.from(firenvimGlobal.firenvimElems.entries())
-                .map(([_, elem]) => elem.putEditorCloseToInputOrigin())
-                .find(changed => changed.posChanged);
-            if (posChanged) {
-                // As long as one editor changes position, try to resize
-                onScroll(true);
-            } else if (cont) {
-                // No editor has moved, but this might be because the website
-                // implements some kind of smooth scrolling that doesn't make
-                // the textarea move immediately. In order to deal with these
-                // cases, schedule a last redraw in a few milliseconds
-                setTimeout(() => onScroll(false), 100);
-            }
-        });
-    }
-    function doScroll() {
-        return onScroll(true);
-    }
     window.addEventListener("scroll", doScroll);
     window.addEventListener("wheel", doScroll);
     (new ((window as any).ResizeObserver)((_: any[]) => {
         onScroll(true);
     })).observe(document.documentElement);
-
-    function addNvimListener(elem: Element) {
-        elem.removeEventListener("focus", firenvimGlobal.nvimify);
-        elem.addEventListener("focus", firenvimGlobal.nvimify);
-        let parent = elem.parentElement;
-        while (parent) {
-            parent.removeEventListener("scroll", doScroll);
-            parent.addEventListener("scroll", doScroll);
-            parent = parent.parentElement;
-        }
-    }
 
     (new MutationObserver((changes, _) => {
         if (changes.filter(change => change.addedNodes.length > 0).length <= 0) {
@@ -296,7 +297,7 @@ function setupListeners(selector: string) {
 
 export const listenersSetup = new Promise(resolve => {
     confReady.then(() => {
-        const conf: { selector: string } = getConf();
+        const conf = getConf();
         if (conf.selector !== undefined && conf.selector !== "") {
             setupListeners(conf.selector);
         }
