@@ -117,7 +117,7 @@ const chromeConfig = (config, env) => {
     ]
   });
   try {
-    fs.rmdirSync(result.output.path, { recursive: true })
+    fs.rmSync(result.output.path, { recursive: true })
   } catch (e) {
     console.log(`Could not delete output dir (${e.message})`);
   }
@@ -156,7 +156,7 @@ const firefoxConfig = (config, env) => {
     })]
   });
   try {
-    fs.rmdirSync(result.output.path, { recursive: true })
+    fs.rmSync(result.output.path, { recursive: true })
   } catch (e) {
     console.log(`Could not delete output dir (${e.message})`);
   }
