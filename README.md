@@ -160,7 +160,7 @@ vim.g.firenvim_config = {
 With this configuration, `takeover` will be set to `always` on all websites. If we wanted to override this value on british websites, we could add the following lines to our init.vim. Notice how the priority of this new regex is higher than that of the `.*` regex:
 
 ```lua
-vim.g.firenvim_config.localSettings["https?://[^/]+\.co\.uk/"] = { takeover = 'never', priority = 1 }
+vim.g.firenvim_config.localSettings["https?://[^/]+\\.co\\.uk/"] = { takeover = 'never', priority = 1 }
 ```
 
 ### Configuring what elements Firenvim should appear on
