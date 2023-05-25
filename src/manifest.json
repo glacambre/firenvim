@@ -16,13 +16,13 @@
          }
       },
       "send_C-n": {
-         "description": "Send <C-n> to firenvim."
+         "description": "Send Ctrl-n to firenvim."
       },
       "send_C-t": {
-         "description": "Send <C-t> to firenvim."
+         "description": "Send Ctrl-t to firenvim."
       },
       "send_C-w": {
-         "description": "Send <C-w> to firenvim."
+         "description": "Send Ctrl-w to firenvim."
       },
       "toggle_firenvim": {
          "description": "Toggle Firenvim in the current tab."
