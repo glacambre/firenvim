@@ -472,13 +472,6 @@ function! s:get_chrome_dev_manifest_dir_path() abort
         return s:build_path([$HOME, '.config', 'google-chrome-unstable', 'NativeMessagingHosts'])
 endfunction
 
-function! s:get_arc_manifest_dir_path() abort
-        if has('mac')
-                return s:get_chrome_manifest_dir_path()
-        end
-        return throw 'No Arc on any other than mac.'
-endfunction
-
 function! s:get_brave_manifest_dir_path() abort
         if has('mac')
                 return s:get_chrome_manifest_dir_path()
@@ -712,7 +705,7 @@ function! s:get_browser_configuration() abort
                 \'arc': {
                         \ 'has_config': s:arc_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
-                        \ 'manifest_dir_path': function('s:get_arc_manifest_dir_path'),
+                        \ 'manifest_dir_path': function('s:get_chrome_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \},
                 \'brave': {
