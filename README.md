@@ -2,7 +2,7 @@
 
 Turn your browser¹ into a Neovim client (demos: [justinmk 🇺🇸](https://www.youtube.com/watch?v=suvh0yFfIB8), [Sean Feng 🇨🇳](https://www.youtube.com/watch?v=dNQJONKnJrg)).
 
-¹ <sub>Firefox and Chrome are specifically supported. Other Chromium based browsers such as Brave, Vivaldi, and Opera should also work but are not specifically tested.</sub>
+¹ <sub>Firefox and Chrome are specifically supported. Other Chromium based browsers such as Brave, Vivaldi, Opera, and Arc should also work but are not specifically tested.</sub>
 
 ![Firenvim demo](firenvim.gif)
 
@@ -77,7 +77,7 @@ If you would rather build and install Firenvim from source, check [CONTRIBUTING.
 
 #### Other browsers
 
-Other browsers aren't supported for now. Opera, Vivaldi and other Chromium-based browsers should however work just like in Chromium and have similar install steps. Brave and Edge might work, Safari doesn't (it doesn't support Webextensions).
+Other browsers aren't supported for now. Opera, Vivaldi and other Chromium-based browsers should however work just like in Chromium and have similar install steps. Brave, Edge, and Arc might work, Safari doesn't (it doesn't support Webextensions).
 
 ## Permissions
 

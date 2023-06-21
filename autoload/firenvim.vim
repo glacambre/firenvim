@@ -309,6 +309,14 @@ function! s:get_librewolf_manifest_dir_path() abort
         return s:build_path([$HOME, '.librewolf', 'native-messaging-hosts'])
 endfunction
 
+function! s:arc_config_exists() abort
+        let l:p = [$HOME, '.config', 'Arc']
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'Arc']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
 function! s:brave_config_exists() abort
         let l:p = [$HOME, '.config', 'BraveSoftware']
         if has('mac')
@@ -462,6 +470,13 @@ function! s:get_chrome_dev_manifest_dir_path() abort
                 return s:build_path([$XDG_CONFIG_HOME, 'google-chrome-unstable', 'NativeMessagingHosts'])
         end
         return s:build_path([$HOME, '.config', 'google-chrome-unstable', 'NativeMessagingHosts'])
+endfunction
+
+function! s:get_arc_manifest_dir_path() abort
+        if has('mac')
+                return s:get_chrome_manifest_dir_path()
+        end
+        return throw 'No Arc on any other than mac.'
 endfunction
 
 function! s:get_brave_manifest_dir_path() abort
@@ -694,6 +709,12 @@ endfunction
 function! s:get_browser_configuration() abort
         " Brave, Opera and Vivaldi all rely on Chrome's native messenger
         let l:browsers = {
+                \'arc': {
+                        \ 'has_config': s:arc_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_arc_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \},
                 \'brave': {
                         \ 'has_config': s:brave_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
