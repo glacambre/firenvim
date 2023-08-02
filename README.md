@@ -127,9 +127,11 @@ vim.api.nvim_create_autocmd({'UIEnter'}, {
 
 Similarly, you can detect when Firenvim disconnects from a Neovim instance with the `UILeave` autocommand.
 
-### Using different settings depending on the page/element being edited
+### Using different settings depending on the url/page/element being edited
 
-If you want to use different settings depending on the textarea you're currently editing, you can use autocommands to do that too. All buffers are named like this: `domainname_page_selector.txt` (see the [toFileName function](src/utils/utils.ts)). For example, this will set file type to markdown for all GitHub buffers:
+The nvim buffer loaded into a textarea is given a unique name. All buffers are named something like this: `domainname_page_selector.txt` (see the [toFileName function](src/utils/utils.ts)).
+
+This alows you to configure different settings by creating autocommands targeting/matching the buffername for that url/page/element. For example, this will set file type to markdown for all GitHub buffers:
 
 ```lua
 vim.api.nvim_create_autocmd({'BufEnter'}, {
@@ -137,6 +139,8 @@ vim.api.nvim_create_autocmd({'BufEnter'}, {
     cmd = "set filetype=markdown"
 })
 ```
+
+To view the buffername of your nvim instance in a textarea, use `:buffers`.
 
 ### Understanding Firenvim's configuration object
 
