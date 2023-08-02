@@ -120,7 +120,7 @@ export const isReady = browser
                                 + `call rpcnotify(${chan}, `
                                     + `'firenvim_bufwrite', `
                                     + `{`
-                                        + `'text': FirenvimWrite,`
+                                        + `'text': FirenvimWrite(),`
                                         + `'cursor': nvim_win_get_cursor(0),`
                                     + `})
                             au VimLeave * ${cleanup}
