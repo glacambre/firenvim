@@ -171,7 +171,7 @@ vim.g.firenvim_config.localSettings["https?://[^/]+\\.co\\.uk/"] = { takeover = 
 The `selector` attribute of a localSetting controls what elements Firenvim automatically takes over. Here's the default value:
 
 ```lua
-vim.g.firenvim_config.localSettings['.*'] = { selector = 'textarea:not([readonly]), div[role="textbox"]' }
+vim.g.firenvim_config.localSettings['.*'] = { selector = 'textarea:not([readonly], [aria-readonly]), div[role="textbox"]' }
 ```
 
 If you don't want to use Firenvim with rich text editors (e.g. Gmail, Outlook, Slack…) as a general rule, you might want to restrict Firenvim to simple textareas:

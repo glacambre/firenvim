@@ -112,7 +112,7 @@ export function mergeWithDefaults(os: string, settings: any): IConfig {
         content: "text",
         priority: 0,
         renderer: "canvas",
-        selector: 'textarea:not([readonly]), div[role="textbox"]',
+        selector: 'textarea:not([readonly], [aria-readonly]), div[role="textbox"]',
         // "takeover": "always" | "once" | "empty" | "nonempty" | "never"
         // #265: On "once", don't automatically bring back after :q'ing it
         takeover: "always",
