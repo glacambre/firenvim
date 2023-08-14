@@ -23,9 +23,9 @@ jobs:
     - name: Install eslint
       run: npm install eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser
     - name: Run ESlint
-      run: '"$(npm bin)/eslint" "./**/*.ts"'
+      run: '"./node_modules/.bin/eslint" "./**/*.ts"'
     - name: Run addons-linter
-      run: 'npm run build && npm run pack && "$(npm bin)/addons-linter" target/xpi/firefox-latest.xpi' 
+      run: 'npm run build && npm run pack && "./node_modules/.bin/addons-linter" target/xpi/firefox-latest.xpi' 
 
   test:
     needs: tslint

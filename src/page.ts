@@ -251,7 +251,6 @@ export function getNeovimFrameFunctions(global: IGlobalState) {
 // Definition of a proxy type that lets the frame script transparently call //
 // the content script's functions                                           //
 //////////////////////////////////////////////////////////////////////////////
-;
 
 // The proxy automatically appends the frameId to the request, so we hide that from users
 type ArgumentsType<T> = T extends (x: any, ...args: infer U) => any ? U: never;
@@ -309,4 +308,4 @@ export function getPageProxy (frameId: number) {
         });
     }
     return page as PageType;
-};
+}

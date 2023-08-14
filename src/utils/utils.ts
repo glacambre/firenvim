@@ -294,7 +294,7 @@ export function parseSingleGuifont(guifont: string, defaults: any) {
             }
             return acc;
         }, result as any);
-};
+}
 
 // Parses a guifont declaration as described in `:h E244`
 // defaults: default value for each of.

@@ -6,7 +6,7 @@ type ResizeEvent = {grid: number, width: number, height: number};
 type FrameResizeEvent = {width: number, height: number}
 type ModeChangeEvent = NvimMode;
 type ResizeEventHandler = (e: ResizeEvent | FrameResizeEvent | ModeChangeEvent) => void;
-type EventKind = "resize" | "frameResize" | "modeChange";
+type EventKind = "resize" | "frameResize" | "modeChange" | "mouseOn" | "mouseOff";
 export const events = new EventEmitter<EventKind, ResizeEventHandler>();
 
 let glyphCache : any = {};
@@ -594,6 +594,12 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
         const mode = globalState.mode;
         mode.styleEnabled = cursorStyleEnabled;
         mode.modeInfo = modeInfo;
+    },
+    mouse_on: () => {
+        events.emit("mouseOn");
+    },
+    mouse_off: () => {
+        events.emit("mouseOff");
     },
     msg_clear: () => {
         damageMessagesSpace(globalState);

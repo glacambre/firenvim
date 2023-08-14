@@ -309,6 +309,14 @@ function! s:get_librewolf_manifest_dir_path() abort
         return s:build_path([$HOME, '.librewolf', 'native-messaging-hosts'])
 endfunction
 
+function! s:arc_config_exists() abort
+        let l:p = [$HOME, '.config', 'Arc']
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'Arc']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
 function! s:brave_config_exists() abort
         let l:p = [$HOME, '.config', 'BraveSoftware']
         if has('mac')
@@ -590,6 +598,7 @@ function! s:get_executable_content(data_dir, prolog) abort
         let l:stdioopen = ''
         if api_info().version.major > 0 || api_info().version.minor > 6
                 let l:stdioopen = '--cmd "' .
+                                        \"let g:firenvim_config={'globalSettings':{},'localSettings':{'.*':{}}}|" .
                                         \'let g:firenvim_i=[]|' .
                                         \'let g:firenvim_o=[]|' .
                                         \'let g:Firenvim_oi={i,d,e->add(g:firenvim_i,d)}|' .
@@ -597,14 +606,14 @@ function! s:get_executable_content(data_dir, prolog) abort
                                         \"let g:firenvim_c=stdioopen({'on_stdin':{i,d,e->g:Firenvim_oi(i,d,e)},'on_print':{t->g:Firenvim_oo(t)}})".
                                         \'"'
         endif
-	if s:is_wsl
-		" Get path of firenvim script on the linux side, execute that
-		" from the windows batch script
-		let s:is_wsl = v:false
-		let l:script_path = s:get_firenvim_script_path()
-		let s:is_wsl = v:true
-		return "@echo off\r\nwsl \"" . l:script_path . '"'
-	endif
+        if s:is_wsl
+                " Get path of firenvim script on the linux side, execute that
+                " from the windows batch script
+                let s:is_wsl = v:false
+                let l:script_path = s:get_firenvim_script_path()
+                let s:is_wsl = v:true
+                return "@echo off\r\nwsl \"" . l:script_path . '"'
+        endif
         if has('win32') || s:is_wsl
                 let l:wsl_prefix = ''
                 if s:is_wsl
@@ -693,6 +702,12 @@ endfunction
 function! s:get_browser_configuration() abort
         " Brave, Opera and Vivaldi all rely on Chrome's native messenger
         let l:browsers = {
+                \'arc': {
+                        \ 'has_config': s:arc_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_chrome_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \},
                 \'brave': {
                         \ 'has_config': s:brave_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
