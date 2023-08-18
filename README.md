@@ -282,7 +282,7 @@ Since Firenvim simply uses the BufWrite event in order to detect when it needs t
 
 ```lua
 vim.api.nvim_create_autocmd({'TextChanged', 'TextChangedI'}, {
-    nested = true
+    nested = true,
     command = "write"
 })
 ```
