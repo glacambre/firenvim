@@ -918,7 +918,7 @@ function! firenvim#install(...) abort
         endfor
 
         if !s:is_wsl
-                let s:is_wsl = !empty($WSLENV) || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
+                let s:is_wsl = !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
                 if s:is_wsl
                         echo 'Installation complete on the wsl side. Performing install on the windows side.'
                         call firenvim#install(l:force_install, l:script_prolog)
