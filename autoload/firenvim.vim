@@ -887,7 +887,7 @@ function! firenvim#install(...) abort
                         call s:maybe_execute('writefile', split(l:ps1_content, "\n"), l:ps1_path)
                         call s:maybe_execute('setfperm', l:ps1_path, 'rwx------')
                         try
-                                let o = s:maybe_execute('system', ['powershell.exe', '-Command', '-'], readfile(l:ps1_path))
+                                let o = s:maybe_execute('system', ['powershell.exe', '-NonInteractive', '-Command', '-'], readfile(l:ps1_path))
                         catch /powershell.exe' is not executable/
                                 let l:failure = v:true
                                 let l:msg = 'Error: Firenvim could not find powershell.exe'
@@ -955,7 +955,7 @@ function! firenvim#uninstall() abort
                 if has('win32') || s:is_wsl
                         echo 'Removing registry key for ' . l:name . '. This may take a while.'
                         let l:ps1_content = 'Remove-Item -Path "' . l:cur_browser['registry_key'] . '" -Recurse'
-                        let o = system(['powershell.exe', '-Command', '-'], [l:ps1_content])
+                        let o = system(['powershell.exe', '-NonInteractive', '-Command', '-'], [l:ps1_content])
                         if v:shell_error
                           echo o
                         endif
