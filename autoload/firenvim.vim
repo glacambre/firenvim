@@ -931,6 +931,12 @@ function! firenvim#install(...) abort
 endfunction
 
 " Removes files created by Firenvim during its installation process
+
+" The uninstallation logic is similar to `firenvim#install`:
+" > At first, is_wsl is set to false, even on WSL. This lets us uninstall
+" firenvim on the wsl side.
+" > Then, we set is_wsl to true if we're on wsl and launch
+" firenvim#uninstall again, uninstalling things on the host side.
 function! firenvim#uninstall() abort
 
         let l:data_dir = s:get_data_dir_path()
@@ -965,6 +971,14 @@ function! firenvim#uninstall() abort
                 call delete(l:manifest_path)
                 echo 'Removed native manifest for ' . l:name . '.'
         endfor
+
+        if !s:is_wsl
+                let s:is_wsl = !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
+                if s:is_wsl
+                        echo 'Uninstallation complete on the wsl side. Performing uninstall on the windows side.'
+                        call firenvim#uninstall()
+                endif
+        endif
 endfunction
 
 function! firenvim#onUIEnter(event) abort
