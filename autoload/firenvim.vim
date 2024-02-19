@@ -887,7 +887,7 @@ function! firenvim#install(...) abort
                         call s:maybe_execute('writefile', split(l:ps1_content, "\n"), l:ps1_path)
                         call s:maybe_execute('setfperm', l:ps1_path, 'rwx------')
                         try
-                                let o = s:maybe_execute('system', ['powershell.exe', '-Command', '-'], readfile(l:ps1_path))
+                                let o = s:maybe_execute('system', ['powershell.exe', '-NonInteractive', '-Command', '-'], readfile(l:ps1_path))
                         catch /powershell.exe' is not executable/
                                 let l:failure = v:true
                                 let l:msg = 'Error: Firenvim could not find powershell.exe'
@@ -918,7 +918,7 @@ function! firenvim#install(...) abort
         endfor
 
         if !s:is_wsl
-                let s:is_wsl = !empty($WSLENV) || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
+                let s:is_wsl = has('wsl') || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
                 if s:is_wsl
                         echo 'Installation complete on the wsl side. Performing install on the windows side.'
                         call firenvim#install(l:force_install, l:script_prolog)
@@ -931,6 +931,12 @@ function! firenvim#install(...) abort
 endfunction
 
 " Removes files created by Firenvim during its installation process
+
+" The uninstallation logic is similar to `firenvim#install`:
+" > At first, is_wsl is set to false, even on WSL. This lets us uninstall
+" firenvim on the wsl side.
+" > Then, we set is_wsl to true if we're on wsl and launch
+" firenvim#uninstall again, uninstalling things on the host side.
 function! firenvim#uninstall() abort
 
         let l:data_dir = s:get_data_dir_path()
@@ -955,7 +961,7 @@ function! firenvim#uninstall() abort
                 if has('win32') || s:is_wsl
                         echo 'Removing registry key for ' . l:name . '. This may take a while.'
                         let l:ps1_content = 'Remove-Item -Path "' . l:cur_browser['registry_key'] . '" -Recurse'
-                        let o = system(['powershell.exe', '-Command', '-'], [l:ps1_content])
+                        let o = system(['powershell.exe', '-NonInteractive', '-Command', '-'], [l:ps1_content])
                         if v:shell_error
                           echo o
                         endif
@@ -965,6 +971,14 @@ function! firenvim#uninstall() abort
                 call delete(l:manifest_path)
                 echo 'Removed native manifest for ' . l:name . '.'
         endfor
+
+        if !s:is_wsl
+                let s:is_wsl = has('wsl') || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
+                if s:is_wsl
+                        echo 'Uninstallation complete on the wsl side. Performing uninstall on the windows side.'
+                        call firenvim#uninstall()
+                endif
+        endif
 endfunction
 
 function! firenvim#onUIEnter(event) abort

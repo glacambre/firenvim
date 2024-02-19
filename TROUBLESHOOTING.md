@@ -19,7 +19,7 @@ call firenvim#install(0)
 
 ## Make sure the firenvim script has been created
 
-Running `call firenvim#install(0)` should have created a shell or batch script in `$XDG_DATA_HOME/firenvim` (on linux/osx, this usually is `$HOME/.local/share/firenvim`, on windows it's `%APPDATA%\firenvim`). Make sure that the script exists and that it is executable. Try running it in a shell, like this:
+Running `call firenvim#install(0)` should have created a shell or batch script in `$XDG_DATA_HOME/firenvim` (on linux/osx, this usually is `$HOME/.local/share/firenvim`, on windows it's `%LOCALAPPDATA%\firenvim`). Make sure that the script exists and that it is executable. Try running it in a shell, like this:
 ```sh
 echo 'abcde{}' | ${XDG_DATA_HOME:-${HOME}/.local/share}/firenvim/firenvim
 ```
@@ -37,7 +37,7 @@ Running `call firenvim#install(0)` should also have created a file named `firenv
     * For Firefox: `$HOME/Library/Application Support/Mozilla/NativeMessagingHosts`
     * For Chrome: `$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts`
     * For Chromium: `$HOME/Library/Application Support/Chromium/NativeMessagingHosts`
-- On Windows: in `%APPDATA%\firenvim` and check that the following registry keys exist and point to the native manifest:
+- On Windows: in `%LOCALAPPDATA%\firenvim` and check that the following registry keys exist and point to the native manifest:
     * For Firefox: `HKEY_CURRENT_USER\SOFTWARE\Mozilla\NativeMessagingHosts\firenvim`
     * For Chrome/Chromium: `HKEY_CURRENT_USER\SOFTWARE\Google\Chrome\NativeMessagingHosts\firenvim`
 
