@@ -16,15 +16,6 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
 
 1. Install Firenvim as a regular NeoVim plugin, then run the built-in post-install script.
 
-    * [packer](https://github.com/wbthomason/packer.nvim)
-
-        ```lua
-        use {
-            'glacambre/firenvim',
-            run = function() vim.fn['firenvim#install'](0) end 
-        }
-        ```
-
     * [lazy](https://github.com/folke/lazy.nvim)
 
         ```lua
@@ -54,13 +45,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
         endif
         ```
 
-    * [dein](https://github.com/Shougo/dein.vim)
-
-        ```vim
-        call dein#add('glacambre/firenvim', { 'hook_post_update': { _ -> firenvim#install(0) } })
-        ```
-
-    * [pathogen](https://github.com/tpope/vim-pathogen), [vundle](https://github.com/VundleVim/Vundle.vim), others
+    * [vundle](https://github.com/VundleVim/Vundle.vim), others
 
         Install the plugin as you usually would, then run this shell command:
 
