@@ -1,6 +1,16 @@
 # Troubleshooting Firenvim
 
-If you're having issues with Firenvim, here are the following steps you can take in order to check if everything is correctly set up on your side:
+If you're having issues with Firenvim, here are the steps you can take in order to check if everything is correctly set up on your side.
+
+## Make sure Flatpak and Snap are not preventing Firenvim from working
+
+If your browser is installed through Snap or Flatpak, sandboxing mechanisms might be preventing the browser from starting Neovim. You can confirm this by running:
+
+```
+flatpak permissions webextensions
+```
+
+If the output of this command shows that Snap/Flatpak are preventing Firenvim from running, you need to run `flatpak permission-set webextensions firenvim snap.firefox yes` to change that.
 
 ## Make sure the neovim plugin is installed
 
