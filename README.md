@@ -118,7 +118,7 @@ This alows you to configure different settings by creating autocommands targetin
 ```lua
 vim.api.nvim_create_autocmd({'BufEnter'}, {
     pattern = "github.com_*.txt",
-    cmd = "set filetype=markdown"
+    command = "set filetype=markdown"
 })
 ```
 
