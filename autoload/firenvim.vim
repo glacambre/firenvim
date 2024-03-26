@@ -273,6 +273,19 @@ function! s:get_data_dir_path() abort
         return s:build_path([l:xdg_data_home, 'firenvim'])
 endfunction
 
+function! s:browser_has_flatpak_installed(browser) abort
+        if has('linux') && has_key(a:browser, 'flatpak_name')
+            let l:cmd_output = system(['flatpak', 'info', a:browser['flatpak_name']])
+            if l:cmd_output =~ 'error:.*not installed'
+                return 0
+            else
+                return 1
+            endif
+        endif
+
+        return 0
+endfunction
+
 function! s:firefox_config_exists() abort
         let l:p = [$HOME, '.mozilla']
         if has('mac')
@@ -281,17 +294,25 @@ function! s:firefox_config_exists() abort
                 let l:p = [$HOME, 'AppData', 'Roaming', 'Mozilla', 'Firefox']
         elseif s:is_wsl
                 let l:p = [s:get_windows_env_path('%APPDATA%'), 'Mozilla', 'Firefox']
+        elseif system(['which', 'flatpak'])
+                return isdirectory(s:build_path([$HOME, '.var', 'app', 'org.mozilla.firefox', '.mozilla'])) || isdirectory(s:build_path(l:p))
         endif
         return isdirectory(s:build_path(l:p))
 endfunction
 
-function! s:get_firefox_manifest_dir_path() abort
-        if has('mac')
-                return s:build_path([$HOME, 'Library', 'Application Support', 'Mozilla', 'NativeMessagingHosts'])
-        elseif has('win32') || s:is_wsl
-                return s:get_data_dir_path()
-        end
-        return s:build_path([$HOME, '.mozilla', 'native-messaging-hosts'])
+function! s:get_firefox_manifest_dir_path(...) abort
+        let should_use_flatpak = get(a:000, 0, 0)
+
+        if should_use_flatpak == 1
+            return s:build_path([$HOME, '.var', 'app', s:get_browser_configuration()['firefox']['flatpak_name'], '.mozilla', 'native-messaging-hosts'])
+        else
+            if has('mac')
+                    return s:build_path([$HOME, 'Library', 'Application Support', 'Mozilla', 'NativeMessagingHosts'])
+            elseif has('win32') || s:is_wsl
+                    return s:get_data_dir_path()
+            end
+            return s:build_path([$HOME, '.mozilla', 'native-messaging-hosts'])
+        endif
 endfunction
 
 function! s:librewolf_config_exists() abort
@@ -749,6 +770,7 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_content': function('s:get_firefox_manifest'),
                         \ 'manifest_dir_path': function('s:get_firefox_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim',
+                        \ 'flatpak_name': 'org.mozilla.firefox',
                 \},
                 \'librewolf': {
                         \ 'has_config': s:librewolf_config_exists(),
@@ -857,6 +879,27 @@ function! firenvim#install(...) abort
                         continue
                 endif
 
+                let l:flatpak_result = s:browser_has_flatpak_installed(l:cur_browser)
+                if l:flatpak_result == 1
+                    try
+                            let l:manifest_content = l:cur_browser['manifest_content'](l:execute_nvim_path)
+                            let l:manifest_dir_path = l:cur_browser['manifest_dir_path'](1)
+                            let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim.json'])
+                    catch /.*/
+                            echo 'Aborting installation for ' . l:name . ' flatpak. ' . v:exception
+                            continue
+                    endtry
+
+                    call s:maybe_execute('mkdir', l:manifest_dir_path, 'p', 0700)
+                    call s:maybe_execute('writefile', [l:manifest_content], l:manifest_path)
+                    call s:maybe_execute('setfperm', l:manifest_path, 'rw-------')
+
+                    echo 'Installed flatpak manifest for ' . l:name . '.'
+
+                   call s:maybe_execute('system', ['ln', '-sf', stdpath("config"), s:build_path([$HOME, '.var', 'app', l:cur_browser['flatpak_name'], "config", "nvim"])]) 
+                   call s:maybe_execute('system', ['ln', '-sf', stdpath("data"), s:build_path([$HOME, '.var', 'app', l:cur_browser['flatpak_name'], "data", "nvim"])]) 
+                endif
+
                 try
                         let l:manifest_content = l:cur_browser['manifest_content'](l:execute_nvim_path)
                         let l:manifest_dir_path = l:cur_browser['manifest_dir_path']()
@@ -949,6 +992,18 @@ function! firenvim#uninstall() abort
                 let l:cur_browser = l:browsers[l:name]
                 if !l:cur_browser['has_config']
                         continue
+                endif
+
+                let l:flatpak_result = s:browser_has_flatpak_installed(l:cur_browser)
+                if l:flatpak_result == 1
+                    let l:manifest_content = l:cur_browser['manifest_content'](l:execute_nvim_path)
+                    let l:manifest_dir_path = l:cur_browser['manifest_dir_path'](1)
+                    let l:manifest_path = s:build_path([l:manifest_dir_path, 'firenvim.json'])
+
+                    call delete(l:manifest_path)
+                    call delete(s:build_path([$HOME, '.var', 'app', l:cur_browser['flatpak_name'], 'config', 'nvim']))
+                    call delete(s:build_path([$HOME, '.var', 'app', l:cur_browser['flatpak_name'], 'data', 'nvim']))
+                    echo 'Removed flatpak manifest for ' . l:name . '.'
                 endif
 
                 let l:manifest_dir_path = l:cur_browser['manifest_dir_path']()
