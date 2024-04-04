@@ -55,6 +55,25 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
 
 2. Install the Firenvim addon for your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
 
+3. If you're not using a flatpak browser, you can skip this
+
+While support for flatpaks was [recently](https://github.com/glacambre/firenvim/pull/1597) added for Firefox, other changes are still needed on the user's end.
+
+The following folders all need to be overridden in the flatpak config for the browser:
+
+- Whatever `:echo stdpath("config")` resolves to for you (normally `~/.config/nvim`)
+- Whatever `:echo stdpath("data")` resolves to for you (normall `~/.local/share/nvim`)
+- `~/.local/share/firenvim`
+- The path to `nvim` if it's installed using something like homebrew (if you're using your distro's package manager you should be able to ignore)
+- `/run/user/1000/firenvim` by default, or whichever path you've configured as the base for the files being edited
+
+You can do this using [flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal) (recommended) or create/amend the file in `~/.local/share/flatpak/overrides/org.mozilla.firefox` to look something similar to the below:
+
+```conf
+[Context]
+filesystems=/run/user/1000/firenvim;~/.local/share/firenvim;~/.local/share/nvim;~/.config/nvim
+```
+
 If you would rather build and install Firenvim from source, check [CONTRIBUTING.md](CONTRIBUTING.md).
 
 #### Other browsers
