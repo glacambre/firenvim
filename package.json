@@ -65,5 +65,8 @@
       "ts"
     ]
   },
-  "version": "0.2.15"
+  "version": "0.2.15",
+  "devDependencies": {
+    "@types/firefox-webext-browser": "^120.0.3"
+  }
 }
