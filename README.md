@@ -14,18 +14,7 @@ Just click on any textarea and it will be immediately replaced by an instance of
 
 Before installing anything please read [SECURITY.md](SECURITY.md) and make sure you're okay with everything mentioned. In the event you think of a way to compromise Firenvim, please send me an email (you can find my address in my commits).
 
-1. Make sure you are using [Neovim][nvim] 0.6.0 or later. This plugin will not work with vanilla [VIM][vim] or [Vimr][vimr]. Also make sure that your browser hasn't been installed with Snap or Flatpak - these prevent Firenvim from starting Neovim.
-
-2. Install Firenvim as a VIM plugin as you would any other, then run the built-in post-install script.
-
-    * [packer](https://github.com/wbthomason/packer.nvim)
-
-        ```lua
-        use {
-            'glacambre/firenvim',
-            run = function() vim.fn['firenvim#install'](0) end 
-        }
-        ```
+1. Install Firenvim as a regular NeoVim plugin, then run the built-in post-install script.
 
     * [lazy](https://github.com/folke/lazy.nvim)
 
@@ -56,13 +45,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
         endif
         ```
 
-    * [dein](https://github.com/Shougo/dein.vim)
-
-        ```vim
-        call dein#add('glacambre/firenvim', { 'hook_post_update': { _ -> firenvim#install(0) } })
-        ```
-
-    * [pathogen](https://github.com/tpope/vim-pathogen), [vundle](https://github.com/VundleVim/Vundle.vim), others
+    * [vundle](https://github.com/VundleVim/Vundle.vim), others
 
         Install the plugin as you usually would, then run this shell command:
 
@@ -70,7 +53,7 @@ Before installing anything please read [SECURITY.md](SECURITY.md) and make sure 
         $ nvim --headless "+call firenvim#install(0) | q"
         ```
 
-3. Finally, install the Firenvim addon for your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
+2. Install the Firenvim addon for your browser from [Mozilla's store](https://addons.mozilla.org/en-US/firefox/addon/firenvim/) or [Google's](https://chrome.google.com/webstore/detail/firenvim/egpjdkipkomnmjhjmdamaniclmdlobbo).
 
 If you would rather build and install Firenvim from source, check [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -135,7 +118,7 @@ This alows you to configure different settings by creating autocommands targetin
 ```lua
 vim.api.nvim_create_autocmd({'BufEnter'}, {
     pattern = "github.com_*.txt",
-    cmd = "set filetype=markdown"
+    command = "set filetype=markdown"
 })
 ```
 
