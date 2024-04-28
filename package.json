@@ -47,6 +47,7 @@
     "install_manifests": "nvim --headless -u NORC -i NONE -n -c \":set rtp+=.\" -c \"call firenvim#install(1)\" -c \"quit\"",
     "jest": "jest",
     "nyc": "nyc",
+    "lint": "addons-linter target/xpi/firefox-latest.xpi",
     "pack": "web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest",
     "tests": "npm run test-firefox && npm run test-chrome",
     "test-firefox": "webpack --env=firefox-testing && nyc instrument --in-place target/firefox && web-ext build --source-dir target/firefox --artifacts-dir target/xpi --overwrite-dest && jest firefox",
@@ -65,7 +66,7 @@
       "ts"
     ]
   },
-  "version": "0.2.15",
+  "version": "0.2.16",
   "devDependencies": {
     "@types/firefox-webext-browser": "^120.0.3"
   }

@@ -36,21 +36,21 @@ export const isReady = browser
 
             const nvim = await nvimPromise;
 
-            keyHandler.on("input", (s: string) => nvim.input(s));
+            keyHandler.on("input", (s: string) => nvim.nvim_input(s));
             rendererEvents.on("modeChange", (s: NvimMode) => keyHandler.setMode(s));
 
             // We need to set client info before running ui_attach because we want this
             // info to be available when UIEnter is triggered
             const extInfo = browser.runtime.getManifest();
             const [major, minor, patch] = extInfo.version.split(".");
-            nvim.set_client_info(extInfo.name,
+            nvim.nvim_set_client_info(extInfo.name,
                 { major, minor, patch },
                 "ui",
                 {},
                 {},
             );
 
-            nvim.ui_attach(
+            nvim.nvim_ui_attach(
                 cols < 1 ? 1 : cols,
                 rows < 1 ? 1 : rows,
                 {
@@ -75,57 +75,65 @@ export const isReady = browser
                         width * window.devicePixelRatio,
                         height * window.devicePixelRatio
                     );
-                    nvim.ui_try_resize_grid(getGridId(), nCols, nRows);
+                    nvim.nvim_ui_try_resize_grid(getGridId(), nCols, nRows);
                     page.resizeEditor(Math.floor(width / nCols) * nCols, Math.floor(height / nRows) * nRows);
                 }
             });
-            page.on("frame_sendKey", (args) => nvim.input(args.join("")));
-            page.on("get_buf_content", (r: any) => r(nvim.buf_get_lines(0, 0, -1, 0)));
+            page.on("frame_sendKey", (args) => nvim.nvim_input(args.join("")));
+            page.on("get_buf_content", (r: any) => r(nvim.nvim_buf_get_lines(0, 0, -1, 0)));
 
             // Create file, set its content to the textarea's, write it
             const filename = toFileName(urlSettings.filename, url, selector, language);
             const content = await contentPromise;
             const [line, col] = cursor;
-            const writeFilePromise = nvim.call_function("writefile", [content.split("\n"), filename])
-                .then(() => nvim.command(`edit ${filename} `
+            const writeFilePromise = nvim.nvim_call_function("writefile", [content.split("\n"), filename])
+                .then(() => nvim.nvim_command(`edit ${filename} `
                                          + `| call nvim_win_set_cursor(0, [${line}, ${col}])`));
 
             // Can't get coverage for this as browsers don't let us reliably
             // push data to the server on beforeunload.
             /* istanbul ignore next */
             window.addEventListener("beforeunload", () => {
-                nvim.ui_detach();
-                nvim.command("qall!");
+                nvim.nvim_ui_detach();
+                nvim.nvim_command("qall!");
             });
 
             // Keep track of last active instance (necessary for firenvim#focus_input() & others)
             const chan = nvim.get_current_channel();
             function setCurrentChan() {
-                nvim.set_var("last_focused_firenvim_channel", chan);
+                nvim.nvim_set_var("last_focused_firenvim_channel", chan);
             }
             setCurrentChan();
             window.addEventListener("focus", setCurrentChan);
             window.addEventListener("click", setCurrentChan);
 
-            const augroupName = `FirenvimAugroupChan${chan}`;
-            // Cleanup means:
-            // - notify frontend that we're shutting down
-            // - delete file
-            // - remove own augroup
-            const cleanup = `call rpcnotify(${chan}, 'firenvim_vimleave') | `
-                        + `call delete('${filename}')`;
             // Ask for notifications when user writes/leaves firenvim
-            nvim.call_atomic((`augroup ${augroupName}
-                            au!
-                            autocmd BufWrite ${filename} `
-                                + `call rpcnotify(${chan}, `
-                                    + `'firenvim_bufwrite', `
-                                    + `{`
-                                        + `'text': FirenvimWrite(),`
-                                        + `'cursor': nvim_win_get_cursor(0),`
-                                    + `})
-                            au VimLeave * ${cleanup}
-                        augroup END`).split("\n").map(command => ["nvim_command", [command]]));
+            nvim.nvim_exec_lua(`
+                local args = {...}
+                local augroupName = args[1]
+                local filename = args[2]
+                local channel = args[3]
+                local group = vim.api.nvim_create_augroup(augroupName, { clear = true })
+                vim.api.nvim_create_autocmd("BufWrite", {
+                  group = group,
+                  pattern = filename,
+                  callback = function(ev)
+                    vim.fn["firenvim#write"]()
+                  end
+                })
+                vim.api.nvim_create_autocmd("VimLeave", {
+                  group = group,
+                  callback = function(ev)
+                    -- Cleanup means:
+                    -- - notify frontend that we're shutting down
+                    -- - delete file
+                    -- - remove own augroup
+                    vim.fn.rpcnotify(channel, 'firenvim_vimleave')
+                    vim.fn.delete(filename)
+                    vim.api.nvim_del_augroup_by_id(group)
+                  end
+                })
+            `, [`FirenvimAugroupChan${chan}`, filename, chan]);
 
             let mouseEnabled = true;
             rendererEvents.on("mouseOn", () => {
@@ -166,7 +174,7 @@ export const isReady = browser
                     (evt.metaKey ? "D" : "") +
                     (evt.shiftKey ? "S" : "");
                 const [x, y] = getGridCoordinates(evt.pageX, evt.pageY);
-                nvim.input_mouse(button,
+                nvim.nvim_input_mouse(button,
                                  action,
                                  modifiers,
                                  getGridId(),
@@ -193,11 +201,11 @@ export const isReady = browser
             window.addEventListener("focus", () => {
                 document.documentElement.style.opacity = "1";
                 keyHandler.focus();
-                nvim.command("doautocmd FocusGained");
+                nvim.nvim_command("doautocmd FocusGained");
             });
             window.addEventListener("blur", () => {
                 document.documentElement.style.opacity = "0.5";
-                nvim.command("doautocmd FocusLost");
+                nvim.nvim_command("doautocmd FocusLost");
             });
             keyHandler.focus();
             return new Promise ((resolve, reject) => setTimeout(() => {
