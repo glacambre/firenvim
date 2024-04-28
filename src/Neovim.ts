@@ -16,7 +16,7 @@ export async function neovim(
     CanvasRenderer.setSettings(settings);
     CanvasRenderer.setCanvas(canvas);
     CanvasRenderer.events.on("resize", ({grid, width, height}: any) => {
-        (functions as any).ui_try_resize_grid(grid, width, height);
+        (functions as any).nvim_ui_try_resize_grid(grid, width, height);
     });
     CanvasRenderer.events.on("frameResize", ({width, height}: any) => {
         page.resizeEditor(width, height);
@@ -126,13 +126,8 @@ export async function neovim(
     stdout.setTypes(apiInfo.types);
 
     Object.assign(functions, apiInfo.functions
-        .filter(f => f.deprecated_since === undefined)
         .reduce((acc, cur) => {
-            let name = cur.name;
-            if (name.startsWith("nvim_")) {
-                name = name.slice(5);
-            }
-            acc[name] = (...args: any[]) => request(cur.name, args);
+            acc[cur.name] = (...args: any[]) => request(cur.name, args);
             return acc;
         }, {} as {[k: string]: (...args: any[]) => any}));
     functions.get_current_channel = () => channel;
