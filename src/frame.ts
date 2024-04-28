@@ -107,25 +107,40 @@ export const isReady = browser
             window.addEventListener("focus", setCurrentChan);
             window.addEventListener("click", setCurrentChan);
 
-            const augroupName = `FirenvimAugroupChan${chan}`;
-            // Cleanup means:
-            // - notify frontend that we're shutting down
-            // - delete file
-            // - remove own augroup
-            const cleanup = `call rpcnotify(${chan}, 'firenvim_vimleave') | `
-                        + `call delete('${filename}')`;
             // Ask for notifications when user writes/leaves firenvim
-            nvim.call_atomic((`augroup ${augroupName}
-                            au!
-                            autocmd BufWrite ${filename} `
-                                + `call rpcnotify(${chan}, `
-                                    + `'firenvim_bufwrite', `
-                                    + `{`
-                                        + `'text': nvim_buf_get_lines(0, 0, -1, 0),`
-                                        + `'cursor': nvim_win_get_cursor(0),`
-                                    + `})
-                            au VimLeave * ${cleanup}
-                        augroup END`).split("\n").map(command => ["nvim_command", [command]]));
+            nvim.exec_lua(`
+                local args = {...}
+                local augroupName = args[1]
+                local filename = args[2]
+                local channel = args[3]
+                local group = vim.api.nvim_create_augroup(augroupName, { clear = true })
+                vim.api.nvim_create_autocmd("BufWrite", {
+                  group = group,
+                  pattern = filename,
+                  callback = function(ev)
+                    vim.fn.rpcnotify(
+                      channel,
+                      "firenvim_bufwrite",
+                      {
+                        text = vim.api.nvim_buf_get_lines(0, 0, -1, 0),
+                        cursor = vim.api.nvim_win_get_cursor(0)
+                      }
+                    )
+                  end
+                })
+                vim.api.nvim_create_autocmd("VimLeave", {
+                  group = group,
+                  callback = function(ev)
+                    -- Cleanup means:
+                    -- - notify frontend that we're shutting down
+                    -- - delete file
+                    -- - remove own augroup
+                    vim.fn.rpcnotify(channel, 'firenvim_vimleave')
+                    vim.fn.delete(filename)
+                    vim.api.nvim_del_augroup_by_id(group)
+                  end
+                })
+            `, [`FirenvimAugroupChan${chan}`, filename, chan]);
 
             let mouseEnabled = true;
             rendererEvents.on("mouseOn", () => {
