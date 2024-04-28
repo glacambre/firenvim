@@ -93,7 +93,7 @@ npm run test-chrome
 npm run build
 
 # lint firefox add-on to make sure we'll be able to publish it
-"$(npm bin)/addons-linter" target/xpi/firefox-latest.xpi
+npm run lint
 
 # Prepare commit message
 COMMIT_TEMPLATE="/tmp/firenvim_release_message"
