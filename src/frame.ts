@@ -118,14 +118,7 @@ export const isReady = browser
                   group = group,
                   pattern = filename,
                   callback = function(ev)
-                    vim.fn.rpcnotify(
-                      channel,
-                      "firenvim_bufwrite",
-                      {
-                        text = vim.api.nvim_buf_get_lines(0, 0, -1, 0),
-                        cursor = vim.api.nvim_win_get_cursor(0)
-                      }
-                    )
+                    vim.fn["firenvim#write"]()
                   end
                 })
                 vim.api.nvim_create_autocmd("VimLeave", {

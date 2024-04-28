@@ -50,6 +50,35 @@ function! firenvim#hide_frame() abort
         call rpcnotify(firenvim#get_chan(), 'firenvim_hide_frame')
 endfunction
 
+" Asks the browser extension to write to the text area. Either two or no
+" arguments.
+" 1st arg: list of strings to write, one string per line, empty strings for
+"          empty lines
+" 2nd arg: position of the cursor
+function! firenvim#write(...) abort
+        let l:text = ''
+        let l:cursor = [0, 0]
+        if a:0 == 0
+                let l:text = nvim_buf_get_lines(0, 0, -1, 0)
+                let l:cursor = nvim_win_get_cursor(0)
+        elseif a:0 == 2
+                let l:text = a:1
+                let l:cursor = a:2
+                if type(l:text) != v:t_list || (len(l:text) > 0 && type(l:text[0]) != v:t_string)
+                        throw "firenvim#write's first argument must be a list of strings"
+                endif
+                if type(l:text) != v:t_list
+                        \ || len(l:cursor) != 2
+                        \ || type(l:cursor[0]) != v:t_number
+                        \ || type(l:cursor[1]) != v:t_number
+                        throw "firenvim#write's second argument must be a list of two numbers"
+                endif
+        else
+                throw 'firenvim#write should be called either with 0 or 2 arguments'
+        endif
+        call rpcnotify(firenvim#get_chan(), 'firenvim_bufwrite', {'text': l:text, 'cursor': l:cursor})
+endfunction
+
 " Asks the browser extension to send one or multiple key events to the
 " underlying input field.
 function! firenvim#press_keys(...) abort
