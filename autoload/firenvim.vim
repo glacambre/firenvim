@@ -201,7 +201,18 @@ function! firenvim#run() abort
                         let l:result['port'] = l:port
                 endif
 
-                call WriteStdout(a:id, json_encode(result))
+                let l:response = ''
+                try
+                        let l:response = json_encode(result)
+                catch /E474/
+                        call remove(result, 'settings')
+                        if !has_key(result, 'messages')
+                                let result['messages'] = []
+                        endif
+                        call add(result['messages'], 'Error serializing settings:' . v:exception)
+                        let l:response = json_encode(result)
+                endtry
+                call WriteStdout(a:id, l:response)
         endfunction
         if exists('g:firenvim_c')
                 for data in g:firenvim_i
