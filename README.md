@@ -12,7 +12,7 @@ Just click on any textarea and it will be immediately replaced by an instance of
 
 ## Installing
 
-Before installing anything please read [SECURITY.md](SECURITY.md) and make sure you're okay with everything mentioned. In the event you think of a way to compromise Firenvim, please send me an email (you can find my address in my commits).
+Before installing anything please read [SECURITY.md](SECURITY.md) and make sure you're okay with everything mentioned. In the event you think of a way to compromise Firenvim, please send me an email (you can find my address on my website).
 
 1. Install Firenvim as a regular NeoVim plugin, then run the built-in post-install script.
 
