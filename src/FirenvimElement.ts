@@ -517,12 +517,12 @@ export class FirenvimElement {
         const focused = this.isFocused();
         this.editor.setContent(text);
         [
-            new Event("keydown",     { bubbles: true }),
-            new Event("keyup",       { bubbles: true }),
-            new Event("keypress",    { bubbles: true }),
-            new Event("beforeinput", { bubbles: true }),
-            new Event("input",       { bubbles: true }),
-            new Event("change",      { bubbles: true })
+            new KeyboardEvent("keydown",  { bubbles: true, ctrlKey: true }),
+            new KeyboardEvent("keyup",    { bubbles: true, ctrlKey: true }),
+            new KeyboardEvent("keypress", { bubbles: true, ctrlKey: true }),
+            new Event("beforeinput",      { bubbles: true }),
+            new Event("input",            { bubbles: true }),
+            new Event("change",           { bubbles: true }),
         ].forEach(ev => this.originalElement.dispatchEvent(ev));
         if (focused) {
             this.focus();
