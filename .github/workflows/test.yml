@@ -62,6 +62,8 @@ jobs:
       run: |
         brew install --cask firefox@developer-edition
         echo "/Applications/Firefox Developer Edition.app/Contents/MacOS/" >> $GITHUB_PATH
+        brew install geckodriver
+        dirname "$(find /opt/homebrew/Cellar/geckodriver -iname geckodriver -type f -perm +111)" >> $GITHUB_PATH
     - name: Install Firefox Dev Edition (Windows)
       if: matrix.browser == 'firefox' && matrix.os == 'windows'
       run: |
