@@ -243,6 +243,8 @@ function! firenvim#run() abort
                 endtry
                 call WriteStdout(a:id, l:response)
         endfunction
+        " g:firenvim_c might not exist for firenvim installations dating back
+        " to 2021 and earlier.
         if exists('g:firenvim_c')
                 for data in g:firenvim_i
                         call OnStdin(g:firenvim_c, data, 'stdin')
@@ -585,9 +587,13 @@ function! s:get_progpath() abort
         " break when neovim is updated. Try to detect these cases, work around
         " them if possible and warn the user.
         let l:specific_installs = {
-                \ 'homebrew': {
+                \ 'homebrew (in /usr/local)': {
                         \ 'pattern': '^/usr/local/Cellar/',
                         \ 'constant_paths': ['/usr/local/opt/nvim']
+                \ },
+                \ 'homebrew (in /opt/homebrew)': {
+                        \ 'pattern': '^/opt/homebrew/Cellar/',
+                        \ 'constant_paths': ['/opt/homebrew/nvim']
                 \ },
                 \ 'nix': {
                         \ 'pattern': '^/nix/store/',
