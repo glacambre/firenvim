@@ -692,9 +692,13 @@ function! s:get_executable_content(data_dir, prolog) abort
                                 \ s:capture_env_var('XDG_CACHE_HOME') .
                                 \ s:capture_env_var('XDG_RUNTIME_DIR') .
                                 \ s:capture_env_var('NVIM_APPNAME') .
+                                \ "if command -v nvim >/dev/null 2>/dev/null; then\n" .
+                                \ "  FIRENVIM_NVIM_BINARY=nvim\n" .
+                                \ "else\n" .
+                                \ '  FIRENVIM_NVIM_BINARY=' . s:get_progpath() . "\n" .
+                                \ "fi\n" .
                                 \ a:prolog . "\n" .
-                                \ "exec '" . s:get_progpath() .
-                                  \ "' --headless " . l:stdioopen .
+                                \ 'exec "$FIRENVIM_NVIM_BINARY" --headless ' . l:stdioopen .
                                   \ " --cmd 'let g:started_by_firenvim = v:true' " .
                                   \ "-c 'try|" .
                                       \ 'call firenvim#run()|' .
