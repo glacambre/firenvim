@@ -281,10 +281,10 @@ vim.api.nvim_create_autocmd({'TextChanged', 'TextChangedI'}, {
         vim.g.timer_started = true
         vim.fn.timer_start(10000, function()
             vim.g.timer_started = false
-            write
+            vim.cmd('silent write')
         end)
     end
-end})
+})
 ```
 
 ### Configuring message timeout
