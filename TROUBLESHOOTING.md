@@ -4,13 +4,22 @@ If you're having issues with Firenvim, here are the steps you can take in order 
 
 ## Make sure Flatpak and Snap are not preventing Firenvim from working
 
-If your browser is installed through Snap or Flatpak, sandboxing mechanisms might be preventing the browser from starting Neovim. You can confirm this by running:
+If your browser is installed through Snap, sandboxing mechanisms might be preventing the browser from starting Neovim. You can confirm this by running:
 
 ```
 flatpak permissions webextensions
 ```
 
-If the output of this command shows that Snap/Flatpak are preventing Firenvim from running, you need to run `flatpak permission-set webextensions firenvim snap.firefox yes` to change that.
+If the output of this command shows that Snap are preventing Firenvim from running, you need to run `flatpak permission-set webextensions firenvim snap.firefox yes` to change that.
+
+In the case of Flatpak installs, verify that you've performed the steps in the [README](https://github.com/glacambre/firenvim?tab=readme-ov-file#installing) and that the `~/.local/share/flatpak/overrides/org.mozilla.firefox` file looks something similar to the below:
+
+```conf
+[Context]
+filesystems=/run/user/1000/firenvim;~/.local/share/firenvim;~/.local/share/nvim;~/.config/nvim
+```
+
+Those directories may change depending on your setup, consult the guidelines in the [README](https://github.com/glacambre/firenvim?tab=readme-ov-file#installing). Also ensure that the directory that `$ which nvim` resolves to shows up (eg if you've installed via homebrew, you'll have to add `/home/linuxbrew/.linuxbrew`)
 
 ## Make sure the neovim plugin is installed
 
