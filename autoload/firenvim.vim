@@ -640,6 +640,16 @@ function! s:capture_env_var(var) abort
               \"fi\n"
 endfunction
 
+function! s:capture_windows_env_var(var) abort
+        let l:value = eval('$' . a:var)
+        if l:value ==? ''
+                return ''
+        endif
+        return 'if NOT DEFINED ' . a:var . ' (' . "\r\n" .
+              \'  set "' . a:var . '=' . l:value . '"' . "\r\n" .
+              \")\r\n"
+endfunction
+
 function! s:get_executable_content(data_dir, prolog) abort
         let l:stdioopen = ''
         if api_info().version.major > 0 || api_info().version.minor > 6
@@ -669,6 +679,7 @@ function! s:get_executable_content(data_dir, prolog) abort
                 return  "@echo off\r\n" .
                                         \ "mkdir \"" . l:dir . "\" 2>nul\r\n" .
                                         \ "cd \"" . l:dir . "\"\r\n" .
+                                        \ s:capture_windows_env_var('NVIM_APPNAME') .
                                         \ a:prolog . "\r\n" .
                                         \ l:wsl_prefix . ' "' . s:get_progpath() . '" --headless ' . l:stdioopen . ' --cmd "let g:started_by_firenvim = v:true" -c "call firenvim#run()"' . "\r\n"
         endif
