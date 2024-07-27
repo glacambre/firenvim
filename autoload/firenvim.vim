@@ -895,6 +895,36 @@ function! firenvim#install(...) abort
                 endif
         endif
 
+        try
+                if !s:is_wsl
+                        call firenvim#internal_install(l:force_install, l:script_prolog)
+                        let s:is_wsl = has('wsl') || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
+                        if s:is_wsl
+                                echo 'Installation complete on the wsl side. Performing install on the windows side.'
+                                call firenvim#internal_install(l:force_install, l:script_prolog)
+                        endif
+                else
+                        throw 'firenvim#install is called, but s:is_wsl has not been reset. Please report this bug.'
+                endif
+        finally
+                let s:is_wsl = v:false
+        endtry
+
+        if luaeval('lvim~=nil')
+                echo 'WARNING: Lunarvim is not supported. Do not open issues if you use Lunarvim.'
+        endif
+endfunction
+
+function! firenvim#internal_install(...) abort
+        let l:force_install = 0
+        let l:script_prolog = ''
+        if a:0 > 0
+                let l:force_install = a:1
+                if a:0 > 1
+                        let l:script_prolog = a:2
+                endif
+        endif
+
         let l:execute_nvim_path = s:get_firenvim_script_path()
         let l:execute_nvim = s:get_executable_content(s:get_runtime_dir_path(), l:script_prolog)
 
@@ -978,18 +1008,6 @@ function! firenvim#install(...) abort
                         echo 'Created registry key for ' . l:name . '.'
                 endif
         endfor
-
-        if !s:is_wsl
-                let s:is_wsl = has('wsl') || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
-                if s:is_wsl
-                        echo 'Installation complete on the wsl side. Performing install on the windows side.'
-                        call firenvim#install(l:force_install, l:script_prolog)
-                endif
-        endif
-
-        if luaeval('lvim~=nil')
-                echo 'WARNING: Lunarvim is not supported. Do not open issues if you use Lunarvim.'
-        endif
 endfunction
 
 " Removes files created by Firenvim during its installation process
@@ -1000,7 +1018,23 @@ endfunction
 " > Then, we set is_wsl to true if we're on wsl and launch
 " firenvim#uninstall again, uninstalling things on the host side.
 function! firenvim#uninstall() abort
+        try
+                if !s:is_wsl
+                        call firenvim#internal_uninstall()
+                        let s:is_wsl = has('wsl') || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
+                        if s:is_wsl
+                                echo 'Uninstallation complete on the wsl side. Performing uninstall on the windows side.'
+                                call firenvim#internal_uninstall()
+                        endif
+                else
+                        throw 'firenvim#uninstall is called, but s:is_wsl has not been reset. Please report this bug.'
+                endif
+        finally
+                let s:is_wsl = v:false
+        endtry
+endfunction
 
+function! firenvim#internal_uninstall() abort
         let l:data_dir = s:get_data_dir_path()
         call delete(l:data_dir, 'rf')
         echo 'Removed firenvim data directory.'
@@ -1052,14 +1086,6 @@ function! firenvim#uninstall() abort
                 call delete(l:manifest_path)
                 echo 'Removed native manifest for ' . l:name . '.'
         endfor
-
-        if !s:is_wsl
-                let s:is_wsl = has('wsl') || !empty($WSL_DISTRO_NAME) || !empty ($WSL_INTEROP)
-                if s:is_wsl
-                        echo 'Uninstallation complete on the wsl side. Performing uninstall on the windows side.'
-                        call firenvim#uninstall()
-                endif
-        endif
 endfunction
 
 function! firenvim#onUIEnter(event) abort
