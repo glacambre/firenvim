@@ -947,8 +947,9 @@ function! firenvim#install(...) abort
                         echo 'Creating registry key for ' . l:name . '. This may take a while. Script: ' . l:ps1_path
                         call s:maybe_execute('writefile', split(l:ps1_content, "\n"), l:ps1_path)
                         call s:maybe_execute('setfperm', l:ps1_path, 'rwx------')
+                        let l:o = ''
                         try
-                                let o = s:maybe_execute('system', ['powershell.exe', '-NonInteractive', '-Command', '-'], readfile(l:ps1_path))
+                                let l:o = s:maybe_execute('system', ['powershell.exe', '-NonInteractive', '-Command', '-'], readfile(l:ps1_path))
                         catch /powershell.exe' is not executable/
                                 let l:failure = v:true
                                 let l:msg = 'Error: Firenvim could not find powershell.exe'
@@ -957,7 +958,7 @@ function! firenvim#install(...) abort
                                 if s:is_wsl
                                         let l:msg += ' from WSL'
                                         try
-                                                let o = s:maybe_execute('system', ['/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe', '-Command', '-'], readfile(l:ps1_path))
+                                                let l:o = s:maybe_execute('system', ['/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe', '-NonInteractive', '-Command', '-'], readfile(l:ps1_path))
                                                 let l:failure = v:false
                                         catch /powershell.exe' is not executable/
                                                 let l:failure = v:true
@@ -971,7 +972,7 @@ function! firenvim#install(...) abort
                         endtry
 
                         if v:shell_error
-                          echo o
+                                echo l:o
                         endif
 
                         echo 'Created registry key for ' . l:name . '.'
@@ -1022,9 +1023,28 @@ function! firenvim#uninstall() abort
                 if has('win32') || s:is_wsl
                         echo 'Removing registry key for ' . l:name . '. This may take a while.'
                         let l:ps1_content = 'Remove-Item -Path "' . l:cur_browser['registry_key'] . '" -Recurse'
-                        let o = system(['powershell.exe', '-NonInteractive', '-Command', '-'], [l:ps1_content])
+                        let l:o = ''
+                        try
+                                let l:o = s:maybe_execute('system', ['powershell.exe', '-NonInteractive', '-Command', '-'], [l:ps1_content])
+                        catch /powershell.exe' is not executable/
+                                let l:failure = v:true
+                                let l:msg = 'Error: Firenvim could not find powershell.exe'
+                                " If the failure happened on wsl, try to use
+                                " an absolute path
+                                if s:is_wsl
+                                        let l:msg += ' from WSL'
+                                        try
+                                                let l:o = s:maybe_execute('system', ['/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe', '-NonInteractive', '-Command', '-'], [l:ps1_content])
+                                                let l:failure = v:false
+                                        catch /powershell.exe' is not executable/
+                                                let l:failure = v:true
+                                        endtry
+                                endif
+                                let l:msg += ' on your system. Please report this issue.'
+                        endtry
+
                         if v:shell_error
-                          echo o
+                                echo l:o
                         endif
                         echo 'Removed registry key for ' . l:name . '.'
                 endif
