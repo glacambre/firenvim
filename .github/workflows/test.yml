@@ -109,7 +109,7 @@ jobs:
         npm run jest -- ${{ matrix.browser }}
         Get-Job | Wait-Job
     - name: Artifact upload (failure only)
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: ${{ matrix.os }}-${{ matrix.browser }}-${{ matrix.neovim }}
