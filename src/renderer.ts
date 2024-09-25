@@ -6,7 +6,7 @@ type ResizeEvent = {grid: number, width: number, height: number};
 type FrameResizeEvent = {width: number, height: number}
 type ModeChangeEvent = NvimMode;
 type ResizeEventHandler = (e: ResizeEvent | FrameResizeEvent | ModeChangeEvent) => void;
-type EventKind = "resize" | "frameResize" | "modeChange" | "mouseOn" | "mouseOff";
+type EventKind = "colorChange" | "resize" | "frameResize" | "modeChange" | "mouseOn" | "mouseOff";
 export const events = new EventEmitter<EventKind, ResizeEventHandler>();
 
 let glyphCache : any = {};
@@ -420,6 +420,7 @@ const handlers : { [key:string] : (...args: any[])=>void } = {
         if (sp !== undefined && sp !== -1) {
             globalState.highlights[0].special = toHexCss(sp);
         }
+        events.emit("colorChange", globalState.highlights[0]);
         const curGridSize = globalState.gridSizes[getGridId()];
         if (curGridSize !== undefined) {
             pushDamage(getGridId(), DamageKind.Cell, curGridSize.height, curGridSize.width, 0, 0);
