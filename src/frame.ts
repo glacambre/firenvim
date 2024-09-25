@@ -204,7 +204,7 @@ export const isReady = browser
                 nvim.nvim_command("doautocmd FocusGained");
             });
             window.addEventListener("blur", () => {
-                document.documentElement.style.opacity = "0.5";
+                document.documentElement.style.opacity = "0.7";
                 nvim.nvim_command("doautocmd FocusLost");
             });
             keyHandler.focus();

@@ -21,6 +21,11 @@ export async function neovim(
     CanvasRenderer.events.on("frameResize", ({width, height}: any) => {
         page.resizeEditor(width, height);
     });
+    CanvasRenderer.events.on("colorChange", (({background, foreground}: any) => {
+        const e = canvas.ownerDocument.documentElement;
+        e.style.backgroundColor = background;
+        e.style.color = foreground;
+    }));
 
     let prevNotificationPromise = Promise.resolve();
     const socket = new WebSocket(`ws://127.0.0.1:${port}/${password}`);
