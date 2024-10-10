@@ -92,9 +92,11 @@ export class KeyHandler extends EventEmitter<"input", (s: string) => void> {
         if (isChrome()) {
             this.elem.addEventListener("compositionstart", (e: CompositionEvent) => {
                 this.isComposing = true;
+                this.elem.style.zIndex = "1";
             });
             this.elem.addEventListener("compositionend", (e: CompositionEvent) => {
                 this.isComposing = false;
+                this.elem.style.zIndex = "-1";
                 acceptInput(e);
             });
         }
