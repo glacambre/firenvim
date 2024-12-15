@@ -499,7 +499,7 @@ function! s:get_edge_manifest_dir_path() abort
                 if !isdirectory(s:build_path(l:p))
                         let l:p = [$HOME, 'Library', 'Application Support', 'Microsoft Edge']
                 endif
-                return s:build_path([l:p, 'NativeMessagingHosts'])
+                return s:build_path(l:p + ['NativeMessagingHosts'])
         elseif has('win32') || s:is_wsl
                 return s:get_data_dir_path()
         end
