@@ -435,6 +435,9 @@ function! s:edge_config_exists() abort
         let l:p = [$HOME, '.config', 'microsoft-edge']
         if has('mac')
                 let l:p = [$HOME, 'Library', 'Application Support', 'Microsoft', 'Edge']
+                if !isdirectory(s:build_path(l:p))
+                        let l:p = [$HOME, 'Library', 'Application Support', 'Microsoft Edge']
+                endif
         elseif has('win32')
                 let l:p = [$HOME, 'AppData', 'Local', 'Microsoft', 'Edge']
         elseif s:is_wsl
@@ -492,7 +495,11 @@ endfunction
 
 function! s:get_edge_manifest_dir_path() abort
         if has('mac')
-                return s:build_path([$HOME, 'Library', 'Application Support', 'Microsoft', 'Edge', 'NativeMessagingHosts'])
+                let l:p = [$HOME, 'Library', 'Application Support', 'Microsoft', 'Edge']
+                if !isdirectory(s:build_path(l:p))
+                        let l:p = [$HOME, 'Library', 'Application Support', 'Microsoft Edge']
+                endif
+                return s:build_path([l:p, 'NativeMessagingHosts'])
         elseif has('win32') || s:is_wsl
                 return s:get_data_dir_path()
         end
