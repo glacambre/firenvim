@@ -243,6 +243,12 @@ function! firenvim#run() abort
                 endtry
                 call WriteStdout(a:id, l:response)
         endfunction
+        " #1660: only create the Firenvim augroup when firenvim#run has been
+        " called in order to prevent issues with Vim.
+        augroup FirenvimUIEnterAugroup
+                autocmd!
+                autocmd UIEnter * call firenvim#onUIEnter(deepcopy(v:event))
+        augroup END
         " g:firenvim_c might not exist for firenvim installations dating back
         " to 2021 and earlier.
         if exists('g:firenvim_c')
