@@ -18,11 +18,5 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@master
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: Setup dependencies
-      run: pip install vim-vint
-    - name: Run Vimscript Linter
-      run: vint .
+    - name: Run vint with reviewdog
+      uses: reviewdog/action-vint@v1.17.0
