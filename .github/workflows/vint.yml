@@ -21,8 +21,8 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.12.8
     - name: Setup dependencies
-      run: pip install vim-vint
+      run: pip install setuptools vim-vint
     - name: Run Vimscript Linter
       run: vint .
