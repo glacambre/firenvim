@@ -63,7 +63,7 @@ Firenvim currently requires the following permissions for the following reasons:
 
 ### Manually triggering Firenvim
 
-You can configure the keybinding to manually trigger Firenvim (`<C-e>` by default) in [the shortcuts menu in `about://addons`](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) on Firefox, or in `chrome://extensions/shortcuts` on Chrome.
+You can configure the keybinding to manually trigger Firenvim (`<C-e>` by default) in [the shortcuts menu](https://support.mozilla.org/en-US/kb/manage-extension-shortcuts-firefox) in `about:addons` on Firefox, or in `chrome://extensions/shortcuts` on Chrome.
 
 ### Temporarily disabling Firenvim in a tab
 
