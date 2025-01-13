@@ -5,10 +5,13 @@ import { isChrome } from "./utils/utils";
 
 export class KeyHandler extends EventEmitter<"input", (s: string) => void> {
     private currentMode : NvimMode;
+    private isComposing : boolean;
+    private lastCursorPosition : { x: number, y: number };
     constructor(private elem: HTMLElement, settings: GlobalSettings) {
         super();
         const ignoreKeys = settings.ignoreKeys;
         this.elem.addEventListener("keydown", (evt) => {
+            this.moveTo(this.lastCursorPosition.x, this.lastCursorPosition.y, "cursor");
             // This is a workaround for osx where pressing non-alphanumeric
             // characters like "@" requires pressing <A-a>, which results
             // in the browser sending an <A-@> event, which we want to
@@ -87,7 +90,13 @@ export class KeyHandler extends EventEmitter<"input", (s: string) => void> {
         // Firefox.
         /* istanbul ignore next */
         if (isChrome()) {
+            this.elem.addEventListener("compositionstart", (e: CompositionEvent) => {
+                this.isComposing = true;
+                this.elem.style.zIndex = "1";
+            });
             this.elem.addEventListener("compositionend", (e: CompositionEvent) => {
+                this.isComposing = false;
+                this.elem.style.zIndex = "-1";
                 acceptInput(e);
             });
         }
@@ -97,9 +106,22 @@ export class KeyHandler extends EventEmitter<"input", (s: string) => void> {
         this.elem.focus();
     }
 
-    moveTo(x: number, y: number) {
-        this.elem.style.left = `${x}px`;
-        this.elem.style.top = `${y}px`;
+    moveTo(x: number, y: number, eventSource: string) {
+        if (eventSource === "cursor") {
+            this.lastCursorPosition = { x, y };
+        }
+        if (!this.isComposing) {
+            this.elem.style.left = `${x}px`;
+            this.elem.style.top = `${y}px`;
+        }
+    }
+
+    resizeHeight(height: number) {
+        this.elem.style.height = `${height}px`;
+    }
+
+    changeColor(foregroundColor: string) {
+        this.elem.style.color = foregroundColor;
     }
 
     setMode(s: NvimMode) {
