@@ -1,0 +1,21 @@
+---
+"on":
+  push:
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nvim-neorocks/luarocks-tag-release@v5
+        env:
+          LUAROCKS_API_KEY: ${{secrets.LUAROCKS_API_KEY}}
+        if: "! startsWith(github.ref, 'refs/tags/')"
+        with:
+          extra_luarocks_args: |
+            --force
+          version: scm
+          template: template.rockspec
