@@ -160,7 +160,14 @@ function! s:get_windows_env_path(env) abort
                                 throw 'Error: Firenvim could not find cmd.exe from WSL on your system. Please report this issue.'
                         endtry
                 endtry
-                return cmd_output[match(l:cmd_output, 'C:\\'):-3]
+                " cmd_output may contain error strings such as 'UNC paths are
+                " not supported' - thus we need to find the beginning of the
+                " path
+                let l:path = cmd_output[match(l:cmd_output, 'C:\\'):]
+                " Despite system()'s :help claiming that CR will be removed
+                " from the output, we may still have CRs in l:path - thus we
+                " need to trim our result (#1683).
+                return trim(l:path)
         endif
         throw 'Used get_windows_env_path on non-windows platform!'
 endfunction
