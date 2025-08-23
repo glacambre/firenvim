@@ -349,6 +349,21 @@ function! s:get_firefox_manifest_dir_path() abort
         return s:build_path([$HOME, '.mozilla', 'native-messaging-hosts'])
 endfunction
 
+function! s:zen_config_exists() abort
+        let l:p = [$HOME, '.zen']
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'zen']
+        endif
+        return isdirectory(s:build_path(l:p))
+endfunction
+
+function! s:get_zen_manifest_dir_path() abort
+        if has('mac')
+                return s:build_path([$HOME, 'Library', 'Application Support', 'zen', 'NativeMessagingHosts'])
+        end
+        return s:build_path([$HOME, '.zen', 'native-messaging-hosts'])
+endfunction
+
 function! s:waterfox_config_exists() abort
         let l:p = [$HOME, '.waterfox']
         if has('win32') || s:is_wsl
@@ -875,6 +890,12 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_content': function('s:get_chrome_manifest'),
                         \ 'manifest_dir_path': function('s:get_vivaldi_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \},
+                \'zen': {
+                        \ 'has_config': s:zen_config_exists(),
+                        \ 'manifest_content': function('s:get_firefox_manifest'),
+                        \ 'manifest_dir_path': function('s:get_zen_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim',
                 \}
         \}
         if $TESTING == 1
@@ -885,6 +906,7 @@ function! s:get_browser_configuration() abort
                 call remove(l:browsers, 'opera')
                 call remove(l:browsers, 'ungoogled-chromium')
                 call remove(l:browsers, 'vivaldi')
+                call remove(l:browsers, 'zen')
         endif
         return l:browsers
 
