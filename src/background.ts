@@ -349,13 +349,21 @@ Object.assign(window, {
 } as any);
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendResponse: any) => {
-    const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
-    // Can't be tested as there's no way to force an incorrect content request.
-    /* istanbul ignore next */
-    if (!fn) {
-        throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
+    // V3 Migration: Use explicit message handlers instead of exec()
+    if (request.type && messageHandlers[request.type]) {
+        return messageHandlers[request.type](sender, request.args || []);
     }
-    return fn(sender, request.args !== undefined ? request.args : []);
+    
+    // Legacy support during migration
+    if (request.funcName) {
+        const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
+        if (!fn) {
+            throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
+        }
+        return fn(sender, request.args !== undefined ? request.args : []);
+    }
+    
+    throw new Error(`Error: unhandled message: ${JSON.stringify(request)}.`);
 });
 
 browser.tabs.onActivated.addListener(tab => {
