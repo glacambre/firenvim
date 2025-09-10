@@ -16,6 +16,7 @@
  */
 import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
 import { getIconImageData, IconKind } from "./utils/utils";
+import { MessageType, Message } from "./MessageTypes";
 
 export let preloadedInstance: Promise<any>;
 
@@ -277,6 +278,37 @@ async function acceptCommand (command: string) {
     }
     return p;
 }
+
+// Message handlers for V3 migration
+const messageHandlers = {
+  [MessageType.ACCEPT_COMMAND]: (_: any, args: any[]) => acceptCommand(args[0]),
+  [MessageType.CLOSE_OWN_TAB]: (sender: any, _: any[]) => browser.tabs.remove(sender.tab.id),
+  [MessageType.GET_ERROR]: (_: any, _args: any[]) => getError(),
+  [MessageType.GET_NEOVIM_INSTANCE]: (_: any, _args: any[]) => {
+    const result = preloadedInstance;
+    preloadedInstance = createNewInstance();
+    return result.then(({ password, port }) => ({ password, port }));
+  },
+  [MessageType.GET_NVIM_PLUGIN_VERSION]: (_: any, _args: any[]) => nvimPluginVersion,
+  [MessageType.GET_OWN_FRAME_ID]: (sender: any, _: any[]) => sender.frameId,
+  [MessageType.GET_TAB]: (sender: any, _: any[]) => sender.tab,
+  [MessageType.GET_TAB_VALUE]: (sender: any, args: any[]) => getTabValue(sender.tab.id, args[0]),
+  [MessageType.GET_TAB_VALUE_FOR]: (_: any, args: any[]) => getTabValue(args[0], args[1]),
+  [MessageType.GET_WARNING]: (_: any, _args: any[]) => getWarning(),
+  [MessageType.MESSAGE_FRAME]: (sender: any, args: any[]) => browser.tabs.sendMessage(sender.tab.id, args[0].message, { frameId: args[0].frameId }),
+  [MessageType.MESSAGE_PAGE]: (sender: any, args: any[]) => browser.tabs.sendMessage(sender.tab.id, args[0]),
+  [MessageType.PUBLISH_FRAME_ID]: (sender: any, _: any[]) => {
+    browser.tabs.sendMessage(sender.tab.id, {
+      args: [sender.frameId],
+      funcName: ["registerNewFrameId"],
+    });
+    return sender.frameId;
+  },
+  [MessageType.SET_TAB_VALUE]: (sender: any, args: any[]) => setTabValue(sender.tab.id, args[0], args[1]),
+  [MessageType.TOGGLE_DISABLED]: (_: any, _args: any[]) => toggleDisabled(),
+  [MessageType.UPDATE_SETTINGS]: (_: any, _args: any[]) => updateSettings(),
+  [MessageType.OPEN_TROUBLESHOOTING_GUIDE]: (_: any, _args: any[]) => browser.tabs.create({ active: true, url: "https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md" }),
+};
 
 Object.assign(window, {
     acceptCommand,

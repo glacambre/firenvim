@@ -1,0 +1,78 @@
+This is a repository of a Chrome extension that loads a Neovim instance inside of Chrome to allow using VIM motions
+AND plugins inside of Chrome; it supports your Neovim config, and all the things you have there.
+
+The issue is that it's using manifest v2, which is now deprecated in Chrome, so the extension cannot be loaded anymore
+into Chrome (even with developer mode).
+
+Our plan is to migrate this to manifest v3, and for that, we need to deep dive (and I mean REALLY DEEP) to see what
+needs to be done, since this extension is using low-level things tied to manifest v2, which may or may not be
+available in v3.
+
+I am NOT the author of this extension, and there's a discussion in the repo, where the author mentions some pain points,
+which I'm gonna include below (NOTE: what's mentioned there may or may not be a complete list, so we need to do an
+EXTREMELY deep dive to see what's needed for manifest v3).
+
+The discussion is as follows:
+- Someone posted this:
+In the interest of making it easier for external contributors to help with this issue, would you mind providing context on what you foresee would be challenges in each of the following steps from the migration guide?
+
+Update the manifest
+Migrate to a service worker
+Update API calls
+Replace blocking web request listeners
+Improve extension security
+Publish your extension
+Also, from your comment
+
+> This is going to be a PITA: developer.chrome.com/docs/extensions/mv3/intro/mv3-migration#executing-arbitrary-strings
+
+Link is no longer pointing to a proper href, but the text suggests it's related to support is removed for remotely hosted code and execution of arbitrary strings. The consequence of this would be that large portions of code in the extension need to be rewritten, or that it's not possible to support firenvim in V3?
+
+- And the owner of the repo replied with this:
+> Update the manifest
+
+I don't foresee any complications for that. The manifest template is in src/manifest.json and is modified at compile time by webpack.config.js.
+
+> Migrate to a service worker
+
+This could be a lot of efforts. Firenvim's current architecture starts Neovim on browser startup and waits (possibly hours or days!) for the user to select a textarea. When a textarea is selected, Firenvim connects to the pre-loaded Neovim instance and then editing begins. Manifest v3 disallows long-lived processes, so a lot of refactoring may have to happen.
+
+> Update API calls
+
+I'm not sure what APIs changed, but I would guess that if Firenvim is impacted, the impact shouldn't be too large as Firenvim doesn't make heavy use of WebExtension APIs.
+
+> Replace blocking web request listeners
+
+Firenvim doesn't use the WebRequest API, so we should be good on that front.
+
+> Improve extension security
+
+I don't know what that means - but if it implies that WebExtensions cannot make unencrypted http/websocket requests, then we're screwed. Firenvim currently uses unencrypted websockets (which is fine, because they're entirely local to the machine), switching to encrypted websockets would require replacing the whole websocket stack I wrote with an industrial-grade implementation and implementing a way to perform certificate rotation within the webextension.
+
+> Publish your extension
+
+I'm the only one who can do that at the moment, but it shouldn't be too much effort.
+
+> The consequence of this would be that large portions of code in the extension need to be rewritten, or that it's not possible to support firenvim in V3?
+
+Firenvim relies on executing arbitrary strings in order to work with "fancy" text editors such as CodeMirror/AceEditor etc that are used on Web IDEs. This means that porting to V3 will probably either require extra work to get these to work again, or lose that functionnality entirely. I think it's fine to ignore this for now.
+
+---
+
+Do NOT worry about admin stuff etc. Right now, I'm trying things for my own locally to see if we can make this work.
+Pay SPECIAL attention to what the owner mentioned the blockers/pain points can be, but do NOT limit yourself to those; we
+need to be EXTREMELY thorough about this.
+
+Come up with a SUPER DETAILED plan on how we want to go about this and write it to a file; the intention of the plan is
+for me to able to pause/resume working on this project whenever I want, without me having to explain everything again to you,
+so you need to make sure you include as much information as possible for you to be able to resume working in a newly created
+"coding session" just by looking the files we have.
+
+If you think there's a question we need to ask the owner of the repo, you need to tell me, and I can ask.
+
+CRITICAL NOTE: YOU'RE NOT, UNDER ANY CIRCUMSTANCES, ALLOWED TO ASSUME THINGS, without your thought being backed up by
+existing code. So, unless you have CONCRETE proof from the code, you need to consider what you thought is COMPLETELY WRONG.
+
+Let's create a separate folder to keep track of things.
+
+Again, note that this is the planning/investigation phase, no code change whatsoever at this stage.
