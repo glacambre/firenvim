@@ -279,8 +279,8 @@ async function acceptCommand (command: string) {
     return p;
 }
 
-// Message handlers for V3 migration
-const messageHandlers = {
+// Message handlers for V3 migration - only background script functions
+const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
   [MessageType.ACCEPT_COMMAND]: (_: any, args: any[]) => acceptCommand(args[0]),
   [MessageType.CLOSE_OWN_TAB]: (sender: any, _: any[]) => browser.tabs.remove(sender.tab.id),
   [MessageType.GET_ERROR]: (_: any, _args: any[]) => getError(),
@@ -350,8 +350,8 @@ Object.assign(window, {
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendResponse: any) => {
     // V3 Migration: Use explicit message handlers instead of exec()
-    if (request.type && messageHandlers[request.type]) {
-        return messageHandlers[request.type](sender, request.args || []);
+    if (request.type && request.type in messageHandlers) {
+        return messageHandlers[request.type as MessageType](sender, request.args || []);
     }
     
     // Legacy support during migration
