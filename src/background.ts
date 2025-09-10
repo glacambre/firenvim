@@ -48,9 +48,9 @@ async function updateIcon(tabid?: number) {
     }
     if ((await getTabValue(tabid, "disabled")) === true) {
         name = "disabled";
-    } else if (error !== "") {
+    } else if ((await getError()) !== "") {
         name = "error";
-    } else if (warning !== "") {
+    } else if ((await getWarning()) !== "") {
         name = "notification";
     }
     return getIconImageData(name).then((imageData: any) => browser.browserAction.setIcon({ imageData }));
@@ -79,13 +79,13 @@ async function getError(): Promise<string> {
 }
 
 function registerErrors(nvim: any, reject: any) {
-    error = "";
+    setError("");
     const timeout = setTimeout(() => {
         nvim.timedOut = true;
-        error = "Neovim is not responding.";
+        setError("Neovim is not responding.");
         updateIcon();
         nvim.disconnect();
-        reject(error);
+        reject("Neovim is not responding.");
     }, 10000);
     nvim.onDisconnect.addListener(async (p: any) => {
         clearTimeout(timeout);
@@ -95,26 +95,28 @@ function registerErrors(nvim: any, reject: any) {
         /* istanbul ignore next */
         if (p.error) {
             const errstr = p.error.toString();
+            let errorMsg = "";
             if (errstr.match(/no such native application/i)) {
-                error = "Native manifest not found. Please run `:call firenvim#install(0)` in neovim.";
+                errorMsg = "Native manifest not found. Please run `:call firenvim#install(0)` in neovim.";
             } else if (errstr.match(/an unexpected error occurred/i)) {
-                error = "The script supposed to start neovim couldn't be found."
+                errorMsg = "The script supposed to start neovim couldn't be found."
                     + " Please run `:call firenvim#install(0)` in neovim";
-                if (os === "win") {
-                    error += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
+                if ((await getOs()) === "win") {
+                    errorMsg += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
                 }
-                error += ".";
+                errorMsg += ".";
             } else if (errstr.match(/Native application tried to send a message of/)) {
-                error = "Unexpected output. Run `nvim --headless` and ensure it prints nothing.";
+                errorMsg = "Unexpected output. Run `nvim --headless` and ensure it prints nothing.";
             } else {
-                error = errstr;
+                errorMsg = errstr;
             }
+            await setError(errorMsg);
             updateIcon();
             reject(p.error);
         } else if (!nvim.replied && !nvim.timedOut) {
-            error = "Neovim died without answering.";
+            await setError("Neovim died without answering.");
             updateIcon();
-            reject(error);
+            reject("Neovim died without answering.");
         }
     });
     return timeout;
@@ -138,27 +140,28 @@ async function getNvimPluginVersion(): Promise<string> {
     return result.nvimPluginVersion || '';
 }
 async function checkVersion(nvimVersion: string) {
-    nvimPluginVersion = nvimVersion;
+    await setNvimPluginVersion(nvimVersion);
     const manifest = browser.runtime.getManifest();
-    warning = "";
+    await setWarning("");
     // Can't be tested as it would require side effects on the OS.
     /* istanbul ignore next */
     if (manifest.version !== nvimVersion) {
-        warning = `Neovim plugin version (${nvimVersion}) and browser addon `
-            + `version (${manifest.version}) do not match.`;
+        await setWarning(`Neovim plugin version (${nvimVersion}) and browser addon `
+            + `version (${manifest.version}) do not match.`);
     }
     updateIcon();
 }
-function warnUnexpectedMessages(messages: string[]) {
+async function warnUnexpectedMessages(messages: string[]) {
     if (messages === undefined || !Array.isArray(messages) || messages.length < 1) {
         return;
     }
-    warning = messages.join("\n");
+    await setWarning(messages.join("\n"));
     updateIcon();
 }
 
 // Function called in order to fill out default settings. Called from updateSettings.
-function applySettings(settings: any) {
+async function applySettings(settings: any) {
+    const os = await getOs();
     return browser.storage.local.set(mergeWithDefaults(os, settings) as any);
 }
 
@@ -297,7 +300,7 @@ const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
     preloadedInstance = createNewInstance();
     return result.then(({ password, port }) => ({ password, port }));
   },
-  [MessageType.GET_NVIM_PLUGIN_VERSION]: (_: any, _args: any[]) => nvimPluginVersion,
+  [MessageType.GET_NVIM_PLUGIN_VERSION]: async (_: any, _args: any[]) => await getNvimPluginVersion(),
   [MessageType.GET_OWN_FRAME_ID]: (sender: any, _: any[]) => sender.frameId,
   [MessageType.GET_TAB]: (sender: any, _: any[]) => sender.tab,
   [MessageType.GET_TAB_VALUE]: async (sender: any, args: any[]) => await getTabValue(sender.tab.id, args[0]),
@@ -332,7 +335,7 @@ Object.assign(window, {
         // Destructuring result to remove kill() from it
         return result.then(({ password, port }) => ({ password, port }));
     },
-    getNvimPluginVersion: () => nvimPluginVersion,
+    getNvimPluginVersion: async () => await getNvimPluginVersion(),
     getOwnFrameId: (sender: any) => sender.frameId,
     getTab: (sender: any) => sender.tab,
     getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
