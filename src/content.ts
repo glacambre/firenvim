@@ -2,6 +2,7 @@ import { FirenvimElement } from "./FirenvimElement";
 import { autofill } from "./autofill";
 import { confReady, getConf } from "./utils/configuration";
 import { getNeovimFrameFunctions, getActiveContentFunctions, getTabFunctions } from "./page";
+import { MessageType } from "./MessageTypes";
 
 if (document.location.href.startsWith("https://github.com/")
     || document.location.protocol === "file:" && document.location.href.endsWith("github.html")) {
@@ -30,8 +31,8 @@ let frameIdLock = Promise.resolve();
 export const firenvimGlobal = {
     // Whether Firenvim is disabled in this tab
     disabled: browser.runtime.sendMessage({
+                type: MessageType.GET_TAB_VALUE,
                 args: ["disabled"],
-                funcName: ["getTabValue"],
         })
         // Note: this relies on setDisabled existing in the object returned by
         // getFunctions and attached to the window object
@@ -139,16 +140,19 @@ export const firenvimGlobal = {
     firenvimElems: new Map<number, FirenvimElement>(),
 };
 
-const ownFrameId = browser.runtime.sendMessage({ args: [], funcName: ["getOwnFrameId"] });
+const ownFrameId = browser.runtime.sendMessage({ 
+    type: MessageType.GET_OWN_FRAME_ID,
+    args: [] 
+});
 async function announceFocus () {
     const frameId = await ownFrameId;
     firenvimGlobal.lastFocusedContentScript = frameId;
     browser.runtime.sendMessage({
-        args: {
+        type: MessageType.MESSAGE_PAGE,
+        args: [{
             args: [ frameId ],
             funcName: ["setLastFocusedContentScript"]
-        },
-        funcName: ["messagePage"]
+        }]
     });
 }
 // When the frame is created, we might receive focus, check for that
