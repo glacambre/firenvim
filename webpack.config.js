@@ -143,6 +143,31 @@ const firefoxConfig = (config, env) => {
                   "strict_min_version": "88.0"
                 }
               };
+              // V3 Migration: Convert V3 service worker to V2 background scripts for Firefox
+              if (manifest.background && manifest.background.service_worker) {
+                manifest.background = {
+                  "scripts": [manifest.background.service_worker],
+                  "persistent": false
+                };
+              }
+              // V3 Migration: Convert V3 action to V2 browser_action for Firefox
+              if (manifest.action) {
+                manifest.browser_action = manifest.action;
+                delete manifest.action;
+              }
+              // V3 Migration: Convert V3 host_permissions to V2 permissions for Firefox
+              if (manifest.host_permissions) {
+                manifest.permissions = (manifest.permissions || []).concat(manifest.host_permissions);
+                delete manifest.host_permissions;
+              }
+              // V3 Migration: Convert V3 web_accessible_resources to V2 format for Firefox
+              if (manifest.web_accessible_resources && Array.isArray(manifest.web_accessible_resources)) {
+                manifest.web_accessible_resources = manifest.web_accessible_resources.reduce((acc, item) => {
+                  return acc.concat(item.resources || []);
+                }, []);
+              }
+              // V3 Migration: Set manifest version to 2 for Firefox
+              manifest.manifest_version = 2;
               manifest.version = package_json.version;
               manifest.description = package_json.description;
               if (env.endsWith("testing")) {
