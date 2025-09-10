@@ -15,8 +15,16 @@
  * content scripts. It rarely acts on its own.
  */
 import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
-import { getIconImageData, IconKind } from "./utils/utils";
+import { IconKind } from "./utils/utils";
 import { MessageType, Message } from "./MessageTypes";
+
+// V3 Migration: Service workers can't generate dynamic icons, use static icon paths
+const iconPaths: Record<IconKind, string> = {
+    normal: "firenvim.svg",
+    disabled: "firenvim.svg", // Could use a different static icon
+    error: "firenvim.svg",    // Could use a different static icon  
+    notification: "firenvim.svg" // Could use a different static icon
+};
 
 // V3 Migration: Remove preloadedInstance - service workers create instances on-demand
 
@@ -53,7 +61,8 @@ async function updateIcon(tabid?: number) {
     } else if ((await getWarning()) !== "") {
         name = "notification";
     }
-    return getIconImageData(name).then((imageData: any) => browser.browserAction.setIcon({ imageData }));
+    // V3 Migration: Service workers use static icon paths instead of dynamic generation
+    return browser.action.setIcon({ path: iconPaths[name] });
 }
 
 // V3 Migration: Replace global variables with chrome.storage.session
