@@ -99,6 +99,12 @@ function registerErrors(nvim: any, reject: any) {
     nvim.onDisconnect.addListener(async (p: any) => {
         clearTimeout(timeout);
         updateIcon();
+        
+        // V3 Migration: Handle runtime.lastError to prevent unchecked error warnings
+        if (browser.runtime.lastError) {
+            console.debug("Native host disconnected:", browser.runtime.lastError.message);
+        }
+        
         // Unfortunately this error handling can't be tested as it requires
         // side-effects on the OS.
         /* istanbul ignore next */
