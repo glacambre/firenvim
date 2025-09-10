@@ -178,7 +178,7 @@ function updateSettings() {
 function createNewInstance() {
     return new Promise((resolve, reject) => {
         const random = new Uint32Array(8);
-        window.crypto.getRandomValues(random);
+        crypto.getRandomValues(random);
         const password = Array.from(random).join("");
 
         const nvim = browser.runtime.connectNative("firenvim");
@@ -321,43 +321,8 @@ const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
   [MessageType.OPEN_TROUBLESHOOTING_GUIDE]: (_: any, _args: any[]) => browser.tabs.create({ active: true, url: "https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md" }),
 };
 
-Object.assign(window, {
-    acceptCommand,
-    // We need to stick the browser polyfill in `window` if we want the `exec`
-    // call to be able to find it on Chrome
-    browser,
-    closeOwnTab: (sender: any) => browser.tabs.remove(sender.tab.id),
-    exec: (_: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
-    getError,
-    getNeovimInstance: () => {
-        const result = preloadedInstance;
-        preloadedInstance = createNewInstance();
-        // Destructuring result to remove kill() from it
-        return result.then(({ password, port }) => ({ password, port }));
-    },
-    getNvimPluginVersion: async () => await getNvimPluginVersion(),
-    getOwnFrameId: (sender: any) => sender.frameId,
-    getTab: (sender: any) => sender.tab,
-    getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
-    getTabValueFor: (_: any, args: any) => getTabValue(args[0], args[1]),
-    getWarning,
-    messageFrame: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id,
-                                                                       args.message,
-                                                                       { frameId: args.frameId }),
-    messagePage: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id,
-                                                                      args),
-    publishFrameId: (sender: any) => {
-        browser.tabs.sendMessage(sender.tab.id, {
-            args: [sender.frameId],
-            funcName: ["registerNewFrameId"],
-        });
-        return sender.frameId;
-    },
-    setTabValue: (sender: any, args: any) => setTabValue(sender.tab.id, args[0], args[1]),
-    toggleDisabled: () => toggleDisabled(),
-    updateSettings: () => updateSettings(),
-    openTroubleshootingGuide: () => browser.tabs.create({ active: true, url: "https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md" }),
-} as any);
+// V3 Migration: Remove window object assignments - not available in service workers
+// Legacy functions are now handled by messageHandlers map
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendResponse: any) => {
     // V3 Migration: Use explicit message handlers instead of exec()
@@ -365,13 +330,9 @@ browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendRes
         return messageHandlers[request.type as MessageType](sender, request.args || []);
     }
     
-    // Legacy support during migration
+    // Legacy support during migration - funcName calls should use messageHandlers
     if (request.funcName) {
-        const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
-        if (!fn) {
-            throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
-        }
-        return fn(sender, request.args !== undefined ? request.args : []);
+        throw new Error(`Legacy funcName calls not supported in service worker: ${JSON.stringify(request)}. Use MessageType instead.`);
     }
     
     throw new Error(`Error: unhandled message: ${JSON.stringify(request)}.`);
@@ -416,5 +377,5 @@ async function updateIfPossible() {
         setTimeout(updateIfPossible, 1000 * 60 * 10);
     }
 }
-(window as any).updateIfPossible = updateIfPossible;
+// V3 Migration: Remove window assignment - not available in service workers
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
