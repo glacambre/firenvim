@@ -56,19 +56,26 @@ async function updateIcon(tabid?: number) {
     return getIconImageData(name).then((imageData: any) => browser.browserAction.setIcon({ imageData }));
 }
 
-// Os is win/mac/linux/androis/cros. We only use it to add information to error
-// messages on windows.
-let os = "";
-browser.runtime.getPlatformInfo().then((plat: any) => os = plat.os);
+// V3 Migration: Replace global variables with chrome.storage.session
+async function setOs(osValue: string) {
+    await browser.storage.session.set({ os: osValue });
+}
 
-// Last error message
-let error = "";
+async function getOs(): Promise<string> {
+    const result = await browser.storage.session.get('os');
+    return result.os || '';
+}
 
-// Simple getter for easy RPC calls. Can't be tested as requires opening
-// browserAction.
-/* istanbul ignore next */
-function getError() {
-    return error;
+// Initialize OS value
+browser.runtime.getPlatformInfo().then((plat: any) => setOs(plat.os));
+
+async function setError(errorMsg: string) {
+    await browser.storage.session.set({ error: errorMsg });
+}
+
+async function getError(): Promise<string> {
+    const result = await browser.storage.session.get('error');
+    return result.error || '';
 }
 
 function registerErrors(nvim: any, reject: any) {
@@ -113,13 +120,23 @@ function registerErrors(nvim: any, reject: any) {
     return timeout;
 }
 
-// Last warning message
-let warning = "";
-/* istanbul ignore next */
-function getWarning() {
-    return warning;
+async function setWarning(warningMsg: string) {
+    await browser.storage.session.set({ warning: warningMsg });
 }
-let nvimPluginVersion = "";
+
+async function getWarning(): Promise<string> {
+    const result = await browser.storage.session.get('warning');
+    return result.warning || '';
+}
+
+async function setNvimPluginVersion(version: string) {
+    await browser.storage.session.set({ nvimPluginVersion: version });
+}
+
+async function getNvimPluginVersion(): Promise<string> {
+    const result = await browser.storage.session.get('nvimPluginVersion');
+    return result.nvimPluginVersion || '';
+}
 async function checkVersion(nvimVersion: string) {
     nvimPluginVersion = nvimVersion;
     const manifest = browser.runtime.getManifest();
