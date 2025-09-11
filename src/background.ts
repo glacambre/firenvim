@@ -18,7 +18,6 @@ import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
 import { IconKind } from "./utils/utils";
 import { MessageType, Message } from "./MessageTypes";
 
-// V3 Migration: Service workers can't generate dynamic icons, use static PNG paths
 const iconPaths: Record<IconKind, string> = {
     normal: "firenvim128.png",
     disabled: "firenvim128.png", // Could use a different static icon
@@ -26,13 +25,11 @@ const iconPaths: Record<IconKind, string> = {
     notification: "firenvim128.png" // Could use a different static icon
 };
 
-// V3 Migration: Remove preloadedInstance - service workers create instances on-demand
 
 type tabId = number;
 type tabStorage = {
     disabled: boolean,
 };
-// V3 Migration: Replace in-memory Map with chrome.storage.session
 async function setTabValue(tabid: tabId, item: keyof tabStorage, value: any) {
     const key = `tab_${tabid}_${item}`;
     await browser.storage.session.set({ [key]: value });
@@ -61,11 +58,9 @@ async function updateIcon(tabid?: number) {
     } else if ((await getWarning()) !== "") {
         name = "notification";
     }
-    // V3 Migration: Service workers use static icon paths instead of dynamic generation
     return browser.action.setIcon({ path: iconPaths[name] });
 }
 
-// V3 Migration: Replace global variables with chrome.storage.session
 async function setOs(osValue: string) {
     await browser.storage.session.set({ os: osValue });
 }
@@ -100,7 +95,6 @@ function registerErrors(nvim: any, reject: any) {
         clearTimeout(timeout);
         updateIcon();
         
-        // V3 Migration: Handle runtime.lastError to prevent unchecked error warnings
         if (browser.runtime.lastError) {
             console.debug("Native host disconnected:", browser.runtime.lastError.message);
         }
@@ -181,7 +175,6 @@ async function applySettings(settings: any) {
 }
 
 function updateSettings() {
-    // V3 Migration: No preloaded instance to manage in service workers
     // Settings are applied when new instances are created on-demand
     return Promise.resolve();
 }
@@ -214,7 +207,6 @@ function createNewInstance() {
     });
 }
 
-// V3 Migration: Initialize settings on startup since we don't have preloaded instance
 async function initializeSettings() {
     try {
         // Check if settings already exist
@@ -320,7 +312,6 @@ const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
   [MessageType.CLOSE_OWN_TAB]: (sender: any, _: any[]) => browser.tabs.remove(sender.tab.id),
   [MessageType.GET_ERROR]: (_: any, _args: any[]) => getError(),
   [MessageType.GET_NEOVIM_INSTANCE]: (_: any, _args: any[]) => {
-    // V3 Migration: Create fresh instance on-demand instead of using preloaded
     return createNewInstance().then(({ password, port }) => ({ password, port }));
   },
   [MessageType.GET_NVIM_PLUGIN_VERSION]: async (_: any, _args: any[]) => await getNvimPluginVersion(),
@@ -344,11 +335,9 @@ const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
   [MessageType.OPEN_TROUBLESHOOTING_GUIDE]: (_: any, _args: any[]) => browser.tabs.create({ active: true, url: "https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md" }),
 };
 
-// V3 Migration: Remove window object assignments - not available in service workers
 // Legacy functions are now handled by messageHandlers map
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendResponse: any) => {
-    // V3 Migration: Use explicit message handlers instead of exec()
     if (request.type && request.type in messageHandlers) {
         return messageHandlers[request.type as MessageType](sender, request.args || []);
     }
@@ -400,5 +389,4 @@ async function updateIfPossible() {
         setTimeout(updateIfPossible, 1000 * 60 * 10);
     }
 }
-// V3 Migration: Remove window assignment - not available in service workers
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);

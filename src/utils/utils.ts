@@ -1,6 +1,5 @@
 let curHost : string;
 
-// V3 Migration: Service workers don't have window object, detect environment differently
 function detectBrowserEnvironment(): string {
     // In service workers, use browser.runtime.getURL to detect browser
     if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.getURL) {
@@ -43,7 +42,6 @@ export function isChrome() {
 // embedding a script element that runs the piece of code and emits its result
 // as an event.
 export function executeInPage(code: string): Promise<any> {
-    // V3 Migration: Service workers don't have window/document, this function only works in content scripts
     if (typeof window === 'undefined' || typeof document === 'undefined') {
         return Promise.reject(new Error('executeInPage can only be called from content scripts, not service workers'));
     }
@@ -134,7 +132,6 @@ export type IconKind = keyof typeof transformations;
 // Takes an icon kind and dimensions as parameter, draws that to a canvas and
 // returns a promise that will be resolved with the canvas' image data.
 export function getIconImageData(kind: IconKind, width = 32, height = 32) {
-    // V3 Migration: Service workers don't have document, this function only works in contexts with DOM
     if (typeof document === 'undefined') {
         return Promise.reject(new Error('getIconImageData can only be called from contexts with DOM access, not service workers'));
     }

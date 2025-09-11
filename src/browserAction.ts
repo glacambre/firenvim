@@ -16,7 +16,6 @@ function displayErrorsAndWarnings() {
 
 async function updateDisableButton() {
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    // V3 Migration: Add safety check for tabs array to prevent undefined access
     if (!tabs || tabs.length === 0) {
         console.warn("No active tab found for disable button update");
         return;
