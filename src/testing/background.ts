@@ -1,7 +1,6 @@
 import { makeRequestHandler } from "./rpc";
 import * as background from "../background";
 
-// V3 Migration: preloadedInstance removed - service workers create instances on-demand
 console.log("Background script loaded for testing");
 
 const socket = new WebSocket('ws://127.0.0.1:12345');

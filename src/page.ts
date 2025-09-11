@@ -290,7 +290,6 @@ export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
                     // handled by frame function handler
                     break;
                 default:
-                    // V3 Migration: Improve error logging to show actual request details
                     console.error("Unhandled page request:", JSON.stringify(request, null, 2));
             }
         });
