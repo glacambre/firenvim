@@ -175,12 +175,12 @@ export const tabFunctions = getTabFunctions(firenvimGlobal);
 Object.assign(window, frameFunctions, activeFunctions, tabFunctions);
 browser.runtime.onMessage.addListener(async (request: any) => {
     let actualRequest = request;
-    
+
     // Handle MESSAGE_PAGE format - extract the nested request
     if (request.type === MessageType.MESSAGE_PAGE) {
         actualRequest = request.args[0];
     }
-    
+
     // Handle direct funcName format or extracted funcName format
     if (!actualRequest.funcName) {
         throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
