@@ -10,7 +10,7 @@ function detectBrowserEnvironment(): string {
             return 'chrome';
         }
     }
-    
+
     // Fallback for content scripts and other contexts with window
     if (typeof window !== 'undefined') {
         if (window.location.protocol === "moz-extension:") {
@@ -21,7 +21,7 @@ function detectBrowserEnvironment(): string {
             return "chrome";
         }
     }
-    
+
     // Default fallback
     return "chrome";
 }
@@ -45,7 +45,7 @@ export function executeInPage(code: string): Promise<any> {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
         return Promise.reject(new Error('executeInPage can only be called from content scripts, not service workers'));
     }
-    
+
     // On firefox, use an API that allows circumventing some CSP restrictions
     // Use wrappedJSObject to detect availability of said API
     // DON'T use window.eval on other plateforms - it doesn't have the
@@ -135,7 +135,7 @@ export function getIconImageData(kind: IconKind, width = 32, height = 32) {
     if (typeof document === 'undefined') {
         return Promise.reject(new Error('getIconImageData can only be called from contexts with DOM access, not service workers'));
     }
-    
+
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     const img = new Image(width, height);

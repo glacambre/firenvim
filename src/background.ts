@@ -21,7 +21,7 @@ import { MessageType, Message } from "./MessageTypes";
 const iconPaths: Record<IconKind, string> = {
     normal: "firenvim128.png",
     disabled: "firenvim128.png", // Could use a different static icon
-    error: "firenvim128.png",    // Could use a different static icon  
+    error: "firenvim128.png",    // Could use a different static icon
     notification: "firenvim128.png" // Could use a different static icon
 };
 
@@ -58,7 +58,7 @@ async function updateIcon(tabid?: number) {
     } else if ((await getWarning()) !== "") {
         name = "notification";
     }
-    
+
     // Cross-browser compatibility: Firefox uses browserAction, Chrome uses action
     const iconAPI = browser.action || browser.browserAction;
     return iconAPI.setIcon({ path: iconPaths[name] });
@@ -97,11 +97,11 @@ function registerErrors(nvim: any, reject: any) {
     nvim.onDisconnect.addListener(async (p: any) => {
         clearTimeout(timeout);
         updateIcon();
-        
+
         if (browser.runtime.lastError) {
             console.debug("Native host disconnected:", browser.runtime.lastError.message);
         }
-        
+
         // Unfortunately this error handling can't be tested as it requires
         // side-effects on the OS.
         /* istanbul ignore next */
@@ -344,12 +344,12 @@ browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendRes
     if (request.type && request.type in messageHandlers) {
         return messageHandlers[request.type as MessageType](sender, request.args || []);
     }
-    
+
     // Legacy support during migration - funcName calls should use messageHandlers
     if (request.funcName) {
         throw new Error(`Legacy funcName calls not supported in service worker: ${JSON.stringify(request)}. Use MessageType instead.`);
     }
-    
+
     throw new Error(`Error: unhandled message: ${JSON.stringify(request)}.`);
 });
 
