@@ -237,7 +237,10 @@ async function toggleDisabled() {
     const disabled = !(await getTabValue(tabid, "disabled"));
     await setTabValue(tabid, "disabled", disabled);
     updateIcon(tabid);
-    return browser.tabs.sendMessage(tabid, { args: [disabled], funcName: ["setDisabled"] });
+    return browser.tabs.sendMessage(tabid, { 
+        type: MessageType.MESSAGE_PAGE,
+        args: [{ args: [disabled], funcName: ["setDisabled"] }]
+    });
 }
 
 async function acceptCommand (command: string) {
@@ -247,13 +250,19 @@ async function acceptCommand (command: string) {
         case "nvimify":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: [], funcName: ["forceNvimify"] },
+                { 
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: [], funcName: ["forceNvimify"] }]
+                },
         );
         break;
         case "send_C-n":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<C-n>"], funcName: ["sendKey"] },
+                { 
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<C-n>"], funcName: ["sendKey"] }]
+                },
         );
         if (getGlobalConf()["<C-n>"] === "default") {
             p = p.catch(() => browser.windows.create());
@@ -262,7 +271,10 @@ async function acceptCommand (command: string) {
         case "send_C-t":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<C-t>"], funcName: ["sendKey"] },
+                { 
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<C-t>"], funcName: ["sendKey"] }]
+                },
         );
         if (getGlobalConf()["<C-t>"] === "default") {
             p = p.catch(() => browser.tabs.create({ "windowId": tab.windowId }));
@@ -271,7 +283,10 @@ async function acceptCommand (command: string) {
         case "send_C-w":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<C-w>"], funcName: ["sendKey"] },
+                { 
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<C-w>"], funcName: ["sendKey"] }]
+                },
         );
         if (getGlobalConf()["<C-w>"] === "default") {
             p = p.catch(() => browser.tabs.remove(tab.id));
@@ -280,7 +295,10 @@ async function acceptCommand (command: string) {
         case "send_CS-n":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<CS-n>"], funcName: ["sendKey"] },
+                { 
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<CS-n>"], funcName: ["sendKey"] }]
+                },
         );
         if (getGlobalConf()["<CS-n>"] === "default") {
             p = p.catch(() => browser.windows.create({ "incognito": true }));
@@ -290,13 +308,19 @@ async function acceptCommand (command: string) {
             // <CS-t> can't be emulated without the sessions API.
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<CS-t>"], funcName: ["sendKey"] },
+                { 
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<CS-t>"], funcName: ["sendKey"] }]
+                },
         );
         break;
         case "send_CS-w":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<CS-w>"], funcName: ["sendKey"] },
+                { 
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<CS-w>"], funcName: ["sendKey"] }]
+                },
         );
         if (getGlobalConf()["<CS-w>"] === "default") {
             p = p.catch(() => browser.windows.remove(tab.windowId));
@@ -327,8 +351,8 @@ const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
   [MessageType.MESSAGE_PAGE]: (sender: any, args: any[]) => browser.tabs.sendMessage(sender.tab.id, args[0]),
   [MessageType.PUBLISH_FRAME_ID]: (sender: any, _: any[]) => {
     browser.tabs.sendMessage(sender.tab.id, {
-      args: [sender.frameId],
-      funcName: ["registerNewFrameId"],
+      type: MessageType.MESSAGE_PAGE,
+      args: [{ args: [sender.frameId], funcName: ["registerNewFrameId"] }]
     });
     return sender.frameId;
   },
@@ -377,8 +401,8 @@ async function updateIfPossible() {
                                         .tabs
                                         .sendMessage(tab.id,
                                                      {
-                                                         args: [],
-                                                         funcName: ["getActiveInstanceCount"],
+                                                         type: MessageType.MESSAGE_PAGE,
+                                                         args: [{ args: [], funcName: ["getActiveInstanceCount"] }]
                                                      },
                                                      { frameId: 0 })
                                         .catch(() => 0));
