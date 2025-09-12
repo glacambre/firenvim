@@ -1,26 +1,28 @@
 
+import { MessageType } from "./MessageTypes";
+
 export async function autofill() {
     const textarea = document.getElementById("issue_body") as any;
     if (!textarea) {
         return;
     }
     const platInfoPromise = browser.runtime.sendMessage({
-        args: {
+        type: MessageType.MESSAGE_PAGE,
+        args: [{
             args: [],
             funcName: ["browser", "runtime", "getPlatformInfo"],
-        },
-        funcName: ["exec"],
+        }]
     });
     const manifestPromise = browser.runtime.sendMessage({
-        args: {
+        type: MessageType.MESSAGE_PAGE,
+        args: [{
             args: [],
             funcName: ["browser", "runtime", "getManifest"],
-        },
-        funcName: ["exec"],
+        }]
     });
     const nvimPluginPromise = browser.runtime.sendMessage({
-        args: {},
-        funcName: ["getNvimPluginVersion"],
+        type: MessageType.GET_NVIM_PLUGIN_VERSION,
+        args: []
     });
     const issueTemplatePromise = fetch(browser.runtime.getURL("ISSUE_TEMPLATE.md")).then(p => p.text());
     const browserString = navigator.userAgent.match(/(firefox|chrom)[^ ]+/gi);
