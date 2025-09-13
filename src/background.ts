@@ -237,7 +237,7 @@ async function toggleDisabled() {
     const disabled = !(await getTabValue(tabid, "disabled"));
     await setTabValue(tabid, "disabled", disabled);
     updateIcon(tabid);
-    return browser.tabs.sendMessage(tabid, {
+    return browser.tabs.sendMessage(tabid, { 
         type: MessageType.MESSAGE_PAGE,
         args: [{ args: [disabled], funcName: ["setDisabled"] }]
     });
@@ -250,7 +250,7 @@ async function acceptCommand (command: string) {
         case "nvimify":
             p = browser.tabs.sendMessage(
                 tab.id,
-                {
+                { 
                     type: MessageType.MESSAGE_PAGE,
                     args: [{ args: [], funcName: ["forceNvimify"] }]
                 },
@@ -259,7 +259,7 @@ async function acceptCommand (command: string) {
         case "send_C-n":
             p = browser.tabs.sendMessage(
                 tab.id,
-                {
+                { 
                     type: MessageType.MESSAGE_PAGE,
                     args: [{ args: ["<C-n>"], funcName: ["sendKey"] }]
                 },
@@ -271,7 +271,7 @@ async function acceptCommand (command: string) {
         case "send_C-t":
             p = browser.tabs.sendMessage(
                 tab.id,
-                {
+                { 
                     type: MessageType.MESSAGE_PAGE,
                     args: [{ args: ["<C-t>"], funcName: ["sendKey"] }]
                 },
@@ -283,7 +283,7 @@ async function acceptCommand (command: string) {
         case "send_C-w":
             p = browser.tabs.sendMessage(
                 tab.id,
-                {
+                { 
                     type: MessageType.MESSAGE_PAGE,
                     args: [{ args: ["<C-w>"], funcName: ["sendKey"] }]
                 },
@@ -295,7 +295,7 @@ async function acceptCommand (command: string) {
         case "send_CS-n":
             p = browser.tabs.sendMessage(
                 tab.id,
-                {
+                { 
                     type: MessageType.MESSAGE_PAGE,
                     args: [{ args: ["<CS-n>"], funcName: ["sendKey"] }]
                 },
@@ -308,7 +308,7 @@ async function acceptCommand (command: string) {
             // <CS-t> can't be emulated without the sessions API.
             p = browser.tabs.sendMessage(
                 tab.id,
-                {
+                { 
                     type: MessageType.MESSAGE_PAGE,
                     args: [{ args: ["<CS-t>"], funcName: ["sendKey"] }]
                 },
@@ -317,7 +317,7 @@ async function acceptCommand (command: string) {
         case "send_CS-w":
             p = browser.tabs.sendMessage(
                 tab.id,
-                {
+                { 
                     type: MessageType.MESSAGE_PAGE,
                     args: [{ args: ["<CS-w>"], funcName: ["sendKey"] }]
                 },

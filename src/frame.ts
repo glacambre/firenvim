@@ -10,14 +10,14 @@ const pageLoaded = new Promise((resolve, reject) => {
     window.addEventListener("load", resolve);
     setTimeout(reject, 10000)
 });
-const connectionPromise = browser.runtime.sendMessage({
+const connectionPromise = browser.runtime.sendMessage({ 
     type: MessageType.GET_NEOVIM_INSTANCE,
     args: []
 });
 
 export const isReady = browser
     .runtime
-    .sendMessage({
+    .sendMessage({ 
         type: MessageType.PUBLISH_FRAME_ID,
         args: []
     })
