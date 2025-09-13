@@ -15,33 +15,30 @@
  * content scripts. It rarely acts on its own.
  */
 import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
-import { getIconImageData, IconKind } from "./utils/utils";
+import { IconKind } from "./utils/utils";
+import { MessageType } from "./MessageTypes";
 
-export let preloadedInstance: Promise<any>;
+const iconPaths: Record<IconKind, string> = {
+    normal: "firenvim128.png",
+    disabled: "firenvim128.png", // Could use a different static icon
+    error: "firenvim128.png",    // Could use a different static icon
+    notification: "firenvim128.png" // Could use a different static icon
+};
+
 
 type tabId = number;
 type tabStorage = {
     disabled: boolean,
 };
-// We can't use the sessions.setTabValue/getTabValue apis firefox has because
-// chrome doesn't support them. Instead, we create a map of tabid => {} kept in
-// the background. This has the disadvantage of not surviving browser restarts,
-// but's it's cross platform.
-const tabValues = new Map<tabId, tabStorage>();
-function setTabValue(tabid: tabId, item: keyof tabStorage, value: any) {
-    let obj = tabValues.get(tabid);
-    if (obj === undefined) {
-        obj = { "disabled": false };
-        tabValues.set(tabid, obj);
-    }
-    obj[item] = value;
+async function setTabValue(tabid: tabId, item: keyof tabStorage, value: any) {
+    const key = `tab_${tabid}_${item}`;
+    await browser.storage.session.set({ [key]: value });
 }
-function getTabValue(tabid: tabId, item: keyof tabStorage) {
-    const obj = tabValues.get(tabid);
-    if (obj === undefined) {
-        return undefined;
-    }
-    return obj[item];
+
+async function getTabValue(tabid: tabId, item: keyof tabStorage) {
+    const key = `tab_${tabid}_${item}`;
+    const result = await browser.storage.session.get(key);
+    return result[key];
 }
 
 async function updateIcon(tabid?: number) {
@@ -54,119 +51,141 @@ async function updateIcon(tabid?: number) {
         }
         tabid = tab.id;
     }
-    if (getTabValue(tabid, "disabled") === true) {
+    if ((await getTabValue(tabid, "disabled")) === true) {
         name = "disabled";
-    } else if (error !== "") {
+    } else if ((await getError()) !== "") {
         name = "error";
-    } else if (warning !== "") {
+    } else if ((await getWarning()) !== "") {
         name = "notification";
     }
-    return getIconImageData(name).then((imageData: any) => browser.browserAction.setIcon({ imageData }));
+
+    // Cross-browser compatibility: Firefox uses browserAction, Chrome uses action
+    const iconAPI = browser.action || browser.browserAction;
+    return iconAPI.setIcon({ path: iconPaths[name] });
 }
 
-// Os is win/mac/linux/androis/cros. We only use it to add information to error
-// messages on windows.
-let os = "";
-browser.runtime.getPlatformInfo().then((plat: any) => os = plat.os);
+async function setOs(osValue: string) {
+    await browser.storage.session.set({ os: osValue });
+}
 
-// Last error message
-let error = "";
+async function getOs(): Promise<string> {
+    const result = await browser.storage.session.get('os');
+    return result.os || '';
+}
 
-// Simple getter for easy RPC calls. Can't be tested as requires opening
-// browserAction.
-/* istanbul ignore next */
-function getError() {
-    return error;
+// Initialize OS value
+browser.runtime.getPlatformInfo().then((plat: any) => setOs(plat.os));
+
+async function setError(errorMsg: string) {
+    await browser.storage.session.set({ error: errorMsg });
+}
+
+async function getError(): Promise<string> {
+    const result = await browser.storage.session.get('error');
+    return result.error || '';
 }
 
 function registerErrors(nvim: any, reject: any) {
-    error = "";
+    setError("");
     const timeout = setTimeout(() => {
         nvim.timedOut = true;
-        error = "Neovim is not responding.";
+        setError("Neovim is not responding.");
         updateIcon();
         nvim.disconnect();
-        reject(error);
+        reject("Neovim is not responding.");
     }, 10000);
     nvim.onDisconnect.addListener(async (p: any) => {
         clearTimeout(timeout);
         updateIcon();
+
+        if (browser.runtime.lastError) {
+            console.debug("Native host disconnected:", browser.runtime.lastError.message);
+        }
+
         // Unfortunately this error handling can't be tested as it requires
         // side-effects on the OS.
         /* istanbul ignore next */
         if (p.error) {
             const errstr = p.error.toString();
+            let errorMsg = "";
             if (errstr.match(/no such native application/i)) {
-                error = "Native manifest not found. Please run `:call firenvim#install(0)` in neovim.";
+                errorMsg = "Native manifest not found. Please run `:call firenvim#install(0)` in neovim.";
             } else if (errstr.match(/an unexpected error occurred/i)) {
-                error = "The script supposed to start neovim couldn't be found."
+                errorMsg = "The script supposed to start neovim couldn't be found."
                     + " Please run `:call firenvim#install(0)` in neovim";
-                if (os === "win") {
-                    error += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
+                if ((await getOs()) === "win") {
+                    errorMsg += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
                 }
-                error += ".";
+                errorMsg += ".";
             } else if (errstr.match(/Native application tried to send a message of/)) {
-                error = "Unexpected output. Run `nvim --headless` and ensure it prints nothing.";
+                errorMsg = "Unexpected output. Run `nvim --headless` and ensure it prints nothing.";
             } else {
-                error = errstr;
+                errorMsg = errstr;
             }
+            await setError(errorMsg);
             updateIcon();
             reject(p.error);
         } else if (!nvim.replied && !nvim.timedOut) {
-            error = "Neovim died without answering.";
+            await setError("Neovim died without answering.");
             updateIcon();
-            reject(error);
+            reject("Neovim died without answering.");
         }
     });
     return timeout;
 }
 
-// Last warning message
-let warning = "";
-/* istanbul ignore next */
-function getWarning() {
-    return warning;
+async function setWarning(warningMsg: string) {
+    await browser.storage.session.set({ warning: warningMsg });
 }
-let nvimPluginVersion = "";
+
+async function getWarning(): Promise<string> {
+    const result = await browser.storage.session.get('warning');
+    return result.warning || '';
+}
+
+async function setNvimPluginVersion(version: string) {
+    await browser.storage.session.set({ nvimPluginVersion: version });
+}
+
+async function getNvimPluginVersion(): Promise<string> {
+    const result = await browser.storage.session.get('nvimPluginVersion');
+    return result.nvimPluginVersion || '';
+}
 async function checkVersion(nvimVersion: string) {
-    nvimPluginVersion = nvimVersion;
+    await setNvimPluginVersion(nvimVersion);
     const manifest = browser.runtime.getManifest();
-    warning = "";
+    await setWarning("");
     // Can't be tested as it would require side effects on the OS.
     /* istanbul ignore next */
     if (manifest.version !== nvimVersion) {
-        warning = `Neovim plugin version (${nvimVersion}) and browser addon `
-            + `version (${manifest.version}) do not match.`;
+        await setWarning(`Neovim plugin version (${nvimVersion}) and browser addon `
+            + `version (${manifest.version}) do not match.`);
     }
     updateIcon();
 }
-function warnUnexpectedMessages(messages: string[]) {
+async function warnUnexpectedMessages(messages: string[]) {
     if (messages === undefined || !Array.isArray(messages) || messages.length < 1) {
         return;
     }
-    warning = messages.join("\n");
+    await setWarning(messages.join("\n"));
     updateIcon();
 }
 
 // Function called in order to fill out default settings. Called from updateSettings.
-function applySettings(settings: any) {
+async function applySettings(settings: any) {
+    const os = await getOs();
     return browser.storage.local.set(mergeWithDefaults(os, settings) as any);
 }
 
 function updateSettings() {
-    const tmp = preloadedInstance;
-    preloadedInstance = createNewInstance();
-    tmp.then(nvim => nvim.kill());
-    // It's ok to return the preloadedInstance as a promise because
-    // settings are only applied when the preloadedInstance has returned a
-    // port+settings object anyway.
-    return preloadedInstance;
+    // Settings are applied when new instances are created on-demand
+    return Promise.resolve();
 }
 
 function createNewInstance() {
     return new Promise((resolve, reject) => {
         const random = new Uint32Array(8);
-        window.crypto.getRandomValues(random);
+        crypto.getRandomValues(random);
         const password = Array.from(random).join("");
 
         const nvim = browser.runtime.connectNative("firenvim");
@@ -191,10 +210,22 @@ function createNewInstance() {
     });
 }
 
-// Creating this first instance serves two purposes: make creating new neovim
-// frames fast and also initialize settings the first time Firenvim is enabled
-// in a browser.
-preloadedInstance = createNewInstance();
+async function initializeSettings() {
+    try {
+        // Check if settings already exist
+        const existing = await browser.storage.local.get();
+        if (Object.keys(existing).length === 0) {
+            // No settings exist, apply defaults
+            const os = await getOs();
+            await browser.storage.local.set(mergeWithDefaults(os, {}) as any);
+        }
+    } catch (error) {
+        console.warn("Failed to initialize settings:", error);
+    }
+}
+
+// Initialize settings on service worker startup
+initializeSettings();
 
 async function toggleDisabled() {
     const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
@@ -203,10 +234,13 @@ async function toggleDisabled() {
         return;
     }
     const tabid = tab.id;
-    const disabled = !getTabValue(tabid, "disabled");
-    setTabValue(tabid, "disabled", disabled);
+    const disabled = !(await getTabValue(tabid, "disabled"));
+    await setTabValue(tabid, "disabled", disabled);
     updateIcon(tabid);
-    return browser.tabs.sendMessage(tabid, { args: [disabled], funcName: ["setDisabled"] });
+    return browser.tabs.sendMessage(tabid, {
+        type: MessageType.MESSAGE_PAGE,
+        args: [{ args: [disabled], funcName: ["setDisabled"] }]
+    });
 }
 
 async function acceptCommand (command: string) {
@@ -216,13 +250,19 @@ async function acceptCommand (command: string) {
         case "nvimify":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: [], funcName: ["forceNvimify"] },
+                {
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: [], funcName: ["forceNvimify"] }]
+                },
         );
         break;
         case "send_C-n":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<C-n>"], funcName: ["sendKey"] },
+                {
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<C-n>"], funcName: ["sendKey"] }]
+                },
         );
         if (getGlobalConf()["<C-n>"] === "default") {
             p = p.catch(() => browser.windows.create());
@@ -231,7 +271,10 @@ async function acceptCommand (command: string) {
         case "send_C-t":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<C-t>"], funcName: ["sendKey"] },
+                {
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<C-t>"], funcName: ["sendKey"] }]
+                },
         );
         if (getGlobalConf()["<C-t>"] === "default") {
             p = p.catch(() => browser.tabs.create({ "windowId": tab.windowId }));
@@ -240,7 +283,10 @@ async function acceptCommand (command: string) {
         case "send_C-w":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<C-w>"], funcName: ["sendKey"] },
+                {
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<C-w>"], funcName: ["sendKey"] }]
+                },
         );
         if (getGlobalConf()["<C-w>"] === "default") {
             p = p.catch(() => browser.tabs.remove(tab.id));
@@ -249,7 +295,10 @@ async function acceptCommand (command: string) {
         case "send_CS-n":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<CS-n>"], funcName: ["sendKey"] },
+                {
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<CS-n>"], funcName: ["sendKey"] }]
+                },
         );
         if (getGlobalConf()["<CS-n>"] === "default") {
             p = p.catch(() => browser.windows.create({ "incognito": true }));
@@ -259,13 +308,19 @@ async function acceptCommand (command: string) {
             // <CS-t> can't be emulated without the sessions API.
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<CS-t>"], funcName: ["sendKey"] },
+                {
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<CS-t>"], funcName: ["sendKey"] }]
+                },
         );
         break;
         case "send_CS-w":
             p = browser.tabs.sendMessage(
                 tab.id,
-                { args: ["<CS-w>"], funcName: ["sendKey"] },
+                {
+                    type: MessageType.MESSAGE_PAGE,
+                    args: [{ args: ["<CS-w>"], funcName: ["sendKey"] }]
+                },
         );
         if (getGlobalConf()["<CS-w>"] === "default") {
             p = p.catch(() => browser.windows.remove(tab.windowId));
@@ -278,52 +333,55 @@ async function acceptCommand (command: string) {
     return p;
 }
 
-Object.assign(window, {
-    acceptCommand,
-    // We need to stick the browser polyfill in `window` if we want the `exec`
-    // call to be able to find it on Chrome
-    browser,
-    closeOwnTab: (sender: any) => browser.tabs.remove(sender.tab.id),
-    exec: (_: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
-    getError,
-    getNeovimInstance: () => {
-        const result = preloadedInstance;
-        preloadedInstance = createNewInstance();
-        // Destructuring result to remove kill() from it
-        return result.then(({ password, port }) => ({ password, port }));
-    },
-    getNvimPluginVersion: () => nvimPluginVersion,
-    getOwnFrameId: (sender: any) => sender.frameId,
-    getTab: (sender: any) => sender.tab,
-    getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
-    getTabValueFor: (_: any, args: any) => getTabValue(args[0], args[1]),
-    getWarning,
-    messageFrame: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id,
-                                                                       args.message,
-                                                                       { frameId: args.frameId }),
-    messagePage: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id,
-                                                                      args),
-    publishFrameId: (sender: any) => {
-        browser.tabs.sendMessage(sender.tab.id, {
-            args: [sender.frameId],
-            funcName: ["registerNewFrameId"],
-        });
-        return sender.frameId;
-    },
-    setTabValue: (sender: any, args: any) => setTabValue(sender.tab.id, args[0], args[1]),
-    toggleDisabled: () => toggleDisabled(),
-    updateSettings: () => updateSettings(),
-    openTroubleshootingGuide: () => browser.tabs.create({ active: true, url: "https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md" }),
-} as any);
+// Message handlers for V3 migration - only background script functions
+const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
+  [MessageType.ACCEPT_COMMAND]: (_: any, args: any[]) => acceptCommand(args[0]),
+  [MessageType.CLOSE_OWN_TAB]: (sender: any, _: any[]) => browser.tabs.remove(sender.tab.id),
+  [MessageType.GET_ERROR]: (_: any, _args: any[]) => getError(),
+  [MessageType.GET_MANIFEST]: (_: any, _args: any[]) => browser.runtime.getManifest(),
+  [MessageType.GET_NEOVIM_INSTANCE]: (_: any, _args: any[]) => {
+    return createNewInstance().then(({ password, port }) => ({ password, port }));
+  },
+  [MessageType.GET_NVIM_PLUGIN_VERSION]: async (_: any, _args: any[]) => await getNvimPluginVersion(),
+  [MessageType.GET_OWN_FRAME_ID]: (sender: any, _: any[]) => sender.frameId,
+  [MessageType.GET_PLATFORM_INFO]: (_: any, _args: any[]) => browser.runtime.getPlatformInfo(),
+  [MessageType.GET_TAB]: (sender: any, _: any[]) => sender.tab,
+  [MessageType.GET_TAB_VALUE]: async (sender: any, args: any[]) => await getTabValue(sender.tab.id, args[0]),
+  [MessageType.GET_TAB_VALUE_FOR]: async (_: any, args: any[]) => await getTabValue(args[0], args[1]),
+  [MessageType.GET_WARNING]: (_: any, _args: any[]) => getWarning(),
+  [MessageType.MESSAGE_FRAME]: (sender: any, args: any[]) => browser.tabs.sendMessage(sender.tab.id, args[0].message, { frameId: args[0].frameId }),
+  [MessageType.MESSAGE_PAGE]: (sender: any, args: any[]) => browser.tabs.sendMessage(sender.tab.id, args[0]),
+  [MessageType.PUBLISH_FRAME_ID]: (sender: any, _: any[]) => {
+    browser.tabs.sendMessage(sender.tab.id, {
+      type: MessageType.MESSAGE_PAGE,
+      args: [{ args: [sender.frameId], funcName: ["registerNewFrameId"] }]
+    });
+    return sender.frameId;
+  },
+  [MessageType.SET_LAST_FOCUSED_CONTENT_SCRIPT]: (sender: any, args: any[]) => {
+    // Store which content script is focused - for now just log it
+    // In the future this could be stored in session storage if needed
+    console.debug("Content script focused:", sender.tab.id, "frame:", args[0]);
+  },
+  [MessageType.SET_TAB_VALUE]: (sender: any, args: any[]) => setTabValue(sender.tab.id, args[0], args[1]),
+  [MessageType.TOGGLE_DISABLED]: (_: any, _args: any[]) => toggleDisabled(),
+  [MessageType.UPDATE_SETTINGS]: (_: any, _args: any[]) => updateSettings(),
+  [MessageType.OPEN_TROUBLESHOOTING_GUIDE]: (_: any, _args: any[]) => browser.tabs.create({ active: true, url: "https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md" }),
+};
+
+// Legacy functions are now handled by messageHandlers map
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendResponse: any) => {
-    const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
-    // Can't be tested as there's no way to force an incorrect content request.
-    /* istanbul ignore next */
-    if (!fn) {
-        throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
+    if (request.type && request.type in messageHandlers) {
+        return messageHandlers[request.type as MessageType](sender, request.args || []);
     }
-    return fn(sender, request.args !== undefined ? request.args : []);
+
+    // Legacy support during migration - funcName calls should use messageHandlers
+    if (request.funcName) {
+        throw new Error(`Legacy funcName calls not supported in service worker: ${JSON.stringify(request)}. Use MessageType instead.`);
+    }
+
+    throw new Error(`Error: unhandled message: ${JSON.stringify(request)}.`);
 });
 
 browser.tabs.onActivated.addListener(tab => {
@@ -350,8 +408,8 @@ async function updateIfPossible() {
                                         .tabs
                                         .sendMessage(tab.id,
                                                      {
-                                                         args: [],
-                                                         funcName: ["getActiveInstanceCount"],
+                                                         type: MessageType.MESSAGE_PAGE,
+                                                         args: [{ args: [], funcName: ["getActiveInstanceCount"] }]
                                                      },
                                                      { frameId: 0 })
                                         .catch(() => 0));
@@ -365,5 +423,4 @@ async function updateIfPossible() {
         setTimeout(updateIfPossible, 1000 * 60 * 10);
     }
 }
-(window as any).updateIfPossible = updateIfPossible;
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);

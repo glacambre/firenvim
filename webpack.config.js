@@ -100,7 +100,7 @@ const chromeConfig = (config, env) => {
             "16": "firenvim16.png",
             "48": "firenvim48.png"
           }
-          manifest.browser_action["default_icon"] = "firenvim128.png";
+          manifest.action["default_icon"] = "firenvim128.png";
           if (env.endsWith("testing")) {
             manifest.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self';"
           }
@@ -143,6 +143,26 @@ const firefoxConfig = (config, env) => {
                   "strict_min_version": "88.0"
                 }
               };
+              if (manifest.background && manifest.background.service_worker) {
+                manifest.background = {
+                  "scripts": [manifest.background.service_worker],
+                  "persistent": false
+                };
+              }
+              if (manifest.action) {
+                manifest.browser_action = manifest.action;
+                delete manifest.action;
+              }
+              if (manifest.host_permissions) {
+                manifest.permissions = (manifest.permissions || []).concat(manifest.host_permissions);
+                delete manifest.host_permissions;
+              }
+              if (manifest.web_accessible_resources && Array.isArray(manifest.web_accessible_resources)) {
+                manifest.web_accessible_resources = manifest.web_accessible_resources.reduce((acc, item) => {
+                  return acc.concat(item.resources || []);
+                }, []);
+              }
+              manifest.manifest_version = 2;
               manifest.version = package_json.version;
               manifest.description = package_json.description;
               if (env.endsWith("testing")) {

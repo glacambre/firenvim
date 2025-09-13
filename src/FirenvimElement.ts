@@ -2,6 +2,7 @@ import { getConf } from "./utils/configuration"
 import { computeSelector, isChrome } from "./utils/utils";
 import { AbstractEditor } from "editor-adapter/AbstractEditor";
 import { getEditor } from "editor-adapter";
+import { MessageType } from "./MessageTypes";
 
 export class FirenvimElement {
 
@@ -171,14 +172,14 @@ export class FirenvimElement {
                 self.putEditorCloseToInputOrigin();
                 self.resizeReqId += 1;
                 browser.runtime.sendMessage({
-                    args: {
+                    type: MessageType.MESSAGE_FRAME,
+                    args: [{
                         frameId: self.frameId,
                         message: {
                             args: [self.resizeReqId, rect.width, rect.height],
                             funcName: ["resize"],
                         }
-                    },
-                    funcName: ["messageFrame"],
+                    }]
                 });
             }
         })(this));
@@ -488,28 +489,28 @@ export class FirenvimElement {
         if (cantFullyResize && warnIframe) {
             this.resizeReqId += 1;
             browser.runtime.sendMessage({
-                args: {
+                type: MessageType.MESSAGE_FRAME,
+                args: [{
                     frameId: this.frameId,
                     message: {
                         args: [this.resizeReqId, width, height],
                         funcName: ["resize"],
                     }
-                },
-                funcName: ["messageFrame"],
+                }]
             });
         }
     }
 
     sendKey (key: string) {
         return browser.runtime.sendMessage({
-            args: {
+            type: MessageType.MESSAGE_FRAME,
+            args: [{
                 frameId: this.frameId,
                 message: {
                     args: [key],
                     funcName: ["frame_sendKey"],
                 }
-            },
-            funcName: ["messageFrame"],
+            }]
         });
     }
 

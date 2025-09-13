@@ -4,3 +4,4 @@ target/
 tests/pages/github.html
 .nyc_output
 failures.txt
+.cache

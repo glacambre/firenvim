@@ -126,7 +126,11 @@ export async function neovim(
         });
     });
 
-    const { 0: channel, 1: apiInfo } = (await request("nvim_get_api_info", [])) as INvimApiInfo;
+    const apiResponse = (await request("nvim_get_api_info", [])) as INvimApiInfo;
+    if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length < 2) {
+        throw new Error("Invalid API response from Neovim");
+    }
+    const { 0: channel, 1: apiInfo } = apiResponse;
 
     stdout.setTypes(apiInfo.types);
 

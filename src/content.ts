@@ -2,11 +2,12 @@ import { FirenvimElement } from "./FirenvimElement";
 import { autofill } from "./autofill";
 import { confReady, getConf } from "./utils/configuration";
 import { getNeovimFrameFunctions, getActiveContentFunctions, getTabFunctions } from "./page";
+import { MessageType } from "./MessageTypes";
 
 if (document.location.href.startsWith("https://github.com/")
     || document.location.protocol === "file:" && document.location.href.endsWith("github.html")) {
     addEventListener("load", autofill);
-    let lastUrl = location.href; 
+    let lastUrl = location.href;
     // We have to use a MutationObserver to trigger autofill because Github
     // uses "progressive enhancement" and thus doesn't always trigger a load
     // event. But we can't always rely on the MutationObserver without the load
@@ -30,8 +31,8 @@ let frameIdLock = Promise.resolve();
 export const firenvimGlobal = {
     // Whether Firenvim is disabled in this tab
     disabled: browser.runtime.sendMessage({
+                type: MessageType.GET_TAB_VALUE,
                 args: ["disabled"],
-                funcName: ["getTabValue"],
         })
         // Note: this relies on setDisabled existing in the object returned by
         // getFunctions and attached to the window object
@@ -139,16 +140,16 @@ export const firenvimGlobal = {
     firenvimElems: new Map<number, FirenvimElement>(),
 };
 
-const ownFrameId = browser.runtime.sendMessage({ args: [], funcName: ["getOwnFrameId"] });
+const ownFrameId = browser.runtime.sendMessage({
+    type: MessageType.GET_OWN_FRAME_ID,
+    args: []
+});
 async function announceFocus () {
     const frameId = await ownFrameId;
     firenvimGlobal.lastFocusedContentScript = frameId;
     browser.runtime.sendMessage({
-        args: {
-            args: [ frameId ],
-            funcName: ["setLastFocusedContentScript"]
-        },
-        funcName: ["messagePage"]
+        type: MessageType.SET_LAST_FOCUSED_CONTENT_SCRIPT,
+        args: [frameId]
     });
 }
 // When the frame is created, we might receive focus, check for that
@@ -172,28 +173,40 @@ export const frameFunctions = getNeovimFrameFunctions(firenvimGlobal);
 export const activeFunctions = getActiveContentFunctions(firenvimGlobal);
 export const tabFunctions = getTabFunctions(firenvimGlobal);
 Object.assign(window, frameFunctions, activeFunctions, tabFunctions);
-browser.runtime.onMessage.addListener(async (request: { funcName: string[], args: any[] }) => {
+browser.runtime.onMessage.addListener(async (request: any) => {
+    let actualRequest = request;
+
+    // Handle MESSAGE_PAGE format - extract the nested request
+    if (request.type === MessageType.MESSAGE_PAGE) {
+        actualRequest = request.args[0];
+    }
+
+    // Handle direct funcName format or extracted funcName format
+    if (!actualRequest.funcName) {
+        throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
+    }
+
     // All content scripts must react to tab functions
-    let fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], tabFunctions);
+    let fn = actualRequest.funcName.reduce((acc: any, cur: string) => acc[cur], tabFunctions);
     if (fn !== undefined) {
-        return fn(...request.args);
+        return fn(...actualRequest.args);
     }
 
     // The only content script that should react to activeFunctions is the active one
-    fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], activeFunctions);
+    fn = actualRequest.funcName.reduce((acc: any, cur: string) => acc[cur], activeFunctions);
     if (fn !== undefined) {
         if (firenvimGlobal.lastFocusedContentScript === await ownFrameId) {
-            return fn(...request.args);
+            return fn(...actualRequest.args);
         }
         return new Promise(() => undefined);
     }
 
     // The only content script that should react to frameFunctions is the one
     // that owns the frame that sent the request
-    fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], frameFunctions);
+    fn = actualRequest.funcName.reduce((acc: any, cur: string) => acc[cur], frameFunctions);
     if (fn !== undefined) {
-        if (firenvimGlobal.firenvimElems.get(request.args[0]) !== undefined) {
-            return fn(...request.args);
+        if (firenvimGlobal.firenvimElems.get(actualRequest.args[0]) !== undefined) {
+            return fn(...actualRequest.args);
         }
         return new Promise(() => undefined);
     }

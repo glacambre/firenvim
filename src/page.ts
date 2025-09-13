@@ -3,6 +3,7 @@ import { FirenvimElement } from "./FirenvimElement";
 import { executeInPage   } from "./utils/utils";
 import { getConf         } from "./utils/configuration";
 import { keysToEvents    } from "./utils/keys";
+import { MessageType     } from "./MessageTypes";
 
 // This module is loaded in both the browser's content script and the browser's
 // frame script.
@@ -268,18 +269,29 @@ export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
                 case "pause_keyhandler":
                 case "frame_sendKey":
                 case "resize":
+                case "setLastFocusedContentScript":
+                case "messageFrame":
                     this.emit(request.funcName[0], request.args);
                     break;
                 case "get_buf_content":
                     return new Promise(resolve => this.emit(request.funcName[0], resolve));
                 case "evalInPage":
-                case "resizeEditor":
-                case "getElementContent":
+                case "focusInput":
+                case "focusPage":
+                case "focusNext":
+                case "focusPrev":
                 case "getEditorInfo":
+                case "getElementContent":
+                case "hideEditor":
+                case "killEditor":
+                case "pressKeys":
+                case "resizeEditor":
+                case "setElementContent":
+                case "setElementCursor":
                     // handled by frame function handler
                     break;
                 default:
-                    console.error("Unhandled page request:", request);
+                    console.error("Unhandled page request:", JSON.stringify(request, null, 2));
             }
         });
     }
@@ -299,11 +311,11 @@ export function getPageProxy (frameId: number) {
         const func = funcName;
         (page as any)[func] = ((...arr: any[]) => {
             return browser.runtime.sendMessage({
-                args: {
+                type: MessageType.MESSAGE_PAGE,
+                args: [{
                     args: [frameId].concat(arr),
                     funcName: [func],
-                },
-                funcName: ["messagePage"],
+                }]
             });
         });
     }

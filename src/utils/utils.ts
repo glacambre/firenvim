@@ -1,18 +1,32 @@
-let curHost : string;
+function detectBrowserEnvironment(): string {
+    // In service workers, use browser.runtime.getURL to detect browser
+    if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.getURL) {
+        const url = browser.runtime.getURL('');
+        if (url.startsWith('moz-extension:')) {
+            return 'firefox';
+        } else if (url.startsWith('chrome-extension:')) {
+            return 'chrome';
+        }
+    }
 
-// Chrome doesn't have a "browser" object, instead it uses "chrome".
-if (window.location.protocol === "moz-extension:") {
-    curHost = "firefox";
-} else if (window.location.protocol === "chrome-extension:") {
-    curHost = "chrome";
-} else if ((window as any).InstallTrigger === undefined) {
-    curHost = "chrome";
-} else {
-    curHost = "firefox";
+    // Fallback for content scripts and other contexts with window
+    if (typeof window !== 'undefined') {
+        if (window.location.protocol === "moz-extension:") {
+            return "firefox";
+        } else if (window.location.protocol === "chrome-extension:") {
+            return "chrome";
+        } else if ((window as any).InstallTrigger === undefined) {
+            return "chrome";
+        }
+    }
+
+    // Default fallback
+    return "chrome";
 }
 
 // Only usable in background script!
 export function isChrome() {
+    const curHost = detectBrowserEnvironment();
     // Can't cover error condition
     /* istanbul ignore next */
     if (curHost === undefined) {
@@ -25,6 +39,10 @@ export function isChrome() {
 // embedding a script element that runs the piece of code and emits its result
 // as an event.
 export function executeInPage(code: string): Promise<any> {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+        return Promise.reject(new Error('executeInPage can only be called from content scripts, not service workers'));
+    }
+
     // On firefox, use an API that allows circumventing some CSP restrictions
     // Use wrappedJSObject to detect availability of said API
     // DON'T use window.eval on other plateforms - it doesn't have the
@@ -111,6 +129,10 @@ export type IconKind = keyof typeof transformations;
 // Takes an icon kind and dimensions as parameter, draws that to a canvas and
 // returns a promise that will be resolved with the canvas' image data.
 export function getIconImageData(kind: IconKind, width = 32, height = 32) {
+    if (typeof document === 'undefined') {
+        return Promise.reject(new Error('getIconImageData can only be called from contexts with DOM access, not service workers'));
+    }
+
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     const img = new Image(width, height);
