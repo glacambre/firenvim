@@ -58,10 +58,7 @@ async function updateIcon(tabid?: number) {
     } else if ((await getWarning()) !== "") {
         name = "notification";
     }
-    
-    // Cross-browser compatibility: Firefox uses browserAction, Chrome uses action
-    const iconAPI = browser.action || browser.browserAction;
-    return iconAPI.setIcon({ path: iconPaths[name] });
+    return browser.action.setIcon({ path: iconPaths[name] });
 }
 
 async function setOs(osValue: string) {
