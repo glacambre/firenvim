@@ -1,6 +1,6 @@
 {
    "background": {
-      "service_worker": "background.js"
+      "scripts": [ "background.js" ]
    },
    "browser_action": {
       "browser_style": true,
