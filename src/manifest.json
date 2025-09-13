@@ -45,7 +45,6 @@
       "page": "options.html"
    },
    "permissions": [ "nativeMessaging", "storage" ],
-   "host_permissions": [ "<all_urls>" ],
    "version": "replaced_at_compile_time",
    "web_accessible_resources": [ "index.html", "ISSUE_TEMPLATE.md" ]
 }
