@@ -2,7 +2,7 @@
    "background": {
       "service_worker": "background.js"
    },
-   "action": {
+   "browser_action": {
       "browser_style": true,
       "default_icon": "firenvim.svg",
       "default_popup": "browserAction.html",
