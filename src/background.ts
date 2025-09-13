@@ -16,7 +16,7 @@
  */
 import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
 import { IconKind } from "./utils/utils";
-import { MessageType, Message } from "./MessageTypes";
+import { MessageType } from "./MessageTypes";
 
 const iconPaths: Record<IconKind, string> = {
     normal: "firenvim128.png",
