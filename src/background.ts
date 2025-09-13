@@ -18,7 +18,7 @@ import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
 import { getIconImageData, IconKind } from "./utils/utils";
 import { MessageType, Message } from "./MessageTypes";
 
-// V3 Migration: Remove preloadedInstance - service workers create instances on-demand
+export let preloadedInstance: Promise<any>;
 
 type tabId = number;
 type tabStorage = {
@@ -166,9 +166,13 @@ async function applySettings(settings: any) {
 }
 
 function updateSettings() {
-    // V3 Migration: No preloaded instance to manage in service workers
-    // Settings are applied when new instances are created on-demand
-    return Promise.resolve();
+    const tmp = preloadedInstance;
+    preloadedInstance = createNewInstance();
+    tmp.then(nvim => nvim.kill());
+    // It's ok to return the preloadedInstance as a promise because
+    // settings are only applied when the preloadedInstance has returned a
+    // port+settings object anyway.
+    return preloadedInstance;
 }
 
 function createNewInstance() {
@@ -199,8 +203,10 @@ function createNewInstance() {
     });
 }
 
-// V3 Migration: Remove preloaded instance initialization
-// Service workers create instances on-demand when needed
+// Creating this first instance serves two purposes: make creating new neovim
+// frames fast and also initialize settings the first time Firenvim is enabled
+// in a browser.
+preloadedInstance = createNewInstance();
 
 async function toggleDisabled() {
     const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
@@ -290,8 +296,9 @@ const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
   [MessageType.CLOSE_OWN_TAB]: (sender: any, _: any[]) => browser.tabs.remove(sender.tab.id),
   [MessageType.GET_ERROR]: (_: any, _args: any[]) => getError(),
   [MessageType.GET_NEOVIM_INSTANCE]: (_: any, _args: any[]) => {
-    // V3 Migration: Create fresh instance on-demand instead of using preloaded
-    return createNewInstance().then(({ password, port }) => ({ password, port }));
+    const result = preloadedInstance;
+    preloadedInstance = createNewInstance();
+    return result.then(({ password, port }) => ({ password, port }));
   },
   [MessageType.GET_NVIM_PLUGIN_VERSION]: async (_: any, _args: any[]) => await getNvimPluginVersion(),
   [MessageType.GET_OWN_FRAME_ID]: (sender: any, _: any[]) => sender.frameId,
