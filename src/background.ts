@@ -338,13 +338,11 @@ const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
   [MessageType.ACCEPT_COMMAND]: (_: any, args: any[]) => acceptCommand(args[0]),
   [MessageType.CLOSE_OWN_TAB]: (sender: any, _: any[]) => browser.tabs.remove(sender.tab.id),
   [MessageType.GET_ERROR]: (_: any, _args: any[]) => getError(),
-  [MessageType.GET_MANIFEST]: (_: any, _args: any[]) => browser.runtime.getManifest(),
   [MessageType.GET_NEOVIM_INSTANCE]: (_: any, _args: any[]) => {
     return createNewInstance().then(({ password, port }) => ({ password, port }));
   },
   [MessageType.GET_NVIM_PLUGIN_VERSION]: async (_: any, _args: any[]) => await getNvimPluginVersion(),
   [MessageType.GET_OWN_FRAME_ID]: (sender: any, _: any[]) => sender.frameId,
-  [MessageType.GET_PLATFORM_INFO]: (_: any, _args: any[]) => browser.runtime.getPlatformInfo(),
   [MessageType.GET_TAB]: (sender: any, _: any[]) => sender.tab,
   [MessageType.GET_TAB_VALUE]: async (sender: any, args: any[]) => await getTabValue(sender.tab.id, args[0]),
   [MessageType.GET_TAB_VALUE_FOR]: async (_: any, args: any[]) => await getTabValue(args[0], args[1]),
@@ -357,11 +355,6 @@ const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
       args: [{ args: [sender.frameId], funcName: ["registerNewFrameId"] }]
     });
     return sender.frameId;
-  },
-  [MessageType.SET_LAST_FOCUSED_CONTENT_SCRIPT]: (sender: any, args: any[]) => {
-    // Store which content script is focused - for now just log it
-    // In the future this could be stored in session storage if needed
-    console.debug("Content script focused:", sender.tab.id, "frame:", args[0]);
   },
   [MessageType.SET_TAB_VALUE]: (sender: any, args: any[]) => setTabValue(sender.tab.id, args[0], args[1]),
   [MessageType.TOGGLE_DISABLED]: (_: any, _args: any[]) => toggleDisabled(),

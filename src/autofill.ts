@@ -7,12 +7,18 @@ export async function autofill() {
         return;
     }
     const platInfoPromise = browser.runtime.sendMessage({
-        type: MessageType.GET_PLATFORM_INFO,
-        args: []
+        type: MessageType.MESSAGE_PAGE,
+        args: [{
+            args: [],
+            funcName: ["browser", "runtime", "getPlatformInfo"],
+        }]
     });
     const manifestPromise = browser.runtime.sendMessage({
-        type: MessageType.GET_MANIFEST,
-        args: []
+        type: MessageType.MESSAGE_PAGE,
+        args: [{
+            args: [],
+            funcName: ["browser", "runtime", "getManifest"],
+        }]
     });
     const nvimPluginPromise = browser.runtime.sendMessage({
         type: MessageType.GET_NVIM_PLUGIN_VERSION,
