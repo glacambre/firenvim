@@ -47,10 +47,5 @@
    "permissions": [ "nativeMessaging", "storage" ],
    "host_permissions": [ "<all_urls>" ],
    "version": "replaced_at_compile_time",
-   "web_accessible_resources": [
-      {
-         "resources": [ "index.html", "ISSUE_TEMPLATE.md" ],
-         "matches": [ "<all_urls>" ]
-      }
-   ]
+   "web_accessible_resources": [ "index.html", "ISSUE_TEMPLATE.md" ]
 }
