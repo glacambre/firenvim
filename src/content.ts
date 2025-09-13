@@ -7,7 +7,7 @@ import { MessageType } from "./MessageTypes";
 if (document.location.href.startsWith("https://github.com/")
     || document.location.protocol === "file:" && document.location.href.endsWith("github.html")) {
     addEventListener("load", autofill);
-    let lastUrl = location.href;
+    let lastUrl = location.href; 
     // We have to use a MutationObserver to trigger autofill because Github
     // uses "progressive enhancement" and thus doesn't always trigger a load
     // event. But we can't always rely on the MutationObserver without the load
@@ -140,9 +140,9 @@ export const firenvimGlobal = {
     firenvimElems: new Map<number, FirenvimElement>(),
 };
 
-const ownFrameId = browser.runtime.sendMessage({
+const ownFrameId = browser.runtime.sendMessage({ 
     type: MessageType.GET_OWN_FRAME_ID,
-    args: []
+    args: [] 
 });
 async function announceFocus () {
     const frameId = await ownFrameId;
