@@ -18,12 +18,12 @@ import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
 import { IconKind } from "./utils/utils";
 import { MessageType, Message } from "./MessageTypes";
 
-// V3 Migration: Service workers can't generate dynamic icons, use static PNG paths
+// V3 Migration: Service workers can't generate dynamic icons, use static icon paths
 const iconPaths: Record<IconKind, string> = {
-    normal: "firenvim128.png",
-    disabled: "firenvim128.png", // Could use a different static icon
-    error: "firenvim128.png",    // Could use a different static icon  
-    notification: "firenvim128.png" // Could use a different static icon
+    normal: "firenvim.svg",
+    disabled: "firenvim.svg", // Could use a different static icon
+    error: "firenvim.svg",    // Could use a different static icon  
+    notification: "firenvim.svg" // Could use a different static icon
 };
 
 // V3 Migration: Remove preloadedInstance - service workers create instances on-demand
