@@ -24,16 +24,25 @@ type tabId = number;
 type tabStorage = {
     disabled: boolean,
 };
-// V3 Migration: Replace in-memory Map with chrome.storage.session
-async function setTabValue(tabid: tabId, item: keyof tabStorage, value: any) {
-    const key = `tab_${tabid}_${item}`;
-    await browser.storage.session.set({ [key]: value });
+// We can't use the sessions.setTabValue/getTabValue apis firefox has because
+// chrome doesn't support them. Instead, we create a map of tabid => {} kept in
+// the background. This has the disadvantage of not surviving browser restarts,
+// but's it's cross platform.
+const tabValues = new Map<tabId, tabStorage>();
+function setTabValue(tabid: tabId, item: keyof tabStorage, value: any) {
+    let obj = tabValues.get(tabid);
+    if (obj === undefined) {
+        obj = { "disabled": false };
+        tabValues.set(tabid, obj);
+    }
+    obj[item] = value;
 }
-
-async function getTabValue(tabid: tabId, item: keyof tabStorage) {
-    const key = `tab_${tabid}_${item}`;
-    const result = await browser.storage.session.get(key);
-    return result[key];
+function getTabValue(tabid: tabId, item: keyof tabStorage) {
+    const obj = tabValues.get(tabid);
+    if (obj === undefined) {
+        return undefined;
+    }
+    return obj[item];
 }
 
 async function updateIcon(tabid?: number) {
@@ -46,7 +55,7 @@ async function updateIcon(tabid?: number) {
         }
         tabid = tab.id;
     }
-    if ((await getTabValue(tabid, "disabled")) === true) {
+    if (getTabValue(tabid, "disabled") === true) {
         name = "disabled";
     } else if (error !== "") {
         name = "error";
@@ -195,8 +204,8 @@ async function toggleDisabled() {
         return;
     }
     const tabid = tab.id;
-    const disabled = !(await getTabValue(tabid, "disabled"));
-    await setTabValue(tabid, "disabled", disabled);
+    const disabled = !getTabValue(tabid, "disabled");
+    setTabValue(tabid, "disabled", disabled);
     updateIcon(tabid);
     return browser.tabs.sendMessage(tabid, { args: [disabled], funcName: ["setDisabled"] });
 }
@@ -283,8 +292,8 @@ const messageHandlers: Record<string, (sender: any, args: any[]) => any> = {
   [MessageType.GET_NVIM_PLUGIN_VERSION]: (_: any, _args: any[]) => nvimPluginVersion,
   [MessageType.GET_OWN_FRAME_ID]: (sender: any, _: any[]) => sender.frameId,
   [MessageType.GET_TAB]: (sender: any, _: any[]) => sender.tab,
-  [MessageType.GET_TAB_VALUE]: async (sender: any, args: any[]) => await getTabValue(sender.tab.id, args[0]),
-  [MessageType.GET_TAB_VALUE_FOR]: async (_: any, args: any[]) => await getTabValue(args[0], args[1]),
+  [MessageType.GET_TAB_VALUE]: (sender: any, args: any[]) => getTabValue(sender.tab.id, args[0]),
+  [MessageType.GET_TAB_VALUE_FOR]: (_: any, args: any[]) => getTabValue(args[0], args[1]),
   [MessageType.GET_WARNING]: (_: any, _args: any[]) => getWarning(),
   [MessageType.MESSAGE_FRAME]: (sender: any, args: any[]) => browser.tabs.sendMessage(sender.tab.id, args[0].message, { frameId: args[0].frameId }),
   [MessageType.MESSAGE_PAGE]: (sender: any, args: any[]) => browser.tabs.sendMessage(sender.tab.id, args[0]),
