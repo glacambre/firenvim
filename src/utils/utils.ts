@@ -1,3 +1,5 @@
+let curHost : string;
+
 function detectBrowserEnvironment(): string {
     // In service workers, use browser.runtime.getURL to detect browser
     if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.getURL) {
@@ -24,9 +26,10 @@ function detectBrowserEnvironment(): string {
     return "chrome";
 }
 
+curHost = detectBrowserEnvironment();
+
 // Only usable in background script!
 export function isChrome() {
-    const curHost = detectBrowserEnvironment();
     // Can't cover error condition
     /* istanbul ignore next */
     if (curHost === undefined) {
