@@ -208,23 +208,8 @@ function createNewInstance() {
     });
 }
 
-// V3 Migration: Initialize settings on startup since we don't have preloaded instance
-async function initializeSettings() {
-    try {
-        // Check if settings already exist
-        const existing = await browser.storage.local.get();
-        if (Object.keys(existing).length === 0) {
-            // No settings exist, apply defaults
-            const os = await getOs();
-            await browser.storage.local.set(mergeWithDefaults(os, {}) as any);
-        }
-    } catch (error) {
-        console.warn("Failed to initialize settings:", error);
-    }
-}
-
-// Initialize settings on service worker startup
-initializeSettings();
+// V3 Migration: Remove preloaded instance initialization
+// Service workers create instances on-demand when needed
 
 async function toggleDisabled() {
     const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
