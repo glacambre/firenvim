@@ -4,23 +4,16 @@ import { getGridId, getLogicalSize, computeGridDimensionsFor, getGridCoordinates
 import { getPageProxy } from "./page";
 import { neovim } from "./Neovim";
 import { toFileName } from "./utils/utils";
-import { MessageType } from "./MessageTypes";
 
 const pageLoaded = new Promise((resolve, reject) => {
     window.addEventListener("load", resolve);
     setTimeout(reject, 10000)
 });
-const connectionPromise = browser.runtime.sendMessage({ 
-    type: MessageType.GET_NEOVIM_INSTANCE,
-    args: []
-});
+const connectionPromise = browser.runtime.sendMessage({ funcName: ["getNeovimInstance"] });
 
 export const isReady = browser
     .runtime
-    .sendMessage({ 
-        type: MessageType.PUBLISH_FRAME_ID,
-        args: []
-    })
+    .sendMessage({ funcName: ["publishFrameId"] })
     .then(async (frameId: number) => {
         await confReady;
         await pageLoaded;
