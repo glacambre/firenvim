@@ -1,5 +1,4 @@
 import { makeRequestHandler } from "./rpc";
-import * as background from "../background";
 
 console.log("Background script loaded for testing");
 
