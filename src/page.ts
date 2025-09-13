@@ -269,7 +269,6 @@ export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
                 case "pause_keyhandler":
                 case "frame_sendKey":
                 case "resize":
-                case "setLastFocusedContentScript":
                     this.emit(request.funcName[0], request.args);
                     break;
                 case "get_buf_content":
