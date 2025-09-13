@@ -127,6 +127,7 @@ export async function neovim(
     });
 
     const apiResponse = (await request("nvim_get_api_info", [])) as INvimApiInfo;
+    // V3 Migration: Add safety check for API response to prevent destructuring errors
     if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length < 2) {
         throw new Error("Invalid API response from Neovim");
     }
