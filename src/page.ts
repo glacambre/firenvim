@@ -274,18 +274,9 @@ export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
                 case "get_buf_content":
                     return new Promise(resolve => this.emit(request.funcName[0], resolve));
                 case "evalInPage":
-                case "focusInput":
-                case "focusPage":
-                case "focusNext":
-                case "focusPrev":
-                case "getEditorInfo":
-                case "getElementContent":
-                case "hideEditor":
-                case "killEditor":
-                case "pressKeys":
                 case "resizeEditor":
-                case "setElementContent":
-                case "setElementCursor":
+                case "getElementContent":
+                case "getEditorInfo":
                     // handled by frame function handler
                     break;
                 default:
