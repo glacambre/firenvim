@@ -3,7 +3,6 @@ import { FirenvimElement } from "./FirenvimElement";
 import { executeInPage   } from "./utils/utils";
 import { getConf         } from "./utils/configuration";
 import { keysToEvents    } from "./utils/keys";
-import { MessageType     } from "./MessageTypes";
 
 // This module is loaded in both the browser's content script and the browser's
 // frame script.
@@ -300,11 +299,11 @@ export function getPageProxy (frameId: number) {
         const func = funcName;
         (page as any)[func] = ((...arr: any[]) => {
             return browser.runtime.sendMessage({
-                type: MessageType.MESSAGE_PAGE,
-                args: [{
+                args: {
                     args: [frameId].concat(arr),
                     funcName: [func],
-                }]
+                },
+                funcName: ["messagePage"],
             });
         });
     }
