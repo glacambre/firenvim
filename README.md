@@ -184,11 +184,11 @@ The `content` localSetting controls how Firenvim should read the content of an e
 vim.g.firenvim_config.localSettings['.*'] = { content = 'html' }
 ```
 
-### Special characters on MacOS
+### Special characters on macOS
 
-On MacOS, the default keyboard layouts emit special characters when the alt (i.e. option) key is held down. From the perspective of the browser, these special characters replace the underlying "main" character of a keystroke event while retaining the modifier. For example, in the standard US layout the key chord alt-o is received in the browser as alt-ø rather than alt-o. Further, certain alt-chords represent "dead keys", which apply a diacritic to the next character entered. Pressing alt-e followed by a produces the single character "á" while alt-u followed by a produces "ä". To produce this behavior, diacritic-mapped strokes like alt-e and alt-u are themselves mapped to a ["Dead key" character](https://en.wikipedia.org/wiki/Dead_key). 
+On macOS, the default keyboard layouts emit special characters when the alt (i.e. option) key is held down. From the perspective of the browser, these special characters replace the underlying "main" character of a keystroke event while retaining the modifier. For example, in the standard US layout the key chord alt-o is received in the browser as alt-ø rather than alt-o. Further, certain alt-chords represent "dead keys", which apply a diacritic to the next character entered. Pressing alt-e followed by a produces the single character "á" while alt-u followed by a produces "ä". To produce this behavior, diacritic-mapped strokes like alt-e and alt-u are themselves mapped to a ["Dead key" character](https://en.wikipedia.org/wiki/Dead_key). 
 
-These behaviors complicate the support of special character and alt/meta (A- or M-) vim mappings on MacOS in two ways:
+These behaviors complicate the support of special character and alt/meta (A- or M-) vim mappings on macOS in two ways:
 
 1. There is no way to generate unmodified special character key events. For example, since the only way to generate the character "ø" via the keyboard is by holding down alt, any key event with the "ø" character will also have an alt modifier. If we forward this directly to Vim, it will be received as `<M-ø>`.
 
@@ -196,7 +196,7 @@ These behaviors complicate the support of special character and alt/meta (A- or 
 
 Terminal and standalone GUI applications can solve these problems by changing the interpretation of the alt key at the application level. `Terminal.app` and `iTerm2`, for instance, both provide a "use Option as Meta key" preference that converts incoming alt-chords at the application level. Firenvim, however, is a browser extension that operates off of browser keystroke events rather than application-level events. At present, we are unsure how to implement this "use option as meta" functionality at the browser event level (help here is welcome!). However, there are some workarounds.
 
-For problem (1), Firenvim will by default drop the alt key on MacOS for any special character, defined here as non-alphanumeric (not matching `/[a-zA-Z0-9]/`). This means alt-o will be forwarded to Neovim as "ø" rather than "M-ø". Note that this behavior can be changed by setting the `alt` setting of the `globalSettings` configuration to `all`, like this:
+For problem (1), Firenvim will by default drop the alt key on macOS for any special character, defined here as non-alphanumeric (not matching `/[a-zA-Z0-9]/`). This means alt-o will be forwarded to Neovim as "ø" rather than "M-ø". Note that this behavior can be changed by setting the `alt` setting of the `globalSettings` configuration to `all`, like this:
 
 ### Making Firenvim ignore keys
 

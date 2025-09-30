@@ -461,7 +461,7 @@ endfunction
 function! s:ungoogled_chromium_config_exists() abort
         let l:p = [$HOME, '.config', 'ungoogled-chromium']
         if has('mac')
-                " According to #1007, on macos, things work when using the
+                " According to #1007, on macOS, things work when using the
                 " regular chrome dir.
                 return v:false
         elseif has('win32') || s:is_wsl
