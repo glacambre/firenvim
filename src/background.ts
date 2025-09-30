@@ -7,7 +7,7 @@
  * - Keep track of error messages/warnings that should are displayed in the
  *   browserAction.
  * - Update settings when the user changes their vimrc.
- * - Start new neovim instances when asked by a content script.
+ * - Start new Neovim instances when asked by a content script.
  * - Provide an RPC mechanism that enables calling background APIs from the
  *   browserAction/content script.
  *
@@ -97,10 +97,10 @@ function registerErrors(nvim: any, reject: any) {
         if (p.error) {
             const errstr = p.error.toString();
             if (errstr.match(/no such native application/i)) {
-                error = "Native manifest not found. Please run `:call firenvim#install(0)` in neovim.";
+                error = "Native manifest not found. Please run `:call firenvim#install(0)` in Neovim.";
             } else if (errstr.match(/an unexpected error occurred/i)) {
-                error = "The script supposed to start neovim couldn't be found."
-                    + " Please run `:call firenvim#install(0)` in neovim";
+                error = "The script supposed to start Neovim couldn't be found."
+                    + " Please run `:call firenvim#install(0)` in Neovim";
                 if (os === "win") {
                     error += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
                 }
@@ -191,7 +191,7 @@ function createNewInstance() {
     });
 }
 
-// Creating this first instance serves two purposes: make creating new neovim
+// Creating this first instance serves two purposes: make creating new Neovim
 // frames fast and also initialize settings the first time Firenvim is enabled
 // in a browser.
 preloadedInstance = createNewInstance();

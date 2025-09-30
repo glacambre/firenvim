@@ -20,7 +20,7 @@ export class FirenvimElement {
         refocusRefs: [] as any[],
         refocusTimeouts: [] as any[],
     };
-    // frameId is the webextension id of the neovim frame. We use it to send
+    // frameId is the webextension id of the Neovim frame. We use it to send
     // commands to the frame.
     private frameId: number;
     // frameIdPromise is a promise that will resolve to the frameId. The
@@ -55,14 +55,14 @@ export class FirenvimElement {
     // page when the user asks for that.
     private originalElement: HTMLElement;
     // resizeObserver is used in order to detect when the size of the element
-    // being edited changed. When this happens, we resize the neovim frame.
+    // being edited changed. When this happens, we resize the Neovim frame.
     // TODO: periodically check if MS implemented a ResizeObserver type
     private resizeObserver: any;
-    // span is the span element we use in order to insert the neovim frame in
-    // the page. The neovim frame is attached to its shadow dom. Using a span
+    // span is the span element we use in order to insert the Neovim frame in
+    // the page. The Neovim frame is attached to its shadow dom. Using a span
     // is much less disruptive to the page and enables a modicum of privacy
     // (the page won't be able to check what's in it). In firefox, pages will
-    // still be able to detect the neovim frame by using window.frames though.
+    // still be able to detect the Neovim frame by using window.frames though.
     private span: HTMLSpanElement;
     // resizeReqId keeps track of the number of resizing requests that are sent
     // to the iframe. We send and increment it for every resize requests, this

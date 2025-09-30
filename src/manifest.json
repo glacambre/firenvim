@@ -10,7 +10,7 @@
    },
    "commands": {
       "nvimify": {
-         "description": "Turn the currently focused element into a neovim iframe.",
+         "description": "Turn the currently focused element into a Neovim iframe.",
          "suggested_key": {
             "default": "Ctrl+E"
          }

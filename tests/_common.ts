@@ -314,7 +314,7 @@ export function reloadNeovim(server: any, driver: webdriver.WebDriver) {
 }
 
 export const testBrokenVimrc = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
-        // Check case where the vimrc doesn't load the neovim plugin
+        // Check case where the vimrc doesn't load the Neovim plugin
         await writeVimrc("");
         await reloadNeovim(server, driver);
         await driver.sleep(10000);
@@ -342,7 +342,7 @@ export const testBrokenVimrc = retryTest(withLocalPage("simple.html", async (tes
                                     document.documentElement.focus();
                                     document.body.focus();`);
 
-        // Check case where the vimrc is broken and makes neovim emit an error
+        // Check case where the vimrc is broken and makes Neovim emit an error
         // message
         await writeVimrc("call");
         await reloadNeovim(server, driver);

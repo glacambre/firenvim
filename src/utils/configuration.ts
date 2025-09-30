@@ -72,7 +72,7 @@ export function mergeWithDefaults(os: string, settings: any): IConfig {
     makeDefaults(settings, "globalSettings", {});
     // "<KEY>": "default" | "noop"
     // #103: When using the browser's command API to allow sending `<C-w>` to
-    // firenvim, whether the default action should be performed if no neovim
+    // firenvim, whether the default action should be performed if no Neovim
     // frame is focused.
     makeDefaults(settings.globalSettings, "<C-n>", "default");
     makeDefaults(settings.globalSettings, "<C-t>", "default");

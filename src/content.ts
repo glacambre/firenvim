@@ -24,7 +24,7 @@ if (document.location.href.startsWith("https://github.com/")
 }
 
 // Promise used to implement a locking mechanism preventing concurrent creation
-// of neovim frames
+// of Neovim frames
 let frameIdLock = Promise.resolve();
 
 export const firenvimGlobal = {
@@ -87,7 +87,7 @@ export const firenvimGlobal = {
             );
             const editor = firenvim.getEditor();
 
-            // If this element already has a neovim frame, stop
+            // If this element already has a Neovim frame, stop
             const alreadyRunning = Array.from(firenvimGlobal.firenvimElems.values())
                 .find((instance) => instance.getElement() === editor.getElement());
             if (alreadyRunning !== undefined) {
@@ -267,7 +267,7 @@ function setupListeners(selector: string) {
         // We also need to check if the currently focused element is among the
         // newly created elements and if it is, nvimify it.
         // Note that we can't do this unconditionally: we would turn the active
-        // element into a neovim frame even for unrelated dom changes.
+        // element into a Neovim frame even for unrelated dom changes.
         for (const mr of changes) {
             for (const node of mr.addedNodes) {
                 if (shouldNvimify(node)) {
