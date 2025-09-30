@@ -133,7 +133,7 @@ type ScrollDamage = {
 
 type GridDamage = CellDamage & ResizeDamage & ScrollDamage;
 
-// The state of the commandline. It is only used when using neovim's external
+// The state of the commandline. It is only used when using Neovim's external
 // commandline.
 type CommandLineState = {
     status: "hidden" | "shown",
@@ -808,7 +808,7 @@ function paintCommandlineWindow(state: State) {
     // should be drawn
     let renderedI = 0;
     // encodedI is the number of bytes that have been iterated over thus
-    // far. It is used to find out where to draw the cursor. Indeed, neovim
+    // far. It is used to find out where to draw the cursor. Indeed, Neovim
     // sends the cursor's position as a byte position within the UTF-8
     // encoded commandline string.
     let encodedI = 0;

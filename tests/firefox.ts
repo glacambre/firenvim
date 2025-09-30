@@ -184,6 +184,6 @@ describe("Firefox", () => {
         t("Mouse", testMouse);
         t("Untrusted input", testUntrustedInput);
         if (process.platform === "linux") {
-                t("No lingering neovim process", testNoLingeringNeovims, 20000);
+                t("No lingering Neovim process", testNoLingeringNeovims, 20000);
         }
 })

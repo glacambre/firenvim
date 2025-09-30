@@ -12,18 +12,18 @@ flatpak permissions webextensions
 
 If the output of this command shows that Snap/Flatpak are preventing Firenvim from running, you need to run `flatpak permission-set webextensions firenvim snap.firefox yes` to change that.
 
-## Make sure the neovim plugin is installed
+## Make sure the Neovim plugin is installed
 
-Run neovim without any arguments and then try to run the following line:
+Run Neovim without any arguments and then try to run the following line:
 ```
 call firenvim#install(0)
 ```
 
-- If this results in `Installed native matifest for ${browser}` being printed, the firenvim plugin is correctly installed in neovim and you can move on to the next troubleshooting step.
+- If this results in `Installed native matifest for ${browser}` being printed, the firenvim plugin is correctly installed in Neovim and you can move on to the next troubleshooting step.
 
 - If this results in `No config detected for ${browser}` and `${browser}` is the browser you want to use firenvim with, this might be because your browser configuration files are in a non-standard directory. If this is the case, you will need to either create a symbolic link from your browser configuration directory to the expected one ([firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Manifest_location), [chrome](https://developer.chrome.com/apps/nativeMessaging#native-messaging-host-location)), or force-install Firenvim with `call firenvim#install(1)` and copy the contents of the default browser configuration directory ([firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_manifests#Manifest_location), [chrome](https://developer.chrome.com/apps/nativeMessaging#native-messaging-host-location)) to your custom one.
 
-- If this results in `Unknown function: firenvim#install` being printed, then firenvim is not correctly installed in neovim and this is likely a configuration error from your side. Check your configuration again.
+- If this results in `Unknown function: firenvim#install` being printed, then firenvim is not correctly installed in Neovim and this is likely a configuration error from your side. Check your configuration again.
 
 - If this results in `nvim version >= 0.4.0 required. Aborting`, you know what to do :).
 
@@ -33,7 +33,7 @@ Running `call firenvim#install(0)` should have created a shell or batch script i
 ```sh
 echo 'abcde{}' | ${XDG_DATA_HOME:-${HOME}/.local/share}/firenvim/firenvim
 ```
-This should print a json object the content of which is the current version of the firenvim neovim plugin. If it doesn't, please open a new github issue.
+This should print a json object the content of which is the current version of the firenvim Neovim plugin. If it doesn't, please open a new github issue.
 
 ## Make sure the firenvim native manifest has been created
 
@@ -53,7 +53,7 @@ Running `call firenvim#install(0)` should also have created a file named `firenv
 
 Also check the content of this json file to make sure that the `path` key points to the firenvim script you checked the existence of in the previous step. If the json file is missing or if the `path` attribute is wrong, please open a new github issue.
 
-## Make sure the browser extension can communicate with neovim
+## Make sure the browser extension can communicate with Neovim
 
 In your browser, open the background console. This requires the following steps:
 
@@ -76,7 +76,7 @@ Then, navigate to a page with a textarea. Open the content console (`<CS-I>` on 
 
 If your configs are not in `$HOME/.config/nvim` and the last step works with `-u NORC`, it could be that firenvim cannot access your config files. Try sourcing them (`:source [path to file]`) from inside firenvim. If this fails, move the configs into `$HOME/.config/nvim` and try sourcing them again.
 
-## Make sure firenvim's $PATH is the same as neovim's
+## Make sure firenvim's $PATH is the same as Neovim's
 
 Some operating systems (such as OSX) empty your browser's `$PATH`. This could be a problem if you want to use plugins that depend on other executables. In order to check if this is indeed happening, just run `echo $PATH` in your shell and `:!echo $PATH` in firenvim and compare the results. If they're different, this might be the culprit.
 

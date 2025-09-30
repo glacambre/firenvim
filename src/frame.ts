@@ -211,7 +211,7 @@ export const isReady = browser
             return new Promise ((resolve, reject) => setTimeout(() => {
                 keyHandler.focus();
                 writeFilePromise.then(() => resolve(page));
-                // To hard to test (we'd need to find a way to make neovim fail
+                // To hard to test (we'd need to find a way to make Neovim fail
                 // to write the file, which requires too many os-dependent side
                 // effects), so don't instrument.
                 /* istanbul ignore next */

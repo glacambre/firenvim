@@ -175,10 +175,10 @@ endfunction
 
 " Entry point of the vim-side of the extension.
 " This function does the following things:
-" - Get a security token from neovim's stdin
+" - Get a security token from Neovim's stdin
 " - Bind itself to a TCP port
 " - Write the security token + tcp port number to stdout()
-" - Take care of forwarding messages received on the TCP port to neovim
+" - Take care of forwarding messages received on the TCP port to Neovim
 function! firenvim#run() abort
         " Write messages to stdout according to the format expected by
         " Firefox's native messaging protocol
@@ -629,12 +629,12 @@ endfunction
 function! s:get_progpath() abort
         let l:result = v:progpath
         if $APPIMAGE !=# ''
-                " v:progpath is different every time you run neovim appimages
+                " v:progpath is different every time you run Neovim appimages
                 let l:result = $APPIMAGE
         endif
-        " Some package managers will install neovim in a version-specific path
+        " Some package managers will install Neovim in a version-specific path
         " that v:progpath will point to. This is an issue because the path may
-        " break when neovim is updated. Try to detect these cases, work around
+        " break when Neovim is updated. Try to detect these cases, work around
         " them if possible and warn the user.
         let l:specific_installs = {
                 \ 'homebrew (in /usr/local)': {
@@ -671,7 +671,7 @@ function! s:get_progpath() abort
                         endfor
                         if !l:alternative_found
                                 let l:warning = l:warning .
-                                        \ 'Firenvim may break next time you update neovim.'
+                                        \ 'Firenvim may break next time you update Neovim.'
                         endif
                         echo l:warning
                 endif
@@ -764,7 +764,7 @@ function! s:get_executable_content(data_dir, prolog) abort
                                   \ "-c 'try|" .
                                       \ 'call firenvim#run()|' .
                                     \ 'catch /Unknown function/|' .
-                                      \ "call chansend(g:firenvim_c,[\"f\\n\\n\\n\"..json_encode({\"messages\":[\"Your plugin manager did not load the Firenvim plugin for neovim.\"],\"version\":\"0.0.0\"})])|" .
+                                      \ "call chansend(g:firenvim_c,[\"f\\n\\n\\n\"..json_encode({\"messages\":[\"Your plugin manager did not load the Firenvim plugin for Neovim.\"],\"version\":\"0.0.0\"})])|" .
                                       \ "call chansend(2,[\"Firenvim not in runtime path. &rtp=\"..&rtp])|" .
                                       \ 'qall!|' .
                                     \ 'catch|' .
@@ -923,7 +923,7 @@ endfunction
 let s:is_wsl = v:false
 
 " Installing firenvim requires several steps:
-" - Create a batch/shell script that takes care of starting neovim with the
+" - Create a batch/shell script that takes care of starting Neovim with the
 "   right arguments. This is needed because the webextension api doesn't let
 "   users specify what arguments programs should be started with
 " - Create a manifest file that lets the browser know where the script created
@@ -937,7 +937,7 @@ let s:is_wsl = v:false
 " a:1: 0 to let firenvim detect what browsers the user wants to use or 1 to
 "      force install for every browser.
 " a:2: A prologue that should be inserted in the shell/batch script and
-"      executed before neovim is ran.
+"      executed before Neovim is ran.
 function! firenvim#install(...) abort
         if !has('nvim-0.6.0')
                 echoerr 'Error: nvim version >= 0.6.0 required. Aborting.'

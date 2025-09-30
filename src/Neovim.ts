@@ -48,7 +48,7 @@ export async function neovim(
         });
     };
     stdout.on("request", (id: number, name: any, args: any) => {
-        console.warn("firenvim: unhandled request from neovim", id, name, args);
+        console.warn("Firenvim: unhandled request from Neovim", id, name, args);
     });
     stdout.on("response", (id: any, error: any, result: any) => {
         const r = requests.get(id);
