@@ -91,7 +91,7 @@ describe("Firefox", () => {
                         .addExtensions(extensionPath);
 
                 if (env["HEADLESS"]) {
-                        options.headless();
+                        options.addArguments("-headless");
                 }
 
                 if (env["APPVEYOR"]) {
