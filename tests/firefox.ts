@@ -88,6 +88,7 @@ describe("Firefox", () => {
 
                 const options = (new Options())
                         .setPreference("xpinstall.signatures.required", false)
+                        .setPreference("remote.active-protocols", 3)
                         .addExtensions(extensionPath);
 
                 if (env["HEADLESS"]) {
