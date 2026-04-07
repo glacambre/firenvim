@@ -4,7 +4,21 @@ import * as process from "process";
 const env = process.env;
 import * as path from "path";
 import * as webdriver from "selenium-webdriver";
-import { Options } from "selenium-webdriver/firefox";
+import { Options, ServiceBuilder } from "selenium-webdriver/firefox";
+
+// Find a binary in PATH - needed to bypass selenium-manager which on Ubuntu 24.04
+// prefers /usr/bin/firefox (snap) over the Firefox Dev Edition in PATH.
+function findInPath(exe: string): string | null {
+        const pathDirs = (process.env["PATH"] || "").split(path.delimiter);
+        for (const dir of pathDirs) {
+                const full = path.join(dir, exe);
+                try {
+                        const s = fs.statSync(full);
+                        if (s.isFile()) return full;
+                } catch { /* not found */ }
+        }
+        return null;
+}
 
 import {
  writeFailures,
@@ -73,6 +87,7 @@ describe("Firefox", () => {
                                 resolve(parseFloat(stdout.match(/nvim v[0-9]+\.[0-9]+\.[0-9]+/gi)[0].slice(6)));
                         });
                 });
+                console.log("neovimVersion:", neovimVersion);
 
                 const coverage_dir = path.join(process.cwd(), ".nyc_output");
                 try {
@@ -86,10 +101,24 @@ describe("Firefox", () => {
                 setupVimrc();
                 const extensionPath = await getNewestFileIn(path.join(extensionDir, "xpi"));
 
+                // Find geckodriver and Firefox from PATH to bypass selenium-manager,
+                // which on Ubuntu 24.04 incorrectly returns the snap Firefox at
+                // /usr/bin/firefox instead of Firefox Dev Edition prepended to PATH.
+                const isWindows = process.platform === "win32";
+                const geckodriverExe = isWindows ? "geckodriver.exe" : "geckodriver";
+                const firefoxExe = isWindows ? "firefox.exe" : "firefox";
+                const geckodriverPath = findInPath(geckodriverExe) || geckodriverExe;
+                const firefoxPath = findInPath(firefoxExe);
+                console.log("geckodriverPath:", geckodriverPath, "firefoxPath:", firefoxPath);
+
                 const options = (new Options())
                         .setPreference("xpinstall.signatures.required", false)
                         .setPreference("remote.active-protocols", 3)
                         .addExtensions(extensionPath);
+
+                if (firefoxPath) {
+                        options.setBinary(firefoxPath);
+                }
 
                 if (env["HEADLESS"]) {
                         options.addArguments("-headless");
@@ -102,6 +131,7 @@ describe("Firefox", () => {
                 driver = new webdriver.Builder()
                         .forBrowser("firefox")
                         .setFirefoxOptions(options)
+                        .setFirefoxService(new ServiceBuilder(geckodriverPath))
                         .build();
 
                 background = await backgroundPromise;
