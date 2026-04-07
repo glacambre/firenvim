@@ -41,9 +41,11 @@ jobs:
     - name: Install ffmpeg (Linux)
       if: matrix.os == 'ubuntu'
       run: sudo apt update -y && sudo apt install -y ffmpeg
+      timeout-minutes: 5
     - name: Install ffmpeg (macOS)
       if: matrix.os == 'macos'
       run: curl -JL https://evermeet.cx/ffmpeg/get/zip --output ffmpeg.zip && unzip ffmpeg.zip && echo "$PWD" >> $GITHUB_PATH
+      timeout-minutes: 5
     - name: Install ffmpeg (Windows)
       if: matrix.os == 'windows'
       run: choco install ffmpeg
@@ -55,16 +57,19 @@ jobs:
       with:
         neovim: true
         version: ${{ matrix.neovim }}
+      timeout-minutes: 5
     - name: Install Geckodriver
       uses: browser-actions/setup-geckodriver@latest
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+      timeout-minutes: 5
     - name: Install Firefox Dev Edition (Linux)
       if: matrix.browser == 'firefox' && matrix.os == 'ubuntu'
       run: |
         curl --output 'firefox.tar.xz' -L 'https://download.mozilla.org/?product=firefox-devedition-latest-ssl&os=linux64'
         tar -xvf firefox.tar.xz
         echo "$PWD/firefox" >> $GITHUB_PATH
+      timeout-minutes: 5
     - name: Install Firefox Dev Edition (macOS)
       if: matrix.browser == 'firefox' && matrix.os == 'macos'
       run: |
@@ -73,9 +78,11 @@ jobs:
         cp -R "/Volumes/Firefox Developer Edition/Firefox Developer Edition.app" /Applications/
         hdiutil detach "/Volumes/Firefox Developer Edition"
         echo "/Applications/Firefox Developer Edition.app/Contents/MacOS" >> $GITHUB_PATH
+      timeout-minutes: 5
     - name: Install Firefox Dev Edition (Windows)
       if: matrix.browser == 'firefox' && matrix.os == 'windows'
       run: choco install firefox-dev --pre && choco install selenium-gecko-driver
+      timeout-minutes: 5
     - name: Install NPM dependencies
       timeout-minutes: 5
       run: npm ci
