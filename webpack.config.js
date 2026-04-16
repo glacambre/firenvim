@@ -100,9 +100,11 @@ const chromeConfig = (config, env) => {
             "16": "firenvim16.png",
             "48": "firenvim48.png"
           }
-          manifest.browser_action["default_icon"] = "firenvim128.png";
+          manifest.action["default_icon"] = "firenvim128.png";
           if (env.endsWith("testing")) {
-            manifest.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self';"
+            manifest.content_security_policy = {
+              extension_pages: "script-src 'self' 'unsafe-eval'; object-src 'self';"
+            };
           }
           content = JSON.stringify(manifest, undefined, 3);
         }
@@ -137,10 +139,14 @@ const firefoxConfig = (config, env) => {
           switch(path.basename(src)) {
             case "manifest.json":
               const manifest = JSON.parse(content.toString());
+              // Firefox MV3 uses scripts instead of service_worker
+              manifest.background = {
+                "scripts": ["background.js"]
+              };
               manifest.browser_specific_settings = {
                 "gecko": {
                   "id": "firenvim@lacamb.re",
-                  "strict_min_version": "88.0"
+                  "strict_min_version": "109.0"
                 }
               };
               manifest.version = package_json.version;

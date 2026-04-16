@@ -3,15 +3,15 @@
  * [background process](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Anatomy_of_a_WebExtension#Background_scripts).
  * Our background process has multiple tasks:
  * - Keep track of per-tab values with its setTabValue/getTabValue functions
- * - Set the [browserActions](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/browserAction)'s icon.
+ * - Set the [action](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/action)'s icon.
  * - Keep track of error messages/warnings that should are displayed in the
- *   browserAction.
+ *   action.
  * - Update settings when the user changes their vimrc.
  * - Start new Neovim instances when asked by a content script.
  * - Provide an RPC mechanism that enables calling background APIs from the
- *   browserAction/content script.
+ *   action/content script.
  *
- * The background process mostly acts as a slave for the browserAction and
+ * The background process mostly acts as a slave for the action and
  * content scripts. It rarely acts on its own.
  */
 import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
@@ -61,7 +61,7 @@ async function updateIcon(tabid?: number) {
     } else if (warning !== "") {
         name = "notification";
     }
-    return getIconImageData(name).then((imageData: any) => browser.browserAction.setIcon({ imageData }));
+    return getIconImageData(name).then((imageData: any) => browser.action.setIcon({ imageData }));
 }
 
 // Os is win/mac/linux/androis/cros. We only use it to add information to error
@@ -73,7 +73,7 @@ browser.runtime.getPlatformInfo().then((plat: any) => os = plat.os);
 let error = "";
 
 // Simple getter for easy RPC calls. Can't be tested as requires opening
-// browserAction.
+// action.
 /* istanbul ignore next */
 function getError() {
     return error;
@@ -166,7 +166,8 @@ function updateSettings() {
 function createNewInstance() {
     return new Promise((resolve, reject) => {
         const random = new Uint32Array(8);
-        window.crypto.getRandomValues(random);
+        // Use globalThis.crypto for service worker compatibility
+        globalThis.crypto.getRandomValues(random);
         const password = Array.from(random).join("");
 
         const nvim = browser.runtime.connectNative("firenvim");
@@ -278,13 +279,16 @@ async function acceptCommand (command: string) {
     return p;
 }
 
-Object.assign(window, {
+// Use globalThis instead of window for service worker compatibility
+const globalScope = globalThis as any;
+
+Object.assign(globalScope, {
     acceptCommand,
-    // We need to stick the browser polyfill in `window` if we want the `exec`
+    // We need to stick the browser polyfill in the global scope if we want the `exec`
     // call to be able to find it on Chrome
     browser,
     closeOwnTab: (sender: any) => browser.tabs.remove(sender.tab.id),
-    exec: (_: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
+    exec: (_: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], globalScope)(...(args.args)),
     getError,
     getNeovimInstance: () => {
         const result = preloadedInstance;
@@ -317,7 +321,7 @@ Object.assign(window, {
 } as any);
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendResponse: any) => {
-    const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
+    const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], globalScope);
     // Can't be tested as there's no way to force an incorrect content request.
     /* istanbul ignore next */
     if (!fn) {
@@ -365,5 +369,5 @@ async function updateIfPossible() {
         setTimeout(updateIfPossible, 1000 * 60 * 10);
     }
 }
-(window as any).updateIfPossible = updateIfPossible;
+globalScope.updateIfPossible = updateIfPossible;
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
