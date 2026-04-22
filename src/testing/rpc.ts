@@ -15,6 +15,24 @@ export function makeRequest(socket: any, func: string, args?: any[]): any {
 export function makeRequestHandler(s: any, context: string, coverageData: any) {
     return async (m: any) => {
         const req = JSON.parse(m.data);
+        const resolve = (args: any[]) => s.send(JSON.stringify({
+            args,
+            funcName: ["resolve"],
+            reqId: req.reqId,
+        }));
+        const reject = (e: any) => s.send(JSON.stringify({
+            args: [{
+                message: e.message,
+                cause: req.funcName[0],
+                name: e.name,
+                fileName: e.fileName,
+                lineNumber: e.lineNumber,
+                columnNumber: e.columnNumber,
+                stack: e.stack,
+            }],
+            funcName: ["reject"],
+            reqId: req.reqId,
+        }));
         switch(req.funcName[0]) {
             // Ignoring the resolve case because the browser has no reason to
             // send requests to the coverage server for now.
@@ -72,28 +90,52 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
                     }));
                 });
                 break;
-            case "eval":
+            case "closeExtraWindows":
                 try {
-                    s.send(JSON.stringify({
-                        args: [await eval(req.args[0])],
-                        funcName: ["resolve"],
-                        reqId: req.reqId,
-                    }));
+                    const wins = await browser.windows.getAll();
+                    await Promise.all(wins.slice(1).map(w => browser.windows.remove(w.id)));
+                    resolve([]);
                 } catch (e) {
-                    s.send(JSON.stringify({
-                        args: [{
-                            message: e.message,
-                            cause: req.args[0],
-                            name: e.name,
-                            fileName: e.fileName,
-                            lineNumber: e.lineNumber,
-                            columnNumber: e.columnNumber,
-                            stack: e.stack,
-                        }],
-                        funcName: ["reject"],
-                        reqId: req.reqId,
-                    }));
+                    reject(e);
                 }
+                break;
+            case "getWindowCount":
+                try {
+                    const wins = await browser.windows.getAll({});
+                    resolve([wins.length]);
+                } catch (e) {
+                    reject(e);
+                }
+                break;
+            case "getTabCount":
+                try {
+                    const tabs = await browser.tabs.query({});
+                    resolve([tabs.length]);
+                } catch (e) {
+                    reject(e);
+                }
+                break;
+            case "dispatchUntrustedKeyhandlerInput":
+                try {
+                    const target = document.getElementById("keyhandler") as HTMLInputElement;
+                    target.value = "a";
+                    [
+                        new KeyboardEvent("keydown",  { key: "a", bubbles: true }),
+                        new KeyboardEvent("keyup",    { key: "a", bubbles: true }),
+                        new KeyboardEvent("keypress", { key: "a", bubbles: true }),
+                        new InputEvent("beforeinput", { data: "a", bubbles: true }),
+                        new InputEvent("input",       { data: "a", bubbles: true }),
+                        new InputEvent("change",      { data: "a", bubbles: true }),
+                        new KeyboardEvent("keydown",  { key: "a", ctrlKey: true, bubbles: true }),
+                        new KeyboardEvent("keyup",    { key: "a", ctrlKey: true, bubbles: true }),
+                        new KeyboardEvent("keypress", { key: "a", ctrlKey: true, bubbles: true }),
+                    ].forEach(e => target.dispatchEvent(e));
+                    target.value = "";
+                    resolve([]);
+                } catch (e) {
+                    reject(e);
+                }
+                break;
         }
     };
 }
