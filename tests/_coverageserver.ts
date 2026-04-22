@@ -143,12 +143,20 @@ export function tryUpdate () {
         return backgroundSocket.then((s : any) => makeRequest(s, "tryUpdate"));
 };
 
-export function backgroundEval (code: string) {
-        return backgroundSocket.then((s : any) => makeRequest(s, "eval", [code]));
+export function closeExtraWindows () {
+        return backgroundSocket.then((s : any) => makeRequest(s, "closeExtraWindows"));
 };
 
-export function contentEval (s: WebSocket, code: string) {
-        return makeRequest(s, "eval", [code]);
+export function getWindowCount () {
+        return backgroundSocket.then((s : any) => makeRequest(s, "getWindowCount"));
+};
+
+export function getTabCount () {
+        return backgroundSocket.then((s : any) => makeRequest(s, "getTabCount"));
+};
+
+export function dispatchUntrustedKeyhandlerInput (s: WebSocket) {
+        return makeRequest(s, "dispatchUntrustedKeyhandlerInput");
 };
 
 export function shutdown () {

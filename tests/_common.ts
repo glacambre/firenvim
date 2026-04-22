@@ -83,8 +83,7 @@ type testFunction = (s: string, server: any, driver: webdriver.WebDriver) => Pro
 
 function withLocalPage(page: string, f: testFunction): testFunction {
         return async function (title, server, driver) {
-                await server.backgroundEval(`browser.windows.getAll()
-                                .then(a => Promise.all(a.slice(1).map(w => browser.windows.remove(w.id))))`);
+                await server.closeExtraWindows();
                 const contentSocket = await loadLocalPage(server, driver, page, title);
                 try {
                         return await f(title, server, driver);
@@ -1109,10 +1108,10 @@ export const testSetCursor = retryTest(withLocalPage("simple.html", async (testT
 
 export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         function getWindowCount () {
-                return server.backgroundEval("browser.windows.getAll({}).then(a => a.length)")
+                return server.getWindowCount();
         }
         function getTabCount () {
-                return server.backgroundEval("browser.tabs.query({}).then(a => a.length)")
+                return server.getTabCount();
         }
         function windowCountChange (windowCount: number, err: string) {
                 return driver.wait(async () => (await getWindowCount() !== windowCount), WAIT_DELAY, err);
@@ -1321,21 +1320,7 @@ inoremap <C-a> aFirenvim let through a C-a in insert mode
 ${vimrcContent}`);
         await reloadNeovim(server, driver);
         const [input, span, frameSocket] = await createFirenvimFor(server, driver, By.id("content-input"));
-        await server.contentEval (frameSocket, `const target = document.getElementById("keyhandler");
-target.value = "a";
-[
-    new KeyboardEvent("keydown",     { key: "a", bubbles: true }),
-    new KeyboardEvent("keyup",       { key: "a", bubbles: true }),
-    new KeyboardEvent("keypress",    { key: "a", bubbles: true }),
-    new InputEvent("beforeinput", { data: "a", bubbles: true }),
-    new InputEvent("input",       { data: "a", bubbles: true }),
-    new InputEvent("change",      { data: "a", bubbles: true }),
-    new KeyboardEvent("keydown",     { key: "a", ctrlKey: true, bubbles: true }),
-    new KeyboardEvent("keyup",       { key: "a", ctrlKey: true, bubbles: true }),
-    new KeyboardEvent("keypress",    { key: "a", ctrlKey: true, bubbles: true }),
-].forEach(e => target.dispatchEvent(e));
-target.value = "";
-`);
+        await server.dispatchUntrustedKeyhandlerInput(frameSocket);
         await sendKeys(driver, "ii".split("")
                        .concat(webdriver.Key.ESCAPE)
                        .concat(":wq!".split(""))
