@@ -1,6 +1,6 @@
 import { KeyHandler } from "./KeyHandler";
 import { getGlobalConf, confReady, getConfForUrl, NvimMode } from "./utils/configuration";
-import { getGridId, getLogicalSize, computeGridDimensionsFor, getGridCoordinates, events as rendererEvents } from "./renderer";
+import { getGridId, getLogicalSize, computeGridDimensionsFor, getGridCoordinates, getInitialState, events as rendererEvents } from "./renderer";
 import { getPageProxy } from "./page";
 import { neovim } from "./Neovim";
 import { toFileName } from "./utils/utils";
@@ -65,7 +65,7 @@ export const isReady = browser
                     resizeReqId = id;
                     // We need to put the keyHandler at the origin in order to avoid
                     // issues when it slips out of the viewport
-                    keyHandler.moveTo(0, 0);
+                    keyHandler.moveTo(0, 0, 'mouse');
                     // It's tempting to try to optimize this by only calling
                     // ui_try_resize when nCols is different from cols and nRows is
                     // different from rows but we can't because redraw notifications
@@ -144,8 +144,20 @@ export const isReady = browser
                 delete canvas.oncontextmenu;
                 mouseEnabled = false;
             });
+            const state = getInitialState();
+            keyHandler.resizeHeight(state.height);
+            rendererEvents.on("resize", ([grid, width, height]: any) => {
+                keyHandler.resizeHeight(height);
+            });
+            keyHandler.changeColor(state.foregroundColor);
+            rendererEvents.on("colorChange", ({ background, foreground }: any) => {
+                keyHandler.changeColor(foreground);
+            });
+            rendererEvents.on("moveCursor", (e: any) => {
+                keyHandler.moveTo(e.x, e.y, 'cursor');
+            });
             window.addEventListener("mousemove", (evt: MouseEvent) => {
-                keyHandler.moveTo(evt.clientX, evt.clientY);
+                keyHandler.moveTo(evt.clientX, evt.clientY, 'mouse');
             });
             function onMouse(evt: MouseEvent, action: string) {
                 if (!mouseEnabled) {

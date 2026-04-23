@@ -6,7 +6,7 @@ type ResizeEvent = {grid: number, width: number, height: number};
 type FrameResizeEvent = {width: number, height: number}
 type ModeChangeEvent = NvimMode;
 type ResizeEventHandler = (e: ResizeEvent | FrameResizeEvent | ModeChangeEvent) => void;
-type EventKind = "colorChange" | "resize" | "frameResize" | "modeChange" | "mouseOn" | "mouseOff";
+type EventKind = "colorChange" | "resize" | "frameResize" | "modeChange" | "mouseOn" | "mouseOff" | "moveCursor";
 export const events = new EventEmitter<EventKind, ResizeEventHandler>();
 
 let glyphCache : any = {};
@@ -318,6 +318,14 @@ export function computeGridDimensionsFor (width : number, height : number) {
 export function getGridCoordinates (x: number, y: number) {
     const [cellWidth, cellHeight] = getGlyphInfo(globalState);
     return [Math.floor(x * window.devicePixelRatio / cellWidth), Math.floor(y * window.devicePixelRatio / cellHeight)];
+}
+
+export function getInitialState() {
+    const [_, charHeight] = getGlyphInfo(globalState);
+    return {
+        foregroundColor: globalState.highlights[0].foreground,
+        height: charHeight,
+    }
 }
 
 function newHighlight (bg: string, fg: string): HighlightInfo {
@@ -873,6 +881,7 @@ function paintCommandlineWindow(state: State) {
         }
     }
     ctx.fillRect(x + cursorX, y, 1, charHeight);
+    events.emit("moveCursor", { x: x + cursorX, y: y });
 }
 
 function paint (_: DOMHighResTimeStamp) {
@@ -1063,6 +1072,7 @@ function paint (_: DOMHighResTimeStamp) {
                     : info.blinkoff - (relativeNow - info.blinkon);
                 setTimeout(scheduleFrame, nextPaint);
             }
+            events.emit("moveCursor", { x: cursor.x * charWidth, y: cursor.y * charHeight });
         }
     }
 
