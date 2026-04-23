@@ -279,7 +279,9 @@ export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
                     // handled by frame function handler
                     break;
                 default:
-                    console.error("Unhandled page request:", request);
+                    // Messages may be broadcast to multiple listeners
+                    // Only log at debug level since this is expected
+                    console.debug("Unhandled page request:", request);
             }
         });
     }

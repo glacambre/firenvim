@@ -1,24 +1,34 @@
 let curHost : string;
 
-// Chrome doesn't have a "browser" object, instead it uses "chrome".
-if (window.location.protocol === "moz-extension:") {
-    curHost = "firefox";
-} else if (window.location.protocol === "chrome-extension:") {
-    curHost = "chrome";
-} else if ((window as any).InstallTrigger === undefined) {
-    curHost = "chrome";
-} else {
-    curHost = "firefox";
+// Lazy browser detection - only runs when needed, not at module load time
+function detectBrowser() {
+    if (curHost !== undefined) {
+        return curHost;
+    }
+    
+    // For service workers or other contexts without window, check browser API
+    if (typeof window === 'undefined' || !window.location) {
+        // In service worker context, detect based on browser API availability
+        curHost = (typeof (browser as any).runtime.getBrowserInfo === 'function') ? "firefox" : "chrome";
+        return curHost;
+    }
+    
+    // Chrome doesn't have a "browser" object, instead it uses "chrome".
+    if (window.location.protocol === "moz-extension:") {
+        curHost = "firefox";
+    } else if (window.location.protocol === "chrome-extension:") {
+        curHost = "chrome";
+    } else if ((window as any).InstallTrigger === undefined) {
+        curHost = "chrome";
+    } else {
+        curHost = "firefox";
+    }
+    return curHost;
 }
 
 // Only usable in background script!
 export function isChrome() {
-    // Can't cover error condition
-    /* istanbul ignore next */
-    if (curHost === undefined) {
-        throw Error("Used isChrome in content script!");
-    }
-    return curHost === "chrome";
+    return detectBrowser() === "chrome";
 }
 
 // Runs CODE in the page's context by setting up a custom event listener,
@@ -71,6 +81,7 @@ export function executeInPage(code: string): Promise<any> {
 // Various filters that are used to change the appearance of the BrowserAction
 // icon.
 const svgpath = "firenvim.svg";
+const pngpath = "firenvim128.png"; // Use PNG for service workers since SVG doesn't work with createImageBitmap
 const transformations = {
     disabled: (img: Uint8ClampedArray) => {
         for (let i = 0; i < img.length; i += 4) {
@@ -111,17 +122,41 @@ export type IconKind = keyof typeof transformations;
 // Takes an icon kind and dimensions as parameter, draws that to a canvas and
 // returns a promise that will be resolved with the canvas' image data.
 export function getIconImageData(kind: IconKind, width = 32, height = 32) {
-    const canvas = document.createElement("canvas") as HTMLCanvasElement;
-    const ctx = canvas.getContext("2d");
-    const img = new Image(width, height);
-    const result = new Promise((resolve) => img.addEventListener("load", () => {
-        ctx.drawImage(img, 0, 0, width, height);
-        const id = ctx.getImageData(0, 0, width, height);
-        transformations[kind](id.data);
-        resolve(id);
-    }));
-    img.src = svgpath;
-    return result;
+    // Use OffscreenCanvas in service workers, regular canvas otherwise
+    const isServiceWorker = typeof window === 'undefined' || typeof document === 'undefined';
+    
+    if (isServiceWorker && typeof (globalThis as any).OffscreenCanvas !== 'undefined') {
+        // Service worker path using OffscreenCanvas
+        // Use PNG instead of SVG because createImageBitmap doesn't support SVG
+        const OffscreenCanvas = (globalThis as any).OffscreenCanvas;
+        const canvas = new OffscreenCanvas(width, height);
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        
+        return fetch(browser.runtime.getURL(pngpath))
+            .then(response => response.blob())
+            .then(blob => createImageBitmap(blob, { resizeWidth: width, resizeHeight: height }))
+            .then(bitmap => {
+                ctx.drawImage(bitmap, 0, 0, width, height);
+                const id = ctx.getImageData(0, 0, width, height);
+                transformations[kind](id.data);
+                return id;
+            });
+    } else {
+        // Regular DOM path - use SVG for better quality
+        const canvas = document.createElement("canvas") as HTMLCanvasElement;
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        const img = new Image(width, height);
+        const result = new Promise((resolve) => img.addEventListener("load", () => {
+            ctx.drawImage(img, 0, 0, width, height);
+            const id = ctx.getImageData(0, 0, width, height);
+            transformations[kind](id.data);
+            resolve(id);
+        }));
+        img.src = svgpath;
+        return result;
+    }
 }
 
 // Given a url and a selector, tries to compute a name that will be unique,
