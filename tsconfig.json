@@ -4,7 +4,7 @@
     "noImplicitAny": true,
     "sourceMap": true,
     "target": "ES2020",
-    "types": ["firefox-webext-browser"],
+    "types": ["firefox-webext-browser", "jest"],
     "alwaysStrict": true
   },
   "include": [
