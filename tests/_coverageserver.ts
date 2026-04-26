@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { Server } from "ws";
+import { WebSocketServer } from "ws";
 import * as istanbul from "istanbul-lib-coverage";
 
 const requests = new Map();
@@ -63,13 +63,13 @@ function makeRequestHandler(s: any) {
         }
 }
 
-let server : Server = undefined;
+let server : WebSocketServer = undefined;
 let backgroundSocket : Promise<any> = undefined;
 let coverage_dir : string = undefined;
 const connectionResolves : any[] = [];
 export function start(port: number, path: string) {
         coverage_dir = path;
-        server = new Server({ host: "127.0.0.1", port });
+        server = new WebSocketServer({ host: "127.0.0.1", port });
         server.on("connection", s => {
                 s.on("message", makeRequestHandler(s))
                 connectionResolves.forEach(r => r(s));
@@ -162,5 +162,5 @@ export function dispatchUntrustedKeyhandlerInput (s: WebSocket) {
 export function shutdown () {
         fs.writeFileSync(path.join(coverage_dir, "results"),
                          JSON.stringify(covMap));
-        return new Promise((resolve) => server.close(resolve));
+        server.close()
 }

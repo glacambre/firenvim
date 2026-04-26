@@ -54,7 +54,7 @@ function sendKeys(driver: webdriver.WebDriver, keys: any[]) {
 }
 
 export async function loadLocalPage(server: Server, driver: webdriver.WebDriver, page: string, title = "") {
-        let error: Error;
+        let error;
         for (let i = 0; i < 3; ++i) {
                 try {
                         const conn = server.getNextContentConnection();
@@ -106,7 +106,7 @@ function retryTest(f: testFunction): testFunction {
                         resetVimrc();
                         try {
                                 result = await f(s, server, driver);
-                        } catch (e) {
+                        } catch (e : any) {
                                 failures += 1;
                                 failureLog += `\n\n===== ${s} attempt ${failures} =====\n`;
                                 failureLog += e.stack.toString();

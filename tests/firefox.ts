@@ -155,7 +155,7 @@ describe("Firefox", () => {
 
         afterAll(async () => {
                 await server.pullCoverageData(background);
-                await server.shutdown();
+                server.shutdown();
                 writeFailures();
                 await killDriver(server, driver);
         }, 120000);
@@ -167,7 +167,7 @@ describe("Firefox", () => {
                 return test.only(s, () => f(s, server, driver), ms);
         }
 
-        t("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
+        o("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
         t("Github autofill", testGithubAutofill);
         t("Setting filenames", testFilenameSettings);
         t("Force nvimify", testForceNvimify);

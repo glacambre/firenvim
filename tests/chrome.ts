@@ -151,7 +151,7 @@ describe("Chrome", () => {
 
         afterAll(async () => {
                 await server.pullCoverageData(background);
-                await server.shutdown();
+                server.shutdown();
                 writeFailures();
                 await killDriver(server, driver);
         }, 120000);
