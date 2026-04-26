@@ -37,7 +37,7 @@ export const isReady = browser
             const nvim = await nvimPromise;
 
             keyHandler.on("input", (s: string) => nvim.nvim_input(s));
-            rendererEvents.on("modeChange", (s: NvimMode) => keyHandler.setMode(s));
+            rendererEvents.on("modeChange", (s: any) => keyHandler.setMode(s as NvimMode));
 
             // We need to set client info before running ui_attach because we want this
             // info to be available when UIEnter is triggered
@@ -60,7 +60,7 @@ export const isReady = browser
             }).catch(console.log);
 
             let resizeReqId = 0;
-            page.on("resize", ([id, width, height]: [number, number, number]) => {
+            page.on("resize", ([id, width, height]: number[]) => {
                 if (id > resizeReqId) {
                     resizeReqId = id;
                     // We need to put the keyHandler at the origin in order to avoid

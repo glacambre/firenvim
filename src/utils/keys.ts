@@ -134,7 +134,7 @@ export function keysToEvents(keys: string[]) {
 }
 
 // Turns a non-literal key (e.g. "Enter") into a vim-equivalent "<Enter>"
-export function translateKey(key: string) {
+export function translateKey(key: string) : string {
     if (nonLiteralKeys[key] !== undefined) {
         return nonLiteralKeys[key];
     }

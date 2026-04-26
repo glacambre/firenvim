@@ -14,7 +14,7 @@ export class EventEmitter<T extends string, U extends (...args: any[]) => void> 
     emit(event: T, ...data: any) {
         const handlers = this.listeners.get(event);
         if (handlers !== undefined) {
-            const errors : Error[] = [];
+            const errors : any[] = [];
             handlers.forEach((handler) => {
                 try {
                     handler(...data);
