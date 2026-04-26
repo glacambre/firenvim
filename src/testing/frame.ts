@@ -18,7 +18,8 @@ function createSocket(): Promise<WebSocket> {
 import { isReady } from "../frame";
 import { PageType } from "../page";
 
-isReady.then((page: PageType) => {
+isReady.then((p) => {
+    let page = p as PageType;
     page.killEditor = (f => async () => {
         if (socket === undefined) {
             // socket is undefined if isReady failed - this happens with the buggy

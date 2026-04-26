@@ -110,6 +110,7 @@ export class FirenvimElement {
         this.onDetach = onDetach;
         this.editor = getEditor(elem, {
             preferHTML: getConf().content == "html",
+            triggerUpdateEvents: false,
             codeMirror6Enabled: isChrome()
         });
 
@@ -392,7 +393,7 @@ export class FirenvimElement {
             document.location.href,
             this.getSelector(),
             await this.getPageElementCursor(),
-            await (this.editor.getLanguage().catch(() => undefined))
+            await (this.editor.getLanguage().catch(() : undefined => undefined))
         ])() as Promise<[string, string, [number, number], string]>;
     }
 

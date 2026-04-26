@@ -25,14 +25,14 @@ export class KeyHandler extends EventEmitter<"input", (s: string) => void> {
                 return;
             }
             // Note: order of this array is important, we need to check OS before checking meta
-            const specialKeys = [["Alt", "A"], ["Control", "C"], ["OS", "D"], ["Meta", "D"]];
+            const specialKeys : [string, string][] = [["Alt", "A"], ["Control", "C"], ["OS", "D"], ["Meta", "D"]];
             // The event has to be trusted and either have a modifier or a non-literal representation
             if (evt.isTrusted
                 && (nonLiteralKeys[evt.key] !== undefined
                     || specialKeys.find(([mod, _]: [string, string]) =>
                                         evt.key !== mod && (evt as any).getModifierState(mod)))) {
                 const text = specialKeys.concat([["Shift", "S"]])
-                .reduce((key: string, [attr, mod]: [string, string]) => {
+                .reduce((key: string, [attr, mod]: string[]) => {
                     if ((evt as any).getModifierState(attr)) {
                         return addModifier(mod, key);
                     }
