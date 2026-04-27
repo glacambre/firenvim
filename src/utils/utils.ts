@@ -68,62 +68,6 @@ export function executeInPage(code: string): Promise<any> {
     });
 }
 
-// Various filters that are used to change the appearance of the BrowserAction
-// icon.
-const svgpath = "firenvim.svg";
-const transformations = {
-    disabled: (img: Uint8ClampedArray) => {
-        for (let i = 0; i < img.length; i += 4) {
-            // Skip transparent pixels
-            if (img[i + 3] === 0) {
-                continue;
-            }
-            const mean = Math.floor((img[i] + img[i + 1] + img[i + 2]) / 3);
-            img[i] = mean;
-            img[i + 1] = mean;
-            img[i + 2] = mean;
-        }
-    },
-    error: (img: Uint8ClampedArray) => {
-        for (let i = 0; i < img.length; i += 4) {
-            // Turn transparent pixels red
-            if (img[i + 3] === 0) {
-                img[i] = 255;
-                img[i + 3] = 255;
-            }
-        }
-    },
-    normal: ((_img: Uint8ClampedArray) => (undefined as never)),
-    notification: (img: Uint8ClampedArray) => {
-        for (let i = 0; i < img.length; i += 4) {
-            // Turn transparent pixels yellow
-            if (img[i + 3] === 0) {
-                img[i] = 255;
-                img[i + 1] = 255;
-                img[i + 3] = 255;
-            }
-        }
-    },
-};
-
-export type IconKind = keyof typeof transformations;
-
-// Takes an icon kind and dimensions as parameter, draws that to a canvas and
-// returns a promise that will be resolved with the canvas' image data.
-export function getIconImageData(kind: IconKind, width = 32, height = 32) {
-    const canvas = document.createElement("canvas") as HTMLCanvasElement;
-    const ctx = canvas.getContext("2d");
-    const img = new Image(width, height);
-    const result = new Promise((resolve) => img.addEventListener("load", () => {
-        ctx.drawImage(img, 0, 0, width, height);
-        const id = ctx.getImageData(0, 0, width, height);
-        transformations[kind](id.data);
-        resolve(id);
-    }));
-    img.src = svgpath;
-    return result;
-}
-
 // Given a url and a selector, tries to compute a name that will be unique,
 // short and readable for the user.
 export function toFileName(formatString: string, url: string, id: string, language: string) {

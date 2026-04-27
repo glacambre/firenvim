@@ -15,7 +15,17 @@
  * content scripts. It rarely acts on its own.
  */
 import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
-import { getIconImageData, IconKind } from "./utils/utils";
+
+type IconKind = "normal" | "disabled" | "error" | "notification";
+
+function iconPath(kind: IconKind) {
+    const prefix = kind === "normal" ? "firenvim" : `firenvim-${kind}`;
+    return {
+        16: `${prefix}16.png`,
+        48: `${prefix}48.png`,
+        128: `${prefix}128.png`,
+    };
+}
 
 export let preloadedInstance: Promise<any>;
 
@@ -61,7 +71,7 @@ async function updateIcon(tabid?: number) {
     } else if (warning !== "") {
         name = "notification";
     }
-    return getIconImageData(name).then((imageData: any) => browser.browserAction.setIcon({ imageData }));
+    return browser.browserAction.setIcon({ path: iconPath(name) });
 }
 
 // Os is win/mac/linux/androis/cros. We only use it to add information to error
