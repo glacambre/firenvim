@@ -16,6 +16,66 @@ function deepCopy (obj) {
   return result;
 };
 
+// Icon variants are pre-rendered at build time so the background script
+// (which becomes a service worker under MV3) doesn't need a canvas/DOM.
+const ICON_STATES = ["normal", "disabled", "error", "notification"];
+const ICON_SIZES = [16, 48, 128];
+
+function applyIconTransform(buf, state) {
+  switch (state) {
+    case "disabled":
+      for (let i = 0; i < buf.length; i += 4) {
+        if (buf[i + 3] === 0) continue;
+        const mean = Math.floor((buf[i] + buf[i + 1] + buf[i + 2]) / 3);
+        buf[i] = mean;
+        buf[i + 1] = mean;
+        buf[i + 2] = mean;
+      }
+      break;
+    case "error":
+      for (let i = 0; i < buf.length; i += 4) {
+        if (buf[i + 3] === 0) {
+          buf[i] = 255;
+          buf[i + 3] = 255;
+        }
+      }
+      break;
+    case "notification":
+      for (let i = 0; i < buf.length; i += 4) {
+        if (buf[i + 3] === 0) {
+          buf[i] = 255;
+          buf[i + 1] = 255;
+          buf[i + 3] = 255;
+        }
+      }
+      break;
+  }
+}
+
+async function renderIcon(svgContent, size, state) {
+  const resized = sharp(svgContent).resize(size, size);
+  if (state === "normal") {
+    return resized.png().toBuffer();
+  }
+  const { data, info } = await resized.raw().toBuffer({ resolveWithObject: true });
+  applyIconTransform(data, state);
+  return sharp(data, { raw: { width: info.width, height: info.height, channels: info.channels } })
+    .png()
+    .toBuffer();
+}
+
+function iconFileName(state, size) {
+  return state === "normal" ? `firenvim${size}.png` : `firenvim-${state}${size}.png`;
+}
+
+function iconPatterns(target_dir) {
+  return ICON_SIZES.flatMap(size => ICON_STATES.map(state => ({
+    from: "static/firenvim.svg",
+    to: () => path.join(target_dir, iconFileName(state, size)),
+    transform: (content) => renderIcon(content, size, state),
+  })));
+}
+
 const browserFiles = [
   ".github/ISSUE_TEMPLATE.md",
   "src/manifest.json",
@@ -108,11 +168,7 @@ const chromeConfig = (config, env) => {
         }
         return content;
       }
-    })).concat([16, 48, 128].map(n => ({
-      from: "static/firenvim.svg",
-      to: () => path.join(chrome_target_dir, `firenvim${n}.png`),
-      transform: (content) => sharp(content).resize(n, n).toBuffer(),
-    })))}),
+    })).concat(iconPatterns(chrome_target_dir))}),
       new ProvidePlugin({ "browser": "webextension-polyfill" })
     ]
   });
@@ -152,7 +208,7 @@ const firefoxConfig = (config, env) => {
           }
           return content;
         }
-      }))
+      })).concat(iconPatterns(firefox_target_dir))
     })]
   });
   try {
