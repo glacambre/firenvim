@@ -5,6 +5,8 @@ import { getPageProxy } from "./page";
 import { neovim } from "./Neovim";
 import { toFileName } from "./utils/utils";
 
+document.addEventListener("contextmenu", e => e.preventDefault());
+
 const pageLoaded = new Promise((resolve, reject) => {
     window.addEventListener("load", resolve);
     setTimeout(reject, 10000)
