@@ -176,7 +176,7 @@ function updateSettings() {
 function createNewInstance() {
     return new Promise((resolve, reject) => {
         const random = new Uint32Array(8);
-        window.crypto.getRandomValues(random);
+        crypto.getRandomValues(random);
         const password = Array.from(random).join("");
 
         const nvim = browser.runtime.connectNative("firenvim");
