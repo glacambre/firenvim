@@ -167,7 +167,7 @@ describe("Firefox", () => {
                 return test.only(s, () => f(s, server, driver), ms);
         }
 
-        o("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
+        t("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
         t("Github autofill", testGithubAutofill);
         t("Setting filenames", testFilenameSettings);
         t("Force nvimify", testForceNvimify);
