@@ -354,6 +354,8 @@ browser.runtime.onMessageExternal.addListener(async (request: any, sender: any, 
     _sendResponse(resp);
 });
 
+const UPDATE_CHECK_ALARM = "firenvim-update-check";
+
 async function updateIfPossible() {
     const tabs = await browser.tabs.query({});
     const messages = tabs.map(tab => browser
@@ -372,8 +374,13 @@ async function updateIfPossible() {
     if (instances.find(n => n > 0) === undefined) {
         browser.runtime.reload();
     } else {
-        setTimeout(updateIfPossible, 1000 * 60 * 10);
+        browser.alarms.create(UPDATE_CHECK_ALARM, { delayInMinutes: 10 });
     }
 }
 (window as any).updateIfPossible = updateIfPossible;
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
+browser.alarms.onAlarm.addListener((alarm: any) => {
+    if (alarm.name === UPDATE_CHECK_ALARM) {
+        updateIfPossible();
+    }
+});
