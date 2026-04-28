@@ -33,26 +33,27 @@ type tabId = number;
 type tabStorage = {
     disabled: boolean,
 };
-// We can't use the sessions.setTabValue/getTabValue apis firefox has because
-// chrome doesn't support them. Instead, we create a map of tabid => {} kept in
-// the background. This has the disadvantage of not surviving browser restarts,
-// but's it's cross platform.
-const tabValues = new Map<tabId, tabStorage>();
-function setTabValue(tabid: tabId, item: keyof tabStorage, value: any) {
-    let obj = tabValues.get(tabid);
-    if (obj === undefined) {
-        obj = { "disabled": false };
-        tabValues.set(tabid, obj);
-    }
+// Per-tab state lives in storage.session so it survives MV3 service-worker
+// suspension within a browser session. One key per tab; cleared on tab close.
+const tabKey = (tabid: tabId) => `tab:${tabid}`;
+async function setTabValue(tabid: tabId, item: keyof tabStorage, value: any) {
+    const key = tabKey(tabid);
+    const obj: tabStorage = (await browser.storage.session.get(key))[key]
+        || { disabled: false };
     obj[item] = value;
+    await browser.storage.session.set({ [key]: obj });
 }
-function getTabValue(tabid: tabId, item: keyof tabStorage) {
-    const obj = tabValues.get(tabid);
+async function getTabValue(tabid: tabId, item: keyof tabStorage) {
+    const key = tabKey(tabid);
+    const obj: tabStorage | undefined = (await browser.storage.session.get(key))[key];
     if (obj === undefined) {
         return undefined;
     }
     return obj[item];
 }
+browser.tabs.onRemoved.addListener(tabid => {
+    browser.storage.session.remove(tabKey(tabid));
+});
 
 async function updateIcon(tabid?: number) {
     let name: IconKind = "normal";
@@ -64,7 +65,7 @@ async function updateIcon(tabid?: number) {
         }
         tabid = tab.id;
     }
-    if (getTabValue(tabid, "disabled") === true) {
+    if ((await getTabValue(tabid, "disabled")) === true) {
         name = "disabled";
     } else if (error !== "") {
         name = "error";
@@ -213,8 +214,8 @@ async function toggleDisabled() {
         return;
     }
     const tabid = tab.id;
-    const disabled = !getTabValue(tabid, "disabled");
-    setTabValue(tabid, "disabled", disabled);
+    const disabled = !(await getTabValue(tabid, "disabled"));
+    await setTabValue(tabid, "disabled", disabled);
     updateIcon(tabid);
     return browser.tabs.sendMessage(tabid, { args: [disabled], funcName: ["setDisabled"] });
 }
