@@ -1,23 +1,10 @@
-let curHost : string;
+// browser.runtime.getURL("") returns "moz-extension://…/" on Firefox and
+// "chrome-extension://…/" on Chrome. Works in content scripts, extension pages,
+// and service workers — unlike `window.location.protocol`, which doesn't exist
+// in a service worker.
+const curHost = browser.runtime.getURL("").startsWith("moz-extension:") ? "firefox" : "chrome";
 
-// Chrome doesn't have a "browser" object, instead it uses "chrome".
-if (window.location.protocol === "moz-extension:") {
-    curHost = "firefox";
-} else if (window.location.protocol === "chrome-extension:") {
-    curHost = "chrome";
-} else if ((window as any).InstallTrigger === undefined) {
-    curHost = "chrome";
-} else {
-    curHost = "firefox";
-}
-
-// Only usable in background script!
 export function isChrome() {
-    // Can't cover error condition
-    /* istanbul ignore next */
-    if (curHost === undefined) {
-        throw Error("Used isChrome in content script!");
-    }
     return curHost === "chrome";
 }
 
