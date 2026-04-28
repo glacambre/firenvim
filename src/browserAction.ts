@@ -13,13 +13,7 @@ function displayErrorsAndWarnings() {
 }
 
 async function updateDisableButton() {
-    const tabId = (await browser.runtime.sendMessage({
-        args: {
-            args: [{ active: true, currentWindow: true }],
-            funcName: [ "browser", "tabs", "query" ],
-        },
-        funcName: ["exec"],
-    }))[0].id;
+    const tabId = (await browser.tabs.query({ active: true, currentWindow: true }))[0].id;
     const disabled = (await browser.runtime.sendMessage({
         args: [tabId, "disabled"],
         funcName: ["getTabValueFor"],
