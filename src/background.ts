@@ -163,7 +163,7 @@ function applySettings(settings: any) {
     return browser.storage.local.set(mergeWithDefaults(os, settings) as any);
 }
 
-function updateSettings() {
+export function updateSettings() {
     const tmp = preloadedInstance;
     preloadedInstance = createNewInstance();
     tmp.then(nvim => nvim.kill());
@@ -219,7 +219,7 @@ async function toggleDisabled() {
     return browser.tabs.sendMessage(tabid, { args: [disabled], funcName: ["setDisabled"] });
 }
 
-async function acceptCommand (command: string) {
+export async function acceptCommand (command: string) {
     const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
     let p;
     switch (command) {
@@ -288,14 +288,9 @@ async function acceptCommand (command: string) {
     return p;
 }
 
-Object.assign(window, {
-    acceptCommand,
-    // We need to stick the browser polyfill in `window` if we want the `exec`
-    // call to be able to find it on Chrome
-    browser,
+const handlers: { [name: string]: (sender: any, args: any) => any } = {
     closeOwnTab: (sender: any) => browser.tabs.remove(sender.tab.id),
-    exec: (_: any, args: any) => args.funcName.reduce((acc: any, cur: string) => acc[cur], window)(...(args.args)),
-    getError,
+    getError: () => getError(),
     getNeovimInstance: () => {
         const result = preloadedInstance;
         preloadedInstance = createNewInstance();
@@ -303,11 +298,12 @@ Object.assign(window, {
         return result.then(({ password, port }) => ({ password, port }));
     },
     getNvimPluginVersion: () => nvimPluginVersion,
+    getPlatformInfo: () => browser.runtime.getPlatformInfo(),
     getOwnFrameId: (sender: any) => sender.frameId,
     getTab: (sender: any) => sender.tab,
     getTabValue: (sender: any, args: any) => getTabValue(sender.tab.id, args[0]),
     getTabValueFor: (_: any, args: any) => getTabValue(args[0], args[1]),
-    getWarning,
+    getWarning: () => getWarning(),
     messageFrame: (sender: any, args: any) => browser.tabs.sendMessage(sender.tab.id,
                                                                        args.message,
                                                                        { frameId: args.frameId }),
@@ -324,13 +320,13 @@ Object.assign(window, {
     toggleDisabled: () => toggleDisabled(),
     updateSettings: () => updateSettings(),
     openTroubleshootingGuide: () => browser.tabs.create({ active: true, url: "https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md" }),
-} as any);
+};
 
 browser.runtime.onMessage.addListener(async (request: any, sender: any, _sendResponse: any) => {
-    const fn = request.funcName.reduce((acc: any, cur: string) => acc[cur], window);
+    const fn = handlers[request.funcName[0]];
     // Can't be tested as there's no way to force an incorrect content request.
     /* istanbul ignore next */
-    if (!fn) {
+    if (!fn || request.funcName.length !== 1) {
         throw new Error(`Error: unhandled content request: ${JSON.stringify(request)}.`);
     }
     return fn(sender, request.args !== undefined ? request.args : []);
@@ -356,7 +352,7 @@ browser.runtime.onMessageExternal.addListener(async (request: any, sender: any, 
 
 const UPDATE_CHECK_ALARM = "firenvim-update-check";
 
-async function updateIfPossible() {
+export async function updateIfPossible() {
     const tabs = await browser.tabs.query({});
     const messages = tabs.map(tab => browser
                                         .tabs
@@ -377,7 +373,6 @@ async function updateIfPossible() {
         browser.alarms.create(UPDATE_CHECK_ALARM, { delayInMinutes: 10 });
     }
 }
-(window as any).updateIfPossible = updateIfPossible;
 browser.runtime.onUpdateAvailable.addListener(updateIfPossible);
 browser.alarms.onAlarm.addListener((alarm: any) => {
     if (alarm.name === UPDATE_CHECK_ALARM) {

@@ -1,4 +1,14 @@
 
+// Background-only actions. Passed in by testing/background.ts; testing/content
+// and testing/frame omit the parameter, since the request types that need
+// these (updateSettings/tryUpdate/acceptCommand) are only ever sent to the
+// background context.
+export type BackgroundActions = {
+    updateSettings: () => Promise<unknown>;
+    updateIfPossible: () => Promise<unknown>;
+    acceptCommand: (command: string) => Promise<unknown>;
+};
+
 const requests = new Map();
 
 let reqId = 0;
@@ -12,7 +22,7 @@ export function makeRequest(socket: any, func: string, args?: any[]): any {
     });
 }
 
-export function makeRequestHandler(s: any, context: string, coverageData: any) {
+export function makeRequestHandler(s: any, context: string, coverageData: any, actions?: BackgroundActions) {
     return async (m: any) => {
         const req = JSON.parse(m.data);
         const resolve = (args: any[]) => s.send(JSON.stringify({
@@ -64,7 +74,7 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
                 /* istanbul ignore next */
                 break;
             case "updateSettings":
-                (window as any).updateSettings().finally(() => {
+                actions.updateSettings().finally(() => {
                     s.send(JSON.stringify({
                         args: [],
                         funcName: ["resolve"],
@@ -73,7 +83,7 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
                 });
                 break;
             case "tryUpdate":
-                (window as any).updateIfPossible().finally(() => {
+                actions.updateIfPossible().finally(() => {
                     s.send(JSON.stringify({
                         args: [],
                         funcName: ["resolve"],
@@ -82,7 +92,7 @@ export function makeRequestHandler(s: any, context: string, coverageData: any) {
                 });
                 break;
             case "acceptCommand":
-                (window as any).acceptCommand(...req.args).finally(() => {
+                actions.acceptCommand(req.args[0]).finally(() => {
                     s.send(JSON.stringify({
                         args: [],
                         funcName: ["resolve"],
