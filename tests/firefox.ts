@@ -114,6 +114,31 @@ describe("Firefox", () => {
                 const options = (new Options())
                         .setPreference("xpinstall.signatures.required", false)
                         .setPreference("remote.active-protocols", 3)
+                        .setPreference("browser.uiCustomization.state", JSON.stringify({
+                                placements: {
+                                        "widget-overflow-fixed-list": [],
+                                        "nav-bar": [
+                                                "back-button",
+                                                "forward-button",
+                                                "stop-reload-button",
+                                                "urlbar-container",
+                                                "downloads-button",
+                                                "fxa-toolbar-menu-button",
+                                                "firenvim_lacamb_re-browser-action",
+                                        ],
+                                        "toolbar-menubar": ["menubar-items"],
+                                        "TabsToolbar": [
+                                                "firefox-view-button",
+                                                "tabbrowser-tabs",
+                                                "new-tab-button",
+                                                "alltabs-button",
+                                        ],
+                                        "PersonalToolbar": ["personal-bookmarks"],
+                                },
+                                seen: ["firenvim_lacamb_re-browser-action"],
+                                currentVersion: 20,
+                                newElementCount: 4,
+                        }))
                         .addExtensions(extensionPath);
 
                 if (firefoxPath) {
