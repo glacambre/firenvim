@@ -5,19 +5,10 @@ export async function autofill() {
         return;
     }
     const platInfoPromise = browser.runtime.sendMessage({
-        args: {
-            args: [],
-            funcName: ["browser", "runtime", "getPlatformInfo"],
-        },
-        funcName: ["exec"],
+        args: [],
+        funcName: ["getPlatformInfo"],
     });
-    const manifestPromise = browser.runtime.sendMessage({
-        args: {
-            args: [],
-            funcName: ["browser", "runtime", "getManifest"],
-        },
-        funcName: ["exec"],
-    });
+    const manifest = browser.runtime.getManifest();
     const nvimPluginPromise = browser.runtime.sendMessage({
         args: {},
         funcName: ["getNvimPluginVersion"],
@@ -37,10 +28,9 @@ export async function autofill() {
     const vendor = navigator.vendor || "";
     const [
         platInfo,
-        manifest,
         nvimPluginVersion,
         issueTemplate,
-    ] = await Promise.all([platInfoPromise, manifestPromise, nvimPluginPromise, issueTemplatePromise]);
+    ] = await Promise.all([platInfoPromise, nvimPluginPromise, issueTemplatePromise]);
     // Can't happen, but doesn't cost much to handle!
     /* istanbul ignore next */
     if (textarea.value.replace(/\r/g, "") !== issueTemplate.replace(/\r/g, "")) {
