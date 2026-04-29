@@ -114,9 +114,14 @@ jobs:
       if: matrix.os == 'windows'
       timeout-minutes: 15
       run: |
-        Start-Job { ffmpeg -loglevel warning -t 240 -framerate 30 -f gdigrab -i desktop D:\a\firenvim\firenvim\video.webm }
-        npm run jest -- ${{ matrix.browser }}
-        Get-Job | Wait-Job
+        $ff = Start-Process -FilePath ffmpeg `
+          -ArgumentList '-loglevel','info','-y','-framerate','30','-f','gdigrab','-i','desktop','-pix_fmt','yuv420p','video.webm' `
+          -RedirectStandardError ffmpeg.log -PassThru
+        try {
+          npm run jest -- ${{ matrix.browser }}
+        } finally {
+          if (-not $ff.HasExited) { Stop-Process -Id $ff.Id -Force }
+        }
     - name: Artifact upload (failure only)
       uses: actions/upload-artifact@v4
       if: failure()
@@ -124,6 +129,7 @@ jobs:
         name: ${{ matrix.os }}-${{ matrix.browser }}-${{ matrix.neovim }}
         path: |
           video.webm
+          ffmpeg.log
           failures.txt
         retention-days: 2
     - name: Process Coverage Report (Coverage only)
