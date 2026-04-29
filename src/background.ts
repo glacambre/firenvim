@@ -76,9 +76,16 @@ async function updateIcon(tabid?: number) {
 }
 
 // Os is win/mac/linux/androis/cros. We only use it to add information to error
-// messages on windows.
-let os = "";
-browser.runtime.getPlatformInfo().then((plat: any) => os = plat.os);
+// messages on windows. Memoized: getPlatformInfo is awaited on first call and
+// cached, so repeated calls (including across SW wake-ups) hit the cache after
+// the first.
+let osPromise: Promise<string> | undefined;
+function getOs(): Promise<string> {
+    if (osPromise === undefined) {
+        osPromise = browser.runtime.getPlatformInfo().then((plat: any) => plat.os);
+    }
+    return osPromise;
+}
 
 // Last error message
 let error = "";
@@ -112,7 +119,7 @@ function registerErrors(nvim: any, reject: any) {
             } else if (errstr.match(/an unexpected error occurred/i)) {
                 error = "The script supposed to start Neovim couldn't be found."
                     + " Please run `:call firenvim#install(0)` in Neovim";
-                if (os === "win") {
+                if ((await getOs()) === "win") {
                     error += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
                 }
                 error += ".";
@@ -160,14 +167,16 @@ function warnUnexpectedMessages(messages: string[]) {
 }
 
 // Function called in order to fill out default settings. Called from updateSettings.
-function applySettings(settings: any) {
-    return browser.storage.local.set(mergeWithDefaults(os, settings) as any);
+async function applySettings(settings: any) {
+    return browser.storage.local.set(mergeWithDefaults(await getOs(), settings) as any);
 }
 
 export function updateSettings() {
     const tmp = preloadedInstance;
     preloadedInstance = createNewInstance();
-    tmp.then(nvim => nvim.kill());
+    if (tmp !== undefined) {
+        tmp.then(nvim => nvim.kill());
+    }
     // It's ok to return the preloadedInstance as a promise because
     // settings are only applied when the preloadedInstance has returned a
     // port+settings object anyway.
@@ -201,11 +210,6 @@ function createNewInstance() {
         });
     });
 }
-
-// Creating this first instance serves two purposes: make creating new Neovim
-// frames fast and also initialize settings the first time Firenvim is enabled
-// in a browser.
-preloadedInstance = createNewInstance();
 
 async function toggleDisabled() {
     const tab = (await browser.tabs.query({ active: true, currentWindow: true }))[0];
@@ -293,7 +297,10 @@ const handlers: { [name: string]: (sender: any, args: any) => any } = {
     closeOwnTab: (sender: any) => browser.tabs.remove(sender.tab.id),
     getError: () => getError(),
     getNeovimInstance: () => {
-        const result = preloadedInstance;
+        // preloadedInstance is undefined when getNeovimInstance is called
+        // before the onInstalled/onStartup init has run, e.g. when the SW just
+        // woke up from suspension for an unrelated event. Create on demand.
+        const result = preloadedInstance ?? createNewInstance();
         preloadedInstance = createNewInstance();
         // Destructuring result to remove kill() from it
         return result.then(({ password, port }) => ({ password, port }));
@@ -343,7 +350,19 @@ browser.windows.onFocusChanged.addListener(async (windowId: number) => {
     }
 });
 
-updateIcon();
+// Runs once per browser session: on extension install and on browser start.
+// Importantly, NOT on every service-worker wake-up — that's why we don't put
+// `preloadedInstance = createNewInstance()` at the module top level. Top-level
+// side effects rerun every time the SW wakes (e.g. for tab-activation events),
+// which would spawn a new Neovim each time. Listener registration above does
+// belong at top level, since the SW must register listeners synchronously
+// during its initial script evaluation.
+function init() {
+    preloadedInstance = createNewInstance();
+    updateIcon();
+}
+browser.runtime.onInstalled.addListener(init);
+browser.runtime.onStartup.addListener(init);
 
 browser.commands.onCommand.addListener(acceptCommand);
 browser.runtime.onMessageExternal.addListener(async (request: any, sender: any, _sendResponse: any) => {
