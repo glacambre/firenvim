@@ -27,8 +27,6 @@ function iconPath(kind: IconKind) {
     };
 }
 
-export let preloadedInstance: Promise<any>;
-
 type tabId = number;
 type tabStorage = {
     disabled: boolean,
@@ -171,19 +169,15 @@ async function applySettings(settings: any) {
     return browser.storage.local.set(mergeWithDefaults(await getOs(), settings) as any);
 }
 
-export function updateSettings() {
-    const tmp = preloadedInstance;
-    preloadedInstance = createNewInstance();
-    if (tmp !== undefined) {
-        tmp.then(nvim => nvim.kill());
-    }
-    // It's ok to return the preloadedInstance as a promise because
-    // settings are only applied when the preloadedInstance has returned a
-    // port+settings object anyway.
-    return preloadedInstance;
+// One-shot connection: spawn a Neovim instance just long enough to receive
+// settings, apply them to storage.local, then disconnect. Called from init()
+// on install/startup and from the popup's "reload settings" button.
+export async function updateSettings() {
+    const nvim = await createNewInstance();
+    nvim.kill();
 }
 
-function createNewInstance() {
+function createNewInstance(): Promise<{ kill: () => void; password: string; port: number }> {
     return new Promise((resolve, reject) => {
         const random = new Uint32Array(8);
         crypto.getRandomValues(random);
@@ -296,15 +290,10 @@ export async function acceptCommand (command: string) {
 const handlers: { [name: string]: (sender: any, args: any) => any } = {
     closeOwnTab: (sender: any) => browser.tabs.remove(sender.tab.id),
     getError: () => getError(),
-    getNeovimInstance: () => {
-        // preloadedInstance is undefined when getNeovimInstance is called
-        // before the onInstalled/onStartup init has run, e.g. when the SW just
-        // woke up from suspension for an unrelated event. Create on demand.
-        const result = preloadedInstance ?? createNewInstance();
-        preloadedInstance = createNewInstance();
-        // Destructuring result to remove kill() from it
-        return result.then(({ password, port }) => ({ password, port }));
-    },
+    getNeovimInstance: () => createNewInstance()
+        // Drop kill() — the native port stays open for the editor's lifetime
+        // and is torn down when the native host disconnects.
+        .then(({ password, port }) => ({ password, port })),
     getNvimPluginVersion: () => nvimPluginVersion,
     getPlatformInfo: () => browser.runtime.getPlatformInfo(),
     getOwnFrameId: (sender: any) => sender.frameId,
@@ -351,14 +340,10 @@ browser.windows.onFocusChanged.addListener(async (windowId: number) => {
 });
 
 // Runs once per browser session: on extension install and on browser start.
-// Importantly, NOT on every service-worker wake-up — that's why we don't put
-// `preloadedInstance = createNewInstance()` at the module top level. Top-level
-// side effects rerun every time the SW wakes (e.g. for tab-activation events),
-// which would spawn a new Neovim each time. Listener registration above does
-// belong at top level, since the SW must register listeners synchronously
-// during its initial script evaluation.
+// Fetches default settings from Neovim into storage.local; the per-editor
+// instances are created on demand by getNeovimInstance.
 function init() {
-    preloadedInstance = createNewInstance();
+    updateSettings();
     updateIcon();
 }
 browser.runtime.onInstalled.addListener(init);
