@@ -706,8 +706,7 @@ export const testNoLingeringNeovims = retryTest(async (testTitle: string, server
                 pstree.stdout.on("data", (d: any) => data += d);
                 pstree.on("close", () => resolve(data));
         }));
-        const match = data.match(/-(\d+\*)?[{\[]?nvim[\]}]?/)
-        expect(match[1]).toBe(undefined);
+        expect(data).not.toMatch(/nvim/);
         await server.pullCoverageData(contentSocket);
 });
 
