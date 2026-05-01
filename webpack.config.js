@@ -160,10 +160,20 @@ const chromeConfig = (config, env) => {
             "16": "firenvim16.png",
             "48": "firenvim48.png"
           }
-          manifest.browser_action["default_icon"] = "firenvim128.png";
-          if (env.endsWith("testing")) {
-            manifest.content_security_policy = "script-src 'self' 'unsafe-eval'; object-src 'self';"
-          }
+          manifest["manifest_version"] = 3;
+          manifest["background"] = { "service_worker": "background.js" };
+          manifest["action"] = manifest.browser_action;
+          delete manifest.browser_action;
+          delete manifest.action.browser_style;
+          manifest.action["default_icon"] = "firenvim128.png";
+          manifest["web_accessible_resources"] = [{
+            "resources": manifest.web_accessible_resources,
+            "matches": ["<all_urls>"]
+          }];
+          // MV3 forbids 'unsafe-eval'/'unsafe-inline' in extension_pages CSP.
+          // The default ('script-src \'self\'; object-src \'self\'') is what
+          // we'd set anyway and works for the testing build, since neither
+          // the runtime code nor the nyc-instrumented test code uses eval.
           content = JSON.stringify(manifest, undefined, 3);
         }
         return content;
