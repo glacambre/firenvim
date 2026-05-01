@@ -53,6 +53,25 @@ browser.tabs.onRemoved.addListener(tabid => {
     browser.storage.session.remove(tabKey(tabid));
 });
 
+// Background-wide ephemeral state. Lives in storage.session so it survives
+// MV3 service-worker suspension within a browser session.
+type bgStorage = {
+    error: string,
+    warning: string,
+    nvimPluginVersion: string,
+};
+const bgKey = "bg";
+const emptyBgState: bgStorage = { error: "", warning: "", nvimPluginVersion: "" };
+async function getBgState(): Promise<bgStorage> {
+    const obj: bgStorage | undefined = (await browser.storage.session.get(bgKey))[bgKey];
+    return obj || emptyBgState;
+}
+async function patchBgState(patch: Partial<bgStorage>): Promise<bgStorage> {
+    const next = Object.assign(await getBgState(), patch);
+    await browser.storage.session.set({ [bgKey]: next });
+    return next;
+}
+
 async function updateIcon(tabid?: number) {
     let name: IconKind = "normal";
     if (tabid === undefined) {
@@ -63,14 +82,16 @@ async function updateIcon(tabid?: number) {
         }
         tabid = tab.id;
     }
+    const state = await getBgState();
     if ((await getTabValue(tabid, "disabled")) === true) {
         name = "disabled";
-    } else if (error !== "") {
+    } else if (state.error !== "") {
         name = "error";
-    } else if (warning !== "") {
+    } else if (state.warning !== "") {
         name = "notification";
     }
-    return browser.browserAction.setIcon({ path: iconPath(name) });
+    const action = (browser as any).action || browser.browserAction;
+    return action.setIcon({ path: iconPath(name) });
 }
 
 // Os is win/mac/linux/androis/cros. We only use it to add information to error
@@ -85,82 +106,84 @@ function getOs(): Promise<string> {
     return osPromise;
 }
 
-// Last error message
-let error = "";
-
 // Simple getter for easy RPC calls. Can't be tested as requires opening
-// browserAction.
+// the action popup.
 /* istanbul ignore next */
-function getError() {
-    return error;
+async function getError() {
+    return (await getBgState()).error;
 }
 
 function registerErrors(nvim: any, reject: any) {
-    error = "";
-    const timeout = setTimeout(() => {
+    patchBgState({ error: "" });
+    const timeout = setTimeout(async () => {
         nvim.timedOut = true;
-        error = "Neovim is not responding.";
+        const msg = "Neovim is not responding.";
+        await patchBgState({ error: msg });
         updateIcon();
         nvim.disconnect();
-        reject(error);
+        reject(msg);
     }, 10000);
     nvim.onDisconnect.addListener(async (p: any) => {
         clearTimeout(timeout);
-        updateIcon();
         // Unfortunately this error handling can't be tested as it requires
         // side-effects on the OS.
         /* istanbul ignore next */
         if (p.error) {
             const errstr = p.error.toString();
+            let msg: string;
             if (errstr.match(/no such native application/i)) {
-                error = "Native manifest not found. Please run `:call firenvim#install(0)` in Neovim.";
+                msg = "Native manifest not found. Please run `:call firenvim#install(0)` in Neovim.";
             } else if (errstr.match(/an unexpected error occurred/i)) {
-                error = "The script supposed to start Neovim couldn't be found."
+                msg = "The script supposed to start Neovim couldn't be found."
                     + " Please run `:call firenvim#install(0)` in Neovim";
                 if ((await getOs()) === "win") {
-                    error += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
+                    msg += " or try running the scripts in %LOCALAPPDATA%\\firenvim\\";
                 }
-                error += ".";
+                msg += ".";
             } else if (errstr.match(/Native application tried to send a message of/)) {
-                error = "Unexpected output. Run `nvim --headless` and ensure it prints nothing.";
+                msg = "Unexpected output. Run `nvim --headless` and ensure it prints nothing.";
             } else {
-                error = errstr;
+                msg = errstr;
             }
+            await patchBgState({ error: msg });
             updateIcon();
             reject(p.error);
         } else if (!nvim.replied && !nvim.timedOut) {
-            error = "Neovim died without answering.";
+            const msg = "Neovim died without answering.";
+            await patchBgState({ error: msg });
             updateIcon();
-            reject(error);
+            reject(msg);
+        } else {
+            updateIcon();
         }
     });
     return timeout;
 }
 
-// Last warning message
-let warning = "";
 /* istanbul ignore next */
-function getWarning() {
-    return warning;
+async function getWarning() {
+    return (await getBgState()).warning;
 }
-let nvimPluginVersion = "";
+async function getNvimPluginVersion() {
+    return (await getBgState()).nvimPluginVersion;
+}
 async function checkVersion(nvimVersion: string) {
-    nvimPluginVersion = nvimVersion;
     const manifest = browser.runtime.getManifest();
-    warning = "";
+    let warning = "";
     // Can't be tested as it would require side effects on the OS.
     /* istanbul ignore next */
     if (manifest.version !== nvimVersion) {
         warning = `Neovim plugin version (${nvimVersion}) and browser addon `
             + `version (${manifest.version}) do not match.`;
     }
+    await patchBgState({ nvimPluginVersion: nvimVersion, warning });
     updateIcon();
 }
-function warnUnexpectedMessages(messages: string[]) {
+async function warnUnexpectedMessages(messages: string[]) {
     if (messages === undefined || !Array.isArray(messages) || messages.length < 1) {
         return;
     }
-    warning = messages.join("\n");
+    await patchBgState({ warning: messages.join("\n") });
     updateIcon();
 }
 
@@ -294,7 +317,7 @@ const handlers: { [name: string]: (sender: any, args: any) => any } = {
         // Drop kill() — the native port stays open for the editor's lifetime
         // and is torn down when the native host disconnects.
         .then(({ password, port }) => ({ password, port })),
-    getNvimPluginVersion: () => nvimPluginVersion,
+    getNvimPluginVersion: () => getNvimPluginVersion(),
     getPlatformInfo: () => browser.runtime.getPlatformInfo(),
     getOwnFrameId: (sender: any) => sender.frameId,
     getTab: (sender: any) => sender.tab,
