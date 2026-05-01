@@ -177,17 +177,20 @@ describe("Chrome", () => {
         t("Modifiers work", testModifiers);
         t("Config priorities", testConfigPriorities);
         t("Add-on updates", testUpdates);
-        t("CodeMirror", testCodemirror);
+        // requires arbitrary code execution
+        // t("CodeMirror", testCodemirror);
         t("Contenteditable", testContentEditable);
         t("Input resize", testInputResizes);
         t("g:started_by_firenvim", testGStartedByFirenvim);
         t("Works in frames", testWorksInFrame);
         t("FocusPage", testFocusPage);
-        t("Ace editor", testAce);
+        // requires arbitrary code execution
+        // t("Ace editor", testAce);
         t("Unfocused killEditor", testUnfocusedKillEditor);
         t("Textarea.setCursor", testSetCursor);
         t("Hide editor", testHideEditor);
-        t("Monaco editor", testMonaco);
+        // requires arbitrary code execution
+        // t("Monaco editor", testMonaco);
         t("Span removed", testDisappearing);
         t("Ignoring keys", testIgnoreKeys);
         t("Browser shortcuts", testBrowserShortcuts);
@@ -201,7 +204,8 @@ describe("Chrome", () => {
         t("PressKeys", testPressKeys);
         t("FocusGained/lost autocmds", testFocusGainedLost);
         t(":set columns lines", testResize);
-        t("EvalJS", testEvalJs);
+        // requires arbitrary code execution
+        // t("EvalJS", testEvalJs);
         t("Takeover: empty", testTakeoverEmpty);
         t("Toggling firenvim", testToggleFirenvim);
         if (process.platform !== "win32") {

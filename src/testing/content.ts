@@ -12,6 +12,6 @@ listenersSetup.then(() => {
     socket.addEventListener('message',
                             makeRequestHandler(socket,
                                                "content",
-                                               (new Function("return this"))().__coverage__
+                                               (globalThis as any).__coverage__
                                                || /* istanbul ignore next */ {}));
 });
