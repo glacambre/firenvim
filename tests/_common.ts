@@ -19,6 +19,21 @@ const WAIT_DELAY = 3000;
 export const pagesDir = path.resolve(path.join("tests", "pages"));
 export const extensionDir = path.resolve("target");
 
+// Find a binary in PATH - needed to e.g. bypass selenium-manager which on
+// Ubuntu 24.04 prefers /usr/bin/firefox (snap) over the Firefox Dev Edition in
+// PATH.
+export function findInPath(exe: string): string | null {
+        const pathDirs = (process.env["PATH"] || "").split(path.delimiter);
+        for (const dir of pathDirs) {
+                const full = path.join(dir, exe);
+                try {
+                        const s = fs.statSync(full);
+                        if (s.isFile()) return full;
+                } catch { /* not found */ }
+        }
+        return null;
+}
+
 // Returns the path of the newest file in directory
 export async function getNewestFileIn(directory: string) {
         // Get list of files

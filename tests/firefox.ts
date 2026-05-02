@@ -6,21 +6,8 @@ import * as path from "path";
 import * as webdriver from "selenium-webdriver";
 import { Options, ServiceBuilder } from "selenium-webdriver/firefox";
 
-// Find a binary in PATH - needed to bypass selenium-manager which on Ubuntu 24.04
-// prefers /usr/bin/firefox (snap) over the Firefox Dev Edition in PATH.
-function findInPath(exe: string): string | null {
-        const pathDirs = (process.env["PATH"] || "").split(path.delimiter);
-        for (const dir of pathDirs) {
-                const full = path.join(dir, exe);
-                try {
-                        const s = fs.statSync(full);
-                        if (s.isFile()) return full;
-                } catch { /* not found */ }
-        }
-        return null;
-}
-
 import {
+ findInPath,
  writeFailures,
  loadLocalPage,
  extensionDir,
