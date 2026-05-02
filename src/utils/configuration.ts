@@ -121,10 +121,34 @@ export function mergeWithDefaults(os: string, settings: any): IConfig {
     return settings;
 }
 
-export const confReady = new Promise(resolve => {
+export const confReady = new Promise((resolve, reject) => {
+    let listener: ((changes: any, area: string) => void) | null = null;
+    const timeoutId = setTimeout(() => {
+        if (listener) {
+            browser.storage.onChanged.removeListener(listener);
+        }
+        reject(new Error("Error: your settings are undefined. Try reloading the page. If this error persists, try the troubleshooting guide: https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md"));
+    }, 30000);
+    function tryResolve(obj: any) {
+        if (obj && obj.localSettings !== undefined) {
+            conf = obj;
+            clearTimeout(timeoutId);
+            if (listener) {
+                browser.storage.onChanged.removeListener(listener);
+            }
+            resolve(true);
+            return true;
+        }
+        return false;
+    }
     browser.storage.local.get().then((obj: any) => {
-        conf = obj;
-        resolve(true);
+        if (tryResolve(obj)) return;
+        // Storage not populated yet — the background SW is still fetching defaults from the native host.
+        listener = (_changes: any, area: string) => {
+            if (area !== "local") return;
+            browser.storage.local.get().then(tryResolve);
+        };
+        browser.storage.onChanged.addListener(listener);
     });
 });
 
