@@ -83,6 +83,51 @@ jobs:
       if: matrix.browser == 'firefox' && matrix.os == 'windows'
       run: choco install firefox-dev --pre && choco install selenium-gecko-driver
       timeout-minutes: 5
+    - name: Install Chrome (Linux)
+      if: matrix.browser == 'chrome' && matrix.os == 'ubuntu'
+      run: |
+        JSON_URL="https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"
+        CHROME_URL=$(curl -fsSL "$JSON_URL" | jq -r '.channels.Stable.downloads.chrome[] | select(.platform=="linux64") | .url')
+        DRIVER_URL=$(curl -fsSL "$JSON_URL" | jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform=="linux64") | .url')
+        curl -fsSL -o chrome.zip "$CHROME_URL"
+        curl -fsSL -o chromedriver.zip "$DRIVER_URL"
+        unzip -q chrome.zip
+        unzip -q chromedriver.zip
+        echo "$PWD/chrome-linux64" >> "$GITHUB_PATH"
+        echo "$PWD/chromedriver-linux64" >> "$GITHUB_PATH"
+      timeout-minutes: 5
+    - name: Install Chrome (macOS)
+      if: matrix.browser == 'chrome' && matrix.os == 'macos'
+      run: |
+        JSON_URL="https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"
+        if [ "$(uname -m)" = "arm64" ]; then
+          PLATFORM="mac-arm64"
+        else
+          PLATFORM="mac-x64"
+        fi
+        CHROME_URL=$(curl -fsSL "$JSON_URL" | jq -r ".channels.Stable.downloads.chrome[] | select(.platform==\"$PLATFORM\") | .url")
+        DRIVER_URL=$(curl -fsSL "$JSON_URL" | jq -r ".channels.Stable.downloads.chromedriver[] | select(.platform==\"$PLATFORM\") | .url")
+        curl -fsSL -o chrome.zip "$CHROME_URL"
+        curl -fsSL -o chromedriver.zip "$DRIVER_URL"
+        unzip -q chrome.zip
+        unzip -q chromedriver.zip
+        echo "$PWD/chrome-$PLATFORM/Google Chrome for Testing.app/Contents/MacOS" >> "$GITHUB_PATH"
+        echo "$PWD/chromedriver-$PLATFORM" >> "$GITHUB_PATH"
+      timeout-minutes: 5
+    - name: Install Chrome (Windows)
+      if: matrix.browser == 'chrome' && matrix.os == 'windows'
+      shell: pwsh
+      run: |
+        $json = Invoke-RestMethod -Uri "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"
+        $chromeUrl = ($json.channels.Stable.downloads.chrome | Where-Object { $_.platform -eq "win64" }).url
+        $driverUrl = ($json.channels.Stable.downloads.chromedriver | Where-Object { $_.platform -eq "win64" }).url
+        Invoke-WebRequest -Uri $chromeUrl -OutFile chrome.zip
+        Invoke-WebRequest -Uri $driverUrl -OutFile chromedriver.zip
+        Expand-Archive -Path chrome.zip -DestinationPath .
+        Expand-Archive -Path chromedriver.zip -DestinationPath .
+        Add-Content -Path $env:GITHUB_PATH -Value "$pwd\chrome-win64"
+        Add-Content -Path $env:GITHUB_PATH -Value "$pwd\chromedriver-win64"
+      timeout-minutes: 5
     - name: Install NPM dependencies
       timeout-minutes: 5
       run: npm ci
@@ -122,6 +167,17 @@ jobs:
         } finally {
           if (-not $ff.HasExited) { Stop-Process -Id $ff.Id -Force }
         }
+    - name: Show ChromeDriver log (failure only)
+      if: failure() && matrix.browser == 'chrome'
+      shell: bash
+      run: |
+        if [ -f chromedriver.log ]; then
+          echo "===== ChromeDriver log ====="
+          cat chromedriver.log
+          echo "===== End ChromeDriver log ====="
+        else
+          echo "No chromedriver.log found in $PWD"
+        fi
     - name: Artifact upload (failure only)
       uses: actions/upload-artifact@v4
       if: failure()
@@ -131,6 +187,7 @@ jobs:
           video.webm
           ffmpeg.log
           failures.txt
+          chromedriver.log
         retention-days: 2
     - name: Process Coverage Report (Coverage only)
       uses: glacambre/action-compare-coverage@master
