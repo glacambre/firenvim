@@ -53,7 +53,7 @@ jobs:
       # Must happen before installing firefox, otherwise action-setup-vim might
       # modify $PATH in a way that will shadow the firefox binary we're
       # installing later on.
-      uses: rhysd/action-setup-vim@v1.4.1
+      uses: rhysd/action-setup-vim@v1.6.1
       with:
         neovim: true
         version: ${{ matrix.neovim }}
