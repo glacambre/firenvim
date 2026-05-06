@@ -15,6 +15,7 @@
  * content scripts. It rarely acts on its own.
  */
 import { getGlobalConf, mergeWithDefaults } from "./utils/configuration";
+import { editorClasses } from "./editor-adapter/rpc";
 
 type IconKind = "normal" | "disabled" | "error" | "notification";
 
@@ -312,6 +313,27 @@ export async function acceptCommand (command: string) {
 
 const handlers: { [name: string]: (sender: any, args: any) => any } = {
     closeOwnTab: (sender: any) => browser.tabs.remove(sender.tab.id),
+    editor: async (sender: any, args: any) => {
+        const clazz = editorClasses[args.className as keyof typeof editorClasses];
+        if (clazz === undefined) {
+            throw new Error(`Unknown editor class: ${args.className}`);
+        }
+        const proc = (clazz as any)[args.procName];
+        if (typeof proc !== "function") {
+            throw new Error(`Unknown procedure ${args.procName} on ${args.className}`);
+        }
+        const results = await browser.scripting.executeScript({
+            target: { tabId: sender.tab.id, frameIds: [sender.frameId] },
+            func: proc as any,
+            args: args.procArgs,
+            world: "MAIN" as any,
+        });
+        let err = results.find(r => r.error !== undefined);
+        if (err !== undefined) {
+            throw err.error;
+        }
+        return results[0]?.result;
+    },
     getError: () => getError(),
     getNeovimInstance: () => createNewInstance()
         // Drop kill() — the native port stays open for the editor's lifetime

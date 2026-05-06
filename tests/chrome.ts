@@ -203,20 +203,17 @@ describe("Chrome", () => {
         t("Modifiers work", testModifiers);
         t("Config priorities", testConfigPriorities);
         t("Add-on updates", testUpdates);
-        // requires arbitrary code execution
-        // t("CodeMirror", testCodemirror);
+        t("CodeMirror", testCodemirror);
         t("Contenteditable", testContentEditable);
         t("Input resize", testInputResizes);
         t("g:started_by_firenvim", testGStartedByFirenvim);
         t("Works in frames", testWorksInFrame);
         t("FocusPage", testFocusPage);
-        // requires arbitrary code execution
-        // t("Ace editor", testAce);
+        t("Ace editor", testAce);
         t("Unfocused killEditor", testUnfocusedKillEditor);
         t("Textarea.setCursor", testSetCursor);
         t("Hide editor", testHideEditor);
-        // requires arbitrary code execution
-        // t("Monaco editor", testMonaco);
+        t("Monaco editor", testMonaco);
         t("Span removed", testDisappearing);
         t("Ignoring keys", testIgnoreKeys);
         // Disabled due to spawning a private window

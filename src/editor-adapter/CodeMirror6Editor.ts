@@ -1,7 +1,7 @@
-import { GenericAbstractEditor, AbstractEditorOptions, wrapper, unwrapper } from "./AbstractEditor";
+import { AbstractEditorOptions } from "./AbstractEditor";
 
 /* istanbul ignore next */
-export class CodeMirror6Editor extends GenericAbstractEditor {
+export class CodeMirror6Editor {
 
     static matches (e: HTMLElement) {
         let parent: HTMLElement | null = e;
@@ -17,8 +17,7 @@ export class CodeMirror6Editor extends GenericAbstractEditor {
     }
 
     private elem: HTMLElement;
-    constructor (e: HTMLElement, options: AbstractEditorOptions) {
-        super(e, options);
+    constructor (e: HTMLElement, _options: AbstractEditorOptions) {
         this.elem = e;
         // Get the topmost CodeMirror element
         let parent: HTMLElement | null = this.elem.parentElement;
@@ -28,38 +27,49 @@ export class CodeMirror6Editor extends GenericAbstractEditor {
         }
     }
 
-    getContent = async (selector: string, wrap: wrapper, unwrap: unwrapper) => {
-        const elem = document.querySelector(selector);
-        return wrap(unwrap(elem).cmView.view.state.doc.toString());
-    }
-
-    getCursor = async (selector: string, wrap: wrapper, unwrap: unwrapper) => {
+    /* istanbul ignore next */
+    static getContent = async (selector: string) => {
         const elem = document.querySelector(selector) as any;
-        const position = unwrap(elem).cmView.view.state.selection.main.head;
-        return [wrap(position.line), wrap(position.ch)] as [number, number];
+        const cm = elem.cmView || elem.cmTile;
+        return cm.view.state.doc.toString();
     }
 
-    getElement = () => {
+    /* istanbul ignore next */
+    static getCursor = async (selector: string) => {
+        const elem = document.querySelector(selector) as any;
+        const cm = elem.cmView || elem.cmTile;
+        const state = cm.view.state;
+        const head = state.selection.main.head;
+        const line = state.doc.lineAt(head);
+        return [line.number, head - line.from] as [number, number];
+    }
+
+    getElement () {
         return this.elem;
     }
 
-    getLanguage = async (selector: string, wrap: wrapper, unwrap: unwrapper) => {
-	const elem = document.querySelector(selector);
-	return wrap(unwrap(elem).dataset.language);
+    /* istanbul ignore next */
+    static getLanguage = async (selector: string) => {
+        const elem = document.querySelector(selector) as any;
+        return elem.dataset.language;
     }
 
-    setContent = async (selector: string, wrap: wrapper, unwrap: unwrapper, text: string) => {
-        const elem = unwrap(document.querySelector(selector) as any);
-        let length = elem.cmView.view.state.doc.length;
-        return wrap(elem.cmView.view.dispatch({changes: {from: 0, to: length, insert: text}}));
+    /* istanbul ignore next */
+    static setContent = async (selector: string, text: string) => {
+        const elem = document.querySelector(selector) as any;
+        const cm = elem.cmView || elem.cmTile;
+        let length = cm.view.state.doc.length;
+        return cm.view.dispatch({changes: {from: 0, to: length, insert: text}});
     }
 
-    setCursor = async (selector: string, wrap: wrapper, unwrap: unwrapper, line: number, column: number) => {
-        const elem = unwrap(document.querySelector(selector) as any);
-        return wrap(elem.vmView.view.dispatch({
+    /* istanbul ignore next */
+    static setCursor = async (selector: string, line: number, column: number) => {
+        const elem = document.querySelector(selector) as any;
+        const cm = elem.cmView || elem.cmTile;
+        return cm.view.dispatch({
             selection: {
-                anchor: elem.cmView.view.doc.line(line) + column
+                anchor: cm.view.doc.line(line) + column
             }
-        }));
+        });
     }
 }

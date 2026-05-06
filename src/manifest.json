@@ -44,7 +44,7 @@
    "options_ui": {
       "page": "options.html"
    },
-   "permissions": [ "alarms", "nativeMessaging", "storage" ],
+   "permissions": [ "alarms", "nativeMessaging", "scripting", "storage", "<all_urls>" ],
    "version": "replaced_at_compile_time",
    "web_accessible_resources": [ "index.html", "ISSUE_TEMPLATE.md" ]
 }
