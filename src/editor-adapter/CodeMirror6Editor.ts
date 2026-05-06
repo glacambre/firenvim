@@ -68,7 +68,7 @@ export class CodeMirror6Editor {
         const cm = elem.cmView || elem.cmTile;
         return cm.view.dispatch({
             selection: {
-                anchor: cm.view.doc.line(line) + column
+                anchor: cm.view.state.doc.line(line).from + column
             }
         });
     }
