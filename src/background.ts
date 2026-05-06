@@ -395,9 +395,9 @@ browser.runtime.onInstalled.addListener(init);
 browser.runtime.onStartup.addListener(init);
 
 browser.commands.onCommand.addListener(acceptCommand);
-browser.runtime.onMessageExternal.addListener(async (request: any, sender: any, _sendResponse: any) => {
-    const resp = await acceptCommand(request.command);
-    _sendResponse(resp);
+browser.runtime.onMessageExternal.addListener(async (request: any) => {
+    // Await for an explicit backtrace in the background script's console
+    return await acceptCommand(request.command);
 });
 
 const UPDATE_CHECK_ALARM = "firenvim-update-check";
