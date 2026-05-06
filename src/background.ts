@@ -318,7 +318,7 @@ const handlers: { [name: string]: (sender: any, args: any) => any } = {
         if (clazz === undefined) {
             throw new Error(`Unknown editor class: ${args.className}`);
         }
-        const proc = (clazz as any)[args.procName];
+        const proc = Object.hasOwn(clazz, args.procName) ? (clazz as any)[args.procName] : undefined;
         if (typeof proc !== "function") {
             throw new Error(`Unknown procedure ${args.procName} on ${args.className}`);
         }
