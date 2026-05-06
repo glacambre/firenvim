@@ -142,22 +142,22 @@ describe("Chrome", () => {
 
                 // Wait for extension to be loaded
                 background = await backgroundPromise;
-                // await driver.sleep(1000);
-                //
-                // // Now we need to enable the extension in incognito mode if
-                // // it's not enabled. This is required for the browser keyboard
-                // // shortcut fallback test.
-                // await driver.get("chrome://extensions/?id=egpjdkipkomnmjhjmdamaniclmdlobbo");
-                // let incognitoToggle = "document.querySelector('extensions-manager').shadowRoot.querySelector('#viewManager > extensions-detail-view.active').shadowRoot.querySelector('div#container.page-container > div.page-content > div#options-section extensions-toggle-row#allow-incognito').shadowRoot.querySelector('label#label input')";
-                // const mustToggle = await driver.executeScript(`return !${incognitoToggle}.checked`);
-                // if (mustToggle) {
-                //         // Extension is going to be reloaded when enabling incognito mode, so be prepared
-                //         backgroundPromise = coverageServer.getNextBackgroundConnection();
-                //         await driver.sleep(1000);
-                //         await driver.executeScript(`${incognitoToggle}.click()`);
-                //         await driver.sleep(1000);
-                //         background = await backgroundPromise;
-                // }
+                await driver.sleep(1000);
+
+                // Now we need to enable the extension in incognito mode if
+                // it's not enabled. This is required for the browser keyboard
+                // shortcut fallback test.
+                await driver.get("chrome://extensions/?id=egpjdkipkomnmjhjmdamaniclmdlobbo");
+                let incognitoToggle = "document.querySelector('extensions-manager').shadowRoot.querySelector('#viewManager > extensions-detail-view.active').shadowRoot.querySelector('div#container.page-container > div.page-content > div#options-section extensions-toggle-row#allow-incognito').shadowRoot.querySelector('label#label input')";
+                const mustToggle = await driver.executeScript(`return !${incognitoToggle}.checked`);
+                if (mustToggle) {
+                        // Extension is going to be reloaded when enabling incognito mode, so be prepared
+                        backgroundPromise = coverageServer.getNextBackgroundConnection();
+                        await driver.sleep(1000);
+                        await driver.executeScript(`${incognitoToggle}.click()`);
+                        await driver.sleep(1000);
+                        background = await backgroundPromise;
+                }
                 return await loadLocalPage(server, driver, "simple.html", "");
         }, 120000);
 
@@ -216,8 +216,7 @@ describe("Chrome", () => {
         t("Monaco editor", testMonaco);
         t("Span removed", testDisappearing);
         t("Ignoring keys", testIgnoreKeys);
-        // Disabled due to spawning a private window
-        // t("Browser shortcuts", testBrowserShortcuts);
+        t("Browser shortcuts", testBrowserShortcuts);
         t("Frame browser shortcuts", (...args) => neovimVersion >= 0.5
                 ? testFrameBrowserShortcuts(...args)
                 : undefined
