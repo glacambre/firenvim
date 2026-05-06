@@ -122,37 +122,27 @@ export function mergeWithDefaults(os: string, settings: any): IConfig {
 }
 
 export const confReady = new Promise((resolve, reject) => {
-    let listener: ((changes: any, area: string) => void) | null = null;
-    const timeoutId = setTimeout(() => {
-        if (listener) {
-            browser.storage.onChanged.removeListener(listener);
-        }
-        reject(new Error("Error: your settings are undefined. Try reloading the page. If this error persists, try the troubleshooting guide: https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md"));
-    }, 30000);
-    function tryResolve(obj: any) {
+    const check = () => browser.storage.local.get().then((obj: any) => {
+        // We check that localSettings is not undefined in order to ensure that
+        // configuration actually has been written (on browser startup, obj may
+        // be null until the background script has had time to apply at least
+        // the default settings).
         if (obj && obj.localSettings !== undefined) {
             conf = obj;
             clearTimeout(timeoutId);
-            if (listener) {
-                browser.storage.onChanged.removeListener(listener);
-            }
+            browser.storage.local.onChanged.removeListener(check);
             resolve(true);
-            return true;
         }
-        return false;
-    }
-    browser.storage.local.get().then((obj: any) => {
-        if (tryResolve(obj)) return;
-        // Storage not populated yet — the background SW is still fetching defaults from the native host.
-        listener = (_changes: any, area: string) => {
-            if (area !== "local") return;
-            browser.storage.local.get().then(tryResolve);
-        };
-        browser.storage.onChanged.addListener(listener);
     });
+    const timeoutId = setTimeout(() => {
+        browser.storage.local.onChanged.removeListener(check);
+        reject(new Error("Error: your settings are undefined. Try reloading the page. If this error persists, try the troubleshooting guide: https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md"));
+    }, 30000);
+    browser.storage.local.onChanged.addListener(check);
+    check();
 });
 
-browser.storage.onChanged.addListener((changes: any) => {
+browser.storage.local.onChanged.addListener((changes: any) => {
     Object
         .entries(changes)
         .forEach(([key, value]: [string, any]) => confReady.then(() => {
