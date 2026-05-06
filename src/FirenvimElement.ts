@@ -1,7 +1,7 @@
 import { getConf } from "./utils/configuration"
 import { computeSelector, isChrome } from "./utils/utils";
 import { AbstractEditor } from "./editor-adapter/AbstractEditor";
-import { getEditor } from "./editor-adapter";
+import { getEditor } from "./editor-adapter/content";
 
 export class FirenvimElement {
 
@@ -108,11 +108,7 @@ export class FirenvimElement {
         this.originalElement = elem;
         this.nvimify = listener;
         this.onDetach = onDetach;
-        this.editor = getEditor(elem, {
-            preferHTML: getConf().content == "html",
-            triggerUpdateEvents: false,
-            codeMirror6Enabled: isChrome()
-        });
+        this.editor = getEditor(elem, { preferHTML: getConf().content == "html" });
 
         this.span = elem
             .ownerDocument

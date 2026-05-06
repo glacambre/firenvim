@@ -1,4 +1,4 @@
-import { AbstractEditor, AbstractEditorOptions, wrapper, unwrapper } from "./AbstractEditor";
+import { AbstractEditor, AbstractEditorOptions } from "./AbstractEditor";
 
 // TextareaEditor sort of works for contentEditable elements but there should
 // really be a contenteditable-specific editor.
@@ -16,29 +16,7 @@ export class TextareaEditor implements AbstractEditor {
         return true;
     }
 
-    private maybeTriggerUpdateEvents(update: () => any) {
-        if (this.options.triggerUpdateEvents) {
-            this.elem.focus();
-            this.elem.dispatchEvent(new FocusEvent("focus", {bubbles: false, cancelable: false}));
-            this.elem.dispatchEvent(new FocusEvent("focusin", {bubbles: true, cancelable: false}));
-
-            this.elem.dispatchEvent(new KeyboardEvent("keydown", {bubbles: true, cancelable: false, ctrlKey: true}));
-            this.elem.dispatchEvent(new InputEvent("beforeinput", {bubbles: true, cancelable: false}));
-            this.elem.dispatchEvent(new KeyboardEvent("keypress", {bubbles: true, cancelable: false, ctrlKey: true}));
-        }
-
-        let result = update();
-
-        if (this.options.triggerUpdateEvents) {
-            this.elem.dispatchEvent(new Event("input", {bubbles: true, cancelable: false}));
-            this.elem.dispatchEvent(new KeyboardEvent("keyup", {bubbles: true, cancelable: false, ctrlKey: true}));
-            this.elem.dispatchEvent(new Event("change", {bubbles: true, cancelable: false}));
-        }
-
-        return result;
-    }
-
-    getContent = async () => {
+    async getContent () {
         if ((this.elem as any).value !== undefined) {
             return Promise.resolve((this.elem as any).value);
         }
@@ -49,7 +27,7 @@ export class TextareaEditor implements AbstractEditor {
         }
     }
 
-    getCursor = async () => {
+    async getCursor () {
         return this.getContent().then(text => {
             let line = 1;
             let column = 0;
@@ -68,11 +46,11 @@ export class TextareaEditor implements AbstractEditor {
         });
     }
 
-    getElement = () => {
+    getElement () {
         return this.elem;
     }
 
-    getLanguage = async () => {
+    async getLanguage () {
         if (this.options.preferHTML) {
             return Promise.resolve('html');
         }
@@ -80,22 +58,20 @@ export class TextareaEditor implements AbstractEditor {
         return Promise.resolve(undefined);
     }
 
-    setContent = async (text: string) => {
-        this.maybeTriggerUpdateEvents(() => {
-            if ((this.elem as any).value !== undefined) {
-                (this.elem as any).value = text;
+    async setContent (text: string) {
+        if ((this.elem as any).value !== undefined) {
+            (this.elem as any).value = text;
+        } else {
+            if (this.options.preferHTML){
+                this.elem.innerHTML = text;
             } else {
-                if (this.options.preferHTML){
-                    this.elem.innerHTML = text;
-                } else {
-                    this.elem.innerText = text;
-                }
+                this.elem.innerText = text;
             }
-        })
+        }
         return Promise.resolve();
     }
 
-    setCursor = async (line: number, column: number) => {
+    async setCursor (line: number, column: number) {
         return this.getContent().then((text) : undefined => {
             let character = 0;
             // Try to find the line the cursor should be put on

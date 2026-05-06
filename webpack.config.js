@@ -170,6 +170,8 @@ const chromeConfig = (config, env) => {
             "resources": manifest.web_accessible_resources,
             "matches": ["<all_urls>"]
           }];
+          manifest["host_permissions"] = ["<all_urls>", "file:///*"];
+          manifest["permissions"] = manifest.permissions.filter(p => p !== "<all_urls>");
           // MV3 forbids 'unsafe-eval'/'unsafe-inline' in extension_pages CSP.
           // The default ('script-src \'self\'; object-src \'self\'') is what
           // we'd set anyway and works for the testing build, since neither
@@ -206,7 +208,7 @@ const firefoxConfig = (config, env) => {
               manifest.browser_specific_settings = {
                 "gecko": {
                   "id": "firenvim@lacamb.re",
-                  "strict_min_version": "115.0"
+                  "strict_min_version": "128.0"
                 }
               };
               manifest.version = package_json.version;

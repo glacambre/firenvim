@@ -1,7 +1,7 @@
-import { GenericAbstractEditor, AbstractEditorOptions, wrapper, unwrapper } from "./AbstractEditor";
+import { AbstractEditorOptions } from "./AbstractEditor";
 
 /* istanbul ignore next */
-export class AceEditor extends GenericAbstractEditor {
+export class AceEditor {
 
     static matches (e: HTMLElement) {
         let parent: HTMLElement | null = e;
@@ -18,7 +18,6 @@ export class AceEditor extends GenericAbstractEditor {
 
     private elem: HTMLElement;
     constructor(e: HTMLElement, _options: AbstractEditorOptions) {
-        super(e, _options);
         this.elem = e;
         // Get the topmost ace element
         let parent: HTMLElement | null = this.elem.parentElement;
@@ -28,50 +27,49 @@ export class AceEditor extends GenericAbstractEditor {
         }
     }
 
-    // This function will be stringified and inserted in page context so we
-    // can't instrument it.
     /* istanbul ignore next */
-    private getAce = (selec: string) => {
-    };
-
-    getContent = async (selector: string, wrap: wrapper, unwrap: unwrapper) => {
+    static getContent = async (selector: string) => {
         const elem = document.querySelector(selector) as any;
-        const ace = elem.aceEditor || unwrap(window).ace.edit(elem);
-        return wrap(ace.getValue());
+        const ace = elem.aceEditor || (window as any).ace.edit(elem);
+        return ace.getValue();
     }
 
-    getCursor = async (selector: string, wrap: wrapper, unwrap: unwrapper) => {
+    /* istanbul ignore next */
+    static getCursor = async (selector: string) => {
         let position;
         const elem = document.querySelector(selector) as any;
-        const ace = elem.aceEditor || unwrap(window).ace.edit(elem);
+        const ace = elem.aceEditor || (window as any).ace.edit(elem);
         if (ace.getCursorPosition !== undefined) {
             position = ace.getCursorPosition();
         } else {
             position = ace.selection.cursor;
         }
-        return [wrap(position.row) + 1, wrap(position.column)] as [number, number];
+        return [position.row + 1, position.column] as [number, number];
     }
 
-    getElement = () => {
+    getElement () {
         return this.elem;
     }
 
-    getLanguage = async (selector: string, wrap: wrapper, unwrap: unwrapper) => {
+    /* istanbul ignore next */
+    static getLanguage = async (selector: string) => {
         const elem = document.querySelector(selector) as any;
-        const ace = elem.aceEditor || unwrap(window).ace.edit(elem);
-        return wrap(ace.session.$modeId).split("/").slice(-1)[0];
+        const ace = elem.aceEditor || (window as any).ace.edit(elem);
+        return ace.session.$modeId.split("/").slice(-1)[0];
     }
 
-    setContent = async (selector: string, wrap: wrapper, unwrap: unwrapper, text: string) => {
+    /* istanbul ignore next */
+    static setContent = async (selector: string, text: string) => {
         const elem = document.querySelector(selector) as any;
-        const ace = elem.aceEditor || unwrap(window).ace.edit(elem);
-        return wrap(ace.setValue(text, 1));
+        const ace = elem.aceEditor || (window as any).ace.edit(elem);
+        return ace.setValue(text, 1);
     }
 
-    setCursor = async (selector: string, wrap: wrapper, unwrap: unwrapper, line: number, column: number) => {
+    /* istanbul ignore next */
+    static setCursor = async (selector: string, line: number, column: number) => {
         const elem = document.querySelector(selector) as any;
-        const ace = elem.aceEditor || unwrap(window).ace.edit(elem);
+        const ace = elem.aceEditor || (window as any).ace.edit(elem);
         const selection = ace.getSelection();
-        return wrap(selection.moveCursorTo(line - 1, column, false));
+        return selection.moveCursorTo(line - 1, column, false);
     }
 }
