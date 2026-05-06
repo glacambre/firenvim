@@ -51,7 +51,13 @@ export function setCanvas (cvs: HTMLCanvasElement) {
     const canvasDefaultFontSize = window.getComputedStyle(state.canvas).fontSize;
     defaultFontSize = `calc(${window.devicePixelRatio} * ${canvasDefaultFontSize})`;
     defaultFontString = makeFontString(defaultFontSize, defaultFontFamily);
-    state.context = state.canvas.getContext("2d", { "alpha": false });
+    state.context = state.canvas.getContext("2d", {
+        "alpha": false,
+        // Tells Chrome to use a CPU renderer instead of a GPU one. Should
+        // speed things up due to the frequent use of getImageData for drawing.
+        // Probably closes https://github.com/glacambre/firenvim/issues/1047 .
+        "willReadFrequently": true
+    });
     setFontString(state, defaultFontString);
 }
 
