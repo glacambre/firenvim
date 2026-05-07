@@ -278,6 +278,16 @@ export class PageEventEmitter extends EventEmitter<PageEvents, PageHandlers> {
                 case "getEditorInfo":
                     // handled by frame function handler
                     break;
+                case "messagePage":
+                case "messageFrame":
+                    // these messages are targeted at the background - pages
+                    // shouldn't handle them
+                    break;
+                case "setLastFocusedContentScript":
+                case "sendKey":
+                    // these messages are targeted at the content script and
+                    // are handled by the activeFunction handler in content.ts
+                    break;
                 default:
                     console.error("Unhandled page request:", request);
             }
