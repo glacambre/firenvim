@@ -1170,13 +1170,15 @@ export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async
         newTabCount = await getTabCount();
         expect(newTabCount).toBe(tabCount - 1);
 
-        // <CS-n> creates a new incognito window. This is chrome behavior but
-        // we can't emulate firefox because it requires an additional permission
-        windowCount = await getWindowCount();
+        // <CS-n> creates a new incognito window. We observe it via selenium
+        // rather than the extension's window count because Chrome doesn't
+        // grant extensions access to incognito windows by default, so
+        // browser.windows.getAll() never sees the new one.
+        const seleniumHandleCount = (await driver.getAllWindowHandles()).length;
         await server.browserShortcut("<CS-n>");
-        await windowCountChange(windowCount, "<CS-n> did not change the number of windows");
-        newWindowCount = await getWindowCount();
-        expect(newWindowCount).toBe(windowCount + 1);
+        await driver.wait(async () => (await driver.getAllWindowHandles()).length !== seleniumHandleCount,
+                          WAIT_DELAY, "<CS-n> did not change the number of windows");
+        expect((await driver.getAllWindowHandles()).length).toBe(seleniumHandleCount + 1);
 
         // Get handle to new incognito window and switch to it
         handles = new Set(await driver.getAllWindowHandles());
@@ -1185,15 +1187,12 @@ export const testBrowserShortcuts = retryTest(withLocalPage("simple.html", async
         const incognito = handles.values().next().value;
         await driver.switchTo().window(incognito);
 
-        // <CS-w> closes the current window
-        windowCount = await getWindowCount();
-        await server.browserShortcut("<CS-w>");
-        await windowCountChange(windowCount, "<CS-w> did not close any window the first time");
-        newWindowCount = await getWindowCount();
-        expect(newWindowCount).toBe(windowCount - 1);
+        // Close the incognito window via selenium since <CS-w> goes through
+        // the extension, which can't see incognito windows.
+        await driver.close();
 
-        // incognito window has been closed, go back to the new window, close
-        // it, go back to original window
+        // Close the regular window opened with <C-n> earlier, then go back
+        // to the original window.
         await driver.switchTo().window(newWindow);
         await driver.close();
         await driver.switchTo().window(originalHandle);
