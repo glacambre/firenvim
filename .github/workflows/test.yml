@@ -179,7 +179,7 @@ jobs:
           echo "No chromedriver.log found in $PWD"
         fi
     - name: Artifact upload (failure only)
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@master
       if: failure()
       with:
         name: ${{ matrix.os }}-${{ matrix.browser }}-${{ matrix.neovim }}
