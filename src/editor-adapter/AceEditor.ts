@@ -41,8 +41,14 @@ export class AceEditor {
         const ace = elem.aceEditor || (window as any).ace.edit(elem);
         if (ace.getCursorPosition !== undefined) {
             position = ace.getCursorPosition();
-        } else {
+        } else if (ace.selection?.getCursor !== undefined) {
+            position = ace.selection.getCursor();
+        } else if (ace.selection?.cursor !== undefined) {
             position = ace.selection.cursor;
+        } else if (ace.selection?.lead !== undefined) {
+            position = ace.selection.lead;
+        } else {
+            position = {row: 0, column: 1};
         }
         return [position.row + 1, position.column] as [number, number];
     }
