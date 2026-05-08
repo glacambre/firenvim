@@ -5,8 +5,8 @@ export type AbstractEditor = {
     getContent: () => Promise<string>;
     getLanguage: () => Promise<string | undefined>;
     getCursor: () => Promise<[number, number]>;
-    setContent: (s: string) => Promise<void>;
-    setCursor: (line: number, column: number) => Promise<undefined>;
+    setContent: (text: string) => Promise<void>;
+    setCursor: (line: number, column: number) => Promise<void>;
 };
 
 // Structural contract for editor classes that go through the executeScript RPC
@@ -15,10 +15,10 @@ export type AbstractEditor = {
 // signatures.
 export type EditorClass = {
     new (e: HTMLElement, options: AbstractEditorOptions): { getElement: () => HTMLElement };
-    matches(e: HTMLElement): boolean;
-    getContent(selector: string): Promise<string>;
-    getLanguage(selector: string): Promise<string | undefined>;
-    getCursor(selector: string): Promise<[number, number]>;
-    setContent(selector: string, text: string): Promise<void>;
-    setCursor(selector: string, line: number, column: number): Promise<undefined>;
+    matches: (e: HTMLElement) => boolean;
+    getContent: (selector: string) => Promise<string>;
+    getLanguage: (selector: string) => Promise<string | undefined>;
+    getCursor: (selector: string) => Promise<[number, number]>;
+    setContent: (selector: string, text: string) => Promise<void>;
+    setCursor: (selector: string, line: number, column: number) => Promise<void>;
 };
