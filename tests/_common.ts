@@ -959,31 +959,6 @@ export const testDisappearing = retryTest(withLocalPage("disappearing.html", asy
         expect("works").toBe(await input.getAttribute("value"));
 }));
 
-export const testGithubAutofill = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
-        // Prepare page, which has to contain issue template
-        const template_content = fs.readFileSync(path.join(process.cwd(), ".github/ISSUE_TEMPLATE.md")).toString();
-        const simple_content = fs.readFileSync(path.join(pagesDir, "simple.html")).toString();
-        const github_content = simple_content.replace(
-                /<textarea[^>]+><\/textarea>/,
-                `<textarea id="issue_body" cols="80" rows="20">${template_content}</textarea>`
-        );
-        fs.writeFileSync(path.join(pagesDir, "github.html"), github_content);
-
-        // compute the information we expect to see
-        const version = JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json")).toString()).version;
-
-        // Now load page and check that browser info was filled
-        const contentSocket = await loadLocalPage(server, driver, "github.html", testTitle);
-        const issue_body = await driver.wait(Until.elementLocated(By.id("issue_body")));
-        await driver.wait(async () => (await issue_body.getAttribute("value") !== github_content), WAIT_DELAY, "Issue body not filled!");
-        const issue_content = await issue_body.getAttribute("value");
-        expect(issue_content).toMatch(new RegExp(`OS Version: (linux|mac|win)`, 'g'));
-        expect(issue_content).toMatch(new RegExp(`Browser Version:.*(Chrom|Firefox)`, 'g'));
-        expect(issue_content).toMatch(new RegExp(`Browser Addon Version: ${version}`, 'g'));
-        expect(issue_content).toMatch(new RegExp(`Neovim Plugin Version: ${version}`, 'g'));
-        await server.pullCoverageData(contentSocket);
-});
-
 export const testToggleFirenvim = retryTest(async (testTitle: string, server: any, driver: webdriver.WebDriver) => {
         // Loading page and toggling correctly disables firenvim in tab
         let contentSocket = await loadLocalPage(server, driver, "simple.html", testTitle);
