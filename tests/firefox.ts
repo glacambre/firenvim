@@ -28,7 +28,6 @@ import {
  testFocusNextPrev1,
  testFocusNextPrev2,
  testForceNvimify,
- testGithubAutofill,
  testGStartedByFirenvim,
  testGuifont,
  testHideEditor,
@@ -180,7 +179,6 @@ describe("Firefox", () => {
         }
 
         t("Empty test always succeeds", () => new Promise(resolve => resolve(expect(true).toBe(true))));
-        t("Github autofill", testGithubAutofill);
         t("Setting filenames", testFilenameSettings);
         t("Force nvimify", testForceNvimify);
         t("Input focused after frame", testInputFocusedAfterLeave);

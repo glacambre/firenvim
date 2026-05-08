@@ -46,5 +46,5 @@
    },
    "permissions": [ "alarms", "nativeMessaging", "scripting", "storage", "<all_urls>" ],
    "version": "replaced_at_compile_time",
-   "web_accessible_resources": [ "index.html", "ISSUE_TEMPLATE.md" ]
+   "web_accessible_resources": [ "index.html" ]
 }

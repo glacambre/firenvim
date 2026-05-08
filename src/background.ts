@@ -59,10 +59,9 @@ browser.tabs.onRemoved.addListener(tabid => {
 type bgStorage = {
     error: string,
     warning: string,
-    nvimPluginVersion: string,
 };
 const bgKey = "bg";
-const emptyBgState: bgStorage = { error: "", warning: "", nvimPluginVersion: "" };
+const emptyBgState: bgStorage = { error: "", warning: "" };
 async function getBgState(): Promise<bgStorage> {
     const obj: bgStorage | undefined = (await browser.storage.session.get(bgKey))[bgKey];
     return obj || emptyBgState;
@@ -165,9 +164,6 @@ function registerErrors(nvim: any, reject: any) {
 async function getWarning() {
     return (await getBgState()).warning;
 }
-async function getNvimPluginVersion() {
-    return (await getBgState()).nvimPluginVersion;
-}
 async function checkVersion(nvimVersion: string) {
     const manifest = browser.runtime.getManifest();
     let warning = "";
@@ -177,7 +173,7 @@ async function checkVersion(nvimVersion: string) {
         warning = `Neovim plugin version (${nvimVersion}) and browser addon `
             + `version (${manifest.version}) do not match.`;
     }
-    await patchBgState({ nvimPluginVersion: nvimVersion, warning });
+    await patchBgState({ warning });
     updateIcon();
 }
 async function warnUnexpectedMessages(messages: string[]) {
@@ -339,7 +335,6 @@ const handlers: { [name: string]: (sender: any, args: any) => any } = {
         // Drop kill() — the native port stays open for the editor's lifetime
         // and is torn down when the native host disconnects.
         .then(({ password, port }) => ({ password, port })),
-    getNvimPluginVersion: () => getNvimPluginVersion(),
     getPlatformInfo: () => browser.runtime.getPlatformInfo(),
     getOwnFrameId: (sender: any) => sender.frameId,
     getTab: (sender: any) => sender.tab,

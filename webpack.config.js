@@ -77,7 +77,6 @@ function iconPatterns(target_dir) {
 }
 
 const browserFiles = [
-  ".github/ISSUE_TEMPLATE.md",
   "src/manifest.json",
   "src/options.html",
   "src/index.html",
