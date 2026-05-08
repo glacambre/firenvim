@@ -94,10 +94,7 @@ async function updateIcon(tabid?: number) {
     return action.setIcon({ path: iconPath(name) });
 }
 
-// Os is win/mac/linux/androis/cros. We only use it to add information to error
-// messages on windows. Memoized: getPlatformInfo is awaited on first call and
-// cached, so repeated calls (including across SW wake-ups) hit the cache after
-// the first.
+// Os is win/mac/linux/androis/cros.
 let osPromise: Promise<string> | undefined;
 function getOs(): Promise<string> {
     if (osPromise === undefined) {
