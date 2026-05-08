@@ -168,6 +168,8 @@ Firenvim has a setting named `takeover` that can be set to `always`, `empty`, `n
 vim.g.firenvim_config.localSettings['.*'] = { takeover = 'always' }
 ```
 
+Setting a global policy (`.*`) with narrower ones for specific websites is an easy way to build a whitelist/allowlist or blacklist/blocklist deciding what webxites Firenvim should work on.
+
 ### Choosing a command line
 
 You can chose between Neovim's built-in command line, firenvim's command line and no command line at all by setting the localSetting named `cmdline` to either `neovim`, `firenvim` or `none`, e.g.:
