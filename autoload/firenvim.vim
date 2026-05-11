@@ -491,6 +491,32 @@ function! s:edge_config_exists() abort
         return isdirectory(s:build_path(l:p))
 endfunction
 
+function! s:helium_config_exists() abort
+        let l:p = [$HOME, '.config', 'net.imput.helium']
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'net.imput.helium']
+        elseif has('win32')
+                let l:p = [$HOME, 'AppData', 'Local', 'imput', 'Helium']
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%LOCALAPPDATA%'), 'imput', 'Helium']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'net.imput.helium']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
+function! s:get_helium_manifest_dir_path() abort
+        if has('mac')
+                return s:build_path([$HOME, 'Library', 'Application Support', 'net.imput.helium', 'NativeMessagingHosts'])
+        elseif has('win32') || s:is_wsl
+                return s:get_data_dir_path()
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'net.imput.helium', 'NativeMessagingHosts'])
+        end
+        return s:build_path([$HOME, '.config', 'net.imput.helium', 'NativeMessagingHosts'])
+endfunction
+
 function! s:chrome_dev_config_exists() abort
         let l:p = [$HOME, '.config', 'google-chrome-unstable']
         if has('mac')
@@ -896,6 +922,12 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_content': function('s:get_firefox_manifest'),
                         \ 'manifest_dir_path': function('s:get_zen_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Mozilla\NativeMessagingHosts\firenvim',
+                \},
+                \'helium': {
+                        \ 'has_config': s:helium_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_helium_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \}
         \}
         if $TESTING == 1
@@ -907,6 +939,7 @@ function! s:get_browser_configuration() abort
                 call remove(l:browsers, 'ungoogled-chromium')
                 call remove(l:browsers, 'vivaldi')
                 call remove(l:browsers, 'zen')
+                call remove(l:browsers, 'helium')
         endif
         return l:browsers
 
