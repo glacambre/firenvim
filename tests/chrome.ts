@@ -106,11 +106,8 @@ describe("Chrome", () => {
                         options.setBinaryPath(chromePath);
                 }
 
-                // Won't work until this wontfix is fixed:
-                // https://bugs.chromium.org/p/chromium/issues/detail?id=706008#c5
                 if (env["HEADLESS"]) {
-                        return;
-                        // options.headless();
+                        options.addArguments("--headless=true");
                 }
 
                 // Set user data path so that the native messenger manifest can

@@ -132,7 +132,7 @@ describe("Firefox", () => {
                 }
 
                 if (env["HEADLESS"]) {
-                        options.addArguments("-headless");
+                        options.addArguments("--headless");
                 }
 
                 if (env["APPVEYOR"]) {
