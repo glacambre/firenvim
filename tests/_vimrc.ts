@@ -5,6 +5,8 @@ const process = require("process");
 
 let init_vim: string;
 
+const FIRENVIM_TEST_TEMPORARY_DIR = path.join(os.tmpdir(), "firenvim_test_run");
+
 export function setupVimrc() {
         const base_dir = path.join(
                 os.tmpdir(),
@@ -28,6 +30,13 @@ export function setupVimrc() {
         init_vim = path.join(nvim_conf_dir, "init.vim");
 
         return resetVimrc();
+}
+
+export function deleteVimrc() {
+        fs.rmSync(FIRENVIM_TEST_TEMPORARY_DIR, {
+                recursive: true,
+                force: true,
+        });
 }
 
 export function resetVimrc() {

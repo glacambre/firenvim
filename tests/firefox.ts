@@ -56,7 +56,7 @@ import {
  testErrmsgVimrc,
  testWorksInFrame,
 } from "./_common"
-import { setupVimrc, resetVimrc } from "./_vimrc";
+import { setupVimrc, resetVimrc, deleteVimrc } from "./_vimrc";
 import * as coverageServer  from "./_coverageserver";
 
 
@@ -169,6 +169,7 @@ describe("Firefox", () => {
                 server.shutdown();
                 writeFailures();
                 await killDriver(server, driver);
+                deleteVimrc();
         }, 120000);
 
         function t(s: string, f: (s: string, s2: any, d: any) => Promise<any>, ms?: number) {
