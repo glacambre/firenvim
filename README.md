@@ -294,7 +294,7 @@ vim.g.firenvim_config = {
 
 ### Configuring the filename
 
-It is possible to configure the name of the file used by Firenvim with the `filename` localSetting. This setting is a format string where each element in curly braces will be replaced with a value and where the maximum length can be specified with a percentage. Possible format elements are `hostname` (= the domain name of the website), `pathname` (= the path of the page), `selector` (= the CSS selector of the text area), `timestamp` (= the current date) and `extension` (the language extension when using Firenvim on a code editor or `txt` otherwise). For example:
+It is possible to configure the name of the file used by Firenvim with the `filename` localSetting. This setting is a format string where each element in curly braces will be replaced with a value and where the maximum length can be specified with a percentage. Possible format elements are `hostname` (= the domain name of the website), `pathname` (= the path of the page), `selector` (= the CSS selector of the text area), `timestamp` (= the current date) and `extension` (the language extension detected by Firenvim when used on a code editor or `txt` otherwise). For example:
 
 ```lua
 vim.g.firenvim_config = {
