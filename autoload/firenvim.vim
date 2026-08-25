@@ -1076,7 +1076,7 @@ function! firenvim#internal_install(...) abort
                         call s:maybe_execute('setfperm', l:ps1_path, 'rwx------')
                         let l:o = ''
                         try
-                                let l:o = s:maybe_execute('system', ['powershell.exe', '-NonInteractive', '-Command', '-'], readfile(l:ps1_path))
+                                let l:o = s:maybe_execute('system', ['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', '-'], readfile(l:ps1_path))
                         catch /powershell.exe' is not executable/
                                 let l:failure = v:true
                                 let l:msg = 'Error: Firenvim could not find powershell.exe'
@@ -1085,7 +1085,7 @@ function! firenvim#internal_install(...) abort
                                 if s:is_wsl
                                         let l:msg += ' from WSL'
                                         try
-                                                let l:o = s:maybe_execute('system', ['/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe', '-NonInteractive', '-Command', '-'], readfile(l:ps1_path))
+                                                let l:o = s:maybe_execute('system', ['/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe', '-NoProfile', '-NonInteractive', '-Command', '-'], readfile(l:ps1_path))
                                                 let l:failure = v:false
                                         catch /powershell.exe' is not executable/
                                                 let l:failure = v:true
@@ -1156,7 +1156,7 @@ function! firenvim#internal_uninstall() abort
                         let l:ps1_content = 'Remove-Item -Path "' . l:cur_browser['registry_key'] . '" -Recurse'
                         let l:o = ''
                         try
-                                let l:o = s:maybe_execute('system', ['powershell.exe', '-NonInteractive', '-Command', '-'], [l:ps1_content])
+                                let l:o = s:maybe_execute('system', ['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', '-'], [l:ps1_content])
                         catch /powershell.exe' is not executable/
                                 let l:failure = v:true
                                 let l:msg = 'Error: Firenvim could not find powershell.exe'
@@ -1165,7 +1165,7 @@ function! firenvim#internal_uninstall() abort
                                 if s:is_wsl
                                         let l:msg += ' from WSL'
                                         try
-                                                let l:o = s:maybe_execute('system', ['/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe', '-NonInteractive', '-Command', '-'], [l:ps1_content])
+                                                let l:o = s:maybe_execute('system', ['/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe', '-NoProfile', '-NonInteractive', '-Command', '-'], [l:ps1_content])
                                                 let l:failure = v:false
                                         catch /powershell.exe' is not executable/
                                                 let l:failure = v:true
