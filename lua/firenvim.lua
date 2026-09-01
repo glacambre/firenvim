@@ -1,4 +1,5 @@
 local websocket = require("firenvim-websocket")
+local uv = vim.uv or vim.loop
 
 local function close_server(server)
         if server ~= nil and not server:is_closing() then
@@ -6,19 +7,19 @@ local function close_server(server)
         end
         -- Work around https://github.com/glacambre/firenvim/issues/49 Note:
         -- important to do this before nvim_command("qall") because it breaks
-        vim.loop.new_timer():start(1000, 100, (function() os.exit() end))
+        uv.new_timer():start(1000, 100, (function() os.exit() end))
         vim.schedule(function()
                 vim.api.nvim_command("qall!")
         end)
 end
 
 local function connection_handler(server, sock, token)
-        local pipe = vim.loop.new_pipe(false)
+        local pipe = uv.new_pipe(false)
         local self_addr = vim.v.servername
         if self_addr == nil then
                 self_addr = os.getenv("NVIM_LISTEN_ADDRESS")
         end
-        vim.loop.pipe_connect(pipe, self_addr, function(err)
+        uv.pipe_connect(pipe, self_addr, function(err)
                 assert(not err, err)
         end)
 
@@ -89,12 +90,12 @@ local function connection_handler(server, sock, token)
 end
 
 local function firenvim_start_server(token)
-        local server = vim.loop.new_tcp()
+        local server = uv.new_tcp()
         server:nodelay(true)
         server:bind('127.0.0.1', 0)
         server:listen(128, function(err)
                 assert(not err, err)
-                local sock = vim.loop.new_tcp()
+                local sock = uv.new_tcp()
                 server:accept(sock)
                 sock:read_start(connection_handler(server, sock, token))
         end)
