@@ -329,7 +329,9 @@ function! s:get_data_dir_path() abort
 endfunction
 
 function! s:firefox_config_exists() abort
-        let l:p = [$HOME, '.mozilla']
+        let l:p = isdirectory(s:build_path([empty($XDG_CONFIG_HOME) ? $HOME . '/.config' : $XDG_CONFIG_HOME, 'mozilla'])) ?
+                \ [empty($XDG_CONFIG_HOME) ? $HOME . '/.config' : $XDG_CONFIG_HOME, 'mozilla'] :
+                \ [$HOME, '.mozilla']
         if has('mac')
                 let l:p = [$HOME, 'Library', 'Application Support', 'Mozilla']
         elseif has('win32')
