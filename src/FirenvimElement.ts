@@ -1,10 +1,9 @@
-import { getConf } from "./utils/configuration"
+import { getConf } from "./utils/configuration";
 import { computeSelector, isChrome } from "./utils/utils";
 import { AbstractEditor } from "./editor-adapter/AbstractEditor";
 import { getEditor } from "./editor-adapter/content";
 
 export class FirenvimElement {
-
     // editor is an object that provides an interface to interact (e.g.
     // retrieve/set content, retrieve/set cursor position) consistently with
     // underlying elements (be they simple textareas, CodeMirror elements or
@@ -56,8 +55,7 @@ export class FirenvimElement {
     private originalElement: HTMLElement;
     // resizeObserver is used in order to detect when the size of the element
     // being edited changed. When this happens, we resize the Neovim frame.
-    // TODO: periodically check if MS implemented a ResizeObserver type
-    private resizeObserver: any;
+    private resizeObserver: ResizeObserver;
     // span is the span element we use in order to insert the Neovim frame in
     // the page. The Neovim frame is attached to its shadow dom. Using a span
     // is much less disruptive to the page and enables a modicum of privacy
@@ -91,36 +89,45 @@ export class FirenvimElement {
     // prepareBufferInfo(). The reason we're not doing this from the
     // constructor is that it's expensive and disruptive - getting this
     // information requires evaluating code in the page's context.
-    private bufferInfo = (Promise.resolve(["", "", [1, 1], undefined]) as
-                          Promise<[string, string, [number, number], string]>);
+    private bufferInfo = Promise.resolve([
+        "",
+        "",
+        [1, 1],
+        undefined,
+    ]) as Promise<[string, string, [number, number], string]>;
     // cursor: last known cursor position. Updated on getPageElementCursor and
     // setPageElementCursor
     private cursor = [1, 1] as [number, number];
-
 
     // elem is the element that received the focusEvent.
     // Nvimify is the function that listens for focus events. We need to know
     // about it in order to remove it before focusing elem (otherwise we'll
     // just grab focus again).
-    constructor (elem: HTMLElement,
-                 listener: (evt: { target: EventTarget }) => Promise<void>,
-                 onDetach: (id: number) => any) {
+    constructor(
+        elem: HTMLElement,
+        listener: (evt: { target: EventTarget }) => Promise<void>,
+        onDetach: (id: number) => any,
+    ) {
         this.originalElement = elem;
         this.nvimify = listener;
         this.onDetach = onDetach;
-        this.editor = getEditor(elem, { preferHTML: getConf().content == "html" });
+        this.editor = getEditor(elem, {
+            preferHTML: getConf().content == "html",
+        });
 
-        this.span = elem
-            .ownerDocument
-            .createElementNS("http://www.w3.org/1999/xhtml", "span");
+        this.span = elem.ownerDocument.createElementNS(
+            "http://www.w3.org/1999/xhtml",
+            "span",
+        );
         // Make non-focusable, as otherwise <Tab> and <S-Tab> in the page would
         // focus the iframe at the end of the page instead of focusing the
         // browser's UI. The only way to <Tab>-focus the frame is to
         // <Tab>-focus the corresponding input element.
         this.span.setAttribute("tabindex", "-1");
-        this.iframe = elem
-            .ownerDocument
-            .createElementNS("http://www.w3.org/1999/xhtml", "iframe") as HTMLIFrameElement;
+        this.iframe = elem.ownerDocument.createElementNS(
+            "http://www.w3.org/1999/xhtml",
+            "iframe",
+        ) as HTMLIFrameElement;
         // Make sure there isn't any extra width/height
         this.iframe.style.padding = "0px";
         this.iframe.style.margin = "0px";
@@ -129,7 +136,7 @@ export class FirenvimElement {
         this.iframe.style.boxShadow = "0px 0px 1px 1px black";
     }
 
-    attachToPage (fip: Promise<number>) {
+    attachToPage(fip: Promise<number>) {
         this.frameIdPromise = fip.then((f: number) => {
             this.frameId = f;
             // Once a frameId has been acquired, the FirenvimElement would die
@@ -153,32 +160,43 @@ export class FirenvimElement {
         // Use a ResizeObserver to detect when the underlying input element's
         // size changes and change the size of the FirenvimElement
         // accordingly
-        this.resizeObserver = new ((window as any).ResizeObserver)(((self) => async (entries: any[]) => {
-            const entry = entries.find((ent: any) => ent.target === self.getElement());
-            if (self.frameId === undefined) {
-                await this.frameIdPromise;
-            }
-            if (entry) {
-                const newRect = this.getElement().getBoundingClientRect();
-                if (rect.width === newRect.width && rect.height === newRect.height) {
-                    return;
+        this.resizeObserver = new ResizeObserver(
+            ((self) => async (entries: any[]) => {
+                const entry = entries.find(
+                    (ent: any) => ent.target === self.getElement(),
+                );
+                if (self.frameId === undefined) {
+                    await this.frameIdPromise;
                 }
-                rect = newRect;
-                self.resizeTo(rect.width, rect.height, false);
-                self.putEditorCloseToInputOrigin();
-                self.resizeReqId += 1;
-                browser.runtime.sendMessage({
-                    args: {
-                        frameId: self.frameId,
-                        message: {
-                            args: [self.resizeReqId, rect.width, rect.height],
-                            funcName: ["resize"],
-                        }
-                    },
-                    funcName: ["messageFrame"],
-                });
-            }
-        })(this));
+                if (entry) {
+                    const newRect = this.getElement().getBoundingClientRect();
+                    if (
+                        rect.width === newRect.width &&
+                        rect.height === newRect.height
+                    ) {
+                        return;
+                    }
+                    rect = newRect;
+                    self.resizeTo(rect.width, rect.height, false);
+                    self.putEditorCloseToInputOrigin();
+                    self.resizeReqId += 1;
+                    browser.runtime.sendMessage({
+                        args: {
+                            frameId: self.frameId,
+                            message: {
+                                args: [
+                                    self.resizeReqId,
+                                    rect.width,
+                                    rect.height,
+                                ],
+                                funcName: ["resize"],
+                            },
+                        },
+                        funcName: ["messageFrame"],
+                    });
+                }
+            })(this),
+        );
         this.resizeObserver.observe(this.getElement(), { box: "border-box" });
 
         this.iframe.src = (browser as any).runtime.getURL("/index.html");
@@ -190,24 +208,40 @@ export class FirenvimElement {
         // by checking visibility changes and re-insert if needed.
         let reinserts = 0;
         this.spanObserver = new MutationObserver(
-            (self => (mutations : MutationRecord[], observer: MutationObserver) => {
-            const span = self.getSpan();
-            for (const mutation of mutations) {
-                for (const node of mutation.removedNodes) {
-                    if (node === span) {
-                        reinserts += 1;
-                        if (reinserts >= 10) {
-                            console.error("Firenvim is trying to create an iframe on this site but the page is constantly removing it. Consider disabling Firenvim on this website.");
-                            observer.disconnect();
-                        } else {
-                            setTimeout(() => self.getElement().ownerDocument.body.appendChild(span), reinserts * 100);
+            (
+                (self) =>
+                (mutations: MutationRecord[], observer: MutationObserver) => {
+                    const span = self.getSpan();
+                    for (const mutation of mutations) {
+                        for (const node of mutation.removedNodes) {
+                            if (node === span) {
+                                reinserts += 1;
+                                if (reinserts >= 10) {
+                                    console.error(
+                                        "Firenvim is trying to create an iframe on this site but the page is constantly removing it. Consider disabling Firenvim on this website.",
+                                    );
+                                    observer.disconnect();
+                                } else {
+                                    setTimeout(
+                                        () =>
+                                            self
+                                                .getElement()
+                                                .ownerDocument.body.appendChild(
+                                                    span,
+                                                ),
+                                        reinserts * 100,
+                                    );
+                                }
+                                return;
+                            }
                         }
-                        return;
                     }
                 }
-            }
-        })(this));
-        this.spanObserver.observe(this.getElement().ownerDocument.body, { childList: true });
+            )(this),
+        );
+        this.spanObserver.observe(this.getElement().ownerDocument.body, {
+            childList: true,
+        });
 
         let parentElement = this.getElement().ownerDocument.body;
         // We can't insert the frame in the body if the element we're going to
@@ -224,38 +258,48 @@ export class FirenvimElement {
         // (either by being removed or by being hidden by other elements), so
         // we use an intersection observer, which is triggered every time the
         // element becomes more or less visible.
-        this.intersectionObserver = new IntersectionObserver((self => () => {
-            const elem = self.getElement();
-            // If elem doesn't have a rect anymore, it's hidden
-            if (elem.getClientRects().length === 0) {
-                self.hide();
-            } else {
-                self.show();
-            }
-        })(this), { root: null, threshold: 0.1 });
+        this.intersectionObserver = new IntersectionObserver(
+            ((self) => () => {
+                const elem = self.getElement();
+                // If elem doesn't have a rect anymore, it's hidden
+                if (elem.getClientRects().length === 0) {
+                    self.hide();
+                } else {
+                    self.show();
+                }
+            })(this),
+            { root: null, threshold: 0.1 },
+        );
         this.intersectionObserver.observe(this.getElement());
 
         // We want to remove the FirenvimElement from the page when the
         // corresponding element is removed. We do this by adding a
         // mutationObserver to its parent.
-        this.pageObserver = new MutationObserver((self => (mutations: MutationRecord[]) => {
-            const elem = self.getElement();
-            mutations.forEach(mutation => mutation.removedNodes.forEach(node => {
-                const walker = document.createTreeWalker(node, NodeFilter.SHOW_ALL);
-                while (walker.nextNode()) {
-                    if (walker.currentNode === elem) {
-                        setTimeout(() => self.detachFromPage());
-                    }
-                }
-            }));
-        })(this));
+        this.pageObserver = new MutationObserver(
+            ((self) => (mutations: MutationRecord[]) => {
+                const elem = self.getElement();
+                mutations.forEach((mutation) =>
+                    mutation.removedNodes.forEach((node) => {
+                        const walker = document.createTreeWalker(
+                            node,
+                            NodeFilter.SHOW_ALL,
+                        );
+                        while (walker.nextNode()) {
+                            if (walker.currentNode === elem) {
+                                setTimeout(() => self.detachFromPage());
+                            }
+                        }
+                    }),
+                );
+            })(this),
+        );
         this.pageObserver.observe(document.documentElement, {
             subtree: true,
-            childList: true
+            childList: true,
         });
     }
 
-    clearFocusListeners () {
+    clearFocusListeners() {
         // When the user tries to `:w | call firenvim#focus_page()` in Neovim,
         // we have a problem. `:w` results in a call to setPageElementContent,
         // which calls FirenvimElement.focus(), because some pages try to grab
@@ -267,9 +311,9 @@ export class FirenvimElement {
         // listeners/timeouts created by FirenvimElement.focus()!
         // So we need a way to clear the timeouts and event listeners before
         // performing focus_page, and that's what this function does.
-        this.focusInfo.finalRefocusTimeouts.forEach(t => clearTimeout(t));
-        this.focusInfo.refocusTimeouts.forEach(t => clearTimeout(t));
-        this.focusInfo.refocusRefs.forEach(f => {
+        this.focusInfo.finalRefocusTimeouts.forEach((t) => clearTimeout(t));
+        this.focusInfo.refocusTimeouts.forEach((t) => clearTimeout(t));
+        this.focusInfo.refocusRefs.forEach((f) => {
             this.iframe.removeEventListener("blur", f);
             this.getElement().removeEventListener("focus", f);
         });
@@ -278,7 +322,7 @@ export class FirenvimElement {
         this.focusInfo.refocusRefs.length = 0;
     }
 
-    detachFromPage () {
+    detachFromPage() {
         this.clearFocusListeners();
         const elem = this.getElement();
         this.resizeObserver.unobserve(elem);
@@ -289,42 +333,46 @@ export class FirenvimElement {
         this.onDetach(this.frameId);
     }
 
-    focus () {
+    focus() {
         // Some inputs try to grab the focus again after we appended the iframe
         // to the page, so we need to refocus it each time it loses focus. But
         // the user might want to stop focusing the iframe at some point, so we
         // actually stop refocusing the iframe a second after it is created.
         const refocus = ((self) => () => {
-            self.focusInfo.refocusTimeouts.push(setTimeout(() => {
-                // First, destroy current selection. Some websites use the
-                // selection to force-focus an element.
-                const sel = document.getSelection();
-                sel.removeAllRanges();
-                const range = document.createRange();
-                // There's a race condition in the testsuite on chrome that
-                // results in self.span not being in the document and errors
-                // being logged, so we check if self.span really is in its
-                // ownerDocument.
-                if (self.span.ownerDocument.contains(self.span)) {
-                    range.setStart(self.span, 0);
-                }
-                range.collapse(true);
-                sel.addRange(range);
-                self.iframe.focus();
-            }, 0));
+            self.focusInfo.refocusTimeouts.push(
+                setTimeout(() => {
+                    // First, destroy current selection. Some websites use the
+                    // selection to force-focus an element.
+                    const sel = document.getSelection();
+                    sel.removeAllRanges();
+                    const range = document.createRange();
+                    // There's a race condition in the testsuite on chrome that
+                    // results in self.span not being in the document and errors
+                    // being logged, so we check if self.span really is in its
+                    // ownerDocument.
+                    if (self.span.ownerDocument.contains(self.span)) {
+                        range.setStart(self.span, 0);
+                    }
+                    range.collapse(true);
+                    sel.addRange(range);
+                    self.iframe.focus();
+                }, 0),
+            );
         })(this);
         this.focusInfo.refocusRefs.push(refocus);
         this.iframe.addEventListener("blur", refocus);
         this.getElement().addEventListener("focus", refocus);
-        this.focusInfo.finalRefocusTimeouts.push(setTimeout(() => {
-            refocus();
-            this.iframe.removeEventListener("blur", refocus);
-            this.getElement().removeEventListener("focus", refocus);
-        }, 100));
+        this.focusInfo.finalRefocusTimeouts.push(
+            setTimeout(() => {
+                refocus();
+                this.iframe.removeEventListener("blur", refocus);
+                this.getElement().removeEventListener("focus", refocus);
+            }, 100),
+        );
         refocus();
     }
 
-    focusOriginalElement (addListener: boolean) {
+    focusOriginalElement(addListener: boolean) {
         (document.activeElement as any).blur();
         this.originalElement.removeEventListener("focus", this.nvimify);
         const sel = document.getSelection();
@@ -341,72 +389,78 @@ export class FirenvimElement {
         }
     }
 
-    getBufferInfo () {
+    getBufferInfo() {
         return this.bufferInfo;
     }
 
-    getEditor () {
+    getEditor() {
         return this.editor;
     }
 
-    getElement () {
+    getElement() {
         return this.editor.getElement();
     }
 
-    getPageElementContent () {
+    getPageElementContent() {
         return this.getEditor().getContent();
     }
 
-    getPageElementCursor () {
-        const p = this.editor.getCursor().catch(() => [1, 1]) as Promise<[number, number]>;
-        p.then(c => this.cursor = c);
+    getPageElementCursor() {
+        const p = this.editor.getCursor().catch(() => [1, 1]) as Promise<
+            [number, number]
+        >;
+        p.then((c) => (this.cursor = c));
         return p;
     }
 
-    getOriginalElement () {
+    getOriginalElement() {
         return this.originalElement;
     }
 
-    getSelector () {
+    getSelector() {
         return computeSelector(this.getElement());
     }
 
-    getSpan () {
+    getSpan() {
         return this.span;
     }
 
-    hide () {
+    hide() {
         this.iframe.style.display = "none";
     }
 
-    isFocused () {
-        return document.activeElement === this.span
-            || document.activeElement === this.iframe;
+    isFocused() {
+        return (
+            document.activeElement === this.span ||
+            document.activeElement === this.iframe
+        );
     }
 
-    prepareBufferInfo () {
+    prepareBufferInfo() {
         this.bufferInfo = (async () => [
             document.location.href,
             this.getSelector(),
             await this.getPageElementCursor(),
-            await (this.editor.getLanguage().catch(() : undefined => undefined))
+            await this.editor.getLanguage().catch((): undefined => undefined),
         ])() as Promise<[string, string, [number, number], string]>;
     }
 
-    pressKeys (keys: KeyboardEvent[]) {
+    pressKeys(keys: KeyboardEvent[]) {
         const focused = this.isFocused();
-        keys.forEach(ev => this.originalElement.dispatchEvent(ev));
+        keys.forEach((ev) => this.originalElement.dispatchEvent(ev));
         if (focused) {
             this.focus();
         }
     }
 
-    putEditorCloseToInputOrigin () {
+    putEditorCloseToInputOrigin() {
         const rect = this.editor.getElement().getBoundingClientRect();
 
         // Save attributes
         const posAttrs = ["left", "position", "top", "zIndex"];
-        const oldPosAttrs = posAttrs.map((attr: any) => this.iframe.style[attr]);
+        const oldPosAttrs = posAttrs.map(
+            (attr: any) => this.iframe.style[attr],
+        );
 
         // Assign new values
         this.iframe.style.left = `${rect.left + window.scrollX + this.relativeX}px`;
@@ -417,12 +471,14 @@ export class FirenvimElement {
         this.iframe.style.zIndex = "2139999995";
 
         // Compare, to know whether the element moved or not
-        const posChanged = !!posAttrs.find((attr: any, index) =>
-                                           this.iframe.style[attr] !== oldPosAttrs[index]);
+        const posChanged = !!posAttrs.find(
+            (attr: any, index) =>
+                this.iframe.style[attr] !== oldPosAttrs[index],
+        );
         return { posChanged, newRect: rect };
     }
 
-    putEditorCloseToInputOriginAfterResizeFromFrame () {
+    putEditorCloseToInputOriginAfterResizeFromFrame() {
         // This is a very weird, complicated and bad piece of code. All calls
         // to `resizeEditor()` have to result in a call to `resizeTo()` and
         // then `putEditorCloseToInputOrigin()` in order to make sure the
@@ -446,7 +502,7 @@ export class FirenvimElement {
     }
 
     // Resize the iframe, making sure it doesn't get larger than the window
-    resizeTo (width: number, height: number, warnIframe: boolean) {
+    resizeTo(width: number, height: number, warnIframe: boolean) {
         // If the dimensions that are asked for are too big, make them as big
         // as the window
         let cantFullyResize = false;
@@ -490,43 +546,43 @@ export class FirenvimElement {
                     message: {
                         args: [this.resizeReqId, width, height],
                         funcName: ["resize"],
-                    }
+                    },
                 },
                 funcName: ["messageFrame"],
             });
         }
     }
 
-    sendKey (key: string) {
+    sendKey(key: string) {
         return browser.runtime.sendMessage({
             args: {
                 frameId: this.frameId,
                 message: {
                     args: [key],
                     funcName: ["frame_sendKey"],
-                }
+                },
             },
             funcName: ["messageFrame"],
         });
     }
 
-    setPageElementContent (text: string) {
+    setPageElementContent(text: string) {
         const focused = this.isFocused();
         this.editor.setContent(text);
         [
-            new KeyboardEvent("keydown",  { bubbles: true, ctrlKey: true }),
-            new KeyboardEvent("keyup",    { bubbles: true, ctrlKey: true }),
+            new KeyboardEvent("keydown", { bubbles: true, ctrlKey: true }),
+            new KeyboardEvent("keyup", { bubbles: true, ctrlKey: true }),
             new KeyboardEvent("keypress", { bubbles: true, ctrlKey: true }),
-            new Event("beforeinput",      { bubbles: true }),
-            new Event("input",            { bubbles: true }),
-            new Event("change",           { bubbles: true }),
-        ].forEach(ev => this.originalElement.dispatchEvent(ev));
+            new Event("beforeinput", { bubbles: true }),
+            new Event("input", { bubbles: true }),
+            new Event("change", { bubbles: true }),
+        ].forEach((ev) => this.originalElement.dispatchEvent(ev));
         if (focused) {
             this.focus();
         }
     }
 
-    setPageElementCursor (line: number, column: number) {
+    setPageElementCursor(line: number, column: number) {
         let p = Promise.resolve();
         this.cursor[0] = line;
         this.cursor[1] = column;
@@ -536,8 +592,7 @@ export class FirenvimElement {
         return p;
     }
 
-    show () {
+    show() {
         this.iframe.style.display = "initial";
     }
-
 }
