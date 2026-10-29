@@ -327,6 +327,79 @@ vim.g.firenvim_config = {
 
 Note that on Firefox on Linux some keyboard shortcuts might not be overridable. I circumvent this issue by running a [patched](https://github.com/glacambre/firefox-patches) version of Firefox (note: once Firefox is patched, you won't need to setup webextension keyboard shortcuts).
 
+Alternatively, you can customize Firefox using [AutoConfig](https://support.mozilla.org/en-US/kb/customizing-firefox-using-autoconfig). You need to place two files (may require Administrator privileges or `sudo`):
+
+1. A config loader in the Firefox defaults directory (e.g., `C:/Program Files/Mozilla Firefox/defaults/pref/autoconfig.js`, `/usr/lib/firefox/defaults/pref/autoconfig.js`, or `/Applications/Firefox.app/Contents/Resources/defaults/pref/autoconfig.js`)
+
+```javascript
+/* vim: set fileformat=unix filetype=javascript: */
+// autoconfig.js must use LF (Unix EOL)
+
+// name of the config file; you can use firefox.js
+pref("general.config.filename", "firefox.cfg");
+pref("general.config.obscure_value", 0);
+// enable privileged js code in firefox.cfg
+pref("general.config.sandbox_enabled", false);
+```
+
+2. The actual config file in the Firefox installation directory (e.g., `C:/Program Files/Mozilla Firefox/firefox.cfg`, `/usr/lib/firefox/firefox.cfg`, or `/Applications/Firefox.app/Contents/Resources/firefox.cfg`)
+
+```javascript
+/* vim: set fileformat=unix filetype=javascript: */
+// IMPORTANT: Start your code on the 2nd line.
+// firefox.cfg: filename in general.config.filename
+
+// pre-Fx117: const { Services } = Components.utils.import('resource://gre/modules/Services.jsm');
+let Services = globalThis.Services;
+if (!Services) {
+  Services = ChromeUtils.import("resource://gre/modules/Services.jsm");
+}
+function customizeBrowserUI(window) {
+  // remove "reserved" to let extensions override default shortcuts
+  const reservedKeys = [
+    "key_newNavigator", // <C-n>
+    "key_newNavigatorTab", // <C-t>
+    "key_close", // <C-w>
+    // additional reserved keys
+    // "key_closeWindow", // <C-S-w>
+    // "key_quitApplication", // <C-S-q>
+    // "key_privatebrowsing", // <C-S-p>
+  ];
+  for (const keyId of reservedKeys) {
+    const keyCommand = window.document.getElementById(keyId);
+    if (!keyCommand) {
+      throw new Error(`autoconfig: ${keyId} not found.`);
+    }
+    keyCommand.removeAttribute("reserved");
+  }
+}
+function onWindowCreated(subject, topic) {
+  if (topic !== "chrome-document-global-created") {
+    return;
+  }
+
+  const window = subject;
+  if (window.location.href !== "chrome://browser/content/browser.xhtml") {
+    return;
+  }
+
+  // wait for full browser startup
+  Services.obs.addObserver(function delayedStartupObserver(_window, _topic) {
+    if (_window === window) {
+      Services.obs.removeObserver(delayedStartupObserver, _topic);
+      customizeBrowserUI(window);
+    }
+  }, "browser-delayed-startup-finished");
+}
+
+try {
+  if (!Services.appinfo.inSafeMode) {
+    Services.obs.addObserver(onWindowCreated, "chrome-document-global-created");
+  }
+} catch (error) {
+}
+```
+
 ## You might also like
 
 - [Tridactyl](https://github.com/tridactyl/tridactyl), provides vim-like keybindings to use Firefox. Also lets you edit input fields and text areas in your favourite editor with its `:editor` command.
