@@ -592,16 +592,17 @@ function! s:get_chrome_dev_manifest_dir_path() abort
         return s:build_path([$HOME, '.config', 'google-chrome-unstable', 'NativeMessagingHosts'])
 endfunction
 
-function! s:get_brave_manifest_dir_path() abort
+function! s:get_brave_manifest_dir_path(...) abort
+        let l:profile = get(a:, 1, 'Brave-Browser')
         if has('mac')
                 return s:get_chrome_manifest_dir_path()
         elseif has('win32') || s:is_wsl
                 return s:get_chrome_manifest_dir_path()
         end
         if !empty($XDG_CONFIG_HOME)
-                return s:build_path([$XDG_CONFIG_HOME, 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'])
+                return s:build_path([$XDG_CONFIG_HOME, 'BraveSoftware', l:profile, 'NativeMessagingHosts'])
         end
-        return s:build_path([$HOME, '.config', 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'])
+        return s:build_path([$HOME, '.config', 'BraveSoftware', l:profile, 'NativeMessagingHosts'])
 endfunction
 
 function! s:canary_config_exists() abort
@@ -853,6 +854,12 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_dir_path': function('s:get_brave_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \},
+                \'brave-origin': {
+                        \ 'has_config': s:brave_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_brave_manifest_dir_path', ['Brave-Origin']),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \},
                 \'chrome': {
                         \ 'has_config': s:chrome_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
@@ -936,6 +943,7 @@ function! s:get_browser_configuration() abort
                 call remove(l:browsers, 'librewolf')
                 call remove(l:browsers, 'waterfox')
                 call remove(l:browsers, 'brave')
+                call remove(l:browsers, 'brave-origin')
                 call remove(l:browsers, 'chrome-dev')
                 call remove(l:browsers, 'opera')
                 call remove(l:browsers, 'ungoogled-chromium')
