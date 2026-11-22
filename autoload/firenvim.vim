@@ -418,6 +418,20 @@ function! s:brave_config_exists() abort
         return isdirectory(s:build_path(l:p))
 endfunction
 
+function! s:brave_origin_config_exists() abort
+        let l:p = [$HOME, '.config', 'BraveSoftware', 'Brave-Origin']
+        if has('mac')
+                let l:p = [$HOME, 'Library', 'Application Support', 'BraveSoftware', 'Brave-Origin']
+        elseif has('win32')
+                let l:p = [$HOME, 'AppData', 'Local', 'BraveSoftware', 'Brave-Origin']
+        elseif s:is_wsl
+                let l:p = [s:get_windows_env_path('%LOCALAPPDATA%'), 'BraveSoftware', 'Brave-Origin']
+        elseif !empty($XDG_CONFIG_HOME)
+                let l:p = [$XDG_CONFIG_HOME, 'BraveSoftware', 'Brave-Origin']
+        end
+        return isdirectory(s:build_path(l:p))
+endfunction
+
 function! s:opera_config_exists() abort
         let l:p = [$HOME, '.config', 'opera']
         if has('mac')
@@ -602,6 +616,18 @@ function! s:get_brave_manifest_dir_path() abort
                 return s:build_path([$XDG_CONFIG_HOME, 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'])
         end
         return s:build_path([$HOME, '.config', 'BraveSoftware', 'Brave-Browser', 'NativeMessagingHosts'])
+endfunction
+
+function! s:get_brave_origin_manifest_dir_path() abort
+        if has('mac')
+                return s:get_chrome_manifest_dir_path()
+        elseif has('win32') || s:is_wsl
+                return s:get_chrome_manifest_dir_path()
+        end
+        if !empty($XDG_CONFIG_HOME)
+                return s:build_path([$XDG_CONFIG_HOME, 'BraveSoftware', 'Brave-Origin', 'NativeMessagingHosts'])
+        end
+        return s:build_path([$HOME, '.config', 'BraveSoftware', 'Brave-Origin', 'NativeMessagingHosts'])
 endfunction
 
 function! s:canary_config_exists() abort
@@ -853,6 +879,12 @@ function! s:get_browser_configuration() abort
                         \ 'manifest_dir_path': function('s:get_brave_manifest_dir_path'),
                         \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
                 \},
+                \'brave-origin': {
+                        \ 'has_config': s:brave_origin_config_exists(),
+                        \ 'manifest_content': function('s:get_chrome_manifest'),
+                        \ 'manifest_dir_path': function('s:get_brave_origin_manifest_dir_path'),
+                        \ 'registry_key': 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\firenvim',
+                \},
                 \'chrome': {
                         \ 'has_config': s:chrome_config_exists(),
                         \ 'manifest_content': function('s:get_chrome_manifest'),
@@ -936,6 +968,7 @@ function! s:get_browser_configuration() abort
                 call remove(l:browsers, 'librewolf')
                 call remove(l:browsers, 'waterfox')
                 call remove(l:browsers, 'brave')
+                call remove(l:browsers, 'brave-origin')
                 call remove(l:browsers, 'chrome-dev')
                 call remove(l:browsers, 'opera')
                 call remove(l:browsers, 'ungoogled-chromium')
